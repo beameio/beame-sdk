@@ -3,6 +3,9 @@ var test=require('beame-provision-test');
 var fs=require('fs');
 var keys = ["$id","hostname","uid"];    //expected answer keys
 var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+if(!fs.exists(devPath)){
+    fs.mkdirSync(devPath);
+}
 /* Expected answer (values gonna change):
  *  "$id": "1",
  *  "hostname": "lkdz51o29q1hlfmusixn3ryilfhm5vdi.v1.beameio.net",
