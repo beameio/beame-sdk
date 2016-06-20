@@ -1,4 +1,6 @@
 .idea
+.beame
+authData
 node_modules
 # Elastic Beanstalk Files
 !.elasticbeanstalk/*.cfg.yml
