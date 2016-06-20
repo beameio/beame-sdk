@@ -9,6 +9,6 @@ node_modules
 !.elasticbeanstalk/*.global.yml
 test/output/*
 build
-
+*.swp
 npm-debug.log
 system
