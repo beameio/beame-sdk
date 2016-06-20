@@ -1,0 +1,25 @@
+{
+  "name": "run-provision",
+  "version": "1.0.0",
+  "description": "run provision tests",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beameio/TestEnvironment.git"
+  },
+  "keywords": [
+    "beame"
+  ],
+  "author": "az",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/beameio/TestEnvironment/issues"
+  },
+  "homepage": "https://github.com/beameio/TestEnvironment#readme",
+  "dependencies": {
+    "beame-provision-test": "^1.0.0"
+  }
+}
