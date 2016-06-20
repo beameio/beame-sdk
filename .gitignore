@@ -1,5 +1,6 @@
 .idea
 .beame
+.DS_Store
 authData
 bck
 node_modules
