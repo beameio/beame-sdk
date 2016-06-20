@@ -1,0 +1,10 @@
+.idea
+node_modules
+# Elastic Beanstalk Files
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+test/output/*
+build
+
+npm-debug.log
+system
