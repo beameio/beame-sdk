@@ -54,6 +54,7 @@ var createDeveloperRequest = function(param, callback){
 	test.runRestfulAPI(testParams,function(err,payload){
         if(!err){
             var i;
+            fs.appendFileSync(devPath+'developers',payload.hostname);
             var devDir=devPath+payload.hostname+'/';
             if (!fs.existsSync(devDir)){
                 fs.mkdirSync(devDir);//create directory for new developer, named with his unique hostname
