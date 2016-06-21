@@ -1,7 +1,19 @@
 # TestEnvironment
 To use tests from this repo, first run "npm install beame-provision-test"
-APIs called here, should be called in strict sequence:
-Here call examples:
+
+All sequence is defined in runData.json file
+runData.template contains full sequence without additional parameters (all
+needed parameters will be defined in runtime)
+
+running wrapper:
+
+node index.js
+
+It is possible to provide any json config file for the run:
+
+node index.js userCfgFile.json
+###
+API call examples:
 
 1:
 node devCreate.js <developerName>
