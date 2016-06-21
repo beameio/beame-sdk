@@ -1,5 +1,4 @@
-//var test=require('../beame-provision-test/main.js');
-var test=require('beame-provision-test');
+var test=require('./prov_api.js');
 var fs=require('fs');
 var keys = ["$id","hostname","uid"];    //expected answer keys
 var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
