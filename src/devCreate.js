@@ -5,13 +5,13 @@ var keys = ["$id","hostname","uid"];    //expected answer keys
 var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 
 try{
-	if(!fs.lstatSync(devPath)){
-		console.log("Dev path ", devPath);
-		fs.mkdirSync(devPath);
-	}
+    if(fs.lstatSync(devPath)){
+        console.log("Directory for developer already exists");
+    }
 }
 catch(e) { 
-	console.log("Directory for developer already exists");
+    console.log("Dev path ", devPath);
+    fs.mkdirSync(devPath);
 }
 
 /* Expected answer (values gonna change):
@@ -68,27 +68,29 @@ var createDeveloperRequest = function(param, callback){
                 }
                 else{
                     console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
-                    process.exit(-1);
+                    //process.exit(-1);
+                    callback(null);
                 }
             }
-			if(callback){
-				 callback(payload);
-			}
+	    if(callback){
+		callback(payload);
+	    }
         }
         else{
-			console.log('Fail: '+err);
-		}
+            callback(null);
+	    console.log('Fail: '+err);
+	}
 
     });
 };
  
 
-var requestCreateDeveloper = function(developerName, callback){
+module.exports.requestCreateDeveloper = function(developerName, callback){
 	var devName = developerName;
 
 	test.setAuthData(authData, function(csr, pk){
 		
-		createDeveloperRequest(developerName);
+		createDeveloperRequest(developerName,callback);
 		//callback will return null,null so
 		//nothing special to do here, this is 
 		//to use in further activities: update / getCert etc
@@ -97,5 +99,5 @@ var requestCreateDeveloper = function(developerName, callback){
 };
 
 	
-module.exports =  requestCreateDeveloper;
+//module.exports =  requestCreateDeveloper;
 

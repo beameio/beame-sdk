@@ -1,0 +1,19 @@
+{
+    "test1":"devCreate",
+    "test2":"devGetCert",
+    "test3":"devProfileUpdate",
+    "test4":"devAppSave",
+    "test5":"devAppGetCert",
+    "test6":"edgeClientRegister",
+    "test7":"edgeClientGetCert",
+    "test9":"devAppUpdate",
+    "test8":"exit",
+    "devName":"sas",
+    "devHostname":"empty",
+    "devUid":"empty",
+    "appHostname":"empty",
+    "appUid":"empty",
+    "appName":"myApp",
+    "edgeHostname":"empty",
+    "edgeUid":"empty"
+}

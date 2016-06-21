@@ -5,23 +5,20 @@ var uid;//variable to hold UID
 var host;//variable to hold hostname
 var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["x509","pkcs7","ca"];
-/* Expected answer (values gonna change):
- *  "$id": "1",
- *    "hostname": "lkdz51o29q1hlfmusixn3ryilfhm5vdi.v1.beameio.net",
- *      "uid": "96fc1f42-30ac-4829-bbcc-3f518fcefcb5"
- * */
-
+/*
 if (process.argv.length < 3) {
     console.log('Usage: node '+__filename+' unique-hostname');
     process.exit(-1);
-}
+}*/
 var param=process.argv[2];
+module.exports.getDevCert = function(param,callback){
 console.log('Running test with param: '+param);
 /*---------- check if developer exists -------------------*/
 var devDir=devPath+param+"/";
 if (!fs.existsSync(devDir)){//provided invalid hostname
     console.log('Provided hostname is invalid, list ./.beame to see existing hostnames');
-    process.exit(-1);
+//    process.exit(-1);
+    callback(null);
 }
 /*---------- read developer data and proceed -------------*/
 fs.readFile(devDir+"hostname", (err, data) => {
@@ -67,17 +64,21 @@ fs.readFile(devDir+"hostname", (err, data) => {
                             }
                             else{
                                 console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
-                                process.exit(-1);
+                                //process.exit(-1);
+                                callback(null);
                             }
                         }
                         console.log('New dev cert request: successful');
+                        callback(payload);
                     }
-                    else
+                    else{
                         console.log('Fail: '+err);
+                        callback(null);
+                    }
                 });
             }
         });
     });
 });
 
-
+}

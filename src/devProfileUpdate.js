@@ -6,20 +6,22 @@ var host;//variable to hold hostname
 var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["updateStatus"];
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
-
+/*
 if (process.argv.length < 3) {
     console.log('Usage: node '+__filename+' unique-hostname');
     process.exit(-1);
 }
-var param=process.argv[2];
-console.log('Running test with param: '+param);
+var param=process.argv[2];*/
+module.exports.devProfileUpdate = function(param,callback){
+
 /*---------- check if developer exists -------------------*/
 var devDir=devPath+param+"/";
 var i;
+console.log('Running profile update from: '+devDir);
 for(i=0;i<usrFiles.length;i++){
     if(!fs.existsSync(devDir+usrFiles[i])){
         console.log('Error! missing: '+devDir+usrFiles[i]);
-        process.exit(-1);
+ //       process.exit(-1);
     }
 }
 /*---------- read developer data and proceed -------------*/
@@ -66,12 +68,14 @@ fs.readFile(devDir+"hostname", (err, data) => {
                             }
                         }
                         console.log('Developer profile update: successful');
+                        callback("success");
                     }
-                    else
+                    else{
                         console.log('Fail: '+err);
+                        callback("Fail");
+                    }
                 });
         });
     });
 });
-
-
+}

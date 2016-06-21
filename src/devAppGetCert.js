@@ -6,28 +6,30 @@ var host;//variable to hold hostname
 var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["x509","pkcs7","ca"];
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
-var appFiles = ["uid","hostname"]
+var appFiles = ["uid","hostname"];
+/*
 if (process.argv.length < 4) {
     console.log('Usage: node '+__filename+' dev-hostname app-hostname');
     process.exit(-1);
 }
 var param=process.argv[2];
-var appHostName=process.argv[3];
-console.log('Running test with param: '+param);
+var appHostName=process.argv[3];*/
+module.exports.devAppGetCert = function(param ,appHostName, callback){
+
 /*---------- check if developer exists -------------------*/
 var devDir=devPath+param+"/";
 var devAppDir=devDir+appHostName+"/";
-console.log('Application files directory: '+devAppDir);
+console.log('Running appGetCert from: '+devAppDir);
 var i;
 for(i=0;i<usrFiles.length;i++){
     if(!fs.existsSync(devDir+usrFiles[i])){
-        console.log('Error! missing: '+devDir+usrFiles[i]);
+        console.warn('Error! missing: '+devDir+usrFiles[i]);
         process.exit(-1);
     }
 }
 for(i=0;i<appFiles.length;i++){
     if(!fs.existsSync(devAppDir+usrFiles[i])){
-        console.log('Error! missing: '+devAppDir+usrFiles[i]);
+        console.warn('Error! missing: '+devAppDir+usrFiles[i]);
         process.exit(-1);
     }
 }
@@ -78,13 +80,16 @@ fs.readFile(devAppDir+"hostname", (err, data) => {
                                 process.exit(-1);
                             }
                         }
-                        console.log('Developer app save: successful');
+                        console.log('Developer app get certs: successful');
+                        callback(payload);
                     }
-                    else
+                    else{
                         console.log('Fail: '+err);
+                        callback(null);
+                    }
                 });
         });
     });
 });
 
-
+}

@@ -7,28 +7,32 @@ var devPath = "./.beame/";              //path to store dev data: uid, hostname,
 var keys = ["uid","hostname"];
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
 var appFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
-if (process.argv.length < 4){ 
+/*if (process.argv.length < 4){ 
     console.log('Usage: node '+__filename+' dev-hostname app-hostname');
     process.exit(-1);
 }
 var param=process.argv[2];
 var appHostName=process.argv[3];
-//var zone=process.argv[4];
-console.log('Running test with param: '+param);
+//var zone=process.argv[4];*/
+module.exports.edgeClientRegister = function(param, appHostName, callback){
+
 /*---------- check if developer exists -------------------*/
 var devDir=devPath+param+"/";
 var devAppDir=devDir+appHostName+"/";
+console.log('Running edge client registration from: '+devAppDir);
 var i;
 for(i=0;i<usrFiles.length;i++){
     if(!fs.existsSync(devDir+usrFiles[i])){
         console.log('Error! missing: '+devDir+usrFiles[i]);
-        process.exit(-1);
+        //process.exit(-1);
+        callback(null);
     }
 }
 for(i=0;i<appFiles.length;i++){
     if(!fs.existsSync(devAppDir+usrFiles[i])){
         console.log('Error! missing: '+devAppDir+usrFiles[i]);
-        process.exit(-1);
+        //process.exit(-1);
+        callback(null);
     }
 }
 /*---------- read developer data and proceed -------------*/
@@ -52,16 +56,18 @@ fs.readFile(devAppDir+"hostname", (err, data) => {
             test.getEndpoint("http://lb-dev.luckyqr.io/endpoint",function(err, endpointData){
                 if(authData.makeCSR && csr==null){
                     console.log('CSR creation for app failed');
-                    process.exit(-1);
+                    //process.exit(-1);
+                    callback(null);
                 }
                 if(err!=null || endpointData.endpoint == undefined){
                     console.log('Failed to get Endpoint data: '+err);
-                    process.exit(-1);
+                    //process.exit(-1);
+                    callback(null);
                 }
                 var postData={
                     host:endpointData.endpoint
                 }
-                console.log('Registering edge client for endpoint: '+postData.zone);
+                console.log('Registering edge client for endpoint: '+postData.host);
                 var testParams={
                     version:"/v1",
                     postData:postData,
@@ -82,18 +88,23 @@ fs.readFile(devAppDir+"hostname", (err, data) => {
                                 fs.writeFile(nextLevelDir+keys[i],payload[keys[i]]);
                             }
                             else{
-                                console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
-                                process.exit(-1);
+                                console.warn('Error, missing <' + keys[i] + '> element in provisioning answer');
+                                //process.exit(-1);
+                                callback(null);
                             }
+
                         }
+                        callback(payload);
                         console.log('Edge register: successful');
                     }
-                    else
+                    else{
                         console.log('Fail: '+err);
+                        callback(null);
+                    }
                 });
             });
         });
     });
 });
 
-
+}
