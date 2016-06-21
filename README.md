@@ -1,5 +1,5 @@
 # TestEnvironment
-To use tests from this repo, first run "npm install beame-provision-test"
+To use tests from this repo, first run "npm install @beameio/beame-api"
 
 All sequence is defined in runData.json file
 runData.template contains full sequence without additional parameters (all
