@@ -58,6 +58,7 @@ module.exports.devAppSave = function(param,appName,callback){
 					}
 					test.runRestfulAPI(testParams,function(err,payload){
 						if(!err){
+                                                        fs.appendFileSync(devDir+'apps',payload.hostname);
 							var devAppDir=devDir+payload.hostname+'/';
 							if (!fs.existsSync(devAppDir)){
 									fs.mkdirSync(devAppDir);//create directory for new developer, named with his unique hostname
