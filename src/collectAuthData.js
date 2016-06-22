@@ -7,21 +7,22 @@ var _=require('underscore');
 var os = require('os');
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7","name"];
 var pathDepths=0;//0=~/.beame 1=developer 2=app 3=client
+var beameDir;
 
 //
 //levels: developer, app instance
 //
 //
-var levels = ['developer', 'app', 'developer'];
+var levels = ['developer', 'app', 'instance'];
 
 
 
 var getNextLevel = function(level){
 	switch(level){
 		case "developer":
-			return 0 + 1;
+			return "app";
 		case "app":
-			return 1 + 1;
+			return "instance";
 		case "instance":
 			return -1;
 		default:
@@ -29,18 +30,24 @@ var getNextLevel = function(level){
 	}
 };
 
-var keyPair = function(sourceDir, level, allDone){
-	this.credentials = {
-		"name":fs.readFileSync(sourceDir + "name"),
-		"key": fs.readFileSync(sourceDir + "private_key.pem"),
-		"cert": fs.readFileSync(sourceDir + "x509"),
-		"hostname": fs.readFileSync(sourceDir + "hostname")
-	};
+var keyPair = function(baseDir, sourceDir, level, allDone){
+    console.log("Creating keypair constructor " + baseDir + " " +sourceDir + " " + level);
+	try {
+        this.credentials = {
+            "name": fs.readFileSync(baseDir + sourceDir + "/name"),
+            "key": fs.readFileSync(baseDir + sourceDir + "/private_key.pem"),
+            "cert": fs.readFileSync(baseDir + sourceDir + "/x509"),
+            "hostname": fs.readFileSync(baseDir + sourceDir + "/hostname")
+        };
+    } catch (e) { this.credentials = {}; }
 	var nextLevel = getNextLevel(level);
 
-	dataLogger.getDependantsSync(sourceDir, nextLevel, allDone);/*function(tree){
+	this.getDependantsSync(baseDir + sourceDir, nextLevel, _.bind(function(tree){
+        console.log("Get Dependant synch returned " + JSON.stringify(tree));
+        allDone && allDone(this.credentials.name, this.credentials);
+    }, this));/*function(tree){
 
-		allDone && allDone(this.credentials.name, this.credentials);
+
 	
 	});*/
 };
@@ -51,14 +58,15 @@ function scanBeameDir(beameDir){
 		beameDir = os.homedir() + "/.beame/";
 	}
 	var developers = [];
-	fs.readdirSync(beameDir, _.bind(function(err, data){
-		console.log('data'+data);	
+	fs.readdir(beameDir, _.bind(function(err, data){
+		console.log('found developers: ' + data);
 		_.each(data, function(item){
-			var stat = fs.statSync(item);
+			var stat = fs.statSync(beameDir + item);
 			console.log('scanBeameDir: '+item);
 			if (stat && stat.isDirectory()) {
-				var dataLogger = new keyPair(item, levels[0],  function(tree){ 
-					console.log(JSON.stringify(tree));
+	 			var dataLogger = new keyPair(beameDir, item, levels[0],  function(name, tree){
+                    developers[tree.name] = tree;
+                    console.log(JSON.stringify(tree));
 				});
 			}
 		});
@@ -66,36 +74,44 @@ function scanBeameDir(beameDir){
 }
 
 keyPair.prototype.getDependantsSync = function(currentDir, level, done ){
-	fs.readdirSync(currentDir, _.bind(function(err, data){
+    console.log("getDependantsSync " + currentDir + " " + level);
+	fs.readdir(currentDir, _.bind(function(err, data){
 		if (err) {  return done(err);	}
 		_.each(data, _.bind(function(item){
-			var stat = fs.statSync(item);
+			var stat = fs.statSync(currentDir +"/" + item);
 			if (stat && stat.isDirectory()) {
-				var newKeyPair = new keyPair(item, level);
+                console.log("Creating keypair in getDependantsSync ")
+				var newKeyPair = new keyPair(currentDir + "/",  item, level, function(name, tree) {
+                    console.log("keyPair returned  " + tree);//+ currentDir + "/" + item + " LEvel " + level);
+                    done(name, tree);
+                });
 
-				switch(level){
-					case "developer":
-					
-						if(!this.credentials.apps)
-						{
-							this.credentials.apps = [];
-						}
-				
-						this.credentials.apps.push(newKeyPair.credentials);
-					break;
-					case "app":
-						if(!this.credentials.instances)
-						{
-							this.credentials.instances = [];
-						}
-				
-						this.credentials.instances.push(newKeyPair.credentials);
-					break;
-					default:
-						done(this.credentials);
-				}
+                switch(level){
+                    case "developer":
+
+                        if(!this.credentials.apps)
+                        {
+                            this.credentials.apps = [];
+                        }
+
+                        this.credentials.apps.push(newKeyPair.credentials);
+                        break;
+                    case "app":
+                        if(!this.credentials.instances)
+                        {
+                            this.credentials.instances = [];
+                        }
+
+                        this.credentials.instances.push(newKeyPair.credentials);
+                        break;
+                    default:
+                    {
+                        console.log(level + " reader completed " + currentDir + "/",  item, level)
+                        done && done("", this.credentials);
+                    }
+                }
 			}
-		}), this);
+		}, this));
 		
 	}, this));
 };
