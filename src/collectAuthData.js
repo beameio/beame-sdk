@@ -39,11 +39,15 @@ var keyPair = function(baseDir, sourceDir, level, allDone){
             "cert": fs.readFileSync(baseDir + sourceDir + "/x509"),
             "hostname": fs.readFileSync(baseDir + sourceDir + "/hostname")
         };
-    } catch (e) { this.credentials = {}; }
+    } catch (e) {
+        console.log(e);
+        this.credentials = {};
+
+    }
     this.level = level;
 
 	this.getDependantsSync(baseDir + sourceDir, _.bind(function(tree){
-        console.log("Get Dependant synch returned " + JSON.stringify(tree));
+        console.log("Get Dependant synch returned " + this.level +" " +  JSON.stringify(tree));
         allDone && allDone(this.credentials.name, this.credentials);
     }, this));/*function(tree){
 
@@ -82,39 +86,40 @@ keyPair.prototype.getDependantsSync = function(currentDir,  done ){
 			var stat = fs.statSync(currentDir +"/" + item);
 			if (stat && stat.isDirectory()) {
                 console.log("Creating keypair in getDependantsSync " + this.level);
-				var newKeyPair = new keyPair(currentDir + "/",  item, getNextLevel(this.level), function(name, tree) {
+				var newKeyPair = new keyPair(currentDir + "/",  item, getNextLevel(this.level), _.bind(function(name, tree) {
                     console.log("keyPair returned  " + tree);//+ currentDir + "/" + item + " LEvel " + this.level);
-                    done(name, tree);
-                });
+                    done(this.level , tree);
+                }, this));
 
-                switch(this.level){
-                    case "app":
-
-                        if(!this.credentials.apps)
-                        {
-                            this.credentials.apps = [];
-                        }
-                        console.log("Pushing app ");
-                        this.credentials.apps.push(this.credentials);
-                        break;
-                    case "instance":
-                        if(!this.credentials.instances)
-                        {
-                            this.credentials.instances = [];
-                        }
-                        console.log("Pushing instance ");
-                        this.credentials.instances.push(this.credentials);
-                        console.log(this.level + " reader completed " + currentDir + "/",  item, this.level)
-                        done && done("", this.credentials);
-                        break;
-                    default:
-                    {
-                        new Error("broken beame dir seek support from beame or read documentation");
-
-                    }
-                }
 			}
 		}, this));
+
+        switch(this.level){
+            case "app":
+
+                if(!this.credentials.apps)
+                {
+                    this.credentials.apps = [];
+                }
+                console.log("Pushing app ");
+                this.credentials.apps.push(this.credentials);
+                break;
+            case "instance":
+                if(!this.credentials.instances)
+                {
+                    this.credentials.instances = [];
+                }
+                console.log("Pushing instance ");
+                this.credentials.instances.push(this.credentials);
+                console.log(this.level + " reader completed " + currentDir + "/",   this.level)
+                done && done(this.level , this.credentials);
+                break;
+            default:
+            {
+                //new Error("broken beame dir seek support from beame or read documentation");
+
+            }
+        }
 		
 	}, this));
 };
