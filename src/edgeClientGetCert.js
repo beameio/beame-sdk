@@ -3,7 +3,8 @@ var test=require('./prov_api.js');
 var fs=require('fs');
 var uid;//variable to hold UID
 var host;//variable to hold hostname
-var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var os =require('os');
+var devPath = os.homedir()+"/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var edgeEndpointURL="http://lb-dev.luckyqr.io/endpoint"; //URL to get edge server data
 var keys = ["x509","pkcs7","ca"];//data that should be returned by the operation
 /*-------- files to check to ensure call on available layer ------------*/

@@ -1,7 +1,9 @@
 var test=require('./prov_api.js');
 var fs=require('fs');
+var os = require('os');
 var keys = ["$id","hostname","uid"];    //expected answer keys
-var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var home = os.homedir();
+var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 
 try{
     if(fs.lstatSync(devPath)){
@@ -30,8 +32,8 @@ var param=process.argv[2];              //get name from cli
 console.log('Running api with cli param: '+param);
 
 var authData={
-    pk:"./authData/pk.pem",
-    x509:"./authData/x509.pem",
+    pk:home+"/authData/pk.pem",
+    x509:home+"/authData/x509.pem",
     generateKeys:false,
     makeCSR:false,
     CSRsubj:"/C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=doesntMatter"
@@ -54,11 +56,12 @@ var createDeveloperRequest = function(param, callback){
 	test.runRestfulAPI(testParams,function(err,payload){
         if(!err){
             var i;
-            fs.appendFileSync(devPath+'developers',payload.hostname);
+            fs.appendFileSync(devPath+'developers',payload.hostname+'\r\n');
             var devDir=devPath+payload.hostname+'/';
             if (!fs.existsSync(devDir)){
                 fs.mkdirSync(devDir);//create directory for new developer, named with his unique hostname
             }
+            fs.writeFileSync(devDir+"name",param);
             for(i=0;i<keys.length;i++){
                 if(payload[keys[i]] !== undefined){
                     console.log(keys[i] + ': ' + payload[keys[i]]);

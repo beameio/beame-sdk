@@ -3,7 +3,9 @@ var test=require('./prov_api.js');
 var fs=require('fs');
 var uid;//variable to hold UID
 var host;//variable to hold hostname
-var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var os = require('os');
+var home = os.homedir();
+var devPath = home+"/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["x509","pkcs7","ca"];
 /*
 if (process.argv.length < 3) {
@@ -30,8 +32,8 @@ module.exports.getDevCert = function(param,callback){
 
 
 			var authData={
-				pk:"./authData/pk.pem",
-				x509:"./authData/x509.pem",
+				pk:home+"/authData/pk.pem",
+				x509:home+"/authData/x509.pem",
 				generateKeys:true,
 				makeCSR:true,
 				devPath:devDir,//static path for now, need to generate with uid to allow multiuser tests

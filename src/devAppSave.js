@@ -2,7 +2,9 @@ var test=require('./prov_api.js');
 var fs=require('fs');
 var uid;//variable to hold UID
 var host;//variable to hold hostname
-var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var os = require('os');
+var home=os.homedir();
+var devPath = home+"/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["hostname","uid"];
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
 /*
@@ -22,7 +24,8 @@ module.exports.devAppSave = function(param,appName,callback){
 	for(i=0;i<usrFiles.length;i++){
 		if(!fs.existsSync(devDir+usrFiles[i])){
 			console.warn('Error! missing: '+devDir+usrFiles[i]);
-			process.exit(-1);
+			//process.exit(-1);
+                        callback(null);
 		}
 	}
 	
@@ -58,11 +61,12 @@ module.exports.devAppSave = function(param,appName,callback){
 					}
 					test.runRestfulAPI(testParams,function(err,payload){
 						if(!err){
-                                                        fs.appendFileSync(devDir+'apps',payload.hostname);
+                            fs.appendFileSync(devDir+'apps',payload.hostname+'\r\n');
 							var devAppDir=devDir+payload.hostname+'/';
 							if (!fs.existsSync(devAppDir)){
 									fs.mkdirSync(devAppDir);//create directory for new developer, named with his unique hostname
 							}
+                            fs.writeFile(devAppDir+'name',appName);
 							for(i=0;i<keys.length;i++){
 								if(payload[keys[i]]!=undefined){
 									console.log(keys[i] + ': ' + payload[keys[i]]);
@@ -72,7 +76,8 @@ module.exports.devAppSave = function(param,appName,callback){
 								}
 								else{
 									console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
-									process.exit(-1);
+									//process.exit(-1);
+                                    callback(null);
 								}
 							}
 							callback(payload);

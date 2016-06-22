@@ -3,7 +3,8 @@ var test=require('./prov_api.js');
 var fs=require('fs');
 var uid;//variable to hold UID
 var host;//variable to hold hostname
-var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var os = require('os');
+var devPath = os.homedir()+"/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["uid","hostname"];
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
 var appFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
@@ -76,7 +77,7 @@ module.exports.edgeClientRegister = function(param, appHostName, callback){
 					}
 					test.runRestfulAPI(testParams,function(err,payload){
 						if(!err){
-                                                    fs.appendFileSync(devAppDir+'developers',payload.hostname);
+                                                    fs.appendFileSync(devAppDir+'edgeClients',payload.hostname+'\r\n');
 							var nextLevelDir=devAppDir+payload.hostname+'/';
 							if (!fs.existsSync(nextLevelDir)){
 								fs.mkdirSync(nextLevelDir);//create directory for new developer, named with his unique hostname

@@ -2,7 +2,8 @@ var test=require('./prov_api.js');
 var fs=require('fs');
 var uid;//variable to hold UID
 var host;//variable to hold hostname
-var devPath = "./.beame/";				//path to store dev data: uid, hostname, key, certs, appData
+var os = require('os');
+var devPath = os.homedir()+"/.beame/";				//path to store dev data: uid, hostname, key, certs, appData
 var keys = ["x509","pkcs7","ca"];
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
 var appFiles = ["uid","hostname"];
@@ -25,13 +26,15 @@ module.exports.devAppGetCert = function(param ,appHostName, callback){
 	for(i=0;i<usrFiles.length;i++){
 		if(!fs.existsSync(devDir+usrFiles[i])){
 			console.warn('Error! missing: '+devDir+usrFiles[i]);
-			process.exit(-1);
+			//process.exit(-1);
+                        callback(null);
 		}
 	}
 	for(i=0;i<appFiles.length;i++){
 		if(!fs.existsSync(devAppDir+usrFiles[i])){
 			console.warn('Error! missing: '+devAppDir+usrFiles[i]);
-			process.exit(-1);
+			//process.exit(-1);
+                        callback(null);
 		}
 	}
 	/*---------- read developer data and proceed -------------*/
@@ -53,8 +56,9 @@ module.exports.devAppGetCert = function(param ,appHostName, callback){
 	/*----------- generate RSA key + csr and post to provision ---------*/
 			test.setAuthData(authData,function(csr,pk){
 					if(csr==null){
-						console.log('CSR creation for app failed');
-						process.exit(-1);
+					    console.log('CSR creation for app failed');
+					    //process.exit(-1);
+                                            callback(null);
 					} 
 					var postData={
 						uid:uid,
@@ -77,8 +81,9 @@ module.exports.devAppGetCert = function(param ,appHostName, callback){
 									fs.writeFile(devAppDir+keys[i],payload[keys[i]]);
 								}
 								else{
-									console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
-									process.exit(-1);
+								    console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
+								//	process.exit(-1);
+                                                                    callback(null);
 								}
 							}
 							console.log('Developer app get certs: successful');

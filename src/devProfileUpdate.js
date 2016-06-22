@@ -3,7 +3,8 @@ var test=require('./prov_api.js');
 var fs=require('fs');
 var uid;//variable to hold UID
 var host;//variable to hold hostname
-var devPath = "./.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var os = require('os');
+var devPath = os.homedir()+"/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["updateStatus"];
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
 /*
@@ -12,6 +13,7 @@ if (process.argv.length < 3) {
     process.exit(-1);
 }
 var param=process.argv[2];*/
+
 module.exports.devProfileUpdate = function(param,callback){
 
 	/*---------- check if developer exists -------------------*/
@@ -20,10 +22,12 @@ module.exports.devProfileUpdate = function(param,callback){
 	console.log('Running profile update from: '+devDir);
 	for(i=0;i<usrFiles.length;i++){
 		if(!fs.existsSync(devDir+usrFiles[i])){
-			console.log('Error! missing: '+devDir+usrFiles[i]);
+		    console.log('Error! missing: '+devDir+usrFiles[i]);
 			//       process.exit(-1);
+                    callback(null);
 		}
 	}
+
 	/*---------- read developer data and proceed -------------*/
 	fs.readFile(devDir+"hostname", (err, data) => {
 		if (err) throw err;
@@ -40,6 +44,7 @@ module.exports.devProfileUpdate = function(param,callback){
 				devPath:devDir,
 				CSRsubj:"C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN="+hostname
 			}
+
 			/*----------- generate RSA key + csr and post to provision ---------*/
 			test.setAuthData(authData,function(csr,pk){
 
@@ -53,6 +58,7 @@ module.exports.devProfileUpdate = function(param,callback){
 					answerExpected:false,
 					decode:false
 				}
+
 				test.runRestfulAPI(testParams,function(err,payload){
 					if(!err){
 						for(i=0;i<keys.length;i++){
