@@ -77,9 +77,9 @@ function scanBeameDir(beameDir){
 			console.log('scanBeameDir: '+item);
 			if (stat && stat.isDirectory()) {
 	 			var dataLogger = new keyPair(beameDir, item, levels[0],  function(name, tree){
-                    developers[tree.name]=JSON.stringify(dataLogger.credentials);
+                    developers.push({name:name, chain: tree});
  //                   developers[tree.name].apps = JSON.stringify(tree);
-                    console.log('Output:: '+JSON.stringify(tree));
+                    console.log('Output:: '+JSON.stringify(developers));
 				});
 			}
 		});
@@ -96,9 +96,7 @@ keyPair.prototype.getDependantsSync = function(currentDir,  done ){
                 console.log("Creating keypair in getDependantsSync " + this.level);
 				var newKeyPair = new keyPair(currentDir + "/",  item, getNextLevel(this.level), _.bind(function(name, tree) {
                     console.log("keyPair returned  " + tree);//+ currentDir + "/" + item + " LEvel " + this.level);
-
                     if(this.level === 'app'){
-
                         if(!this.credentials.instances)
                             this.credentials.instances =[];
                         this.credentials.instances.push(tree);
