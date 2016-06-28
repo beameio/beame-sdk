@@ -8,6 +8,8 @@ var os = require('os');
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7","name"];
 var pathDepths=0;//0=~/.beame 1=developer 2=app 3=client
 var beameDir;
+var debug = require("debug")("collectAuthData");
+
 //
 //levels: developer, app instance
 //
@@ -30,7 +32,7 @@ var getNextLevel = function(level){
 };
 
 var keyPair = function(baseDir, sourceDir, level, allDone){
-    console.log("Creating keypair constructor " + baseDir + " " +sourceDir + " " + level);
+    debug("Creating keypair constructor " + baseDir + " " +sourceDir + " " + level);
 
     wd = 7;//reset watchdog
 
@@ -59,7 +61,7 @@ var keyPair = function(baseDir, sourceDir, level, allDone){
     this.level = level;
 
 	this.getDependantsSync(baseDir + sourceDir, _.bind(function(name, tree){
-        console.log("Get Dependant synch returned " + this.level);// +" " +  JSON.stringify(tree));
+        debug("Get Dependant synch returned " + this.level);// +" " +  JSON.stringify(tree));
         allDone && allDone(this.credentials.name, tree);
     }, this));/*function(tree){
 
@@ -75,7 +77,7 @@ function getDirectories(srcpath) {
 }
 var wd = 7;
 module.exports.scanBeameDir=function(beameDir,cb){
-	console.log('start');
+	debug('start');
 	if(beameDir.length === 0){
 		beameDir = os.homedir() + "/.beame/";
 	}
@@ -84,14 +86,14 @@ module.exports.scanBeameDir=function(beameDir,cb){
     var i_dev = 0, processed = 0;
     var returned = 0;
     fs.readdir(beameDir, _.bind(function(err, data){
-        console.log('found developers: <<'+devDir.length +'>>'+ data);
+        debug('found developers: <<'+devDir.length +'>>'+ data);
         _.each(data, function(item){
             var stat = fs.statSync(beameDir + item);
-            console.log('scanBeameDir: '+item);
+            debug('scanBeameDir: '+item);
             if (stat && stat.isDirectory()) {
                 var dataLogger = new keyPair(beameDir, item, levels[0],  function(name, tree){
                     developers.push({dev:i_dev++, chain: tree});
-                    //    console.log('Output:: '+JSON.stringify(developers));
+                    //    debug('Output:: '+JSON.stringify(developers));
                     //                    if(/*++i_dev >= devDir.length-1 &&*/ !returned){
 
 
@@ -103,7 +105,7 @@ module.exports.scanBeameDir=function(beameDir,cb){
         var exportData = setInterval(function(){
             if(!(wd--)){
                 clearInterval(exportData);
-                console.log('Exporting data :)');
+                debug('Exporting data :)');
                 cb(developers);
             }
         },10);
@@ -113,23 +115,23 @@ module.exports.scanBeameDir=function(beameDir,cb){
 }
 
 keyPair.prototype.getDependantsSync = function(currentDir,  done ){
-    console.log("getDependantsSync " + currentDir + " " + this.level);
+    debug("getDependantsSync " + currentDir + " " + this.level);
 	fs.readdir(currentDir, _.bind(function(err, data){
 		if (err) {  return done("",err);	}
 		_.each(data, _.bind(function(item){
 			var stat = fs.statSync(currentDir +"/" + item);
 			if (stat && stat.isDirectory()) {
-                console.log("Creating keypair in getDependantsSync " + this.level);
+                debug("Creating keypair in getDependantsSync " + this.level);
 				var newKeyPair = new keyPair(currentDir + "/",  item, getNextLevel(this.level), _.bind(function(name, tree) {
-                    console.log("keyPair returned  " + tree);//+ currentDir + "/" + item + " LEvel " + this.level);
+                    debug("keyPair returned  " + tree);//+ currentDir + "/" + item + " LEvel " + this.level);
                     if(this.level === 'app'){
                         if(!this.credentials.instances)
                             this.credentials.instances =[];
                         this.credentials.instances.push(tree);
-                        console.log('PUSHING INSTANCES');
+                        debug('PUSHING INSTANCES');
                     }
                     if(this.level === 'developer'){
-                        console.log('PUSHING APPS');
+                        debug('PUSHING APPS');
                         if(!this.credentials.apps)
                             this.credentials.apps =[];
                         this.credentials.apps.push(tree);
@@ -140,7 +142,7 @@ keyPair.prototype.getDependantsSync = function(currentDir,  done ){
 			}
 		}, this));
         if(this.level === "instance"){
-            console.log(this.level + " reader completed " + currentDir + "/",   this.level)
+            debug(this.level + " reader completed " + currentDir + "/",   this.level);
             done && done(this.name , this.credentials);
         }
 
