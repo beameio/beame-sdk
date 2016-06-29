@@ -1,12 +1,14 @@
 
 var beameApi = require("../index.js");
-
+var prompt = require('prompt');
 var events = require('events');
 var eventEmitter = new events.EventEmitter();
 var fs = require('fs');
-var runDataFile = './runData.json';
+var os = require('os');
+var _ = require('underscore');
+var runDataFile = '../runEmpty.json';
 var debug = require("debug")("BeameApiTests");
-
+var RUN = true;
 if(process.argv.length >= 3){
 	if(fs.existsSync(process.argv[2]))
 		runDataFile = process.argv[2];
@@ -50,46 +52,76 @@ catch(e){
 	};
 }
 
-
+var beameDirData;
 var testN = 0;
+var runTests = false;
+beameApi.scanBeameDir.scanBeameDir(os.homedir()+'/.beame/',function(data){
+	beameDirData = data;
+    var ii;
+//	console.log(JSON.stringify(beameDirData));
+	if(JSON.stringify(beameDirData).length > 30){
+        if(beameDirData.dev.length === 1){
+            runningParam.devName = beameDirData.dev[0].name;
+            runningParam.devHostname = beameDirData.dev[0].hostname;
+            if(beameDirData.dev[0].app.length === 1){
+                runningParam.appName = beameDirData.dev[0].app[0].name;
+                runningParam.appHostname = beameDirData.dev[0].app[0].hostname;
+            }//else - more than 1 app defined
+            else{
+                _.each(beameDirData.dev,function(dev){
+                    console.log(dev.name)
+                });
+
+            }
+        }//else - more than 1 developer defined
+	    runTests = true;//sync
+    }
+    else{
+	    runTests = true;//sync
+    }
+
+});
 eventEmitter.on('switch',function(){
-	switch(++testN){
-		case 1:
-			console.log('Switch: running test1');
-			eventEmitter.emit(runningParam.test1);
-			break;
-		case 2:
-			console.log('Switch: running test2');
-			eventEmitter.emit(runningParam.test2);
-			break;
-		case 3:
-			console.log('Switch: running test3');
-			eventEmitter.emit(runningParam.test3);
-			break;
-		case 4:
-			console.log('Switch: running test4');
-			eventEmitter.emit(runningParam.test4);
-			break;
-		case 5:
-			console.log('Switch: running test5');
-			eventEmitter.emit(runningParam.test5);
-			break;
-		case 6:
-			console.log('Switch: running test6');
-			eventEmitter.emit(runningParam.test6);
-			break;
-		case 7:
-			console.log('Switch: running test7');
-			eventEmitter.emit(runningParam.test7);
-			break;
-		case 8:
-			console.log('Switch: running test8');
-			eventEmitter.emit(runningParam.test8);
-			break;
-		default:
-			console.warn('undefined sequence');
-			process.exit(0);
-	}
+
+    if(runTests){
+        switch(++testN){
+            case 1:
+                console.log('Switch: running test1');
+                eventEmitter.emit(runningParam.test1);
+                break;
+            case 2:
+                console.log('Switch: running test2');
+                eventEmitter.emit(runningParam.test2);
+                break;
+            case 3:
+                console.log('Switch: running test3');
+                eventEmitter.emit(runningParam.test3);
+                break;
+            case 4:
+                console.log('Switch: running test4');
+                eventEmitter.emit(runningParam.test4);
+                break;
+            case 5:
+                console.log('Switch: running test5');
+                eventEmitter.emit(runningParam.test5);
+                break;
+            case 6:
+                console.log('Switch: running test6');
+                eventEmitter.emit(runningParam.test6);
+                break;
+            case 7:
+                console.log('Switch: running test7');
+                eventEmitter.emit(runningParam.test7);
+                break;
+            case 8:
+                console.log('Switch: running test8');
+                eventEmitter.emit(runningParam.test8);
+                break;
+            default:
+                console.warn('undefined sequence');
+                process.exit(0);
+        }
+    }
 });
 
 eventEmitter.on('devCreate', function(){
@@ -195,6 +227,8 @@ eventEmitter.on('edgeClientGetCert', function(){
 		eventEmitter.emit('switch');
 	});
 });
-
-eventEmitter.emit('switch');
+if(RUN && runTests){
+    console.log('running with config file:' + runDataFile );
+    eventEmitter.emit('switch');
+}
 

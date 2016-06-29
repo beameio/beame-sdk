@@ -1,7 +1,8 @@
+var os = require('os');
 var beameApi = require('../src/collectAuthData.js');
 
-beameApi.authDataCollection("~/npmmod/",function(data){
+beameApi.scanBeameDir(os.homedir()+'/.beame/',function(data){
 
-//    console.log("testttttt: "+data);
 
+    console.log("testttttt:" +JSON.stringify(data)); 
 });
