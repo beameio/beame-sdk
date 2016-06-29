@@ -77,7 +77,7 @@ module.exports.edgeClientRegister = function(param, appHostName, callback){
 					}
 					test.runRestfulAPI(testParams,function(err,payload){
 						if(!err){
-                                                    fs.appendFileSync(devAppDir+'edgeClients',payload.hostname+'\r\n');
+							fs.appendFileSync(devAppDir+'edgeClients',payload.hostname+'\r\n');
 							var nextLevelDir=devAppDir+payload.hostname+'/';
 							if (!fs.existsSync(nextLevelDir)){
 								fs.mkdirSync(nextLevelDir);//create directory for new developer, named with his unique hostname

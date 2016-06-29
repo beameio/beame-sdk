@@ -4,7 +4,7 @@
   "description": "run provision tests",
   "main": "main.js",
   "scripts": {
-   "test": "node ./tests/testFullCycle.js"
+    "test": "node ./tests/testFullCycle.js"
   },
   "repository": {
     "type": "git",
@@ -21,14 +21,15 @@
   "homepage": "https://github.com/beameio/TestEnvironment#readme",
   "dependencies": {
     "async": "^2.0.0-rc.6",
+    "beame-edge-services": "git+ssh://git@github.com/beameio/BeameEdgeServices.git",
+    "beame-proxy-clients": "git+ssh@github.com:beameio/BeameProxyClients.git",
+    "beame-utils": "git+ssh://git@github.com/beameio/BeameUtils.git",
     "debug": "^2.2.0",
     "pem": "^1.8.3",
     "request": "^2.72.0",
+    "socket.io": "^1.4.8",
     "socket.io-client": "^1.4.6",
-    "underscore": "^1.8.3",
-    "beame-edge-services": "git+ssh://git@github.com/beameio/BeameEdgeServices.git",
-    "beame-utils": "git+ssh://git@github.com/beameio/BeameUtils.git",
-    "beame-proxy-clients": "git+ssh@github.com:beameio/BeameProxyClients.git"
+    "underscore": "^1.8.3"
   },
   "directories": {
     "test": "tests"
