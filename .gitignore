@@ -12,3 +12,4 @@ build
 *.swp
 npm-debug.log
 system
+runEmpty.json
