@@ -12,7 +12,8 @@ var Server = function(){
 			console.log(data);
 			const options = {
 				key: instance.key,
-				cert: instance.cert
+				cert: instance.cert,
+				ca: instance.ca
 			};
 
 			https.createServer(options, function(req, res){
@@ -29,4 +30,4 @@ var Server = function(){
 }
 
 
-server = new Server();
+var server = new Server();

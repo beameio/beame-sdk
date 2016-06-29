@@ -41,7 +41,8 @@ var keyPair = function(baseDir, sourceDir, level, allDone){
             "name": fs.readFileSync(baseDir + sourceDir + "/name"),
             "key": fs.readFileSync(baseDir + sourceDir + "/private_key.pem"),
             "cert": fs.readFileSync(baseDir + sourceDir + "/x509"),
-            "hostname": fs.readFileSync(baseDir + sourceDir + "/hostname")
+            "hostname": fs.readFileSync(baseDir + sourceDir + "/hostname"),
+            "ca": fs.readFileSync(baseDir + sourceDir + "/ca")
         };
     } catch (e) {
         this.credentials = {
@@ -66,7 +67,7 @@ var keyPair = function(baseDir, sourceDir, level, allDone){
     }, this));/*function(tree){
 
 
-	
+
 	});*/
 };
 
@@ -146,7 +147,7 @@ keyPair.prototype.getDependantsSync = function(currentDir,  done ){
             done && done(this.name , this.credentials);
         }
 
-		
+
 	}, this));
 };
 
