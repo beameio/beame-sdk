@@ -82,6 +82,7 @@ module.exports.edgeClientRegister = function(param, appHostName, callback){
 							if (!fs.existsSync(nextLevelDir)){
 								fs.mkdirSync(nextLevelDir);//create directory for new developer, named with his unique hostname
 							}
+                            fs.writeFile(nextLevelDir+'name','instance');
 							for(i=0;i<keys.length;i++){
 								if(payload[keys[i]]!=undefined){
 									console.log(keys[i] + ': ' + payload[keys[i]]);
