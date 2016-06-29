@@ -12,15 +12,15 @@ function startServer(appName, numberOfHosts, devName){
 	beameServer.findInstanceCertificates( function(devCerts){ 
 		{ 
 			[ 
-			{"devname": "devname",
-				"devPrivateKey": "key",
-				"devCert": "cert",
+			{"name": "devname",
+				"key": "key",
+				"cert": "cert",
 				"hostname": "",
 				"apps": [
 				{
-					"appname": "name",
-					"appkey": "key", //		 
-					"appcert": "cert",
+					"name": "name",
+					"key": "key", //		 
+					":cert": "cert",
 					"instances":[
 					{
 						hostname: "name",
