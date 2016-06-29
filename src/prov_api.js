@@ -106,13 +106,6 @@ var postToProvisionApi = function (url, options, type, callback) {
 var privateKey;
 var secretKey;
 
-function readHostName(filePath,cb){
-    fs.readFile(filePath, (err, data) => {
-        if (err) throw err;
-        console.log(data);
-        cb(err,data);
-    });
-}
 
 exports.setAuthData = function(authData,cb){
     console.log('reading auth data: pk<' + authData.pk+'> <'+authData.x509+'>');
