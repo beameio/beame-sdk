@@ -1,6 +1,6 @@
 {
   "name": "@beameio/beame-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "run provision tests",
   "main": "main.js",
   "scripts": {
