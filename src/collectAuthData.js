@@ -42,9 +42,13 @@ var keyPair = function(baseDir, sourceDir, level, allDone){
             "key": fs.readFileSync(baseDir + sourceDir + "/private_key.pem"),
             "cert": fs.readFileSync(baseDir + sourceDir + "/x509"),
             "hostname": fs.readFileSync(baseDir + sourceDir + "/hostname"),
-            "ca": fs.readFileSync(baseDir + sourceDir + "/ca")
+            "ca": fs.readFileSync(baseDir + sourceDir + "/ca"),
         };
+        if(this.level === 'instance') {
+            this.credentials.edgeHostname = fs.readFileSync(baseDir + sourceDir + "/edgeHostname");
+        }
     } catch (e) {
+        console.log("Error", e.toString())
         this.credentials = {
 
             "name":"",
@@ -56,7 +60,7 @@ var keyPair = function(baseDir, sourceDir, level, allDone){
 /*    if(level === 'developer') {
         this.credentials.apps = [];
     }
-    if(this.level === 'app') {
+    if(this.level === 'instance') {
         this.credentials.instances = [];
     }*/
     this.level = level;

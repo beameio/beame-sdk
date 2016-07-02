@@ -5,7 +5,7 @@ var uid;//variable to hold UID
 var host;//variable to hold hostname
 var os = require('os');
 var devPath = os.homedir()+"/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
-var keys = ["uid","hostname"];
+var keys = ["uid","hostname", "edgeHostname"];
 var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
 var appFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
 /*if (process.argv.length < 4){ 
