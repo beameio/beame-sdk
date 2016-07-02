@@ -1,4 +1,3 @@
-//var test=require('../beame-provision-test/main.js');
 var test = require('./prov_api.js');
 var provApi = new test();
 var fs = require('fs');
@@ -11,9 +10,13 @@ var keys = ["x509", "pkcs7", "ca"];//data that should be returned by the operati
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var appFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var edgeFiles = ["uid", "hostname"];
+var debug = require("debug")("./src/edgeClientGetCert.js");
+
+
+
 /*-------- process arguments --------------------*/
 /*if (process.argv.length < 5){ 
- console.log('Usage: node '+__filename+' dev-hostname app-hostname edge-client-hostname');
+ debug('Usage: node '+__filename+' dev-hostname app-hostname edge-client-hostname');
  process.exit(-1);
  }
  var param=process.argv[2];
@@ -25,25 +28,25 @@ module.exports.edgeClientGetCert = function (param, appHostName, edgeHostName, c
     var devDir = devPath + param + "/";
     var devAppDir = devDir + appHostName + "/";
     var edgeClientDir = devAppDir + edgeHostName + "/";
-    console.log('Running edgeClientGetCert from: ' + edgeClientDir);
+    debug('Running edgeClientGetCert from: ' + edgeClientDir);
     var i;
     for (i = 0; i < usrFiles.length; i++) {
         if (!fs.existsSync(devDir + usrFiles[i])) {
-            console.log('Error! missing: ' + devDir + usrFiles[i]);
+            debug('Error! missing: ' + devDir + usrFiles[i]);
             //process.exit(-1);
             callback(null);
         }
     }
     for (i = 0; i < appFiles.length; i++) {
         if (!fs.existsSync(devAppDir + usrFiles[i])) {
-            console.log('Error! missing: ' + devAppDir + usrFiles[i]);
+            debug('Error! missing: ' + devAppDir + usrFiles[i]);
             //process.exit(-1);
             callback(null);
         }
     }
     for (i = 0; i < edgeFiles.length; i++) {
         if (!fs.existsSync(edgeClientDir + usrFiles[i])) {
-            console.log('Error! missing: ' + edgeClientDir + usrFiles[i]);
+            debug('Error! missing: ' + edgeClientDir + usrFiles[i]);
             //process.exit(-1);
             callback(null);
         }
@@ -68,7 +71,7 @@ module.exports.edgeClientGetCert = function (param, appHostName, edgeHostName, c
             provApi.setAuthData(authData, function (csr) { //pk
 
                 if (authData.makeCSR && csr == null) {
-                    console.log('CSR creation for app failed');
+                    debug('CSR creation for app failed');
                     //process.exit(-1);
                     callback(null);
                 }
@@ -90,23 +93,23 @@ module.exports.edgeClientGetCert = function (param, appHostName, edgeHostName, c
                         }
                         for (i = 0; i < keys.length; i++) {
                             if (payload[keys[i]] != undefined) {
-                                console.log(keys[i] + ': OK');// + payload[keys[i]]);
+                                debug(keys[i] + ': OK');// + payload[keys[i]]);
                                 // next is single test use only,
                                 // eventually, this gonna create folder for each user to be re-used in following multi-user tests:
                                 fs.writeFile(nextLevelDir + keys[i], payload[keys[i]]);
                             }
                             else {
-                                console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
+                                debug('Error, missing <' + keys[i] + '> element in provisioning answer');
                                 //                                process.exit(-1);
                                 callback(null);
 
                             }
                         }
                         callback(payload);
-                        console.log('Getting edge client certs: successful');
+                        debug('Getting edge client certs: successful');
                     }
                     else {
-                        console.log('Fail: ' + err);
+                        debug('Fail: ' + err);
                         callback(null);
                     }
                 });

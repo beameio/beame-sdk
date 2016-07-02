@@ -8,14 +8,17 @@ var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["hostname", "uid"];
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
+var debug = require("debug")("./src/devAppSave.js");
+
+
 /*
  if (process.argv.length < 4) {
- console.log('Usage: node '+__filename+' unique-hostname app-name');
+ debug('Usage: node '+__filename+' unique-hostname app-name');
  process.exit(-1);
  }
  var param=process.argv[2];
  var appName=process.argv[3];
- console.log('Running test with param: '+param);*/
+ debug('Running test with param: '+param);*/
 module.exports.devAppSave = function (param, appName, callback) {
 
     /*---------- check if developer exists -------------------*/
@@ -70,22 +73,22 @@ module.exports.devAppSave = function (param, appName, callback) {
                         fs.writeFile(devAppDir + 'name', appName);
                         for (i = 0; i < keys.length; i++) {
                             if (payload[keys[i]] != undefined) {
-                                console.log(keys[i] + ': ' + payload[keys[i]]);
+                                debug(keys[i] + ': ' + payload[keys[i]]);
                                 // next is single test use only,
                                 // eventually, this gonna create folder for each user to be re-used in following multi-user tests:
                                 fs.writeFile(devAppDir + keys[i], payload[keys[i]]);
                             }
                             else {
-                                console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
+                                debug('Error, missing <' + keys[i] + '> element in provisioning answer');
                                 //process.exit(-1);
                                 callback(null);
                             }
                         }
                         callback(payload);
-                        console.log('Developer app save: successful');
+                        debug('Developer app save: successful');
                     }
                     else {
-                        console.log('Fail: ' + err);
+                        debug('Fail: ' + err);
                     }
                 });
             });

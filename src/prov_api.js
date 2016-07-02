@@ -1,4 +1,6 @@
 'use strict';
+var debug = require("debug")("./src/prov_api.js");
+
 
 var commonEPprefix = "https://prov-staging.beameio.net/api";
 //var answerExpected = false;
@@ -48,7 +50,7 @@ var exec = require('child_process').exec;//needed to run openssl cli
 
 //private helpers
 var parseProvisionResponse = function (error, response, body, type, callback) {
-    console.log('Host responded with status <' + response.statusCode + '>');
+    debug('Host responded with status <' + response.statusCode + '>');
 
     if (error) {
         console.error('provision error', error);
@@ -106,7 +108,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 };
 
 var postToProvisionApi = function (url, options, type, callback) {
-    console.log('postToProvision: ' + url);
+    debug('postToProvision: ' + url);
     request.post(
         url,
         options,
@@ -130,7 +132,7 @@ var postToProvisionApi = function (url, options, type, callback) {
 var ProvApiService = function () {};
 
 ProvApiService.prototype.setAuthData = function (authData, cb) {
-    console.log('reading auth data: pk<' + authData.pk + '> <' + authData.x509 + '>');
+    debug('reading auth data: pk<' + authData.pk + '> <' + authData.x509 + '>');
     this.options = {
         key: fs.readFileSync(authData.pk),
         cert: fs.readFileSync(authData.x509)
@@ -141,24 +143,24 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
         var cmd = "openssl genrsa 2048";
         if (!authData.generateKeys)
             cmd = "echo \"" + devPK + "\"";
-        console.log('generating private key with: ' + cmd);
+        debug('generating private key with: ' + cmd);
         var child = exec(cmd, function (error, stdout, stderr) {
             var devPK = stdout;
-//            console.log('devPK: '  + devPK);
+//            debug('devPK: '  + devPK);
             if (error !== null) {
-                console.log('stderr: ' + stderr);
+                debug('stderr: ' + stderr);
                 /* -------  put error handler to deal with possible openssl failure -----------*/
-                console.log('Failed to generate Private Key: ' + error);
+                debug('Failed to generate Private Key: ' + error);
             }
             //else{//store RSA key in developer data
             var pkFile = authData.devPath + "private_key.pem";
             fs.writeFile(pkFile, devPK, function (err) {
                 if (err) {
-                    return console.log(err);
+                    return debug(err);
                 }
                 //else
                 cmd = "openssl req -key " + pkFile + " -new -subj \"/" + authData.CSRsubj + "\"";
-                console.log('CLI: ' + cmd);
+                debug('CLI: ' + cmd);
                 try{
                     child = exec(cmd,
                         /**
@@ -169,9 +171,9 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
                          */
                         function (error, stdout, stderr) {
                             if (error !== null) {
-                                console.log('stderr: ' + stderr);
+                                debug('stderr: ' + stderr);
                                 /* ------------- put error handler to deal with possible openssl failure ---------*/
-                                console.log('exec error: ' + error);
+                                debug('exec error: ' + error);
                             }
                             cb && cb(stdout, devPK);
                         });
@@ -192,7 +194,7 @@ ProvApiService.prototype.getEndpoint = function (url, cb) {
     request.get(url)
         .on('response', function (res) {
             res.on('data', function (body) {
-                console.log('Endpoint answer: ' + body);
+                debug('Endpoint answer: ' + body);
                 cb(null, JSON.parse(body));
             });
         })
@@ -206,7 +208,7 @@ ProvApiService.prototype.runRestfulAPI = function (inParams, callback) {
 
     var options = _.extend(this.options, {form: testData.postData});
     var apiEndpoint = commonEPprefix + testData.version + testData.api;
-    console.log('Posting to: ' + apiEndpoint);
+    debug('Posting to: ' + apiEndpoint);
     postToProvisionApi(apiEndpoint, options, testData.api, callback);
 };
 
