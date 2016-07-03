@@ -6,10 +6,11 @@ To use tests from this repo, first run "npm install beame-api"
 
 ## Beame.IO SDK introduction
 
-Beame.IO SDK introduction. The Beame.IO SDK allows to easily register routable
-hostnames. This essentially allows access to a device without routable IP
-address. Beame.IO SDK provides ability to easily generate random hostnames, and
-get matching certificates for them. 
+1. The Beame.IO SDK allows to easily register routable hostnames. This essentially
+allows access to a device without routable IP address.
+
+2. Beame.IO SDK provides ability to easily generate random hostnames, and get
+matching certificates for them. 
 
 The Beame.IO service is designed to be used in bulk. Its goal is providing
 strongly authenticated endpoint for accessing client devices, as well as easy
@@ -20,10 +21,10 @@ and easily be able to receive https traffic on that endpoint.
 
 ## Beame.IO SDK - High level architecture
 
-The Beame.IO SDK credentials systems, is build around two concepts:
+The Beame.IO SDK credentials system is build around two concepts:
 
-1. Transport layer security - proving ownership of certain common name
-   (hostname), via client side cert, server side cert.
+1. Transport Layer Security - proving ownership of certain common name
+   (hostname), via client side certificate or server side certificate.
 2. Provisioning Authentication Proof of ownership of keys via a web API
 
 
