@@ -151,71 +151,85 @@ gateway server, generate your own keys in RSA format, and request them to be
 signed.  Once they are signed they and receive publicly trusted SSL
 certificates. You can get lots of SSL certificates, very quickly.
 
-1. Top level commands 
-	1. init
-	2. backup credentials --password
-	3. list all credentials.
+### Top level commands
 
-1. Credentialing Commands:
+	init()
 
-	a. developer_register (no arguments)
-		a. name, email, varification
-	b. package_developer_credentials
-	c. list_developers
-	e. set default developer (if there is only one developer record)
+	backup_credentials(password)
 
-2. atom_level_commands 
-	a. atom-add --name 
-	b. atom-delete --local 
-All sequence is defined in runData.json file
-runData.template contains full sequence without additional parameters (all
-needed parameters will be defined in runtime)
+	list_all_credentials()
 
-running wrapper:
+### Credentials commands
 
-node index.js
+	developer_register()
 
-It is possible to provide any json config file for the run:
+TODO
+name, email, verification
 
-node index.js userCfgFile.json
-###
-API call examples:
+	package_developer_credentials()
 
-1:
-node devCreate.js <developerName>
-as result of this call directory containing developer data will be created under ./.beame
-directory will be named by hostname received from provision
+TODO
 
-2:
-node devGetCert.js <developer hostname>
-this call will create private key + CSR, as result the key and a set of certs will be written
-into developer directory (created in running devCreate.js)
+	list_developers()
 
-3:
-node devProfileUpdate.js <developer hostname>
-issues a call to provision, signed with new developer certificate
+TODO
 
-4:
-node devAppSave.js <developer hostname> <appName>
-will receive from provision hostname and uid for new app. Directory named with new hostname will be created
-under ./.beame/<developer hostname> directory
+	set_default_developer()
 
-5:
-node devAppGetCert.js <developer hostname> <app hostname>
-this call will create private key + CSR, as result the key and a set of certs will be written into app folder
+TODO
+if there is only one developer record
+
+### Atom level commands
+
+	atom_add(name)
+
+	atom_delete(local)
+
+All sequence is defined in `runData.json` file. `runData.template` contains full
+sequence without additional parameters (all needed parameters will be defined
+in runtime).
+
+### Running the wrapper
+
+	node index.js [userCfgFile.json]
+
+### API calls examples
+
+	node devCreate.js <developerName>
+
+As result of this call directory containing developer data will be created
+under `./.beame` directory will be named by hostname received from provision.
+
+	node devGetCert.js <developerHostname>
+
+Create private key + CSR, as result the key and a set of certs will be written
+into developer directory (created in running `devCreate.js`)
+
+	node devProfileUpdate.js <developerHostname>
+
+Issues a call to provision, signed with new developer certificate
+
+	node devAppSave.js <developerHostname> <appName>
+
+Receive from provision hostname and uid for new app. Directory named with new hostname will be created
+under ./.beame/<developerHostname> directory
+
+	node devAppGetCert.js <developerHostname> <appHostname>
+
+Create private key + CSR, as result the key and a set of certs will be written into app folder
 created in step 4
 
-6:
-node devAppUpdate.js <developer hostname> <app hostname> <newAppName>
-will issue a call to change appName to provision, signed with app cert
+	node devAppUpdate.js <developerHostname> <appHostname> <newAppName>
 
-7:
-node edgeClientRegister.js <developer hostname> <app hostname> 
+Change appName to provision, signed with app cert
+
+	node edgeClientRegister.js <developerHostname> <appHostname>
+
 will receive routable hostname + unique ID from provision. Directory to hold client data, named with 
-<client hostname> will be created under ./.beame/<developer hostname>/<app hostname>
+<clientHostname> will be created under ./.beame/<developerHostname>/<appHostname>
 
-8:
-node edgeClientGetCert.js <developer hostname> <app hostname> <client hostname>
-this call will create private key + CSR, as result the key and a set of certs will be written into client folder
+	node edgeClientGetCert.js <developer hostname> <app hostname> <client hostname>
+
+Create private key + CSR, as result the key and a set of certs will be written into client folder
 created in step 7
 
