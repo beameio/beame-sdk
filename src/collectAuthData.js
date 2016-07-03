@@ -1,13 +1,13 @@
 'use strict';
 var fs = require('fs');
-var path = require('path');
-var dataCollection;
-var jsonElement;
-var _=require('underscore');
-var os = require('os');
-var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7","name"];
-var pathDepths=0;//0=~/.beame 1=developer 2=app 3=client
-var beameDir;
+var path = require('path'); 
+var dataCollection; 
+var jsonElement; 
+var _=require('underscore'); 
+var os = require('os'); 
+var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7","name"]; var
+pathDepths=0;//0=~/.beame 1=developer 2=app 3=client 
+var beameDir; 
 var debug = require("debug")("collectAuthData");
 
 //
@@ -33,18 +33,22 @@ var getNextLevel = function(level){
 
 var keyPair = function(baseDir, sourceDir, level, allDone){
     debug("Creating keypair constructor " + baseDir + " " +sourceDir + " " + level);
-
+    this.level = level;
     wd = 7;//reset watchdog
 
 	try {
         this.credentials = {
-            "name": fs.readFileSync(baseDir + sourceDir + "/name"),
-            "key": fs.readFileSync(baseDir + sourceDir + "/private_key.pem"),
-            "cert": fs.readFileSync(baseDir + sourceDir + "/x509"),
-            "hostname": fs.readFileSync(baseDir + sourceDir + "/hostname"),
-            "ca": fs.readFileSync(baseDir + sourceDir + "/ca")
+            "name": fs.readFileSync(baseDir + sourceDir + "/name") + "",
+            "key": fs.readFileSync(baseDir + sourceDir + "/private_key.pem")+ "",
+            "cert": fs.readFileSync(baseDir + sourceDir + "/x509")+ "",
+            "hostname": fs.readFileSync(baseDir + sourceDir + "/hostname")+ "",
+            "ca": fs.readFileSync(baseDir + sourceDir + "/ca")+ ""    
         };
+        if(this.level === 'instance') {
+            this.credentials.edgeHostname = fs.readFileSync(baseDir + sourceDir + "/edgeHostname") + "";
+        }
     } catch (e) {
+        debug("Error", e.toString())
         this.credentials = {
 
             "name":"",
@@ -56,10 +60,10 @@ var keyPair = function(baseDir, sourceDir, level, allDone){
 /*    if(level === 'developer') {
         this.credentials.apps = [];
     }
-    if(this.level === 'app') {
+    if(this.level === 'instance') {
         this.credentials.instances = [];
     }*/
-    this.level = level;
+
 
 	this.getDependantsSync(baseDir + sourceDir, _.bind(function(name, tree){
         debug("Get Dependant synch returned " + this.level);// +" " +  JSON.stringify(tree));

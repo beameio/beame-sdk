@@ -11,10 +11,11 @@ var helper = new Helper();
 var keys = ["x509", "pkcs7", "ca"];
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var appFiles = ["uid", "hostname"];
+var debug = require("debug")("./src/devAppGetCert.js");
 
 /*
  if (process.argv.length < 4) {
- console.log('Usage: node '+__filename+' dev-hostname app-hostname');
+ debug('Usage: node '+__filename+' dev-hostname app-hostname');
  process.exit(-1);
  }
 
@@ -25,7 +26,7 @@ module.exports.devAppGetCert = function (param, appHostName, callback) {
     /*---------- check if developer exists -------------------*/
     var devDir = devPath + param + "/";
     var devAppDir = devDir + appHostName + "/";
-    console.log('Running appGetCert from: ' + devAppDir);
+    debug('Running appGetCert from: ' + devAppDir);
     var i = 0;
     for (i = 0; i < usrFiles.length; i++) {
         if (!fs.existsSync(devDir + usrFiles[i])) {
@@ -56,7 +57,7 @@ module.exports.devAppGetCert = function (param, appHostName, callback) {
             /*----------- generate RSA key + csr and post to provision ---------*/
             provApi.setAuthData(authData, function (csr) { //pk
                 if (csr == null) {
-                    console.log('CSR creation for app failed');
+                    debug('CSR creation for app failed');
                     //process.exit(-1);
                     callback(null);
                 }
@@ -71,22 +72,22 @@ module.exports.devAppGetCert = function (param, appHostName, callback) {
                     if (!err) {
                         for (i = 0; i < keys.length; i++) {
                             if (payload[keys[i]] != undefined) {
-                                console.log(keys[i] + ' => OK');// + ': ' + payload[keys[i]]);
+                                debug(keys[i] + ' => OK');// + ': ' + payload[keys[i]]);
                                 // next is single test use only,
                                 // eventually, this gonna create folder for each user to be re-used in following multi-user tests:
                                 fs.writeFile(devAppDir + keys[i], payload[keys[i]]);
                             }
                             else {
-                                console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
+                                debug('Error, missing <' + keys[i] + '> element in provisioning answer');
                                 //	process.exit(-1);
                                 callback(null);
                             }
                         }
-                        console.log('Developer app get certs: successful');
+                        debug('Developer app get certs: successful');
                         callback(payload);
                     }
                     else {
-                        console.log('Fail: ' + err);
+                        debug('Fail: ' + err);
                         callback(null);
                     }
                 });

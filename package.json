@@ -1,6 +1,6 @@
 {
-  "name": "@beameio/beame-api",
-  "version": "1.0.1",
+  "name": "beame-api",
+  "version": "1.0.2",
   "description": "run provision tests",
   "main": "main.js",
   "scripts": {
@@ -25,6 +25,7 @@
     "beame-proxy-clients": "git+ssh@github.com:beameio/BeameProxyClients.git",
     "beame-utils": "git+ssh://git@github.com/beameio/BeameUtils.git",
     "debug": "^2.2.0",
+    "minimist": "^1.2.0",
     "pem": "^1.8.3",
     "request": "^2.72.0",
     "socket.io": "^1.4.8",

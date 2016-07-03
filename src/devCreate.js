@@ -1,5 +1,7 @@
 var test = require('./prov_api.js');
 var provApi = new test();
+var debug = require("debug")("./src/devCreate.js");
+
 
 var fs = require('fs');
 var os = require('os');
@@ -11,11 +13,11 @@ var helper = new Helper();
 
 try {
     if (fs.lstatSync(devPath)) {
-        console.log("Directory for developer already exists");
+        debug("Directory for developer already exists");
     }
 }
 catch (e) {
-    console.log("Dev path ", devPath);
+    debug("Dev path ", devPath);
     fs.mkdirSync(devPath);
 }
 
@@ -26,14 +28,14 @@ catch (e) {
  *
  */
 
-/*console.log(process.argv);
+/*debug(process.argv);
  if (process.argv.length < 3) {
- console.log('Usage: node '+__filename+' nikname');
+ debug('Usage: node '+__filename+' nikname');
  process.exit(-1);
  }*/
 
 var param = process.argv[2];              //get name from cli
-console.log('Running api with cli param: ' + param);
+debug('Running api with cli param: ' + param);
 
 var authData = helper.getAuthToken(home + "/authData/pk.pem",home + "/authData/x509.pem",false,false);
 
@@ -62,13 +64,13 @@ var createDeveloperRequest = function (param, callback) {
 
             for (i = 0; i < keys.length; i++) {
                 if (payload[keys[i]] !== undefined) {
-                    console.log(keys[i] + ': ' + payload[keys[i]]);
+                    debug(keys[i] + ': ' + payload[keys[i]]);
                     // next is single test use only,
                     // eventually, this gonna create folder for each user to be re-used in following multi-user tests:
                     fs.writeFile(devDir + keys[i], payload[keys[i]]);
                 }
                 else {
-                    console.log('Error, missing <' + keys[i] + '> element in provisioning answer');
+                    debug('Error, missing <' + keys[i] + '> element in provisioning answer');
                     //process.exit(-1);
                     callback(null);
                 }
@@ -80,7 +82,7 @@ var createDeveloperRequest = function (param, callback) {
         }
         else {
             callback(null);
-            console.log('Fail: ' + err);
+            debug('Fail: ' + err);
         }
 
     });
