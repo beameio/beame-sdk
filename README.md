@@ -21,9 +21,10 @@ and easily be able to receive https traffic on that endpoint.
 ## Beame.IO SDK - High level architecture
 
 The Beame.IO SDK credentials systems, is build around two concepts:
-	1. Transport layer security - proving ownership of certain common
-	   name  (hostname), via client side cert, server side cert.
-	2. Provisioning Authentication Proof of ownership of keys via a web API
+
+1. Transport layer security - proving ownership of certain common name
+   (hostname), via client side cert, server side cert.
+2. Provisioning Authentication Proof of ownership of keys via a web API
 
 
 You will be issued an organization certificate. It will have a hostname.  In
