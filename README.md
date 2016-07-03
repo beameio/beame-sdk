@@ -112,11 +112,11 @@ Queries Beame for a public key related to that hostname. Encrypts data on `stdin
 
 	beame data decrypt --developer name --atom name --instance name 
 
-Will read data from stdin, query beame for a public key related to that hostname and decrypt the data with specific public key
+Read data from stdin, query Beame for a public key related to that hostname and decrypt the data with specific public key
 		
 	beame get-public-key hostname
 
-shows public key of the given `hostname`
+Shows public key of the given `hostname`
 
 	beame atoms list --developer
 
