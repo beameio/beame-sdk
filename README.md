@@ -98,11 +98,7 @@ Creates a password protected zip file, with all of the credentials on the given 
 
 Signs data on `stdin` using provided credentials (app developer level, app level, or instance level)
 
-	beame data encrypt --public-key key
-
-Encrypts data on `stdin` for the given public key `key`
-
-	beame data encrypt --public-key-pem file
+	beame data encrypt --public-key file
 
 Encrypts data on `stdin` for the given public key in file `file`
 
