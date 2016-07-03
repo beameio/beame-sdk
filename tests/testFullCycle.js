@@ -55,35 +55,27 @@ var testN = 0;
 eventEmitter.on('switch',function(){
 	switch(++testN){
 		case 1:
-			console.log('Switch: running test1');
 			eventEmitter.emit(runningParam.test1);
 			break;
 		case 2:
-			console.log('Switch: running test2');
 			eventEmitter.emit(runningParam.test2);
 			break;
 		case 3:
-			console.log('Switch: running test3');
 			eventEmitter.emit(runningParam.test3);
 			break;
 		case 4:
-			console.log('Switch: running test4');
 			eventEmitter.emit(runningParam.test4);
 			break;
 		case 5:
-			console.log('Switch: running test5');
 			eventEmitter.emit(runningParam.test5);
 			break;
 		case 6:
-			console.log('Switch: running test6');
 			eventEmitter.emit(runningParam.test6);
 			break;
 		case 7:
-			console.log('Switch: running test7');
 			eventEmitter.emit(runningParam.test7);
 			break;
 		case 8:
-			console.log('Switch: running test8');
 			eventEmitter.emit(runningParam.test8);
 			break;
 		default:
