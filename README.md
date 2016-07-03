@@ -1,6 +1,6 @@
 # Beame.IO SDK
 
-## Installing
+## Installing Beame.IO SDK
 
 To use tests from this repo, first run "npm install beame-api"
 
@@ -62,7 +62,7 @@ can be controlled by setting the `BEAME_DIR` environment variable, export
 
 	beame init
 
-Beame init will establish your credentials in our system. And store it in the `BEAME_DIR` folder. The structure of the folder is self-explanatory.
+`beame init` will establish your credentials in our system and will store them in the `BEAME_DIR` folder. The structure of the folder is self-explanatory.
 On each level the will be a JSON file. At each level of the directory structure you will find:
 
 	private_key.pem 
@@ -74,46 +74,54 @@ After 'beame init' is ran, you can run:
 	beame credentials show 
 
 	
+### Beame.IO CLI - selecting acting entity
+
+CLI options:
+	
+	* `--developer name` (If there is only one developer, it will be used as default)
+	* `--atom name`
+	* `--instance name`
+
 ### Beame.IO CLI top level commands
 
-	Default developer:
-		If there is one developer present it will select that one is default. 
-
-	Options: [--developer name --atom name --instance name ];
-	
 	beame credentials show
-		Shows a tabular output of all the credentials in the system. 
+		Shows a tabular output of all the credentials in the system.
 	
 	beame credentials export --password
-		creates a passwor protected zip file, with all of the credentials on the given system.
+		Creates a password protected zip file, with all of the credentials on the given system.
 
 	beame data sign [options] 
-		will read data from sdtin, and sign it with the level of specific credentials. and output to stdout the credentials can be app developer level, app level, or instance level.
+		Signs data on `stdin` using provided credentials (app developer level, app level, or instance level)
 
-	beame data encrypt --publicKey || --beameHostName || --publicKeyPem // read from std in 
-		will read data from stdin query beame for a public key related to that hostname and encrypt the data with that publci key. 
+	beame data encrypt --public-key key
+		Encrypts data on `stdin` for the given public key `key`
+
+	beame data encrypt --public-key-pem file
+		Encrypts data on `stdin` for the given public key in file `file`
+
+	beame data encrypt --hostname host
+		Queries Beame for a public key related to that hostname. Encrypts data on `stdin` for the public key.
 
 	beame data decrypt --developer name --atom name --instance name 
-		will read data from stdin query beame for a public key related to that hostname and decrypt the data with specific public key  
+		will read data from stdin, query beame for a public key related to that hostname and decrypt the data with specific public key
 		
-	beame query_public_key hostname
-		will outout public key of the specific public key
+	beame get-public-key hostname
+		shows public key of the given `hostname`
 
-	beame atoms list --developer 
+	beame atoms list --developer
 
 	beame help 
 
-	beame start demoServer --developer 
-		this will start a server, and a subsequent set of clients, with some kind of preformance benchmack.
+	beame start demo-server --developer
+		Start a server, and a subsequent set of clients, with some kind of performance benchmack.
 
-
-	beame start sslProxy --targetHost --targetPort [potentially multipe if we do an inbound sni sniff]
+	beame start ssl-proxy --host --port [potentially multipe if we do an inbound sni sniff]
 	
-	beame start httpProxy --targetHost --targetPort --targetHostname // Terminates encryption
+	beame start http-proxy --host --port --hostname // Terminates encryption
 	
-	beame start unitTest 
+	beame start unit-test
 	
-	beame start GatewayServerDemo 
+	beame start gateway-server-demo
 		This is a demo which demonstrates how you can sign requests for beame for establishing credentialing in your atoms, but providing a crypto challange response. 
 	
 ## Beame.IO NodeJS API
