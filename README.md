@@ -6,11 +6,12 @@ To use tests from this repo, first run "npm install beame-api"
 
 ## Beame.io SDK introduction
 
-1. The Beame.io SDK allows to easily register routable hostnames. This essentially
-allows access to a device without routable IP address.
+1. The Beame.io SDK allows to register routable hostname for a device without
+   a routable IP address.
 
 2. Beame.io SDK provides ability to easily generate random hostnames, and get
-matching certificates for them. 
+   matching certificates for them. These hostnames can be used for routing the
+   traffic to your device without a routable IP address.
 
 The Beame.io service is designed to be used in bulk. Its goal is providing
 strongly authenticated endpoint for accessing client devices, as well as easy
