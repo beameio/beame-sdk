@@ -78,51 +78,71 @@ After 'beame init' is ran, you can run:
 
 CLI options:
 	
-	* `--developer name` (If there is only one developer, it will be used as default)
-	* `--atom name`
-	* `--instance name`
+* `--developer name` (If there is only one developer, it will be used as default)
+* `--atom name`
+* `--instance name`
 
 ### Beame.IO CLI top level commands
 
 	beame credentials show
-		Shows a tabular output of all the credentials in the system.
+
+Shows a tabular output of all the credentials in the system.
 	
 	beame credentials export --password
-		Creates a password protected zip file, with all of the credentials on the given system.
+
+Creates a password protected zip file, with all of the credentials on the given system.
 
 	beame data sign [options] 
-		Signs data on `stdin` using provided credentials (app developer level, app level, or instance level)
+
+Signs data on `stdin` using provided credentials (app developer level, app level, or instance level)
 
 	beame data encrypt --public-key key
-		Encrypts data on `stdin` for the given public key `key`
+
+Encrypts data on `stdin` for the given public key `key`
 
 	beame data encrypt --public-key-pem file
-		Encrypts data on `stdin` for the given public key in file `file`
+
+Encrypts data on `stdin` for the given public key in file `file`
 
 	beame data encrypt --hostname host
-		Queries Beame for a public key related to that hostname. Encrypts data on `stdin` for the public key.
+
+Queries Beame for a public key related to that hostname. Encrypts data on `stdin` for the public key.
 
 	beame data decrypt --developer name --atom name --instance name 
-		will read data from stdin, query beame for a public key related to that hostname and decrypt the data with specific public key
+
+Will read data from stdin, query beame for a public key related to that hostname and decrypt the data with specific public key
 		
 	beame get-public-key hostname
-		shows public key of the given `hostname`
+
+shows public key of the given `hostname`
 
 	beame atoms list --developer
 
+TODO
+
 	beame help 
 
+TODO
+
 	beame start demo-server --developer
-		Start a server, and a subsequent set of clients, with some kind of performance benchmack.
+
+Start a server, and a subsequent set of clients, with some kind of performance benchmack.
 
 	beame start ssl-proxy --host --port [potentially multipe if we do an inbound sni sniff]
+
+TODO
 	
 	beame start http-proxy --host --port --hostname // Terminates encryption
+
+TODO
 	
 	beame start unit-test
+
+TODO
 	
 	beame start gateway-server-demo
-		This is a demo which demonstrates how you can sign requests for beame for establishing credentialing in your atoms, but providing a crypto challange response. 
+
+This is a demo which demonstrates how you can sign requests for beame for establishing credentialing in your atoms, but providing a crypto challange response. 
 	
 ## Beame.IO NodeJS API
 
