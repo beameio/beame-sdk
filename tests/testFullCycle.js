@@ -31,13 +31,21 @@ catch(e){
 	console.log('No run configuration file <'+runDataFile+'>, running default sequence');
 	var runningParam = {
 		'test1':'devCreate',
+		'cycle1': '1',
 		'test2':'devGetCert',
+		'cycle2': '1',
 		'test3':'devProfileUpdate',
+		'cycle3': '1',
 		'test4':'devAppSave',
+		'cycle4': '1',
 		'test5':'devAppGetCert',
+		'cycle5': '1',
 		'test6':'edgeClientRegister',
+		'cycle6': '1',
 		'test7':'edgeClientGetCert',
+		'cycle7': '1',
 		'test8':'devAppUpdate',
+		'cycle8': '1',
 		'test9':'exit',
 		'devName':"sas",
 		'devHostname':"empty",
@@ -52,31 +60,38 @@ catch(e){
 
 
 var testN = 0;
+var runCycles = 1;
+var testExecuted = runningParam.test1;
+function setTest(runCycles, test){
+	numCycles = runCycles;
+	testExecuted = test;
+	eventEmitter.emit(test);
+}
 eventEmitter.on('switch',function(){
 	switch(++testN){
 		case 1:
-			eventEmitter.emit(runningParam.test1);
+			setTest(runningParam.cycles1, runningParam.test1);
 			break;
 		case 2:
-			eventEmitter.emit(runningParam.test2);
+			setTest(runningParam.cycles2, runningParam.test2);
 			break;
 		case 3:
-			eventEmitter.emit(runningParam.test3);
+			setTest(runningParam.cycles3, runningParam.test3);
 			break;
 		case 4:
-			eventEmitter.emit(runningParam.test4);
+			setTest(runningParam.cycles4, runningParam.test4);
 			break;
 		case 5:
-			eventEmitter.emit(runningParam.test5);
+			setTest(runningParam.cycles5, runningParam.test5);
 			break;
 		case 6:
-			eventEmitter.emit(runningParam.test6);
+			setTest(runningParam.cycles6, runningParam.test6);
 			break;
 		case 7:
-			eventEmitter.emit(runningParam.test7);
+			setTest(runningParam.cycles7, runningParam.test7);
 			break;
 		case 8:
-			eventEmitter.emit(runningParam.test8);
+			setTest(runningParam.cycles8, runningParam.test8);
 			break;
 		default:
 			console.warn('undefined sequence');
@@ -96,7 +111,13 @@ eventEmitter.on('devCreate', function(){
 			runningParam.devHostname = payload.hostname;
 			runningParam.devUid = payload.uid;
 		}
-		eventEmitter.emit('switch');
+		numCycles--;
+		if(numCycles>0){
+			eventEmitter.emit(testExecuted);
+		}
+		else{
+			eventEmitter.emit('switch');
+		}
 	});
 });
 

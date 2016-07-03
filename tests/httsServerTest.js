@@ -7,12 +7,13 @@ var io = new Server();
 var argv = require('minimist')(process.argv.slice(2));
 var _ = require('underscore');
 var fs = require('fs');
-console.log(argv);
+//console.log(argv);
 
 var targetDeveloper = argv.developer;
 
 var Server = function(){
 	beameapi.scanBeameDir.scanBeameDir("", function(object){
+		console.log(JSON.stringify(object, null, 2));
 		var developer = _.find(object, function(item){ 
 			return (item.chain.hostname + "") == targetDeveloper;
 			

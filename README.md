@@ -87,35 +87,30 @@ CLI options:
 
 ### Beame.io CLI top level commands
 
-	beame credentials show
-
-Shows a tabular output of all the credentials in the system.
-	
 	beame credentials export --password
+	
+### Certificate Commands 
+	
+	beame creds list   --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net  --format {json|text} 
+	beame creds create --type {developer|atom|instance} --localip { ipaddress | auto } --format {json|text} 
+	beame creds renew  --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net} --format {json|text} 
+	beame creds purge  --type {developer|atom|instance} --localip { ipaddress | auto } --format {json|text}
 
-Creates a password protected zip file, with all of the credentials on the given system.
+### Cert Services 
 
-	beame data sign [options] 
 
-Signs data on `stdin` using provided credentials (app developer level, app level, or instance level)
+	beame cert show	 --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net  --format {json|text} 
 
-	beame data encrypt --public-key file
+### Data Commands 
 
-Encrypts data on `stdin` for the given public key in file `file`
+	beame data sign    --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net 
+	beame data encrypt  jdafskljdasjkldsa.beameio.net
+	beame data decrypt ---type {developer|atom|instance} jdafskljdasjkldsa.beameio.net 
 
-	beame data encrypt --hostname host
 
-Queries Beame for a public key related to that hostname. Encrypts data on `stdin` for the public key.
+### Low Level Api 
 
-	beame data decrypt --developer name --atom name --instance name 
-
-Read data from stdin, query Beame for a public key related to that hostname and decrypt the data with specific public key
-		
-	beame get-public-key hostname
-
-Shows public key of the given `hostname`
-
-	beame atoms list --developer
+	beame cert fetch <fqdn>
 
 TODO
 
