@@ -1,0 +1,5 @@
+{
+    "DeveloperCreateResponseKeys": ["hostname", "uid"],
+    "CertificateResponseKeys" : ["x509", "pkcs7", "ca"]
+
+}
