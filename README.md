@@ -1,62 +1,69 @@
-# Beame.IO sdk introduction
+# Beame.IO SDK
+
+## Installing
 
 To use tests from this repo, first run "npm install beame-api"
 
-Beame.IO sdk introduction. The beame.io sdk allows to easily register routable
-hostnames. This essentially allows access to a device without routeable IP
-address. Beame.io sdk provides ability to easily generate random hostnames, and
+## Beame.IO SDK introduction
+
+Beame.IO SDK introduction. The Beame.IO SDK allows to easily register routable
+hostnames. This essentially allows access to a device without routable IP
+address. Beame.IO SDK provides ability to easily generate random hostnames, and
 get matching certificates for them. 
 
-The beame.io service is designed to be used in bulk. Its goal is providing
+The Beame.IO service is designed to be used in bulk. Its goal is providing
 strongly authenticated endpoint for accessing client devices, as well as easy
-and affordable access to use of x509 certificcates.
+and affordable access to use of x509 certificates.
 
-Easentially, whay beame.io allows to do is to get a random common name signed,
-and easily be able to recive https traffic on that endoint.  
+Essentially, what Beame.IO allows to do is to get a random common name signed,
+and easily be able to receive https traffic on that endpoint.
 
-High level architecture: 
+## Beame.IO SDK - High level architecture
 
-The beamesdk credentiality systems, is build around two concepts: 
-	1. Transport layer security Meaning proving ownership of certain common
+The Beame.IO SDK credentials systems, is build around two concepts:
+	1. Transport layer security - proving ownership of certain common
 	   name  (hostname), via client side cert, server side cert.
-	2. Provisioning Authentication Proof of ownership of keys via a web api
+	2. Provisioning Authentication Proof of ownership of keys via a web API
 
 
-You will be issued an organization certificate it will have a hosntame
-host name. In order to take actions as your organization your will be required to prove ownership of the cert.  This can happen one of three ways 
+You will be issued an organization certificate. It will have a hostname.  In
+order to take actions as your organization your will be required to prove
+ownership of the cert (hostname).  This can happen one of two ways:
 
-1. using it as a client cert and access beame, 
-2. using it as a server cert when beame access you with push of freshly issued certificate. 
-
-
-In fact we have three layers (organizational, you will only have
-one), atom, is essentially a logical seperation of instances in our particular
-envieroment. 
-
-Here is how this would typically be deploied: 
-1. Gateway server (equpied with atom keys) 
-2. Instance contacts the gateway server and requests to sign its request to beame.
-3. The gateway server will sign the request using its private key and cn 
-4. Instance will send this signed request to beame, and automatically deliver the x509 cert signing server 
+1. Using it as a client cert and access Beame.IO .
+2. Using it as a server cert when Beame.IO accesses you with push of freshly issued certificate.
 
 
--+Developer
- |
- + Atom
- 	+ Instances 
+In fact we have three layers (organizational, you will only have one), atom, is
+essentially a logical separation of instances in our particular environment.
+
+## Typical deployment
+
+1. Gateway server (equipped with atom keys)
+2. Instance contacts the gateway server and requests to sign its request to Beame.
+3. The gateway server will sign the request using its private key and common name.
+4. Instance will send this signed request to Beame, and automatically deliver the x509 cert signing server.
 
 
-This is also the strcutre of the ~/.beame folder. The location of the folder
-can be controlled by setting the BEAME_DIR envieromental variable, export
+	-+Developer
+	|
+	+ Atom
+		+ Instances
 
-BEAME_DIR='path' # /home/userz/.beame 
 
-Using beame_api from command line:
+This is also the structure of the `~/.beame` folder. The location of the folder
+can be controlled by setting the `BEAME_DIR` environment variable, export
 
-[Step 1: beame init]
+	BEAME_DIR='path' # /home/userz/.beame
 
-Beame init will establish your credentials in our system. And store it in the BEAME_DIR folder. The structure of the folder is self explanetory.
-On each level the will be a file in json format, at each level of the directory stucture you will find:
+## Beame.IO CLI
+
+### Setting up Beame.IO CLI
+
+	beame init
+
+Beame init will establish your credentials in our system. And store it in the `BEAME_DIR` folder. The structure of the folder is self-explanatory.
+On each level the will be a JSON file. At each level of the directory structure you will find:
 
 	private_key.pem 
 	x509
@@ -67,7 +74,7 @@ After 'beame init' is ran, you can run:
 	beame credentials show 
 
 	
-[top level commands]
+### Beame.IO CLI top level commands
 
 	Default developer:
 		If there is one developer present it will select that one is default. 
@@ -109,16 +116,12 @@ After 'beame init' is ran, you can run:
 	beame start GatewayServerDemo 
 		This is a demo which demonstrates how you can sign requests for beame for establishing credentialing in your atoms, but providing a crypto challange response. 
 	
-------------------------------------------------------------------------------------------------
-nodejs api 
+## Beame.IO NodeJS API
 
-	the idea behain the node.js implementation is so that you can easily contact a gateway server
-
-It wi
-Generate your own keys in RSA format, and
-request them to be signed.  Once they are signed they and recivie publically
-trusted SSL certificates. You can get lots of ssl certificates, very quicky.
-The command line actually  
+The idea behind the node.js implementation is so that you can easily contact a
+gateway server, generate your own keys in RSA format, and request them to be
+signed.  Once they are signed they and receive publicly trusted SSL
+certificates. You can get lots of SSL certificates, very quickly.
 
 1. Top level commands 
 	1. init
