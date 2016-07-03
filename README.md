@@ -88,7 +88,8 @@ CLI options:
 ### Beame.io CLI top level commands
 
 	beame credentials export --password
-	
+ 	beame types list
+
 ### Certificate Commands 
 	
 	beame creds list   --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net  --format {json|text} 
@@ -99,7 +100,7 @@ CLI options:
 ### Cert Services 
 
 
-	beame cert show	 --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net  --format {json|text} 
+	beame cert show	 jdafskljdasjkldsa.beameio.net  --format {json|text} 
 
 ### Data Commands 
 
