@@ -1,27 +1,27 @@
-# Beame.IO SDK
+# Beame.io SDK
 
-## Installing Beame.IO SDK
+## Installing Beame.io SDK
 
 To use tests from this repo, first run "npm install beame-api"
 
-## Beame.IO SDK introduction
+## Beame.io SDK introduction
 
-1. The Beame.IO SDK allows to easily register routable hostnames. This essentially
+1. The Beame.io SDK allows to easily register routable hostnames. This essentially
 allows access to a device without routable IP address.
 
-2. Beame.IO SDK provides ability to easily generate random hostnames, and get
+2. Beame.io SDK provides ability to easily generate random hostnames, and get
 matching certificates for them. 
 
-The Beame.IO service is designed to be used in bulk. Its goal is providing
+The Beame.io service is designed to be used in bulk. Its goal is providing
 strongly authenticated endpoint for accessing client devices, as well as easy
 and affordable access to use of x509 certificates.
 
-Essentially, what Beame.IO allows to do is to get a random common name signed,
+Essentially, what Beame.io allows to do is to get a random common name signed,
 and easily be able to receive https traffic on that endpoint.
 
-## Beame.IO SDK - High level architecture
+## Beame.io SDK - High level architecture
 
-The Beame.IO SDK credentials system is build around two concepts:
+The Beame.io SDK credentials system is build around two concepts:
 
 1. Transport Layer Security - proving ownership of certain common name
    (hostname), via client side certificate or server side certificate.
@@ -32,8 +32,8 @@ You will be issued an organization certificate. It will have a hostname.  In
 order to take actions as your organization your will be required to prove
 ownership of the cert (hostname).  This can happen one of two ways:
 
-1. Using it as a client cert and access Beame.IO .
-2. Using it as a server cert when Beame.IO accesses you with push of freshly issued certificate.
+1. Using it as a client cert and access Beame.io .
+2. Using it as a server cert when Beame.io accesses you with push of freshly issued certificate.
 
 
 In fact we have three layers (organizational, you will only have one), atom, is
@@ -58,9 +58,9 @@ can be controlled by setting the `BEAME_DIR` environment variable, export
 
 	BEAME_DIR='path' # /home/userz/.beame
 
-## Beame.IO CLI
+## Beame.io CLI
 
-### Setting up Beame.IO CLI
+### Setting up Beame.io CLI
 
 	beame init
 
@@ -76,7 +76,7 @@ After 'beame init' is ran, you can run:
 	beame credentials show 
 
 	
-### Beame.IO CLI - selecting acting entity
+### Beame.io CLI - selecting acting entity
 
 CLI options:
 	
@@ -84,7 +84,7 @@ CLI options:
 * `--atom name`
 * `--instance name`
 
-### Beame.IO CLI top level commands
+### Beame.io CLI top level commands
 
 	beame credentials show
 
@@ -146,7 +146,7 @@ TODO
 
 This is a demo which demonstrates how you can sign requests for beame for establishing credentialing in your atoms, but providing a crypto challange response. 
 	
-## Beame.IO NodeJS API
+## Beame.io NodeJS API
 
 The idea behind the node.js implementation is so that you can easily contact a
 gateway server, generate your own keys in RSA format, and request them to be
