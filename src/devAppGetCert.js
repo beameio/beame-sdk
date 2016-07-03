@@ -4,7 +4,10 @@ var fs = require('fs');
 var uid;//variable to hold UID
 //var host;//variable to hold hostname
 var os = require('os');
-var devPath = os.homedir() + "/.beame/";				//path to store dev data: uid, hostname, key, certs, appData
+var home = os.homedir();
+var devPath = home + "/.beame/";				//path to store dev data: uid, hostname, key, certs, appData
+var Helper = require('./helper.js');
+var helper = new Helper();
 var keys = ["x509", "pkcs7", "ca"];
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var appFiles = ["uid", "hostname"];
@@ -46,14 +49,10 @@ module.exports.devAppGetCert = function (param, appHostName, callback) {
             if (err) throw err;
             uid = data;
 
-            var authData = {
-                pk: devDir + "private_key.pem",
-                x509: devDir + "x509",
-                generateKeys: true,
-                makeCSR: true,
-                devPath: devAppDir,
-                CSRsubj: "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=" + hostname
-            };
+
+            var authData = helper.getAuthToken(devDir + "private_key.pem",devDir + "x509",true,true,devAppDir,hostname);
+
+
             /*----------- generate RSA key + csr and post to provision ---------*/
             provApi.setAuthData(authData, function (csr) { //pk
                 if (csr == null) {
@@ -66,13 +65,9 @@ module.exports.devAppGetCert = function (param, appHostName, callback) {
                     csr: csr
                 };
 
-                var testParams = {
-                    version: "/v1",
-                    postData: postData,
-                    api: "/dev/getAppCert",
-                    answerExpected: true
-                };
-                provApi.runRestfulAPI(testParams, function (err, payload) {
+                var apiData = helper.getApiCallData("/v1","/dev/getAppCert",postData,true);
+                
+                provApi.runRestfulAPI(apiData, function (err, payload) {
                     if (!err) {
                         for (i = 0; i < keys.length; i++) {
                             if (payload[keys[i]] != undefined) {

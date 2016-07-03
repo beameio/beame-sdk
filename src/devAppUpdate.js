@@ -4,6 +4,8 @@ var fs = require('fs');
 var uid;//variable to hold UID
 var os = require('os');
 var devPath = os.homedir() + "/.beame/";				//path to store dev data: uid, hostname, key, certs, appData
+var Helper = require('./helper.js');
+var helper = new Helper();
 var keys = ["updateStatus"];
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var appFiles = ["uid", "hostname"];
@@ -46,14 +48,8 @@ fs.readFile(devAppDir + "hostname", function (err, data) {
         if (err) throw err;
         uid = data;
 
-        var authData = {
-            pk: devDir + "private_key.pem",
-            x509: devDir + "x509",
-            generateKeys: false,
-            makeCSR: false,
-            devPath: devDir,
-            CSRsubj: "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=" + hostname
-        };
+        var authData = helper.getAuthToken(devDir + "private_key.pem",devDir + "x509",false,false,devDir,hostname);
+
         /*----------- generate RSA key + csr and post to provision ---------*/
         provApi.setAuthData(authData, function (csr) { //pk
             if (csr == null && authData.createCSR) {
@@ -65,14 +61,9 @@ fs.readFile(devAppDir + "hostname", function (err, data) {
                 name: appName
             };
 
-            var testParams = {
-                version: "/v1",
-                postData: postData,
-                api: "/dev/app/" + uid + "/update",
-                answerExpected: false
-            };
+            var apiData = helper.getApiCallData("/v1","/dev/app/" + uid + "/update",postData,false);
 
-            provApi.runRestfulAPI(testParams, function (err, payload) {
+            provApi.runRestfulAPI(apiData, function (err, payload) {
                 if (!err) {
                     for (i = 0; i < keys.length; i++) {
                         if (payload[keys[i]] != undefined) {

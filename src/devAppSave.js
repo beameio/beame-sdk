@@ -6,6 +6,8 @@ var uid;//variable to hold UID
 var os = require('os');
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var Helper = require('./helper.js');
+var helper = new Helper();
 var keys = ["hostname", "uid"];
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 /*
@@ -38,14 +40,8 @@ module.exports.devAppSave = function (param, appName, callback) {
             if (err) throw err;
             uid = data;
 
-            var authData = {
-                pk: devDir + "private_key.pem",
-                x509: devDir + "x509",
-                generateKeys: false,
-                makeCSR: false,
-                devPath: devDir,
-                CSRsubj: "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=" + hostname
-            };
+            var authData = helper.getAuthToken(devDir + "private_key.pem",devDir + "x509",false,false,devDir,hostname);
+
             /*----------- generate RSA key + csr and post to provision ---------*/
             provApi.setAuthData(authData, function () { //csr, pk
 
@@ -53,14 +49,9 @@ module.exports.devAppSave = function (param, appName, callback) {
                     name: appName
                 };
 
-                var testParams = {
-                    version: "/v1",
-                    postData: postData,
-                    api: "/dev/app/save",
-                    answerExpected: true,
-                    decode: false
-                };
-                provApi.runRestfulAPI(testParams, function (err, payload) {
+                var apiData = helper.getApiCallData("/v1","/dev/app/save",postData,true);
+                
+                provApi.runRestfulAPI(apiData, function (err, payload) {
                     if (!err) {
                         fs.appendFileSync(devDir + 'apps', payload.hostname + '\r\n');
                         var devAppDir = devDir + payload.hostname + '/';

@@ -29,15 +29,6 @@ var testData = null;
  * @property {String} hostname
  */
 
-/**
- * @typedef {Object} ProvApiResponse
- * @property {String} StatusCode
- * @property {String} ErrorMessage
- * @property {String} Message
- * @property {Boolean} IsSuccess
- * @property {Object} Payload
- */
-
 
 var _ = require('underscore');
 var request = require('request');
