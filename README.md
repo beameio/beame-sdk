@@ -1,12 +1,13 @@
-# TestEnvironment To use tests from this repo, first run "npm install
-@beameio/beame-api"
+# Beame.IO sdk introduction
+
+To use tests from this repo, first run "npm install beame-api"
 
 Beame.IO sdk introduction. The beame.io sdk allows to easily register routable
 hostnames. This essentially allows access to a device without routeable IP
 address. Beame.io sdk provides ability to easily generate random hostnames, and
 get matching certificates for them. 
 
-The beame.io service is desgiend to be used in bulk. Its goal is providing
+The beame.io service is designed to be used in bulk. Its goal is providing
 strongly authenticated endpoint for accessing client devices, as well as easy
 and affordable access to use of x509 certificcates.
 
@@ -20,8 +21,15 @@ The beamesdk credentiality systems, is build around two concepts:
 	   name  (hostname), via client side cert, server side cert.
 	2. Provisioning Authentication Proof of ownership of keys via a web api
 
-You will be issued an organization certificate it will have a non routeable
-host name. In fact we have three layers (organizational, you will only have
+
+You will be issued an organization certificate it will have a hosntame
+host name. In order to take actions as your organization your will be required to prove ownership of the cert.  This can happen one of three ways 
+
+1. using it as a client cert and access beame, 
+2. using it as a server cert when beame access you with push of freshly issued certificate. 
+
+
+In fact we have three layers (organizational, you will only have
 one), atom, is essentially a logical seperation of instances in our particular
 envieroment. 
 
