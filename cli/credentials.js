@@ -1,3 +1,5 @@
+
+
 var debug = require("debug")("creds");
 
 function show(type,  fqdn,format){
@@ -6,6 +8,10 @@ function show(type,  fqdn,format){
 
 function list(type,  fqdn,format){
 	debug("list %j %j %j", type,  fqdn, format);
+    var reader = require('../src/collectAuthData');
+    reader.scanBeameDir("", function (beameTree) {
+            console.log(beameTree);
+    })
 }
 
 function create(type,  fqdn,format){
