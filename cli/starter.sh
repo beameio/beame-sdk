@@ -1,4 +1,4 @@
-export beame='node cli.js'
+export beame='./beame.js'
 export DEVELOPER_ID='xeb54z03ir93ngdu.v1.beameio.net'
 export APP_ID='o6h2837uh3o4pe47.xeb54z03ir93ngdu.v1.beameio.net'
 export INSTANCE_ID='ti61mioq368nfplj.v1.r.d.edge.eu-central-1a-1.v1.beameio.net'

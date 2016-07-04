@@ -1,0 +1,23 @@
+	beame credentials export --password
+	
+	### Certificate Commands 
+	
+	beame creds list   --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net  --format {json|text} 
+	beame creds create --type {developer|atom|instance} --localip { ipaddress | auto } --format {json|text} 
+	beame creds renew  --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net} --format {json|text} 
+	beame creds purge  --type {developer|atom|instance} --localip { ipaddress | auto } --format {json|text}
+
+	### Cert Services 
+
+
+	beame cert show	 --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net  --format {json|text} 
+
+	### Data Commands 
+
+	beame data sign    --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net 
+	beame data encrypt  jdafskljdasjkldsa.beameio.net
+	beame data decrypt ---type {developer|atom|instance} jdafskljdasjkldsa.beameio.net 
+
+
+	### Low Level Api 
+	beame cert fetch <fqdn>

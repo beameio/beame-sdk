@@ -1,9 +1,10 @@
+#!/usr/bin/env node
 var argv = require('minimist')(process.argv.slice(2));
 var _ = require('underscore');
 
 var commands = { 
 	"creds": { "file": "./credentials.js" } ,
-	"cert": { "file": "./certs.js" },
+	"certs": { "file": "./certs.js" },
 	"data": { "file": "./data.js" }
 };
 
@@ -30,12 +31,12 @@ function command () {
 
 					_.each(acceptedArgs, function(item){
 						argumentsArray.push(argv[item]);
-					})
+					});
 					module[subCommand].apply(null, argumentsArray);
 				}
 			}
 		} catch(e) {
-			console.error("Error module not found $j", e.toString())
+			console.error("Error module not found $j", e.toString());
 		}
 	}
 	//console.log(foundCommand);
