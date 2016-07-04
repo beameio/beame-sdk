@@ -111,7 +111,7 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
 DeveloperServices.prototype.registerDeveloper = function (developerName, callback) {
     var self = this;
 
-    var authData = beameUtils.getAuthToken(home + "/authData/pk.pem", home + "/authData/x509.pem", false, false);
+    var authData = beameUtils.getAuthToken(home + global.authData.PK_PATH, home + global.authData.CERT_PATH, false, false);
 
     provisionApi.setAuthData(authData, function () {
 
