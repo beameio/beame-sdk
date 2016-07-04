@@ -3,8 +3,8 @@
  */
 var debug = require("debug")("./src/services/DataServices.js");
 var fs = require('fs');
-// var async = require('async');
-// var exec = require('child_process').exec;
+var exec = require('child_process').exec;
+var async = require('async');
 
 //private methods
 
@@ -94,9 +94,10 @@ DataServices.prototype.savePayload = function (path, payload, keys, callback) {
  * @param {String} dirPath
  * @param {OrderPemResponse} payload
  * @param {Array} keys
+ * @param {boolean} createP7B
  * @param callback
  */
-DataServices.prototype.saveCerts = function (dirPath, payload, keys, callback) {
+DataServices.prototype.saveCerts = function (dirPath, payload, keys, createP7B,callback) {
     for (var i = 0; i < keys.length; i++) {
         if (payload[keys[i]]) {
 
@@ -109,6 +110,25 @@ DataServices.prototype.saveCerts = function (dirPath, payload, keys, callback) {
         }
     }
 
+    if(createP7B){
+        exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
+            if (error) {
+                callback && callback(error, null);
+                return;
+            }
+
+            try{
+
+                fs.writeFileSync(dirPath + global.CertFileNames.P7B,stdout);
+            }
+            catch(error){
+                callback && callback(error, null);
+            }
+
+
+        });
+    }
+    
     callback && callback(null, payload);
 };
 
@@ -129,6 +149,22 @@ DataServices.prototype.saveFile = function (path, data, cb) {
 
 };
 
+/**
+ *
+ * @param {String} path
+ * @param {Object} data
+ * @param {Function|null} [cb]
+ */
+DataServices.prototype.saveFileAsync = function (path, data, cb) {
+    fs.writeFile(path, data, function (error) {
+        if(!cb) return;
+        if (error) {
+            cb(error, null);
+            return;
+        }
+        cb(null, true);
+    });
+},
 /**
  * read JSON file
  * @param {String} path

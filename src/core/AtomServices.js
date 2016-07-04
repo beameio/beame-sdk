@@ -169,7 +169,7 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
 
-                        dataServices.saveCerts(devAppDir, payload, responseKeys.CertificateResponseKeys, callback);
+                        dataServices.saveCerts(devAppDir, payload, responseKeys.CertificateResponseKeys, false, callback);
                     }
                     else {
                         errMsg = beameUtils.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.ApiRestError, "atom get cert api error", {"hostname": appHostname});

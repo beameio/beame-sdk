@@ -18,7 +18,8 @@ global.CertFileNames = {
     "PRIVATE_KEY": "private_key.pem",
     "X509": "x509.pem",
     "CA": "ca.pem",
-    "PKCS7": "pkcs7.pem"
+    "PKCS7": "pkcs7.pem",
+    "P7B": "p7b.cer"
 };
 
 global.authData = {

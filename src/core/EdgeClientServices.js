@@ -221,7 +221,7 @@ EdgeClientServices.prototype.getCert = function(developerHostname, appHostname, 
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
 
-                        dataServices.saveCerts(edgeClientDir, payload, responseKeys.CertificateResponseKeys, callback);
+                        dataServices.saveCerts(edgeClientDir, payload, responseKeys.CertificateResponseKeys, true, callback);
                     }
                     else {
                         errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.ApiRestError, "atom get cert api error", {"hostname": edgeHostname});

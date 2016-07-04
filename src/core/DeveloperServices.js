@@ -165,7 +165,7 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
 
-                        dataServices.saveCerts(devDir, payload, responseKeys.CertificateResponseKeys, callback);
+                        dataServices.saveCerts(devDir, payload, responseKeys.CertificateResponseKeys, false, callback);
                     }
                     else {
                         errorJson = {"message": "CSR for " + hostname + " failed"};
