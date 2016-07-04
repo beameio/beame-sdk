@@ -3,7 +3,7 @@
  */
 
 var atomServices = new(require('../../src/core/AtomServices'))();
-var devHostname = 'fsxby2p8u6lkfoj2.v1.beameio.net';
+var devHostname = 'vrd63lna6efxpvqe.v1.beameio.net';
 
 atomServices.createAtom(devHostname,'appa-ahuyapa',function(error,payload){
     if(!error){

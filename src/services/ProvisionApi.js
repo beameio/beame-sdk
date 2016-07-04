@@ -34,6 +34,12 @@ var exec = require('child_process').exec;//needed to run openssl cli
 
 //private helpers
 var parseProvisionResponse = function (error, response, body, type, callback) {
+
+    if(!response) {
+        callback && callback(new Error('empty response'),null);
+        return;
+    }
+
     debug('Host responded with status <' + response.statusCode + '>');
 
     if (error) {

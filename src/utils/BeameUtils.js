@@ -3,6 +3,7 @@
  */
 
 require('./Globals');
+var request = require('request');
 var _ = require('underscore');
 var dataServices = new (require('../services/DataServices'))();
 
@@ -19,7 +20,6 @@ var dataServices = new (require('../services/DataServices'))();
 
 /**
  * @typedef {Object} ApiData
- * @property {String} version => api version
  * @property {Object} postData => post data to send to provision in JSON format
  * @property {String} api => api endpoint
  * @property {boolean} answerExpected => if response data expecting from provision
@@ -34,6 +34,14 @@ var dataServices = new (require('../services/DataServices'))();
  * @param {Object} data
  */
 
+/**
+ * @typedef {Object} EdgeShortData
+ * @property {String} endpoint
+ * @property {String} region
+ * @property {String} zone
+ * @property {String} publicIp
+ */
+
 /** @const {String} */
 var csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
@@ -45,15 +53,16 @@ module.exports = {
      * @param {String} code
      * @param {String} message
      * @param {Object} data
-     * @returns {DebugMessage}
+     * @returns {typeof DebugMessage}
      */
     formatDebugMessage: function (module, code, message, data) {
+
         return {
             module: module,
             code: code,
             message: message,
             data: data
-        }
+        };
     },
 
     /**
@@ -64,7 +73,7 @@ module.exports = {
      * @param {boolean} genScr
      * @param {String|null|undefined} [certPath]
      * @param {String|null|undefined} [hostname]
-     * @returns {AuthData}
+     * @returns {typeof AuthData}
      */
     getAuthToken: function (path2Pk, path2X509, genKeys, genScr, certPath, hostname) {
         return {
@@ -83,7 +92,7 @@ module.exports = {
      * @param {String} endpoint
      * @param {Object} postData
      * @param {boolean} answerExpected
-     * @returns {ApiData}
+     * @returns {typeof ApiData}
      */
     getApiCallData: function (version, endpoint, postData, answerExpected) {
         return {
@@ -98,7 +107,7 @@ module.exports = {
      * @param {String} endpoint
      * @param {Object} postData
      * @param {boolean} answerExpected
-     * @returns {ApiData}
+     * @returns {typeof ApiData}
      */
     getApiData: function (endpoint, postData, answerExpected) {
         return {
@@ -135,6 +144,77 @@ module.exports = {
 
         });
     },
+
+    getRegionName: function (hostname) {
+
+        if (!hostname) return "Unknown";
+
+        for (var i = 0; i < AwsRegions.length; i++) {
+            var region = AwsRegions[i];
+            if (hostname.lastIndexOf(region.Code) >= 0) {
+                return region.Name;
+            }
+        }
+
+        return "Unknown";
+    },
+
+    /**
+     *
+     * @param {String} url
+     * @param {Function|null} callback
+     */
+    httpGet: function (url, callback) {
+        request({
+            url: url,
+            json: true
+        }, function (error, response, body) {
+
+            if (!error && response.statusCode === 200) {
+                callback && callback(null, body);
+            }
+            else {
+                callback && callback(error, null);
+            }
+        })
+    },
+
+    /**
+     *
+     * @param {String} loadBalancerEndpoint
+     * @returns {Promise.<typeof EdgeShortData>}
+     */
+    selectBestProxy: function (loadBalancerEndpoint) {
+        var getRegionName = this.getRegionName;
+        var get = this.httpGet;
+
+        return new Promise(function (resolve, reject) {
+
+            get(loadBalancerEndpoint + "/instance", function (error, data) {
+                if (data) {
+                    var region = getRegionName(data.instanceData.endpoint);
+
+                    var edge = {
+                        endpoint: data.instanceData.endpoint,
+                        region: region,
+                        zone: data.instanceData.avlZone,
+                        publicIp: data.instanceData.publicipv4
+                    };
+
+                    resolve(edge);
+                }
+                else {
+
+                    var errorJson = formatter(module, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
+                    console.error(errorJson);
+                    reject(errorJson);
+
+                }
+            });
+
+        });
+    },
+
     /**
      *
      * @param {Object} obj

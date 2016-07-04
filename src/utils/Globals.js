@@ -7,6 +7,8 @@ global.metadataFileName = "metadata.json";
 /** @const {String} **/
 global.apiUIDTemplatePattern = "{{UID}}";
 
+/** @const {String} **/
+global.loadBalancerEdnpoint = "http://lb-dev.luckyqr.io";
 
 /**
  * Certificate file names
@@ -42,6 +44,7 @@ global.AppModules = {
  */
 global.MessageCodes = {
     "DebugInfo" : "DebugInfo",
+    "EdgeLbError" : "EdgeLbError",
     "OpenSSLError" : "OpenSSLError",
     "ApiRestError" : "ApiRestError",
     "HostnameRequired" : "HostnameRequired",
@@ -50,3 +53,55 @@ global.MessageCodes = {
     "NodeFilesMissing" : "NodeFilesMissing",
     "CSRCreationFailed" : "CSRCreationFailed"
 };
+
+/**
+ * @typedef {Object} AwsRegion
+ * @property {String} Name
+ * @property {String} Code
+ */
+
+/**
+ * @type {AwsRegion[]}
+ */
+global.AwsRegions = [
+    {
+        "Name": "EU (Ireland)",
+        "Code": "eu-west-1"
+    },
+    {
+        "Name": "Asia Pacific (Singapore)",
+        "Code": "ap-southeast-1"
+    },
+    {
+        "Name": "Asia Pacific (Sydney)",
+        "Code": "ap-southeast-2"
+    },
+    {
+        "Name": "EU (Frankfurt)",
+        "Code": "eu-central-1"
+    },
+    {
+        "Name": "Asia Pacific (Seoul)",
+        "Code": "ap-northeast-2"
+    },
+    {
+        "Name": "Asia Pacific (Tokyo)",
+        "Code": "ap-northeast-1"
+    },
+    {
+        "Name": "US East (N. Virginia)",
+        "Code": "us-east-1"
+    },
+    {
+        "Name": "South America (S?o Paulo)",
+        "Code": "sa-east-1"
+    },
+    {
+        "Name": "US West (N. California)",
+        "Code": "us-west-1"
+    },
+    {
+        "Name": "US West (Oregon)",
+        "Code": "us-west-2"
+    }
+];

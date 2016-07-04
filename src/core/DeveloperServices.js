@@ -3,7 +3,6 @@
  */
 var debug = require("debug")("./src/services/DeveloperServices.js");
 var os = require('os');
-//var _ = require('underscore');
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 
@@ -13,8 +12,7 @@ var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.DeveloperApi;
 
-//private callbacks
-
+//private methods
 
 /**
  *
@@ -79,15 +77,18 @@ var DeveloperServices = function () {
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
     var self = this;
 
-    var debugMsg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.DebugInfo, "Call Create Developer", {"name": developerName,"email": developerEmail});
+    var debugMsg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.DebugInfo, "Call Create Developer", {
+        "name": developerName,
+        "email": developerEmail
+    });
     debug(debugMsg);
 
     self.registerDeveloper(developerName, function (error, payload) {
         if (!error) {
-            
+
             var hostname = payload.hostname;
-            
-            self.getCert(hostname, function (error, payload) {
+
+            self.getCert(hostname, function (error) {
                 if (!error) {
                     self.updateProfile(hostname, developerEmail, developerName, callback);
                 }
@@ -147,7 +148,7 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
 
     /*---------- read developer data and proceed -------------*/
 
-    beameUtils.getNodeMetadata(devDir,hostname,global.AppModules.Developer).then(function onSuccess(metadata) {
+    beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(function onSuccess(metadata) {
         /*----------- generate RSA key + csr and post to provision ---------*/
         var authData = beameUtils.getAuthToken(home + global.authData.PK_PATH, home + global.authData.CERT_PATH, true, true, devDir, hostname);
 
@@ -206,7 +207,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
     }
 
     /*---------- read developer data and proceed -------------*/
-    beameUtils.getNodeMetadata(devDir,hostname,global.AppModules.Developer).then(function onSuccess(metadata) {
+    beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(function onSuccess(metadata) {
         var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, false, false, devDir, hostname);
 
         provisionApi.setAuthData(authData, function () {
