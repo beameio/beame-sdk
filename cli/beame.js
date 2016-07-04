@@ -3,7 +3,7 @@ var argv = require('minimist')(process.argv.slice(2));
 var _ = require('underscore');
 
 var commands = { 
-	"creds": { "file": "./credentials.js" } ,
+	"creds": { "file": "./creds.js" } ,
 	"certs": { "file": "./certs.js" },
 	"data": { "file": "./data.js" }
 };
