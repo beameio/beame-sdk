@@ -53,7 +53,7 @@ var path = "/home/zglozman/.beame/r936s7lnbemo1nzb.v1.beameio.net/hl3n9lvol364pt
 		});
 		app.listen(8000, function() {
 			//function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetHost, targetPort, options, agent, edgeClientCerts) {
-			var proxy = new ProxyClient.ProxyClient("HTTPS", outInstanceName, instance.edgeHostname, 'localhost', 8000, undefined, undefined, options);
+			var proxy = new ProxyClient("HTTPS", outInstanceName, instance.edgeHostname, 'localhost', 8000, undefined, undefined, options);
 			console.log("Registered Instance : " + outInstanceName);
 
 
