@@ -21,9 +21,8 @@
   "homepage": "https://github.com/beameio/TestEnvironment#readme",
   "dependencies": {
     "async": "^2.0.0-rc.6",
-    "beame-edge-services": "git+https://github.com/beameio/BeameEdgeServices.git",
-    "beame-proxy-clients": "git+https://github.com/beameio/BeameProxyClients.git",
-    "beame-utils": "git+https://github.com/beameio/BeameUtils.git",
+    "beame-utils": "git+https://github.com/beameio/beame-utils.git",
+    "beame-ssl-proxy-client": "git+https://github.com/beameio/beame-ssl-proxy-client.git",
     "debug": "^2.2.0",
     "minimist": "^1.2.0",
     "pem": "^1.8.3",
