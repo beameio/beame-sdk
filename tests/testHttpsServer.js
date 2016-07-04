@@ -27,7 +27,11 @@ var Server = function(){
 
 		var options = {
 			key: instance.key,
-			cert: instance.cert
+			cert: instance.cert,
+			// Client certificates - start
+			requestCert: true,
+			rejectUnauthorized: false
+			// Client certificates - end
 		};
 		console.log(options.cert);
 		var app = https.createServer(options, function(req, res){
