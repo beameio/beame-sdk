@@ -18,7 +18,7 @@ var debug = require("debug")("./src/devGetCert.js");
  process.exit(-1);
  }*/
 var param = process.argv[2];
-module.exports.getDevCert = function (param, callback) {
+module.exports.getCert = function (param, callback) {
     debug('Running test with param: ' + param);
     /*---------- check if developer exists -------------------*/
     var devDir = devPath + param + "/";

@@ -3,7 +3,7 @@
  */
 var debug = require("debug")("./src/services/DeveloperServices.js");
 var os = require('os');
-var _ = require('underscore');
+//var _ = require('underscore');
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 
@@ -15,30 +15,6 @@ var apiActions = require('../../config/ApiConfig.json').Actions.DeveloperApi;
 
 //private callbacks
 
-/**
- * try read metadata file for node
- * @param {String} devDir
- * @param {String} hostname
- * @returns {Promise.<Object>}
- */
-var getDeveloperMetadata = function (devDir,hostname) {
-
-    return new Promise(function (resolve, reject) {
-
-        var developerMetadataPath = devDir + beameUtils.metadataFileName;
-        var metadata = dataServices.readJSON(developerMetadataPath);
-
-        if (_.isEmpty(metadata)) {
-            var errorJson = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.MetadataEmpty, "metadata.json for is empty", {"hostname": hostname});
-            console.error(errorJson);
-            reject(errorJson);
-        }
-        else {
-            resolve(metadata);
-        }
-
-    });
-};
 
 /**
  *
@@ -63,7 +39,7 @@ var createDeveloperRequest = function (developerName, cb) {
 
             dataServices.createDir(devDir);
 
-            dataServices.savePayload(devDir + beameUtils.metadataFileName, payload, responseKeys.DeveloperCreateResponseKeys, function (error) {
+            dataServices.savePayload(devDir + global.metadataFileName, payload, responseKeys.DeveloperCreateResponseKeys, function (error) {
                 if (!cb) return;
 
                 if (!error) {
@@ -108,11 +84,11 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
 
     self.registerDeveloper(developerName, function (error, payload) {
         if (!error) {
-            console.log(payload);
+            
             var hostname = payload.hostname;
-            self.getDevCert(hostname, function (error, payload) {
+            
+            self.getCert(hostname, function (error, payload) {
                 if (!error) {
-                    console.log(payload);
                     self.updateProfile(hostname, developerEmail, developerName, callback);
                 }
                 else {
@@ -149,7 +125,7 @@ DeveloperServices.prototype.registerDeveloper = function (developerName, callbac
  * @param {String} hostname => developer hostname
  * @param {Function} callback
  */
-DeveloperServices.prototype.getDevCert = function (hostname, callback) {
+DeveloperServices.prototype.getCert = function (hostname, callback) {
     var errorJson;
 
     if (!hostname) {
@@ -163,7 +139,7 @@ DeveloperServices.prototype.getDevCert = function (hostname, callback) {
     /*---------- check if developer exists -------------------*/
     var devDir = devPath + hostname + "/";
     if (!dataServices.isPathExists(devDir)) {//provided invalid hostname
-        var errorJson = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
+        errorJson = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
         console.error(errorJson);
         callback(errorJson, null);
         return;
@@ -171,9 +147,9 @@ DeveloperServices.prototype.getDevCert = function (hostname, callback) {
 
     /*---------- read developer data and proceed -------------*/
 
-    getDeveloperMetadata(devDir,hostname).then(function onSuccess(metadata) {
+    beameUtils.getNodeMetadata(devDir,hostname,global.AppModules.Developer).then(function onSuccess(metadata) {
         /*----------- generate RSA key + csr and post to provision ---------*/
-        var authData = beameUtils.getAuthToken(home + "/authData/pk.pem", home + "/authData/x509.pem", true, true, devDir, hostname);
+        var authData = beameUtils.getAuthToken(home + global.authData.PK_PATH, home + global.authData.CERT_PATH, true, true, devDir, hostname);
 
         provisionApi.setAuthData(authData, function (csr) {
             if (csr != null) {
@@ -218,19 +194,19 @@ DeveloperServices.prototype.getDevCert = function (hostname, callback) {
  * @param {Function} callback
  */
 DeveloperServices.prototype.updateProfile = function (hostname, email, name, callback) {
-
+    var errMsg;
     /*---------- check if developer exists -------------------*/
     var devDir = devPath + hostname + "/";
 
     if (!dataServices.isNodeFilesExists(devDir, responseKeys.NodeFiles)) {
-        var msg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": hostname});
-        console.error(msg);
-        callback && callback(msg, null);
+        errMsg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": hostname});
+        console.error(errMsg);
+        callback && callback(errMsg, null);
         return;
     }
 
     /*---------- read developer data and proceed -------------*/
-    getDeveloperMetadata(devDir,hostname).then(function onSuccess(metadata) {
+    beameUtils.getNodeMetadata(devDir,hostname,global.AppModules.Developer).then(function onSuccess(metadata) {
         var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, false, false, devDir, hostname);
 
         provisionApi.setAuthData(authData, function () {
@@ -249,12 +225,13 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
                     metadata.name = postData.name;
                     metadata.email = email;
 
-                    dataServices.saveFile(devDir + beameUtils.metadataFileName, beameUtils.stringify(metadata));
+                    dataServices.saveFile(devDir + global.metadataFileName, beameUtils.stringify(metadata));
 
                     callback(null, metadata);
                 }
                 else {
-                    console.error(error);
+                    errMsg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.ApiRestError, "developer update profile API error", {"error": error});
+                    console.error(errMsg);
                     callback(error, null);
                 }
             });

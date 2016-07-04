@@ -110,7 +110,7 @@ eventEmitter.on('devCreate', function(){
 
 eventEmitter.on('devGetCert', function(){
 	console.log('{\"devGetCert\":\"running\"}');
-	beameApi.devGetCert.getDevCert(runningParam.devHostname,function(payload){
+	beameApi.devGetCert.getCert(runningParam.devHostname,function(payload){
 		if(payload === null){
 			console.log('{\"devGetCert\":\"failed\"}');
 		}

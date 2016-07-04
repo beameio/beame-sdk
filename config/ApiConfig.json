@@ -14,6 +14,17 @@
             "UpdateProfile": {
                 "endpoint": "/api/v1/dev/profile/update"
             }
+        },
+        "AtomApi": {
+            "CreateAtom": {
+                "endpoint": "/api/v1/dev/app/save"
+            },
+            "GetCert": {
+                "endpoint": "/api/v1/dev/getAppCert"
+            },
+            "UpdateAtom": {
+                "endpoint": "/api/v1/dev/app/{{UID}}/update"
+            }
         }
     }
 }

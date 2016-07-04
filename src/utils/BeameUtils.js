@@ -3,6 +3,8 @@
  */
 
 require('./Globals');
+var _ = require('underscore');
+var dataServices = new (require('../services/DataServices'))();
 
 /**
  * @typedef {Object} AuthData
@@ -36,9 +38,6 @@ require('./Globals');
 var csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
 module.exports = {
-
-    /** @const {String} **/
-    metadataFileName: "metadata.json",
 
     /**
      *
@@ -109,6 +108,33 @@ module.exports = {
         };
     },
 
+    /**
+     * try read metadata file for node
+     * @param {String} devDir
+     * @param {String} hostname
+     * @param {String} module
+     * @returns {Promise.<Object>}
+     */
+    getNodeMetadata: function (devDir, hostname, module) {
+
+        var formatter = this.formatDebugMessage;
+
+        return new Promise(function (resolve, reject) {
+
+            var developerMetadataPath = devDir + global.metadataFileName;
+            var metadata = dataServices.readJSON(developerMetadataPath);
+
+            if (_.isEmpty(metadata)) {
+                var errorJson = formatter(module, global.MessageCodes.MetadataEmpty, "metadata.json for is empty", {"hostname": hostname});
+                console.error(errorJson);
+                reject(errorJson);
+            }
+            else {
+                resolve(metadata);
+            }
+
+        });
+    },
     /**
      *
      * @param {Object} obj

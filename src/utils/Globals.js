@@ -1,6 +1,12 @@
 /**
  * Created by zenit1 on 04/07/2016.
  */
+/** @const {String} **/
+global.metadataFileName = "metadata.json";
+
+/** @const {String} **/
+global.apiUIDTemplatePattern = "{{UID}}";
+
 
 /**
  * Certificate file names
@@ -11,6 +17,11 @@ global.CertFileNames = {
     "X509": "x509.pem",
     "CA": "ca.pem",
     "PKCS7": "pkcs7.pem"
+};
+
+global.authData = {
+   "PK_PATH" : "/authData/pk.pem",
+    "CERT_PATH" : "/authData/x509.pem"
 };
 
 /**
