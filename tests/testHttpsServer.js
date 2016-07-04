@@ -28,17 +28,13 @@ var Server = function(){
 		var edgeHostname = instance.edgeHostname;
 		var proxyUtils = new beame_utils.ProxyUtils();
         
-var path = "/home/zglozman/.beame/r936s7lnbemo1nzb.v1.beameio.net/hl3n9lvol364ptpe.r936s7lnbemo1nzb.v1.beameio.net/civ4z3zzxjtw1tx3.v1.r.d.edge.eu-central-1a-1.v1.beameio.net/zcert.crt";
-
-		var  options = {
+		var options = {
 			key: instance.key,
-			cert: fs.readFileSync(path)+ ""
-//			ca: instance.ca
-//                data.rejectUnauthorized = true;
+			cert: instance.cert
 		};
 		console.log(options.cert);
 		var app = https.createServer(options, function(req, res){
-			res.writeHead(200, {'Content-Type': 'text/html'});
+			res.writeHead(200, {'Content-Type': 'text/plain'});
 			res.end('hello world\n');
 			console.log("returning hello world");
 		});
