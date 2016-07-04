@@ -1,5 +1,5 @@
 var https = require("https");
-var ProxyClient = require("beame-proxy-clients");
+var ProxyClient = require("beame-ssl-proxy-client");
 var beameapi = require("../index.js");
 var beame_utils = require("beame-utils");
 var Server = require('socket.io');
