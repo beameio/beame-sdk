@@ -2,6 +2,8 @@
  * Created by zenit1 on 03/07/2016.
  */
 
+require('./Globals');
+
 /**
  * @typedef {Object} AuthData
  * @property {String} pk => path to file
@@ -21,13 +23,39 @@
  * @property {boolean} answerExpected => if response data expecting from provision
  */
 
+
+/**
+ * @typedef {Object} DebugMessage
+ * @param {String} module
+ * @param {String} code
+ * @param {String} message
+ * @param {Object} data
+ */
+
 /** @const {String} */
 var csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
 module.exports = {
 
     /** @const {String} **/
-    metadataFileName : "metadata.json",
+    metadataFileName: "metadata.json",
+
+    /**
+     *
+     * @param {String} module
+     * @param {String} code
+     * @param {String} message
+     * @param {Object} data
+     * @returns {DebugMessage}
+     */
+    formatDebugMessage: function (module, code, message, data) {
+        return {
+            module: module,
+            code: code,
+            message: message,
+            data: data
+        }
+    },
 
     /**
      *

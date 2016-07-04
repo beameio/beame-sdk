@@ -21,7 +21,7 @@ var DataServices = function () {
  * @param {String} path
  * @returns {boolean}
  */
-DataServices.prototype.isPathExists = function(path){
+DataServices.prototype.isPathExists = function (path) {
     try {
         fs.accessSync(path, fs.F_OK);
         return true;
@@ -36,10 +36,10 @@ DataServices.prototype.isPathExists = function(path){
  * @param {Array} nodeFiles
  * @returns {boolean}
  */
-DataServices.prototype.isNodeFilesExists = function(path,nodeFiles){
+DataServices.prototype.isNodeFilesExists = function (path, nodeFiles) {
     for (var i = 0; i < nodeFiles.length; i++) {
         if (!fs.existsSync(path + nodeFiles[i])) {
-            console.error({"message":"Error! missing: " + path + nodeFiles[i]});
+            console.error({"message": "Error! missing: " + path + nodeFiles[i]});
             //       process.exit(-1);
             return false;
         }
@@ -71,12 +71,12 @@ DataServices.prototype.createDir = function (path) {
  * @param {Array} keys
  * @param {Function} callback
  */
-DataServices.prototype.savePayload =  function (path,payload,keys,callback){
+DataServices.prototype.savePayload = function (path, payload, keys, callback) {
     var self = this;
     var data = {};
 
     for (var i = 0; i < keys.length; i++) {
-        if (payload[keys[i]] !== undefined) {
+        if (payload[keys[i]]) {
             data[keys[i]] = payload[keys[i]];
         }
         else {
@@ -86,7 +86,7 @@ DataServices.prototype.savePayload =  function (path,payload,keys,callback){
         }
     }
 
-    self.saveFile(path,JSON.stringify(data,null,2),callback);
+    self.saveFile(path, JSON.stringify(data, null, 2), callback);
 };
 
 /**
@@ -96,47 +96,53 @@ DataServices.prototype.savePayload =  function (path,payload,keys,callback){
  * @param {Array} keys
  * @param callback
  */
-DataServices.prototype.saveCerts = function(dirPath,payload,keys,callback){
+DataServices.prototype.saveCerts = function (dirPath, payload, keys, callback) {
     for (var i = 0; i < keys.length; i++) {
-        if (payload[keys[i]] != undefined) {
+        if (payload[keys[i]]) {
 
             fs.writeFileSync(dirPath + keys[i] + '.pem', payload[keys[i]]);
         }
         else {
 
-            callback({"message":"Error, missing <" + keys[i] + "> element in provisioning answer"},null);
+            callback({"message": "Error, missing <" + keys[i] + "> element in provisioning answer"}, null);
             return;
         }
     }
 
-    callback && callback(null,payload);
+    callback && callback(null, payload);
 };
 
 /**
  *
  * @param {String} path
  * @param {Object} data
- * @param {Function|null} [callback]
+ * @param {Function|null} [cb]
  */
-DataServices.prototype.saveFile =  function (path, data, callback) {
-    fs.writeFile(path, data, function (error) {
-        if (error) {
-            callback && callback(error, null);
-            return;
-        }
-        callback && callback(null, true);
-    });
+DataServices.prototype.saveFile = function (path, data, cb) {
+    try {
+        fs.writeFileSync(path, data);
+        cb && cb(null, true);
+    }
+    catch (error) {
+        cb && cb(error, null);
+    }
+
 };
 
 /**
  * read JSON file
  * @param {String} path
  */
-DataServices.prototype.readJSON = function(path){
-   if(this.isPathExists(path)){
-       var file = fs.readFileSync(path);
-       return JSON.parse(file);
-   }
+DataServices.prototype.readJSON = function (path) {
+    if (this.isPathExists(path)) {
+        try {
+            var file = fs.readFileSync(path);
+            return JSON.parse(file);
+        }
+        catch (error) {
+            return {};
+        }
+    }
 
     return {};
 };

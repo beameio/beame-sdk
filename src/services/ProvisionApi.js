@@ -50,11 +50,11 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
             payload = JSON.parse(body);
         }
         catch (err) {
-            payload = {updateStatus:'pass'};//body;
+            payload = {updateStatus: 'pass'};//body;
         }
     }
     else {
-        payload = response.statusCode == 200 ? {updateStatus:'pass'} : "empty";
+        payload = response.statusCode == 200 ? {updateStatus: 'pass'} : "empty";
     }
 
 
@@ -63,32 +63,9 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
         callback && callback(null, payload);
     }
     else {
-        callback(body + ':status:' + response.statusCode, null);
+        callback && callback(body + ':status:' + response.statusCode, null);
     }
 
-    // if (response.statusCode == 200) {
-    //     //noinspection JSUnresolvedVariable
-    //     //
-    //
-    //     var resp;
-    //     if (testData.answerExpected) {
-    //         resp = JSON.parse(body);
-    //         if (!resp) {
-    //             console.error('Wrong response from provisioning api(' + type + '):', body);
-    //             throw new Error('Wrong response from provisioning api(' + type + '): ' + JSON.stringify(resp, null, 2));
-    //         }
-    //
-    //         callback(null, resp);
-    //     }
-    //     else {
-    //         var tmpResp = "{\"updateStatus\":\"pass\"}";
-    //         resp = JSON.parse(tmpResp);
-    //         callback(null, resp);
-    //     }
-    // }
-    // else {
-    //     callback(body + ':status:' + response.statusCode, null);
-    // }
 };
 
 var postToProvisionApi = function (url, options, type, callback) {
@@ -117,17 +94,18 @@ var ProvApiService = function () {
 
     /** @member {String} **/
     this.provApiEndpoint = beameUtils.isAmazon() ? provisionSettings.Endpoints.Online : provisionSettings.Endpoints.Local;
-    debug({"message":"Provision Api init with " + this.provApiEndpoint});
+    debug(beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "Provision Api Constructor", {"endpoint": this.provApiEndpoint}));
 
 };
 
 /**
- * 
+ *
  * @param {AuthData} authData
  * @param {Function} cb
  */
 ProvApiService.prototype.setAuthData = function (authData, cb) {
-    debug('reading auth data: pk<' + authData.pk + '> <' + authData.x509 + '>');
+    var errMsg;
+    //debug('reading auth data: pk<' + authData.pk + '> <' + authData.x509 + '>');
     this.options = {
         key: fs.readFileSync(authData.pk),
         cert: fs.readFileSync(authData.x509)
@@ -138,25 +116,28 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
         var cmd = "openssl genrsa 2048";
         if (!authData.generateKeys)
             cmd = "echo \"" + devPK + "\"";
-        debug('generating private key with: ' + cmd);
+
+        debug(beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
+
         var child = exec(cmd, function (error, stdout, stderr) {
             var devPK = stdout;
 //            debug('devPK: '  + devPK);
             if (error !== null) {
-                debug('stderr: ' + stderr);
                 /* -------  put error handler to deal with possible openssl failure -----------*/
-                debug('Failed to generate Private Key: ' + error);
+                debug(beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
+                    "error": error,
+                    "stderr": stderr
+                }));
             }
             //else{//store RSA key in developer data
-            var pkFile = authData.devPath + "private_key.pem";
-            fs.writeFile(pkFile, devPK, function (err) {
-                if (err) {
-                    return debug(err);
-                }
-                //else
+            var pkFile = authData.devPath + global.CertFileNames.PRIVATE_KEY;
+
+            try {
+                fs.writeFileSync(pkFile, devPK);
+
                 cmd = "openssl req -key " + pkFile + " -new -subj \"/" + authData.CSRsubj + "\"";
-                debug('CLI: ' + cmd);
-                try{
+
+                try {
                     child = exec(cmd,
                         /**
                          *
@@ -166,17 +147,30 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
                          */
                         function (error, stdout, stderr) {
                             if (error !== null) {
-                                debug('stderr: ' + stderr);
-                                /* ------------- put error handler to deal with possible openssl failure ---------*/
-                                debug('exec error: ' + error);
+                                errMsg = beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate CSR", {
+                                    "error": error,
+                                    "stderr": stderr
+                                });
+                                console.error(errMsg);
+                                cb && cb(errMsg, null);
                             }
-                            cb && cb(stdout);
+                            else {
+                                cb && cb(stdout);
+                            }
+
                         });
                 }
-                catch(error){
-                    console.error('create developer csr',error);
+                catch (error) {
+                    errMsg = beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
+                    console.error(errMsg);
+                    cb && cb(errMsg, null);
                 }
-            });
+            }
+            catch (error) {
+                errMsg = beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to save Private Key", {"error": error});
+                console.error(errMsg);
+                cb && cb(errMsg, null);
+            }
         });
     }
     else {
