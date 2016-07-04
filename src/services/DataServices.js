@@ -16,6 +16,11 @@ var DataServices = function () {
 
 };
 
+/**
+ * check if directory or file exists
+ * @param {String} path
+ * @returns {boolean}
+ */
 DataServices.prototype.isPathExists = function(path){
     try {
         fs.accessSync(path, fs.F_OK);
@@ -23,6 +28,24 @@ DataServices.prototype.isPathExists = function(path){
     } catch (e) {
         return false;
     }
+};
+
+/**
+ *
+ * @param {String} path
+ * @param {Array} nodeFiles
+ * @returns {boolean}
+ */
+DataServices.prototype.isNodeFilesExists = function(path,nodeFiles){
+    for (var i = 0; i < nodeFiles.length; i++) {
+        if (!fs.existsSync(path + nodeFiles[i])) {
+            console.error({"message":"Error! missing: " + path + nodeFiles[i]});
+            //       process.exit(-1);
+            return false;
+        }
+    }
+
+    return true;
 };
 
 /**
@@ -67,7 +90,7 @@ DataServices.prototype.savePayload =  function (path,payload,keys,callback){
 };
 
 /**
- * 
+ *
  * @param {String} dirPath
  * @param {OrderPemResponse} payload
  * @param {Array} keys
@@ -76,15 +99,16 @@ DataServices.prototype.savePayload =  function (path,payload,keys,callback){
 DataServices.prototype.saveCerts = function(dirPath,payload,keys,callback){
     for (var i = 0; i < keys.length; i++) {
         if (payload[keys[i]] != undefined) {
-             fs.writeFile(dirPath + keys[i] + '.pem', payload[keys[i]]);
+
+            fs.writeFileSync(dirPath + keys[i] + '.pem', payload[keys[i]]);
         }
         else {
-            
+
             callback({"message":"Error, missing <" + keys[i] + "> element in provisioning answer"},null);
             return;
         }
-    }  
-    
+    }
+
     callback && callback(null,payload);
 };
 

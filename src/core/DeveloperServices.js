@@ -14,6 +14,32 @@ var beameUtils = require('../utils/BeameUtils');
 var apiActions =  require('../../config/ApiConfig.json').Actions.DeveloperApi;
 
 //private callbacks
+
+/**
+ * try read metadata file for node
+ * @param {String} devDir
+ * @returns {Promise.<Object>}
+ */
+var getDeveloperMetadata = function(devDir){
+
+
+    return new Promise(function(resolve, reject){
+
+        var developerMetadataPath = devDir + beameUtils.metadataFileName;
+        var metadata = dataServices.readJSON(developerMetadataPath);
+
+        if(_.isEmpty(metadata)){
+            var errorJson = {"message":"metadata.json for " + hostname + " is empty"};
+            console.error(errorJson);
+            reject(errorJson);
+        }
+        else{
+            resolve(metadata);
+        }
+
+    });
+};
+
 /**
  *
  * @param {Object} developerName
@@ -32,12 +58,14 @@ var createDeveloperRequest = function (developerName, cb) {
     provisionApi.runRestfulAPI(apiData, function (error, payload) {
         if (!error) {
 
-            var developersJSONPath = devPath + beameUtils.metadataFileName;
-            var developers = dataServices.readJSON(developersJSONPath);
+            // var developersJSONPath = devPath + beameUtils.metadataFileName;
+            // var developers = dataServices.readJSON(developersJSONPath);
+            //
+            // developers[payload.hostname] = developerName;
+            //
+            // dataServices.saveFile(developersJSONPath,beameUtils.stringify(developers));
 
-            developers[payload.hostname] = developerName;
-
-            dataServices.saveFile(developersJSONPath,beameUtils.stringify(developers));
+            payload.name = developerName;
 
             var devDir = devPath + payload.hostname + '/';
 
@@ -72,33 +100,55 @@ var DeveloperServices = function () {
 };
 
 /**
+ * Register developer => Receive developer Certs => Update developer profile
+ * @param {String} developerName
+ * @param {String} developerEmail
+ * @param {Function} callback
+ */
+DeveloperServices.prototype.createDeveloper = function(developerName,developerEmail,callback){
+    var self = this;
+
+    self.registerDeveloper(developerName,function(error, payload){
+        if(!error){
+            console.log(payload);
+            var hostname = payload.hostname;
+            self.getDevCert(hostname,function(error, payload){
+                if(!error){
+                    console.log(payload);
+                    self.updateProfile(hostname, developerEmail, developerName,function(error, payload){
+                        if(!error){
+                            callback && callback(null,payload);
+                        }
+                        else{
+                            callback && callback(error,null);
+                        }
+                    });
+                }
+                else{
+                    callback && callback(error,null);
+                }
+            });
+        }
+        else{
+            callback && callback(error,null);
+        }
+    });
+};
+
+
+/**
  *
  * @param {String|null|undefined} [developerName]
  * @param {Function} callback
  */
-DeveloperServices.prototype.createDeveloper = function (developerName, callback) {
+DeveloperServices.prototype.registerDeveloper = function (developerName, callback) {
     var self = this;
 
     var authData = beameUtils.getAuthToken(home + "/authData/pk.pem", home + "/authData/x509.pem", false, false);
 
     provisionApi.setAuthData(authData, function () {
 
-        createDeveloperRequest.call(self, developerName, function (error,payload) {
-            if(!error){
-                debug({"message":"Developer " + developerName + "created","data": payload});
-
-                callback(null,payload);
-
-                self.getDevCert(payload.hostname,callback);
-
-                return;
-            }
-
-            callback(error,null);
-        });
-        //callback will return null,null so
-        //nothing special to do here, this is
-        //to use in further activities: update / getCert etc
+        createDeveloperRequest.call(self, developerName, callback);
 
     });
 
@@ -125,56 +175,105 @@ DeveloperServices.prototype.getDevCert = function (hostname, callback) {
     }
 
     /*---------- read developer data and proceed -------------*/
-    var developerMetadataPath = devDir + beameUtils.metadataFileName;
-    var metadata = dataServices.readJSON(developerMetadataPath);
 
-    if(_.isEmpty(metadata)){
-        errorJson = {"message":"metadata.json for " + hostname + " is empty"};
-        console.error(errorJson);
-        callback && callback(errorJson,null);
+    getDeveloperMetadata(devDir).then(function onSuccess(metadata){
+        /*----------- generate RSA key + csr and post to provision ---------*/
+        var authData = beameUtils.getAuthToken(home + "/authData/pk.pem", home + "/authData/x509.pem", true, true, devDir, hostname);
 
-    }
+        provisionApi.setAuthData(authData, function (csr) {
+            if (csr != null) {
 
-    /*----------- generate RSA key + csr and post to provision ---------*/
-    var authData = beameUtils.getAuthToken(home + "/authData/pk.pem", home + "/authData/x509.pem", true, true, devDir, hostname);
+                var postData = {
+                    csr: csr,
+                    uid: metadata.uid
+                };
 
-    provisionApi.setAuthData(authData, function (csr) {
-        if (csr != null) {
+                var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
 
-            var postData = {
-                csr: csr,
-                uid: metadata.uid
-            };
+                provisionApi.runRestfulAPI(apiData, function (error, payload) {
+                    if (!error) {
 
-            var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
-
-            provisionApi.runRestfulAPI(apiData, function (error, payload) {
-                if (!error) {
-
-                    dataServices.saveCerts(devDir,payload,responseKeys.CertificateResponseKeys,function(error){
-                        if(!error){
-                            callback &&  callback(null,payload);
-                        }
-                        else {
-                            callback &&  callback(error,null);
-                        }
-                    });
-                }
-                else {
-                    errorJson = {"message":"CSR for " + hostname + " failed"};
-                    console.error(errorJson);
-                    callback(errorJson,null);
-                }
-            });
-        }
-        else{
-            errorJson = {"message":"CSR for " + hostname + " failed"};
-            console.error(errorJson);
-            callback && callback(errorJson,null);
-        }
+                        dataServices.saveCerts(devDir,payload,responseKeys.CertificateResponseKeys,function(error){
+                            if(!error){
+                                callback &&  callback(null,payload);
+                            }
+                            else {
+                                callback &&  callback(error,null);
+                            }
+                        });
+                    }
+                    else {
+                        errorJson = {"message":"CSR for " + hostname + " failed"};
+                        console.error(errorJson);
+                        callback(errorJson,null);
+                    }
+                });
+            }
+            else{
+                errorJson = {"message":"CSR for " + hostname + " failed"};
+                console.error(errorJson);
+                callback && callback(errorJson,null);
+            }
+        });
+    },function onError(error){
+       callback(error,null);
     });
+
+
 };
 
+/**
+ *
+ * @param {String} hostname => developer hostname
+ * @param {String} email
+ * @param {String|null|undefined} [name]
+ * @param {Function} callback
+ */
+DeveloperServices.prototype.updateProfile = function (hostname, email, name, callback) {
 
+    /*---------- check if developer exists -------------------*/
+    var devDir = devPath + hostname + "/";
+
+    if(!dataServices.isNodeFilesExists(devDir,responseKeys.NodeFiles)){
+        callback && callback({"message":"developer files not found"},null);
+        return;
+    }
+
+    /*---------- read developer data and proceed -------------*/
+    getDeveloperMetadata(devDir).then(function onSuccess(metadata){
+        var authData = beameUtils.getAuthToken(devDir + "private_key.pem",devDir + "x509.pem",false,false,devDir,hostname);
+
+        provisionApi.setAuthData(authData, function () {
+
+            var postData = {
+                email: email,
+                name: name ? name : metadata.name
+            };
+
+            var apiData = beameUtils.getApiData(apiActions.UpdateProfile.endpoint, postData, false);
+
+
+            provisionApi.runRestfulAPI(apiData, function (error) {
+                if (!error) {
+                    /*---------- update metadata -------------*/
+                    metadata.name  = postData.name;
+                    metadata.email = email;
+
+                    dataServices.saveFile(devDir + beameUtils.metadataFileName,beameUtils.stringify(metadata));
+
+                    callback(null,metadata);
+                }
+                else {
+                   console.error(error);
+                    callback(error,null);
+                }
+            });
+        });
+
+    },function onError(error){
+        callback(error,null);
+    });
+
+};
 
 module.exports = DeveloperServices;

@@ -1,17 +1,18 @@
 {
-
-    "Endpoints" : {
-        "Local" : "https://zenit.office.beameio.net",
-        "Online" : "https://prov-staging.beameio.net"
+    "Endpoints": {
+        "Local": "https://zenit.office.beameio.net",
+        "Online": "https://prov-staging.beameio.net"
     },
-
-    "Actions" : {
+    "Actions": {
         "DeveloperApi": {
             "CreateDeveloper": {
                 "endpoint": "/api/v1/dev/create"
             },
             "GetCert": {
                 "endpoint": "/api/v1/dev/getCert"
+            },
+            "UpdateProfile": {
+                "endpoint": "/api/v1/dev/profile/update"
             }
         }
     }

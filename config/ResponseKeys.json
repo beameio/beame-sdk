@@ -1,5 +1,5 @@
 {
-    "DeveloperCreateResponseKeys": ["hostname", "uid"],
+    "NodeFiles" : ["metadata.json", "x509.pem", "ca.pem", "private_key.pem", "pkcs7.pem"],
+    "DeveloperCreateResponseKeys": ["hostname", "uid","name"],
     "CertificateResponseKeys" : ["x509", "pkcs7", "ca"]
-
 }

@@ -5,8 +5,7 @@
 
 var developerServices = new(require('../../src/core/DeveloperServices'))();
 
-
-developerServices.createDeveloper('huy',function(error,payload){
+developerServices.createDeveloper('Serge', 's@beame.io',function(error, payload){
     if(!error){
         console.log(payload);
     }
@@ -14,3 +13,6 @@ developerServices.createDeveloper('huy',function(error,payload){
         console.error(error);
     }
 });
+
+
+
