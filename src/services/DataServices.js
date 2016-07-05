@@ -1,6 +1,8 @@
 /**
  * Created by zenit1 on 03/07/2016.
  */
+'use strict';
+require('../utils/Globals');
 var debug = require("debug")("./src/services/DataServices.js");
 var fs = require('fs');
 var exec = require('child_process').exec;
@@ -44,13 +46,17 @@ DataServices.prototype.isPathExists = function (path) {
  *
  * @param {String} path
  * @param {Array} nodeFiles
+ * @param {String} module
  * @returns {boolean}
  */
-DataServices.prototype.isNodeFilesExists = function (path, nodeFiles) {
+DataServices.prototype.isNodeFilesExists = function (path, nodeFiles, module) {
+    var self = this;
     for (var i = 0; i < nodeFiles.length; i++) {
-        if (!fs.existsSync(path + nodeFiles[i])) {
-            console.error({"message": "Error! missing: " + path + nodeFiles[i]});
-            //       process.exit(-1);
+        if (!self.isPathExists(path + nodeFiles[i])) {
+            console.error(global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, "cert missing", {
+                "path": path,
+                "file": nodeFiles[i]
+            }));
             return false;
         }
     }
@@ -64,12 +70,9 @@ DataServices.prototype.isNodeFilesExists = function (path, nodeFiles) {
  */
 DataServices.prototype.createDir = function (path) {
     try {
-        if (fs.lstatSync(path)) {
-            debug("Directory for developer already exists");
-        }
+        fs.accessSync(path, fs.F_OK);
     }
     catch (e) {
-        debug("Dev path ", path);
         fs.mkdirSync(path);
     }
 };
@@ -85,7 +88,7 @@ DataServices.prototype.createDir = function (path) {
 DataServices.prototype.savePayload = function (path, payload, keys, level, callback) {
     var self = this;
     var data = {
-        "level" : level
+        "level": level
     };
 
     for (var i = 0; i < keys.length; i++) {
@@ -93,8 +96,12 @@ DataServices.prototype.savePayload = function (path, payload, keys, level, callb
             data[keys[i]] = payload[keys[i]];
         }
         else {
-            debug('Error, missing <' + keys[i] + '> element in provisioning answer');
-            callback(null);
+            var errMsg = global.formatDebugMessage(level, global.MessageCodes.InvalidPayload, "payload key missing", {
+                "payload": payload,
+                "key": keys[i]
+            });
+            console.error(errMsg);
+            callback(errMsg, null);
             return;
         }
     }

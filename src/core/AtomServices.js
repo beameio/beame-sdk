@@ -1,11 +1,11 @@
 /**
  * Created by zenit1 on 04/07/2016.
  */
+'use strict';
+require('../utils/Globals');
 var debug = require("debug")("./src/services/AtomServices.js");
 var _ = require('underscore');
-var os = require('os');
-var home = os.homedir();
-var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var devPath = global.devPath;
 
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
@@ -149,7 +149,9 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
                         if (!callback) return;
 
                         if (!error) {
-                            callback(null, payload);
+                            beameUtils.getNodeMetadata(devAppDir, payload.hostname, global.AppModules.Atom).then(function(metadata){
+                                callback(null, metadata);
+                            }, callback);
                         }
                         else {
                             callback(error, null);
@@ -157,6 +159,7 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
                     });
                 }
                 else {
+                    error.data.hostname = developerHostname;
                     console.error(error);
                     callback(error, null);
                 }
@@ -198,17 +201,23 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
 
                 var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
 
-                provisionApi.runRestfulAPI(apiData, function (error, payload) {
-                    if (!error) {
+                provisionApi.runRestfulAPI(apiData,
+                    /**
+                     * @param {DebugMessage} error
+                     * @param {Object} payload
+                     */
+                    function (error, payload) {
+                        if (!error) {
 
-                        dataServices.saveCerts(devAppDir, payload, callback);
-                    }
-                    else {
-                        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.ApiRestError, "atom get cert api error", {"hostname": appHostname});
-                        console.error(errMsg);
-                        callback(errMsg, null);
-                    }
-                });
+                            dataServices.saveCerts(devAppDir, payload, callback);
+                        }
+                        else {
+                            //noinspection JSUnresolvedVariable
+                            error.data.hostname = appHostname;
+                            console.error(error);
+                            callback(error, null);
+                        }
+                    });
             }
             else {
                 errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": hostname});
@@ -256,9 +265,9 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
                     callback && callback(null, metadata);
                 }
                 else {
-                    errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.ApiRestError, "atom update  API error", {"error": error});
-                    console.error(errMsg);
-                    callback && callback(errMsg, null);
+                    error.data.hostname = appHostname;
+                    console.error(error);
+                    callback && callback(error, null);
                 }
             });
         });

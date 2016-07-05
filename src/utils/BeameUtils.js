@@ -1,7 +1,7 @@
 /**
  * Created by zenit1 on 03/07/2016.
  */
-
+'use strict';
 require('./Globals');
 var request = require('request');
 var _ = require('underscore');
@@ -157,9 +157,9 @@ module.exports = {
                 }
                 else {
 
-                    var errorJson = formatter(module, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
-                    console.error(errorJson);
-                    reject(errorJson);
+                    var errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
+                    console.error(errMsg);
+                    reject(errMsg);
 
                 }
             });
@@ -242,7 +242,7 @@ module.exports = {
 
         return new Promise(function (resolve, reject) {
 
-            if (!dataServices.isNodeFilesExists(path, nodeFiles)) {
+            if (!dataServices.isNodeFilesExists(path, nodeFiles, module)) {
                 var errMsg = global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, nodeLevel + "files not found", {
                     "level": nodeLevel,
                     "hostname": hostname

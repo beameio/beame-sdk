@@ -9,7 +9,8 @@ var edgeClientServices = new(require('../../src/core/EdgeClientServices'))();
 var createEdgeClient = function (devHostname,appHostName) {
     edgeClientServices.createEdgeClient(devHostname,appHostName,function(error,payload){
         if(!error){
-            console.log('/**********Create Edge Client Response***********/',payload);
+            console.log('/**********Create Edge Client Response***********/');
+            console.log(payload);
         }
         else{
             console.error(error);
@@ -20,7 +21,8 @@ var createEdgeClient = function (devHostname,appHostName) {
 var createAtom = function(devHostname){
     atomServices.createAtom(devHostname,'satom',function(error,payload){
         if(!error){
-            console.log('/**********Create Atom Response***********/',payload);
+            console.log('/**********Create Atom Response***********/');
+            console.log(payload);
             var appHostname = payload.hostname;
             createEdgeClient(devHostname,appHostname);
         }
@@ -33,7 +35,8 @@ var createAtom = function(devHostname){
 var createDeveloper = function(){
     developerServices.createDeveloper('SergeD', 'sd@beame.io',function(error, payload){
         if(!error){
-            console.log('/**********Create Developer Response***********/',payload);
+            console.log('/**********Create Developer Response***********/');
+            console.log(payload);
             var developerHostname = payload.hostname;
             createAtom(developerHostname);
         }

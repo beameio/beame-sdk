@@ -1,11 +1,11 @@
 /**
  * Created by zenit1 on 04/07/2016.
  */
+'use strict';
+require('../utils/Globals');
 var debug = require("debug")("./src/services/EdgeClientServices.js");
 var _ = require('underscore');
-var os = require('os');
-var home = os.homedir();
-var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var devPath = global.devPath;
 
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
@@ -64,7 +64,7 @@ var isEdgeHostValid = function (hostname) {
  * @param {boolean} validateEdgeHostname
  * @returns {Promise}
  */
-var isRequestValid = function (developerHostname, appHostname, edgeHostname, devDir, devAppDir, edgeClientDir ,validateEdgeHostname) {
+var isRequestValid = function (developerHostname, appHostname, edgeHostname, devDir, devAppDir, edgeClientDir, validateEdgeHostname) {
 
     return new Promise(function (resolve, reject) {
 
@@ -182,7 +182,9 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
                     if (!callback) return;
 
                     if (!error) {
-                        callback(null, payload);
+                        beameUtils.getNodeMetadata(edgeClientDir, payload.hostname, global.AppModules.EdgeClient).then(function(metadata){
+                            callback(null, metadata);
+                        }, callback);
                     }
                     else {
                         callback(error, null);
@@ -191,8 +193,8 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
 
             }
             else {
-                errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.ApiRestError, "create edge client  API error", {"error": error});
-                console.error(errMsg);
+                error.data.hostname = appHostname;
+                console.error(error);
                 callback && callback(errMsg, null);
             }
         });
@@ -203,7 +205,7 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
         var authData = beameUtils.getAuthToken(devAppDir + global.CertFileNames.PRIVATE_KEY, devAppDir + global.CertFileNames.X509, false, false, devAppDir, appHostname);
 
         provisionApi.setAuthData(authData, function () {
-            beameUtils.selectBestProxy(global.loadBalancerEdnpoint).then(onEdgeServerSelected,onEdgeSelectionError);
+            beameUtils.selectBestProxy(global.loadBalancerEdnpoint).then(onEdgeServerSelected, onEdgeSelectionError);
         });
     }
 
@@ -246,8 +248,8 @@ EdgeClientServices.prototype.getCert = function (developerHostname, appHostname,
                         dataServices.saveCerts(edgeClientDir, payload, callback);
                     }
                     else {
-                        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.ApiRestError, "atom get cert api error", {"hostname": edgeHostname});
-                        console.error(errMsg);
+                        error.data.hostname = edgeHostname;
+                        console.error(error);
                         callback(errMsg, null);
                     }
                 });
