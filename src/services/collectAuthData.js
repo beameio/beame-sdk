@@ -5,9 +5,7 @@ var _=require('underscore');
 var os = require('os'); 
 var debug = require("debug")("collectauthdata");
 require('./../utils/Globals');
-
-
-var beameDir = "";
+var jmespath = require('jmespath');
 
 
 function makepath(){
@@ -53,30 +51,23 @@ function readBeameDir(startdir, start){
 	}
 
 	_.each(subfolders, function(dir) {
-		debug('found subdir ');
-//		_.each(getDirectories(makepath(startdir, dir)), function(dirs){
+		debug('found subdir ' + startdir);
 		var deeperLevel = readBeameDir(makepath(startdir, dir), false);
 		if (start) {
 			if(!currentLevelData[deeperLevel.metadata.level])
 				currentLevelData[deeperLevel.metadata.level] = [];
 			currentLevelData[deeperLevel.metadata.level].push(deeperLevel);
-			//currentLevelData[deeperLevel.metadata.hostname].push(deeperLevel);;
-			//currentLevelData[]
 		}
 		else {
 			if(!currentLevelData[deeperLevel.metadata.level])
 				currentLevelData[deeperLevel.metadata.level] = {};
 			currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname] = deeperLevel;
 			//currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname].push(deeperLevel);
-			//	currentLevelData.next = deeperLevel;
-			//}
-			//return beameDir;
 		}
-//		});
 	});
 	return currentLevelData;
 };
 
 var tree = readBeameDir("", true);
-console.log(JSON.stringify(tree, "", 2));
+console.log(jmespath.search(tree, "Developer[*]"));
 //scanBeameDir(os.homedir()+'/.beame/');
