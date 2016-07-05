@@ -17,6 +17,7 @@ var parametersSchema = {
 	},
 	'format': {
 		required: false,
+		options: ['text', 'json'],
 		default: 'text'
 	}
 };
@@ -38,7 +39,7 @@ function main() {
 		throw new Error("Command '"+cmdName+"' not found. Valid top-level commands are: " + _.keys(commands));
 	}
 
-	if(typeof commands[cmdName][subCmdName] !== 'function') {
+	if(!commands[cmdName][subCmdName]) {
 		throw new Error("Sub-command '"+subCmdName+"' for command '"+cmdName+"' not found. Valid sub-commands are: " + _.keys(commands[cmdName]));
 	}
 
