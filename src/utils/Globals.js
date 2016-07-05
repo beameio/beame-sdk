@@ -24,7 +24,7 @@ global.__homedir = home;
  * @param {Object} data
  * @returns {typeof DebugMessage}
  */
-global.formatDebugMessage =function (module, code, message, data) {
+global.formatDebugMessage = function (module, code, message, data) {
 
     return {
         module: module,
@@ -34,6 +34,8 @@ global.formatDebugMessage =function (module, code, message, data) {
     };
 };
 
+/** @const {String} */
+global.csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
 /** @const {String} **/
 global.metadataFileName = "metadata.json";
@@ -54,8 +56,8 @@ global.CertFileNames = {
     "CA": "ca.pem",
     "PKCS7": "pkcs7.pem",
     "P7B": "p7b.cer",
-    "PKCS12" : "cert.pfx",
-    "PWD" : "pwd.txt"
+    "PKCS12": "cert.pfx",
+    "PWD": "pwd.txt"
 };
 
 /**
@@ -64,13 +66,13 @@ global.CertFileNames = {
  */
 global.CertRespponseFields = {
     "x509": "x509",
-    "pkcs7" : "pkcs7",
+    "pkcs7": "pkcs7",
     "ca": "ca"
 };
 
 global.authData = {
-   "PK_PATH" : "/authData/pk.pem",
-    "CERT_PATH" : "/authData/x509.pem"
+    "PK_PATH": "/authData/pk.pem",
+    "CERT_PATH": "/authData/x509.pem"
 };
 
 /**
@@ -90,16 +92,16 @@ global.AppModules = {
  *  @enum {string}
  */
 global.MessageCodes = {
-    "DebugInfo" : "DebugInfo",
-    "EdgeLbError" : "EdgeLbError",
-    "OpenSSLError" : "OpenSSLError",
-    "ApiRestError" : "ApiRestError",
-    "HostnameRequired" : "HostnameRequired",
-    "MetadataEmpty" : "MetadataEmpty",
-    "NodeFolderNotExists" : "NodeFolderNotExists",
-    "NodeFilesMissing" : "NodeFilesMissing",
-    "CSRCreationFailed" : "CSRCreationFailed",
-    "InvalidPayload" : "InvalidPayload"
+    "DebugInfo": "DebugInfo",
+    "EdgeLbError": "EdgeLbError",
+    "OpenSSLError": "OpenSSLError",
+    "ApiRestError": "ApiRestError",
+    "HostnameRequired": "HostnameRequired",
+    "MetadataEmpty": "MetadataEmpty",
+    "NodeFolderNotExists": "NodeFolderNotExists",
+    "NodeFilesMissing": "NodeFilesMissing",
+    "CSRCreationFailed": "CSRCreationFailed",
+    "InvalidPayload": "InvalidPayload"
 };
 
 /**
@@ -156,9 +158,9 @@ global.AwsRegions = [
 
 
 global.ResponseKeys = {
-    "NodeFiles" : [global.metadataFileName, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509, global.CertFileNames.CA,  global.CertFileNames.PKCS7, global.CertFileNames.P7B, global.CertFileNames.PKCS12 , global.CertFileNames.PWD],
-    "DeveloperCreateResponseKeys": ["hostname", "uid","name"],
-    "AtomCreateResponseKeys": ["hostname", "uid","name"],
-    "EdgeClientResponseKeys" : ["uid", "hostname","edgeHostname"],
-    "CertificateResponseKeys" : ["x509", "pkcs7", "ca"]
+    "NodeFiles": [global.metadataFileName, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509, global.CertFileNames.CA, global.CertFileNames.PKCS7, global.CertFileNames.P7B, global.CertFileNames.PKCS12, global.CertFileNames.PWD],
+    "DeveloperCreateResponseKeys": ["hostname", "uid", "name"],
+    "AtomCreateResponseKeys": ["hostname", "uid", "name"],
+    "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname"],
+    "CertificateResponseKeys": ["x509", "pkcs7", "ca"]
 };

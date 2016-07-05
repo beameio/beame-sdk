@@ -13,53 +13,6 @@ var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.DeveloperApi;
 
-//private methods
-
-/**
- *
- * @param {Object} developerName
- * @param {Function} cb
- * @this {DeveloperServices}
- */
-var createDeveloperRequest = function (developerName, cb) {
-
-    var postData = {
-        name: developerName
-    };
-
-    var apiData = beameUtils.getApiData(apiActions.CreateDeveloper.endpoint, postData, true);
-
-    provisionApi.runRestfulAPI(apiData, function (error, payload) {
-        if (!error) {
-
-            payload.name = developerName;
-
-            var devDir = devPath + payload.hostname + '/';
-
-            dataServices.createDir(devDir);
-
-            dataServices.savePayload(devDir + global.metadataFileName, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
-                if (!cb) return;
-
-                if (!error) {
-                    beameUtils.getNodeMetadata(devDir, payload.hostname, global.AppModules.Developer).then(function(metadata){
-                        cb(null, metadata);
-                    }, cb);
-                }
-                else {
-                    cb(error, null);
-                }
-            });
-
-        }
-        else {
-            console.error(error);
-            cb && cb(error, null);
-        }
-
-    });
-};
-
 
 /**
  * Developer services
@@ -111,13 +64,42 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
  * @param {Function} callback
  */
 DeveloperServices.prototype.registerDeveloper = function (developerName, callback) {
-    var self = this;
 
-    var authData = beameUtils.getAuthToken(homedir + global.authData.PK_PATH, homedir + global.authData.CERT_PATH, false, false);
+    provisionApi.setAuthData(beameUtils.getAuthToken(homedir + global.authData.PK_PATH, homedir + global.authData.CERT_PATH));
 
-    provisionApi.setAuthData(authData, function () {
+    var postData = {
+        name: developerName
+    };
 
-        createDeveloperRequest.call(self, developerName, callback);
+    var apiData = beameUtils.getApiData(apiActions.CreateDeveloper.endpoint, postData, true);
+
+    provisionApi.runRestfulAPI(apiData, function (error, payload) {
+        if (!error) {
+
+            payload.name = developerName;
+
+            var devDir = devPath + payload.hostname + '/';
+
+            dataServices.createDir(devDir);
+
+            dataServices.savePayload(devDir + global.metadataFileName, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
+                if (!callback) return;
+
+                if (!error) {
+                    beameUtils.getNodeMetadata(devDir, payload.hostname, global.AppModules.Developer).then(function (metadata) {
+                        callback(null, metadata);
+                    }, callback);
+                }
+                else {
+                    callback(error, null);
+                }
+            });
+
+        }
+        else {
+            console.error(error);
+            callback && callback(error, null);
+        }
 
     });
 
@@ -132,21 +114,20 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
     var errMsg;
     var devDir = devPath + hostname + "/";
 
-    if (!hostname) {
+    if (_.isEmpty(hostname)) {
         errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        debug(errMsg);
-
+        console.error(errMsg);
         callback && callback(errMsg, null);
         return;
     }
 
     /*---------- private callbacks -------------------*/
-    function onMetaInfoReceived(metadata) {
-        /*----------- generate RSA key + csr and post to provision ---------*/
-        var authData = beameUtils.getAuthToken(homedir + global.authData.PK_PATH, homedir + global.authData.CERT_PATH, true, true, devDir, hostname);
+    function onMetadataReceived(metadata) {
 
-        provisionApi.setAuthData(authData, function (csr) {
-            if (!_.isEmpty(csr)) {
+        dataServices.createCSR(devDir, hostname).then(
+            function onCsrCreated(csr) {
+
+                provisionApi.setAuthData(beameUtils.getAuthToken(homedir + global.authData.PK_PATH, homedir + global.authData.CERT_PATH));
 
                 var postData = {
                     csr: csr,
@@ -166,18 +147,17 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
                         callback(error, null);
                     }
                 });
-            }
-            else {
-                errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": hostname});
-                console.error(errMsg);
-                callback && callback(errMsg, null);
-            }
-        });
+
+            },
+            function onCsrCreationFailed(error) {
+                console.error(error);
+                callback && callback(error, null);
+            });
     }
 
     function onPathValidated() {
         /*---------- read developer data and proceed -------------*/
-        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetaInfoReceived, onValidationError);
+        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
     }
 
     function onValidationError(error) {
@@ -195,39 +175,37 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
  * @param {Function} callback
  */
 DeveloperServices.prototype.updateProfile = function (hostname, email, name, callback) {
-    var errMsg;
     var devDir = devPath + hostname + "/";
 
     /*---------- private callbacks -------------------*/
     function onMetaInfoReceived(metadata) {
-        var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, false, false, devDir, hostname);
 
-        provisionApi.setAuthData(authData, function () {
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509));
 
-            var postData = {
-                email: email,
-                name: name ? name : metadata.name
-            };
+        var postData = {
+            email: email,
+            name: name ? name : metadata.name
+        };
 
-            var apiData = beameUtils.getApiData(apiActions.UpdateProfile.endpoint, postData, false);
+        var apiData = beameUtils.getApiData(apiActions.UpdateProfile.endpoint, postData, false);
 
-            provisionApi.runRestfulAPI(apiData, function (error) {
-                if (!error) {
-                    /*---------- update metadata -------------*/
-                    metadata.name = postData.name;
-                    metadata.email = email;
+        provisionApi.runRestfulAPI(apiData, function (error) {
+            if (!error) {
+                /*---------- update metadata -------------*/
+                metadata.name = postData.name;
+                metadata.email = email;
 
-                    dataServices.saveFile(devDir + global.metadataFileName, beameUtils.stringify(metadata));
+                dataServices.saveFile(devDir + global.metadataFileName, beameUtils.stringify(metadata));
 
-                    callback(null, metadata);
-                }
-                else {
-                    error.data.hostname = hostname;
-                    console.error(error);
-                    callback(error, null);
-                }
-            });
+                callback(null, metadata);
+            }
+            else {
+                error.data.hostname = hostname;
+                console.error(error);
+                callback(error, null);
+            }
         });
+
 
     }
 

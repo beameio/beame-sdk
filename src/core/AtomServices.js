@@ -125,45 +125,42 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
     var devDir = devPath + developerHostname + "/";
 
     /*---------- private callbacks -------------------*/
-    function onRequestValidated(metadata) {
-        var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, false, false, devDir, metadata.hostname);
+    function onRequestValidated() {
 
-        provisionApi.setAuthData(authData, function () {
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509));
 
-            var postData = {
-                name: appName
-            };
+        var postData = {
+            name: appName
+        };
 
-            var apiData = beameUtils.getApiData(apiActions.CreateAtom.endpoint, postData, false);
+        var apiData = beameUtils.getApiData(apiActions.CreateAtom.endpoint, postData, false);
 
+        provisionApi.runRestfulAPI(apiData, function (error, payload) {
+            if (!error) {
+                payload.name = appName;
 
-            provisionApi.runRestfulAPI(apiData, function (error, payload) {
-                if (!error) {
-                    payload.name = appName;
+                var devAppDir = devDir + payload.hostname + '/';
 
-                    var devAppDir = devDir + payload.hostname + '/';
+                dataServices.createDir(devAppDir);
 
-                    dataServices.createDir(devAppDir);
+                dataServices.savePayload(devAppDir + global.metadataFileName, payload, global.ResponseKeys.AtomCreateResponseKeys, global.AppModules.Atom, function (error) {
+                    if (!callback) return;
 
-                    dataServices.savePayload(devAppDir + global.metadataFileName, payload, global.ResponseKeys.AtomCreateResponseKeys, global.AppModules.Atom, function (error) {
-                        if (!callback) return;
-
-                        if (!error) {
-                            beameUtils.getNodeMetadata(devAppDir, payload.hostname, global.AppModules.Atom).then(function(metadata){
-                                callback(null, metadata);
-                            }, callback);
-                        }
-                        else {
-                            callback(error, null);
-                        }
-                    });
-                }
-                else {
-                    error.data.hostname = developerHostname;
-                    console.error(error);
-                    callback(error, null);
-                }
-            });
+                    if (!error) {
+                        beameUtils.getNodeMetadata(devAppDir, payload.hostname, global.AppModules.Atom).then(function (metadata) {
+                            callback(null, metadata);
+                        }, callback);
+                    }
+                    else {
+                        callback(error, null);
+                    }
+                });
+            }
+            else {
+                error.data.hostname = developerHostname;
+                console.error(error);
+                callback(error, null);
+            }
         });
 
     }
@@ -182,17 +179,16 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
  * @param {Function} callback
  */
 AtomServices.prototype.getCert = function (developerHostname, appHostname, callback) {
-    var errMsg;
     var devDir = devPath + developerHostname + "/";
     var devAppDir = devDir + appHostname + "/";
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated(metadata) {
-        /*----------- generate RSA key + csr and post to provision ---------*/
-        var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, true, true, devAppDir, appHostname);
 
-        provisionApi.setAuthData(authData, function (csr) {
-            if (!_.isEmpty(csr)) {
+        dataServices.createCSR(devAppDir, appHostname).then(
+            function onCsrCreated(csr) {
+
+                provisionApi.setAuthData(beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509));
 
                 var postData = {
                     csr: csr,
@@ -218,13 +214,12 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
                             callback(error, null);
                         }
                     });
-            }
-            else {
-                errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": hostname});
-                console.error(errMsg);
-                callback && callback(errMsg, null);
-            }
-        });
+
+            },
+            function onCsrCreationFailed(error) {
+                console.error(error);
+                callback && callback(error, null);
+            });
     }
 
     function onValidationError(error) {
@@ -243,34 +238,33 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
  * @param {Function} callback
  */
 AtomServices.prototype.updateAtom = function (developerHostname, appHostname, appName, callback) {
-    var errMsg;
     var devDir = devPath + developerHostname + "/";
     var devAppDir = devDir + appHostname + "/";
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated(metadata) {
-        var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, false, false, devDir, developerHostname);
 
-        provisionApi.setAuthData(authData, function () {
-            var postData = {
-                name: appName
-            };
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509));
 
-            var apiData = beameUtils.getApiData(apiActions.UpdateAtom.endpoint.replace(global.apiUIDTemplatePattern, metadata.uid), postData, false);
+        var postData = {
+            name: appName
+        };
 
-            provisionApi.runRestfulAPI(apiData, function (error) {
-                if (!error) {
-                    metadata.name = appName;
-                    dataServices.saveFile(devAppDir + global.metadataFileName, beameUtils.stringify(metadata));
-                    callback && callback(null, metadata);
-                }
-                else {
-                    error.data.hostname = appHostname;
-                    console.error(error);
-                    callback && callback(error, null);
-                }
-            });
+        var apiData = beameUtils.getApiData(apiActions.UpdateAtom.endpoint.replace(global.apiUIDTemplatePattern, metadata.uid), postData, false);
+
+        provisionApi.runRestfulAPI(apiData, function (error) {
+            if (!error) {
+                metadata.name = appName;
+                dataServices.saveFile(devAppDir + global.metadataFileName, beameUtils.stringify(metadata));
+                callback && callback(null, metadata);
+            }
+            else {
+                error.data.hostname = appHostname;
+                console.error(error);
+                callback && callback(error, null);
+            }
         });
+
     }
 
     function onValidationError(error) {
