@@ -22,6 +22,14 @@ var parametersSchema = {
 	}
 };
 
+// http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
+function InvalidArgv(message) {
+	this.name = 'InvalidArgv';
+	this.message = message;
+}
+
+InvalidArgv.prototype = Error.prototype;
+
 function getParamsNames(fun) {
 	var names = fun.toString().match(/^[\s\(]*function[^(]*\(([^)]*)\)/)[1]
 		.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
@@ -36,15 +44,41 @@ function main() {
 	var cmd = commands[cmdName];
 
 	if(!cmd) {
-		throw new Error("Command '"+cmdName+"' not found. Valid top-level commands are: " + _.keys(commands));
+		throw new InvalidArgv("Command '" + cmdName + "' not found. Valid top-level commands are: " + _.keys(commands));
 	}
 
 	if(!commands[cmdName][subCmdName]) {
-		throw new Error("Sub-command '"+subCmdName+"' for command '"+cmdName+"' not found. Valid sub-commands are: " + _.keys(commands[cmdName]));
+		throw new InvalidArgv("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + _.keys(commands[cmdName]));
 	}
 
+	// TODO: handle boolean such as in "--fqdn --some-other-switch" or "--no-fqdn"
+	// Validate argv and build arguments for the function
 	var paramsNames = getParamsNames(commands[cmdName][subCmdName]);
-	var args = _.map(paramsNames, function(paramName) { return argv[paramName]; });
+	var args = _.map(paramsNames, function(paramName) {
+
+		// Required parameter missing
+		if(parametersSchema[paramName].required && !_.has(argv, paramName)) {
+			throw new InvalidArgv("Command '" + cmdName + ' ' + subCmdName + "' - required argument '" + paramName + "' is missing.");
+		}
+
+		// Optional parameter missing
+		if(!parametersSchema[paramName].required && !_.has(argv, paramName)) {
+			if(parametersSchema[paramName].default) {
+				return parametersSchema[paramName].default;
+			}
+			return null;
+		}
+
+		// Parameter must be one of the specified values ("options")
+		if(parametersSchema[paramName].options) {
+			if(_.indexOf(parametersSchema[paramName].options, argv[paramName]) == -1) {
+				throw new InvalidArgv("Command '" + cmdName + ' ' + subCmdName + "' - argument '" + paramName + "' must be one of: " + parametersSchema[paramName].options.join(','));
+			}
+		}
+		return argv[paramName];
+	});
+
+	// Run the command
 	commands[cmdName][subCmdName].apply(null, args);
 }
 
