@@ -18,20 +18,20 @@ var createEdgeClient = function (devHostname,appHostName) {
 };
 
 var createAtom = function(devHostname){
-    atomServices.createAtom(devHostname,'appa-ahuyapa',function(error,payload){
+    atomServices.createAtom(devHostname,'satom',function(error,payload){
         if(!error){
-            console.log('/**********Create Developer Response***********/',payload);
+            console.log('/**********Create Atom Response***********/',payload);
             var appHostname = payload.hostname;
             createEdgeClient(devHostname,appHostname);
         }
         else{
             console.error(error);
         }
-    });  
+    });
 };
 
 var createDeveloper = function(){
-    developerServices.createDeveloper('Serge', 's@beame.io',function(error, payload){
+    developerServices.createDeveloper('SergeD', 'sd@beame.io',function(error, payload){
         if(!error){
             console.log('/**********Create Developer Response***********/',payload);
             var developerHostname = payload.hostname;
@@ -40,7 +40,7 @@ var createDeveloper = function(){
         else{
             console.error(error);
         }
-    }); 
+    });
 };
 
 createDeveloper();

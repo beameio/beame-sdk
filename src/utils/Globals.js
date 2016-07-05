@@ -146,3 +146,12 @@ global.AwsRegions = [
         "Code": "us-west-2"
     }
 ];
+
+
+global.ResponseKeys = {
+    "NodeFiles" : [global.metadataFileName, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509, global.CertFileNames.CA,  global.CertFileNames.PKCS7, global.CertFileNames.P7B, global.CertFileNames.PKCS12 , global.CertFileNames.PWD],
+    "DeveloperCreateResponseKeys": ["hostname", "uid","name"],
+    "AtomCreateResponseKeys": ["hostname", "uid","name"],
+    "EdgeClientResponseKeys" : ["uid", "hostname","edgeHostname"],
+    "CertificateResponseKeys" : ["x509", "pkcs7", "ca"]
+};

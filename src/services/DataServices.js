@@ -79,11 +79,14 @@ DataServices.prototype.createDir = function (path) {
  * @param {String} path
  * @param {Object} payload
  * @param {Array} keys
+ * @param {String} level => Developer | Atom | EdgeClient
  * @param {Function} callback
  */
-DataServices.prototype.savePayload = function (path, payload, keys, callback) {
+DataServices.prototype.savePayload = function (path, payload, keys, level, callback) {
     var self = this;
-    var data = {};
+    var data = {
+        "level" : level
+    };
 
     for (var i = 0; i < keys.length; i++) {
         if (payload[keys[i]]) {

@@ -1,7 +1,0 @@
-{
-    "NodeFiles" : ["metadata.json", "x509.pem", "ca.pem", "private_key.pem", "pkcs7.pem"],
-    "DeveloperCreateResponseKeys": ["hostname", "uid","name"],
-    "AtomCreateResponseKeys": ["hostname", "uid","name"],
-    "EdgeClientResponseKeys" : ["uid", "hostname","edgeHostname"],
-    "CertificateResponseKeys" : ["x509", "pkcs7", "ca"]
-}

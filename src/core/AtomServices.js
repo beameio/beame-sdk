@@ -2,21 +2,21 @@
  * Created by zenit1 on 04/07/2016.
  */
 var debug = require("debug")("./src/services/AtomServices.js");
+var _ = require('underscore');
 var os = require('os');
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 
-var responseKeys = require('../../config/ResponseKeys.json');
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.AtomApi;
 
 
-var isDeveloperHostsValid = function (developerHostname) {
+var validateDeveloperHost = function (developerHostname) {
     var errMsg;
     return new Promise(function (resolve, reject) {
-        if (!developerHostname) {
+        if (_.isEmpty(developerHostname)) {
             errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, developer hostname missing", {"error": "developer hostname missing"});
             reject(errMsg);
             return;
@@ -26,11 +26,11 @@ var isDeveloperHostsValid = function (developerHostname) {
     });
 };
 
-var isAtomHostsValid = function (appHostname) {
+var isAtomHostValid = function (appHostname) {
     var errMsg;
     return new Promise(function (resolve, reject) {
 
-        if (!appHostname) {
+        if (_.isEmpty(appHostname)) {
             errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, atom hostname missing", {"error": "atom hostname missing"});
             reject(errMsg);
             return;
@@ -39,40 +39,39 @@ var isAtomHostsValid = function (appHostname) {
     });
 };
 
-var isRequestValid = function (developerHostname, appHostname, devDir, devAppDir,validateAppCerts) {
+var isRequestValid = function (developerHostname, appHostname, devDir, devAppDir, validateAppCerts) {
 
     return new Promise(function (resolve, reject) {
-
-        function onMetaInfoReceived(metadata) {
-            resolve(metadata);
-        }
-
-        function getMetainfo() {
-            beameUtils.getNodeMetadata(devAppDir || devDir, developerHostname, global.AppModules.Atom).then(onMetaInfoReceived, onValidationError);
-        }
-
-        function onCertsValidated() {
-            if (validateAppCerts && devAppDir) {
-                beameUtils.isNodeCertsExists(devAppDir, responseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(getMetainfo, onValidationError);
-            }
-            else {
-                getMetainfo();
-            }
-        }
-
-        function onAtomHostValidated() {
-            beameUtils.isNodeCertsExists(devDir, responseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
-        }
-
-        function onDeveloperHostValidated() {
-            isAtomHostsValid(appHostname).then(onAtomHostValidated, onValidationError);
-        }
-
         function onValidationError(error) {
             reject(error);
         }
 
-        isDeveloperHostsValid(developerHostname).then(onDeveloperHostValidated, onValidationError);
+        function onMetadataReceived(metadata) {
+            resolve(metadata);
+        }
+
+        function getMetadata() {
+            beameUtils.getNodeMetadata(devAppDir || devDir, developerHostname, global.AppModules.Atom).then(onMetadataReceived, onValidationError);
+        }
+
+        function validateAtomCerts() {
+            if (validateAppCerts) {
+                beameUtils.isNodeCertsExists(devAppDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(getMetadata, onValidationError);
+            }
+            else {
+                getMetadata();
+            }
+        }
+
+        function validateDevCerts() {
+            beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(validateAtomCerts, onValidationError);
+        }
+
+        function validateAtomHost() {
+            isAtomHostValid(appHostname).then(validateDevCerts, onValidationError);
+        }
+
+        validateDeveloperHost(developerHostname).then(validateAtomHost, onValidationError);
     });
 };
 
@@ -146,7 +145,7 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
 
                     dataServices.createDir(devAppDir);
 
-                    dataServices.savePayload(devAppDir + global.metadataFileName, payload, responseKeys.AtomCreateResponseKeys, function (error) {
+                    dataServices.savePayload(devAppDir + global.metadataFileName, payload, global.ResponseKeys.AtomCreateResponseKeys, global.AppModules.Atom, function (error) {
                         if (!callback) return;
 
                         if (!error) {
@@ -170,7 +169,7 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
         callback(error, null);
     }
 
-    isRequestValid(developerHostname, "EMPTY DUMMY", devDir, null,false).then(onRequestValidated, onValidationError);
+    isRequestValid(developerHostname, "EMPTY DUMMY", devDir, null, false).then(onRequestValidated, onValidationError);
 };
 
 /**
@@ -190,7 +189,7 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
         var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, true, true, devAppDir, appHostname);
 
         provisionApi.setAuthData(authData, function (csr) {
-            if (csr != null) {
+            if (!_.isEmpty(csr)) {
 
                 var postData = {
                     csr: csr,
@@ -223,7 +222,7 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
         callback(error, null);
     }
 
-    isRequestValid(developerHostname, appHostname, devDir, devAppDir,false).then(onRequestValidated, onValidationError);
+    isRequestValid(developerHostname, appHostname, devDir, devAppDir, false).then(onRequestValidated, onValidationError);
 
 };
 
@@ -269,8 +268,8 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
         callback(error, null);
     }
 
-    isRequestValid(developerHostname, appHostname, devDir, devAppDir,true).then(onRequestValidated, onValidationError);
- 
+    isRequestValid(developerHostname, appHostname, devDir, devAppDir, true).then(onRequestValidated, onValidationError);
+
 };
 
 module.exports = AtomServices;

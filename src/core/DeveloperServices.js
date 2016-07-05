@@ -2,11 +2,11 @@
  * Created by zenit1 on 03/07/2016.
  */
 var debug = require("debug")("./src/services/DeveloperServices.js");
+var _ = require('underscore');
 var os = require('os');
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 
-var responseKeys = require('../../config/ResponseKeys.json');
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
@@ -37,7 +37,7 @@ var createDeveloperRequest = function (developerName, cb) {
 
             dataServices.createDir(devDir);
 
-            dataServices.savePayload(devDir + global.metadataFileName, payload, responseKeys.DeveloperCreateResponseKeys, function (error) {
+            dataServices.savePayload(devDir + global.metadataFileName, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
                 if (!cb) return;
 
                 if (!error) {
@@ -144,7 +144,7 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
         var authData = beameUtils.getAuthToken(home + global.authData.PK_PATH, home + global.authData.CERT_PATH, true, true, devDir, hostname);
 
         provisionApi.setAuthData(authData, function (csr) {
-            if (csr != null) {
+            if (!_.isEmpty(csr)) {
 
                 var postData = {
                     csr: csr,
@@ -238,7 +238,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
         callback(error, null);
     }
 
-    beameUtils.isNodeCertsExists(devDir,responseKeys.NodeFiles,global.AppModules.Developer,hostname,global.AppModules.Developer).then(onCertsValidated,onValidationError);
+    beameUtils.isNodeCertsExists(devDir,global.ResponseKeys.NodeFiles,global.AppModules.Developer,hostname,global.AppModules.Developer).then(onCertsValidated,onValidationError);
 
 };
 
