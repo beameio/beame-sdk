@@ -150,40 +150,36 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 
             async.parallel(
                 [
-                    function(callback){
+                    function (callback) {
                         exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
                             if (error) {
                                 callback(error, null);
                                 return;
                             }
-                            self.saveFileAsync(dirPath + global.CertFileNames.P7B, stdout, function(error){
-                                if(error){
-                                    callback(error,null);
-                                }
+                            self.saveFileAsync(dirPath + global.CertFileNames.P7B, stdout, function (error) {
+                                error ? callback(error, null) : callback(null, true);
                             });
                         });
                     },
-                    function(callback){
+                    function (callback) {
                         var pwd = randomPassword();
 
                         var cmd = "openssl pkcs12 -export -in " + dirPath + global.CertFileNames.X509 + " -certfile " + dirPath + global.CertFileNames.CA + " -inkey " + dirPath + global.CertFileNames.PRIVATE_KEY + " -password pass:'" + pwd + "' -out " + dirPath + global.CertFileNames.PKCS12;
 
-                        try{
+                        try {
                             exec(cmd, function (error) {
                                 if (error) {
                                     callback(error, null);
                                     return;
                                 }
-                                self.saveFileAsync(dirPath + global.CertFileNames.PWD, pwd, function(error){
-                                    if(error){
-                                        callback(error,null);
-                                    }
+                                self.saveFileAsync(dirPath + global.CertFileNames.PWD, pwd, function (error) {
+                                    error ? callback(error, null) : callback(null, true);
                                 });
                             });
 
                         }
-                        catch(e){
-                            callback(e,null);
+                        catch (e) {
+                            callback(e, null);
                         }
 
                     }

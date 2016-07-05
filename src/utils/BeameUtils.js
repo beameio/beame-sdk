@@ -34,11 +34,17 @@ var dataServices = new (require('../services/DataServices'))();
  * @property {String} publicIp
  */
 
+/**
+ * @typedef {Object} ValidationResult
+ * @param {boolean} isValid
+ * @param {DebugMessage} message
+ */
+
 /** @const {String} */
 var csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
 module.exports = {
-    
+
     /**
      *
      * @param {String} path2Pk
@@ -59,7 +65,6 @@ module.exports = {
             CSRsubj: csrSubj + hostname
         }
     },
-
 
     /**
      * @param {String} version
@@ -91,33 +96,6 @@ module.exports = {
         };
     },
 
-    /**
-     * try read metadata file for node
-     * @param {String} devDir
-     * @param {String} hostname
-     * @param {String} module
-     * @returns {Promise.<Object>}
-     */
-    getNodeMetadata: function (devDir, hostname, module) {
-
-        var formatter = this.formatDebugMessage;
-
-        return new Promise(function (resolve, reject) {
-
-            var developerMetadataPath = devDir + global.metadataFileName;
-            var metadata = dataServices.readJSON(developerMetadataPath);
-
-            if (_.isEmpty(metadata)) {
-                var errorJson = formatter(module, global.MessageCodes.MetadataEmpty, "metadata.json for is empty", {"hostname": hostname});
-                console.error(errorJson);
-                reject(errorJson);
-            }
-            else {
-                resolve(metadata);
-            }
-
-        });
-    },
 
     getRegionName: function (hostname) {
 
@@ -197,9 +175,84 @@ module.exports = {
         return JSON.stringify(obj, null, 2);
     },
 
-
     isAmazon: function () {
         return process.env.NODE_ENV ? true : false;
+    },
+
+    //validation services
+
+    /**
+     * try read metadata file for node
+     * @param {String} devDir
+     * @param {String} hostname
+     * @param {String} module
+     * @returns {Promise.<Object>}
+     */
+    getNodeMetadata: function (devDir, hostname, module) {
+
+        return new Promise(function (resolve, reject) {
+
+            var developerMetadataPath = devDir + global.metadataFileName;
+            var metadata = dataServices.readJSON(developerMetadataPath);
+
+            if (_.isEmpty(metadata)) {
+                var errorJson = global.formatDebugMessage(module, global.MessageCodes.MetadataEmpty, "metadata.json for is empty", {"hostname": hostname});
+                console.error(errorJson);
+                reject(errorJson);
+            }
+            else {
+                resolve(metadata);
+            }
+
+        });
+    },
+
+    /**
+     *
+     * @param {String} path
+     * @param {String} module
+     * @param {String} hostname
+     * @returns {Promise}
+     */
+    isHostnamePathValid: function (path, module, hostname) {
+
+        return new Promise(function (resolve, reject) {
+
+            if (!dataServices.isPathExists(path)) {//provided invalid hostname
+                var errMsg = global.formatDebugMessage(module, global.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
+                console.error(errMsg);
+                reject(errMsg);
+            }
+            else {
+                resolve(true);
+            }
+        });
+    },
+
+    /**
+     *
+     * @param {String} path
+     * @param {Array} nodeFiles
+     * @param {String} module
+     * @param {String} hostname
+     * @param {String} nodeLevel => Developer | Atom | EdgeClient
+     * @returns {Promise}
+     */
+    isNodeCertsExists: function (path, nodeFiles, module, hostname, nodeLevel) {
+
+        return new Promise(function (resolve, reject) {
+
+            if (!dataServices.isNodeFilesExists(path, nodeFiles)) {
+                var errMsg = global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, nodeLevel + "files not found", {
+                    "level": nodeLevel,
+                    "hostname": hostname
+                });
+                console.error(errMsg);
+                reject(errMsg);
+            }
+            else {
+                resolve(true);
+            }
+        });
     }
-}
-;
+};

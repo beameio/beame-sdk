@@ -12,11 +12,76 @@ var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.AtomApi;
 
+
+var isDeveloperHostsValid = function (developerHostname) {
+    var errMsg;
+    return new Promise(function (resolve, reject) {
+        if (!developerHostname) {
+            errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, developer hostname missing", {"error": "developer hostname missing"});
+            reject(errMsg);
+            return;
+        }
+
+        resolve(true);
+    });
+};
+
+var isAtomHostsValid = function (appHostname) {
+    var errMsg;
+    return new Promise(function (resolve, reject) {
+
+        if (!appHostname) {
+            errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, atom hostname missing", {"error": "atom hostname missing"});
+            reject(errMsg);
+            return;
+        }
+        resolve(true);
+    });
+};
+
+var isRequestValid = function (developerHostname, appHostname, devDir, devAppDir,validateAppCerts) {
+
+    return new Promise(function (resolve, reject) {
+
+        function onMetaInfoReceived(metadata) {
+            resolve(metadata);
+        }
+
+        function getMetainfo() {
+            beameUtils.getNodeMetadata(devAppDir || devDir, developerHostname, global.AppModules.Atom).then(onMetaInfoReceived, onValidationError);
+        }
+
+        function onCertsValidated() {
+            if (validateAppCerts && devAppDir) {
+                beameUtils.isNodeCertsExists(devAppDir, responseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(getMetainfo, onValidationError);
+            }
+            else {
+                getMetainfo();
+            }
+        }
+
+        function onAtomHostValidated() {
+            beameUtils.isNodeCertsExists(devDir, responseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
+        }
+
+        function onDeveloperHostValidated() {
+            isAtomHostsValid(appHostname).then(onAtomHostValidated, onValidationError);
+        }
+
+        function onValidationError(error) {
+            reject(error);
+        }
+
+        isDeveloperHostsValid(developerHostname).then(onDeveloperHostValidated, onValidationError);
+    });
+};
+
 /**
  *
  * @constructor
  */
-var AtomServices = function () {};
+var AtomServices = function () {
+};
 
 /**
  *
@@ -57,21 +122,11 @@ AtomServices.prototype.createAtom = function (developerHostname, appName, callba
  * @param {Function} callback
  */
 AtomServices.prototype.registerAtom = function (developerHostname, appName, callback) {
-    var errMsg;
-  
+
     var devDir = devPath + developerHostname + "/";
 
-    /*---------- check if developer exists -------------------*/
-    if (!dataServices.isNodeFilesExists(devDir, responseKeys.NodeFiles)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": developerHostname});
-        console.error(errMsg);
-        callback && callback(errMsg, null);
-        return;
-    }
-
-
-    /*---------- read developer data and proceed -------------*/
-    beameUtils.getNodeMetadata(devDir, developerHostname, global.AppModules.Atom).then(function onSuccess(metadata) {
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated(metadata) {
         var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, false, false, devDir, metadata.hostname);
 
         provisionApi.setAuthData(authData, function () {
@@ -109,10 +164,13 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
             });
         });
 
-    }, function onError(error) {
-        callback(error, null);
-    });
+    }
 
+    function onValidationError(error) {
+        callback(error, null);
+    }
+
+    isRequestValid(developerHostname, "EMPTY DUMMY", devDir, null,false).then(onRequestValidated, onValidationError);
 };
 
 /**
@@ -123,36 +181,11 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
  */
 AtomServices.prototype.getCert = function (developerHostname, appHostname, callback) {
     var errMsg;
-
-    if (!developerHostname) {
-        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, developer hostname missing", {"error": "developer hostname missing"});
-        debug(errMsg);
-
-        callback && callback(errMsg, null);
-        return;
-    }
-
-    if (!appHostname) {
-        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, atom hostname missing", {"error": "atom hostname missing"});
-        debug(errMsg);
-
-        callback && callback(errMsg, null);
-        return;
-    }
-
     var devDir = devPath + developerHostname + "/";
     var devAppDir = devDir + appHostname + "/";
 
-    /*---------- check if developer exists -------------------*/
-    if (!dataServices.isNodeFilesExists(devDir, responseKeys.NodeFiles)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": developerHostname});
-        console.error(errMsg);
-        callback && callback(errMsg, null);
-        return;
-    }
-    
-    /*---------- check if atom exists -------------------*/
-    beameUtils.getNodeMetadata(devAppDir, appHostname, global.AppModules.Atom).then(function onSuccess(metadata) {
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated(metadata) {
         /*----------- generate RSA key + csr and post to provision ---------*/
         var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, true, true, devAppDir, appHostname);
 
@@ -169,7 +202,7 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
 
-                        dataServices.saveCerts(devAppDir, payload,  callback);
+                        dataServices.saveCerts(devAppDir, payload, callback);
                     }
                     else {
                         errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.ApiRestError, "atom get cert api error", {"hostname": appHostname});
@@ -184,10 +217,14 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
                 callback && callback(errMsg, null);
             }
         });
-    }, function onError(error) {
+    }
+
+    function onValidationError(error) {
         callback(error, null);
-    });
-    
+    }
+
+    isRequestValid(developerHostname, appHostname, devDir, devAppDir,false).then(onRequestValidated, onValidationError);
+
 };
 
 /**
@@ -199,45 +236,11 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
  */
 AtomServices.prototype.updateAtom = function (developerHostname, appHostname, appName, callback) {
     var errMsg;
-
-    if (!developerHostname) {
-        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, developer hostname missing", {"error": "developer hostname missing"});
-        debug(errMsg);
-
-        callback && callback(errMsg, null);
-        return;
-    }
-
-    if (!appHostname) {
-        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, atom hostname missing", {"error": "atom hostname missing"});
-        debug(errMsg);
-
-        callback && callback(errMsg, null);
-        return;
-    }
-
     var devDir = devPath + developerHostname + "/";
     var devAppDir = devDir + appHostname + "/";
 
-    /*---------- check if developer exists -------------------*/
-    if (!dataServices.isNodeFilesExists(devDir, responseKeys.NodeFiles)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": developerHostname});
-        console.error(errMsg);
-        callback && callback(errMsg, null);
-        return;
-    }
-
-    /*---------- check if atom files exists -------------------*/
-    if (!dataServices.isNodeFilesExists(devAppDir, responseKeys.NodeFiles)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.NodeFilesMissing, "atom files not found", {"hostname": appHostname});
-        console.error(errMsg);
-        callback && callback(errMsg, null);
-        return;
-    }
-    
-    /*---------- get atom metadata -------------------*/
-    beameUtils.getNodeMetadata(devAppDir, appHostname, global.AppModules.Atom).then(function onSuccess(metadata) {
-        /*----------- generate RSA key + csr and post to provision ---------*/
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated(metadata) {
         var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, false, false, devDir, developerHostname);
 
         provisionApi.setAuthData(authData, function () {
@@ -260,9 +263,14 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
                 }
             });
         });
-    }, function onError(error) {
+    }
+
+    function onValidationError(error) {
         callback(error, null);
-    });
+    }
+
+    isRequestValid(developerHostname, appHostname, devDir, devAppDir,true).then(onRequestValidated, onValidationError);
+ 
 };
 
 module.exports = AtomServices;

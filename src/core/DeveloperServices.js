@@ -127,28 +127,19 @@ DeveloperServices.prototype.registerDeveloper = function (developerName, callbac
  * @param {Function} callback
  */
 DeveloperServices.prototype.getCert = function (hostname, callback) {
-    var errorJson;
+    var errMsg;
+    var devDir = devPath + hostname + "/";
 
     if (!hostname) {
-        errorJson = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        debug(errorJson);
+        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
+        debug(errMsg);
 
-        callback && callback(errorJson, null);
+        callback && callback(errMsg, null);
         return;
     }
 
-    /*---------- check if developer exists -------------------*/
-    var devDir = devPath + hostname + "/";
-    if (!dataServices.isPathExists(devDir)) {//provided invalid hostname
-        errorJson = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
-        console.error(errorJson);
-        callback(errorJson, null);
-        return;
-    }
-
-    /*---------- read developer data and proceed -------------*/
-
-    beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(function onSuccess(metadata) {
+    /*---------- private callbacks -------------------*/
+    function onMetaInfoReceived(metadata) {
         /*----------- generate RSA key + csr and post to provision ---------*/
         var authData = beameUtils.getAuthToken(home + global.authData.PK_PATH, home + global.authData.CERT_PATH, true, true, devDir, hostname);
 
@@ -168,23 +159,30 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
                         dataServices.saveCerts(devDir, payload, callback);
                     }
                     else {
-                        errorJson = {"message": "CSR for " + hostname + " failed"};
-                        console.error(errorJson);
-                        callback(errorJson, null);
+                        errMsg = {"message": "CSR for " + hostname + " failed"};
+                        console.error(errMsg);
+                        callback(errMsg, null);
                     }
                 });
             }
             else {
-                errorJson = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": hostname});
-                console.error(errorJson);
-                callback && callback(errorJson, null);
+                errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": hostname});
+                console.error(errMsg);
+                callback && callback(errMsg, null);
             }
         });
-    }, function onError(error) {
+    }
+
+    function onPathValidated(){
+        /*---------- read developer data and proceed -------------*/
+        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetaInfoReceived, onValidationError);
+    }
+
+    function onValidationError(error){
         callback(error, null);
-    });
+    }
 
-
+    beameUtils.isHostnamePathValid(devDir, global.AppModules.Developer, hostname).then(onPathValidated,onValidationError);
 };
 
 /**
@@ -196,18 +194,10 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
  */
 DeveloperServices.prototype.updateProfile = function (hostname, email, name, callback) {
     var errMsg;
-    /*---------- check if developer exists -------------------*/
     var devDir = devPath + hostname + "/";
 
-    if (!dataServices.isNodeFilesExists(devDir, responseKeys.NodeFiles)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": hostname});
-        console.error(errMsg);
-        callback && callback(errMsg, null);
-        return;
-    }
-
-    /*---------- read developer data and proceed -------------*/
-    beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(function onSuccess(metadata) {
+    /*---------- private callbacks -------------------*/
+    function onMetaInfoReceived(metadata) {
         var authData = beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509, false, false, devDir, hostname);
 
         provisionApi.setAuthData(authData, function () {
@@ -218,7 +208,6 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
             };
 
             var apiData = beameUtils.getApiData(apiActions.UpdateProfile.endpoint, postData, false);
-
 
             provisionApi.runRestfulAPI(apiData, function (error) {
                 if (!error) {
@@ -238,9 +227,18 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
             });
         });
 
-    }, function onError(error) {
+    }
+
+    function onCertsValidated(){
+        /*---------- read developer data and proceed -------------*/
+        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetaInfoReceived, onValidationError);
+    }
+
+    function onValidationError(error){
         callback(error, null);
-    });
+    }
+
+    beameUtils.isNodeCertsExists(devDir,responseKeys.NodeFiles,global.AppModules.Developer,hostname,global.AppModules.Developer).then(onCertsValidated,onValidationError);
 
 };
 
