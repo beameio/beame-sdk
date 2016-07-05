@@ -1,6 +1,12 @@
 /**
  * Created by zenit1 on 04/07/2016.
  */
+'use strict';
+
+var os = require('os');
+var home = os.homedir();
+global.devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+global.__homedir = home;
 
 /**
  * @typedef {Object} DebugMessage
@@ -92,7 +98,8 @@ global.MessageCodes = {
     "MetadataEmpty" : "MetadataEmpty",
     "NodeFolderNotExists" : "NodeFolderNotExists",
     "NodeFilesMissing" : "NodeFilesMissing",
-    "CSRCreationFailed" : "CSRCreationFailed"
+    "CSRCreationFailed" : "CSRCreationFailed",
+    "InvalidPayload" : "InvalidPayload"
 };
 
 /**
@@ -146,3 +153,12 @@ global.AwsRegions = [
         "Code": "us-west-2"
     }
 ];
+
+
+global.ResponseKeys = {
+    "NodeFiles" : [global.metadataFileName, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509, global.CertFileNames.CA,  global.CertFileNames.PKCS7, global.CertFileNames.P7B, global.CertFileNames.PKCS12 , global.CertFileNames.PWD],
+    "DeveloperCreateResponseKeys": ["hostname", "uid","name"],
+    "AtomCreateResponseKeys": ["hostname", "uid","name"],
+    "EdgeClientResponseKeys" : ["uid", "hostname","edgeHostname"],
+    "CertificateResponseKeys" : ["x509", "pkcs7", "ca"]
+};

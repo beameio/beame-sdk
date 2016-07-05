@@ -1,6 +1,6 @@
 'use strict';
-
-var debug = require("debug")("ProvisionApi");
+require('../utils/Globals');
+var debug = require("debug")("./src/services/ProvisionApi.js");
 var provisionSettings = require('../../config/ApiConfig.json');
 var beameUtils = require('../utils/BeameUtils');
 
@@ -27,24 +27,21 @@ var beameUtils = require('../utils/BeameUtils');
 
 var _ = require('underscore');
 var request = require('request');
-var pem = require('pem');
 var fs = require('fs');
 //var sys = require('sys');
 var exec = require('child_process').exec;//needed to run openssl cli
 
 //private helpers
 var parseProvisionResponse = function (error, response, body, type, callback) {
-
-    if(!response) {
-        callback && callback(new Error('empty response'),null);
+    var errMsg;
+    if (!response) {
+        callback && callback(new Error('empty response'), null);
         return;
     }
 
-    debug('Host responded with status <' + response.statusCode + '>');
-
     if (error) {
-        console.error('provision error', error);
-        callback(error, null);
+        errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api response error", {"error": error});
+        callback(errMsg, null);
         return;
     }
 
@@ -54,9 +51,11 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
     if (body) {
         try {
             payload = JSON.parse(body);
+
+            delete payload['$id'];
         }
         catch (err) {
-            payload = {updateStatus: 'pass'};//body;
+            payload = {message: body};
         }
     }
     else {
@@ -69,7 +68,13 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
         callback && callback(null, payload);
     }
     else {
-        callback && callback(body + ':status:' + response.statusCode, null);
+        //noinspection JSUnresolvedVariable
+        errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api response error", {
+            "status": response.statusCode,
+            "message": payload.Message || payload
+        });
+
+        callback && callback(errMsg, null);
     }
 
 };
@@ -80,12 +85,12 @@ var postToProvisionApi = function (url, options, type, callback) {
         url,
         options,
         function (error, response, body) {
-            parseProvisionResponse(error, response, body, type, function (err, payload) {
+            parseProvisionResponse(error, response, body, type, function (error, payload) {
                 if (payload) {
                     callback(null, payload);
                 }
                 else {
-                    callback(err, null);
+                    callback(error, null);
                 }
             });
         }
@@ -127,7 +132,7 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
 
         var child = exec(cmd, function (error, stdout, stderr) {
             var devPK = stdout;
-//            debug('devPK: '  + devPK);
+
             if (error !== null) {
                 /* -------  put error handler to deal with possible openssl failure -----------*/
                 debug(global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
@@ -135,7 +140,7 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
                     "stderr": stderr
                 }));
             }
-            //else{//store RSA key in developer data
+
             var pkFile = authData.devPath + global.CertFileNames.PRIVATE_KEY;
 
             try {
