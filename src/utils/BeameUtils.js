@@ -13,14 +13,12 @@ var dataServices = new (require('../services/DataServices'))();
  * @property {String} x509 => path to file
  */
 
-
 /**
  * @typedef {Object} ApiData
  * @property {Object} postData => post data to send to provision in JSON format
  * @property {String} api => api endpoint
  * @property {boolean} answerExpected => if response data expecting from provision
  */
-
 
 /**
  * @typedef {Object} EdgeShortData
@@ -35,8 +33,6 @@ var dataServices = new (require('../services/DataServices'))();
  * @param {boolean} isValid
  * @param {DebugMessage} message
  */
-
-
 
 module.exports = {
 
