@@ -4,6 +4,8 @@ var fs = require('fs');
 var uid;//variable to hold UID
 var os = require('os');
 var devPath = os.homedir() + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var Helper = require('./helper.js');
+var helper = new Helper();
 //var edgeEndpointURL = "http://lb-dev.luckyqr.io/endpoint"; //URL to get edge server data
 var keys = ["x509", "pkcs7", "ca"];//data that should be returned by the operation
 /*-------- files to check to ensure call on available layer ------------*/
@@ -59,14 +61,8 @@ module.exports.edgeClientGetCert = function (param, appHostName, edgeHostName, c
             if (err) throw err;
             uid = data;
 
-            var authData = {
-                pk: devAppDir + "private_key.pem",
-                x509: devAppDir + "x509",
-                generateKeys: true,
-                makeCSR: true,
-                devPath: edgeClientDir,
-                CSRsubj: "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=" + hostname
-            };
+            var authData = helper.getAuthToken(devAppDir + "private_key.pem",devAppDir + "x509",true,true,edgeClientDir,hostname);
+
             /*----------- generate RSA key + csr and post to provision ---------*/
             provApi.setAuthData(authData, function (csr) { //pk
 
@@ -79,13 +75,10 @@ module.exports.edgeClientGetCert = function (param, appHostName, edgeHostName, c
                     csr: csr,
                     uid: uid
                 };
-                var testParams = {
-                    version: "/v1",
-                    postData: postData,
-                    api: "/client/getCert",
-                    answerExpected: true
-                };
-                provApi.runRestfulAPI(testParams, function (err, payload) {
+
+                var apiData = helper.getApiCallData("/v1","/client/getCert",postData,true);
+
+                provApi.runRestfulAPI(apiData, function (err, payload) {
                     if (!err) {
                         var nextLevelDir = edgeClientDir;//devAppDir+payload.hostname+'/';
                         if (!fs.existsSync(nextLevelDir)) {

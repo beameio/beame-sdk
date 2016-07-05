@@ -8,6 +8,8 @@ var os = require('os');
 var keys = ["$id", "hostname", "uid"];    //expected answer keys
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var Helper = require('./helper.js');
+var helper = new Helper();
 
 try {
     if (fs.lstatSync(devPath)) {
@@ -35,13 +37,8 @@ catch (e) {
 var param = process.argv[2];              //get name from cli
 debug('Running api with cli param: ' + param);
 
-var authData = {
-    pk: home + "/authData/pk.pem",
-    x509: home + "/authData/x509.pem",
-    generateKeys: false,
-    makeCSR: false,
-    CSRsubj: "/C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=doesntMatter"
-};
+var authData = helper.getAuthToken(home + "/authData/pk.pem",home + "/authData/x509.pem",false,false);
+
 
 var createDeveloperRequest = function (param, callback) {
 
@@ -49,15 +46,10 @@ var createDeveloperRequest = function (param, callback) {
         name: param
     };
 
-    var testParams = {
-        version: "/v1",
-        api: "/dev/create",
-        postData: postData,
-        answerExpected: true,
-        decode: false
-    };
+    var apiData = helper.getApiCallData("/v1","/dev/create",postData,true);
+    
 
-    provApi.runRestfulAPI(testParams, function (err, payload) {
+    provApi.runRestfulAPI(apiData, function (err, payload) {
         if (!err) {
             var i;
             fs.appendFileSync(devPath + 'developers', payload.hostname + '\r\n');

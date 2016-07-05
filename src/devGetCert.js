@@ -7,6 +7,8 @@ var os = require('os');
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
 var keys = ["x509", "pkcs7", "ca"];
+var Helper = require('./helper.js');
+var helper = new Helper();
 var debug = require("debug")("./src/devGetCert.js");
 
 
@@ -16,7 +18,7 @@ var debug = require("debug")("./src/devGetCert.js");
  process.exit(-1);
  }*/
 var param = process.argv[2];
-module.exports.getDevCert = function (param, callback) {
+module.exports.getCert = function (param, callback) {
     debug('Running test with param: ' + param);
     /*---------- check if developer exists -------------------*/
     var devDir = devPath + param + "/";
@@ -34,14 +36,8 @@ module.exports.getDevCert = function (param, callback) {
             uid = data;
 
 
-            var authData = {
-                pk: home + "/authData/pk.pem",
-                x509: home + "/authData/x509.pem",
-                generateKeys: true,
-                makeCSR: true,
-                devPath: devDir,//static path for now, need to generate with uid to allow multiuser tests
-                CSRsubj: "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=" + hostname
-            };
+            var authData = helper.getAuthToken(home + "/authData/pk.pem",home + "/authData/x509.pem",true,true,devDir,hostname);
+
             /*----------- generate RSA key + csr and post to provision ---------*/
             provApi.setAuthData(authData, function (csr) { //pk
                 if (csr != null) {
@@ -50,14 +46,10 @@ module.exports.getDevCert = function (param, callback) {
                         csr: csr,
                         uid: uid
                     };
-                    var testParams = {
-                        version: "/v1",
-                        postData: postData,
-                        api: "/dev/getCert",
-                        answerExpected: true,
-                        decode: false
-                    };
-                    provApi.runRestfulAPI(testParams, function (err, payload) {
+
+                    var apiData = helper.getApiCallData("/v1","/dev/getCert",postData,true);
+                   
+                    provApi.runRestfulAPI(apiData, function (err, payload) {
                         if (!err) {
                             var i;
                             for (i = 0; i < keys.length; i++) {

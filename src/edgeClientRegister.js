@@ -3,22 +3,22 @@ var provApi = new test();
 var fs = require('fs');
 var uid;//variable to hold UID
 var os = require('os');
-var devPath = os.homedir()+"/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
-var keys = ["uid","hostname", "edgeHostname"];
-var usrFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
-var appFiles = ["uid","hostname","x509","ca","private_key.pem","pkcs7"];
+var devPath = os.homedir() + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+var Helper = require('./helper.js');
+var helper = new Helper();
+var keys = ["uid", "hostname","edgeHostname"];
+var usrFiles = ["uid", "hostname", "edgeHostname", "x509", "ca", "private_key.pem", "pkcs7"];
+var appFiles = ["uid", "hostname", "edgeHostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var debug = require("debug")("./src/edgeClientRegister.js");
+/*if (process.argv.length < 4){
+ console.log('Usage: node '+__filename+' dev-hostname app-hostname');
+ process.exit(-1);
+ }
+ var param=process.argv[2];
+ var appHostName=process.argv[3];
+ //var zone=process.argv[4];*/
+module.exports.edgeClientRegister = function (param, appHostName, callback) {
 
-
-
-/*if (process.argv.length < 4){ 
-debug('Usage: node '+__filename+' dev-hostname app-hostname');
-    process.exit(-1);
-}
-var param=process.argv[2];
-var appHostName=process.argv[3];
-//var zone=process.argv[4];*/
-module.exports.edgeClientRegister = function(param, appHostName, callback){
     /*---------- check if developer exists -------------------*/
     var devDir = devPath + param + "/";
     var devAppDir = devDir + appHostName + "/";
@@ -46,14 +46,8 @@ module.exports.edgeClientRegister = function(param, appHostName, callback){
             if (err) throw err;
             uid = data;
 
-            var authData = {
-                pk: devAppDir + "private_key.pem",
-                x509: devAppDir + "x509",
-                generateKeys: false,
-                makeCSR: false,
-                devPath: devAppDir,
-                CSRsubj: "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=" + hostname
-            };
+            var authData = helper.getAuthToken(devAppDir + "private_key.pem",devAppDir + "x509",false,false,devAppDir,hostname);
+
             /*----------- generate RSA key + csr and post to provision ---------*/
             provApi.setAuthData(authData, function (csr) { //pk
                 provApi.getEndpoint("http://lb-dev.luckyqr.io/endpoint", function (err, endpointData) {
@@ -71,13 +65,11 @@ module.exports.edgeClientRegister = function(param, appHostName, callback){
                         host: endpointData.endpoint
                     };
                     debug('Registering edge client for endpoint: ' + postData.host);
-                    var testParams = {
-                        version: "/v1",
-                        postData: postData,
-                        api: "/client/register",
-                        answerExpected: true
-                    };
-                    provApi.runRestfulAPI(testParams, function (err, payload) {
+                    
+                    var apiData = helper.getApiCallData("/v1","/client/register",postData,true);
+
+                    
+                    provApi.runRestfulAPI(apiData, function (err, payload) {
                         if (!err) {
                             fs.appendFileSync(devAppDir + 'edgeClients', payload.hostname + '\r\n');
                             var nextLevelDir = devAppDir + payload.hostname + '/';
