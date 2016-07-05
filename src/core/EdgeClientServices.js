@@ -13,6 +13,65 @@ var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.EdgeClient;
 
 
+var isDeveloperHostsValid = function (developerHostname) {
+    var errMsg;
+    return new Promise(function (resolve, reject) {
+        if (!developerHostname) {
+            errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, developer hostname missing", {"error": "developer hostname missing"});
+            reject(errMsg);
+            return;
+        }
+
+        resolve(true);
+    });
+};
+
+var isAtomHostsValid = function (appHostname) {
+    var errMsg;
+    return new Promise(function (resolve, reject) {
+
+        if (!appHostname) {
+            errMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.HostnameRequired, "Get atom certs, atom hostname missing", {"error": "atom hostname missing"});
+            reject(errMsg);
+            return;
+        }
+        resolve(true);
+    });
+};
+
+var isRequestValid = function (developerHostname, appHostname, edgeHostname, devDir, devAppDir,validateAppCerts) {
+
+    return new Promise(function (resolve, reject) {
+
+        function onMetaInfoReceived(metadata) {
+            resolve(metadata);
+        }
+        
+
+        function onAtomCertsValidated() {
+            beameUtils.getNodeMetadata(devAppDir, developerHostname, global.AppModules.Atom).then(onMetaInfoReceived, onValidationError);
+        }
+        
+        function onDeveloperCertsValidated() {
+            beameUtils.isNodeCertsExists(devAppDir, responseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(onAtomCertsValidated, onValidationError);
+        }
+
+        function onAtomHostValidated() {
+            beameUtils.isNodeCertsExists(devDir, responseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(onDeveloperCertsValidated, onValidationError);
+        }
+
+        function onDeveloperHostValidated() {
+            isAtomHostsValid(appHostname).then(onAtomHostValidated, onValidationError);
+        }
+
+        function onValidationError(error) {
+            reject(error);
+        }
+
+        isDeveloperHostsValid(developerHostname).then(onDeveloperHostValidated, onValidationError);
+    });
+};
+
 var EdgeClientServices = function () {
 };
 
