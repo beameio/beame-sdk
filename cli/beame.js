@@ -3,9 +3,23 @@ var argv = require('minimist')(process.argv.slice(2));
 var _ = require('underscore');
 
 var commands = {}
-_.map(['creds', 'certs', 'data'], function(module) {
-	commands[module] = require('./' + module + '.js')
+_.each(['creds', 'certs', 'data'], function(cmdName) {
+	commands[cmdName] = require('./' + cmdName + '.js')
 });
+
+var parametersSchema = {
+	'type': {
+		required: true,
+		options: ['developer', 'atom', 'instance']
+	},
+	'fqdn': {
+		required: true
+	},
+	'format': {
+		required: false,
+		default: 'text'
+	}
+};
 
 function getParamsNames(fun) {
 	var names = fun.toString().match(/^[\s\(]*function[^(]*\(([^)]*)\)/)[1]
@@ -34,8 +48,26 @@ function main() {
 }
 
 function usage() {
+	var myname = 'beame.js';
     console.log("Usage:");
-    console.log("  TODO");
+	_.each(commands, function(subCommands, cmdName) {
+		_.each(subCommands, function(subCmdFunc, subCmdName) {
+			var paramsNames = getParamsNames(subCmdFunc);
+			var params = paramsNames.map(function(paramName) {
+				var ret = '--' + paramName;
+				if(parametersSchema[paramName].options) {
+					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
+				} else {
+					ret = ret + ' ' + paramName;
+				}
+				if(!parametersSchema[paramName].required) {
+					ret = '[' + ret + ']';
+				}
+				return ret;
+			});
+			console.log('  ' + myname + ' ' + cmdName + ' ' + subCmdName + ' ' + params.join(' '));
+		})
+	});
 }
 
 if(argv._.length < 2) {
