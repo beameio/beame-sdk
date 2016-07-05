@@ -18,9 +18,15 @@ __beame_complete() {
 		return
 	fi
 
+	if [[ $prev == --* ]];then
+		switch_values=$($__BEAME_BIN complete switch-value "${prev#--}")
+		COMPREPLY=( $(compgen -W "${switch_values[@]}" -- "$cur") )
+		return
+	fi
+
 	# echo $__BEAME_BIN complete switches "${words[@]:1}"
-	commands=$($__BEAME_BIN complete switches "${words[@]:1}")
-	COMPREPLY=( $(compgen -W "${commands[@]}" -- "$cur") )
+	switches=$($__BEAME_BIN complete switches "${words[@]:1}")
+	COMPREPLY=( $(compgen -W "${switches[@]}" -- "$cur") )
 }
 
 complete -F __beame_complete beame

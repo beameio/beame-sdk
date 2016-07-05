@@ -126,6 +126,14 @@ if(argv._[0] == 'complete') {
 		console.log(switches);
 		process.exit(0);
 	}
+	if(argv._[1] == 'switch-value') {
+		var sw = argv._[2];
+		if(parametersSchema[sw].options) {
+			console.log(parametersSchema[sw].options.join(' '));
+			process.exit(0);
+		}
+		process.exit(0);
+	}
 	process.exit(1);
 }
 
