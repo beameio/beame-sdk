@@ -11,12 +11,7 @@ var dataServices = new (require('../services/DataServices'))();
  * @typedef {Object} AuthData
  * @property {String} pk => path to file
  * @property {String} x509 => path to file
- * @property {boolean} generateKeys => flag to private key generation
- * @property {boolean} makeCSR => flag to create csr
- * @property {String} devPath => path for storing keys
- * @property {String|null|undefined} CSRsubj => subject for CSR
  */
-
 
 /**
  * @typedef {Object} ApiData
@@ -24,7 +19,6 @@ var dataServices = new (require('../services/DataServices'))();
  * @property {String} api => api endpoint
  * @property {boolean} answerExpected => if response data expecting from provision
  */
-
 
 /**
  * @typedef {Object} EdgeShortData
@@ -40,29 +34,17 @@ var dataServices = new (require('../services/DataServices'))();
  * @param {DebugMessage} message
  */
 
-/** @const {String} */
-var csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
-
 module.exports = {
 
     /**
-     *
      * @param {String} path2Pk
      * @param {String} path2X509
-     * @param {boolean} genKeys
-     * @param {boolean} genScr
-     * @param {String|null|undefined} [certPath]
-     * @param {String|null|undefined} [hostname]
      * @returns {typeof AuthData}
      */
-    getAuthToken: function (path2Pk, path2X509, genKeys, genScr, certPath, hostname) {
+    getAuthToken: function (path2Pk, path2X509) {
         return {
             pk: path2Pk,
-            x509: path2X509,
-            generateKeys: genKeys,
-            makeCSR: genScr,
-            devPath: certPath,//static path for now, need to generate with uid to allow multiuser tests
-            CSRsubj: csrSubj + hostname
+            x509: path2X509
         }
     },
 

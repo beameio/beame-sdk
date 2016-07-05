@@ -166,6 +166,8 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
     /** @param {EdgeShortData} edge  **/
     function onEdgeServerSelected(edge) {
 
+        provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir + global.CertFileNames.PRIVATE_KEY, devAppDir + global.CertFileNames.X509));
+
         var postData = {
             host: edge.endpoint
         };
@@ -182,7 +184,7 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
                     if (!callback) return;
 
                     if (!error) {
-                        beameUtils.getNodeMetadata(edgeClientDir, payload.hostname, global.AppModules.EdgeClient).then(function(metadata){
+                        beameUtils.getNodeMetadata(edgeClientDir, payload.hostname, global.AppModules.EdgeClient).then(function (metadata) {
                             callback(null, metadata);
                         }, callback);
                     }
@@ -202,11 +204,9 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
     }
 
     function onRequestValidated() {
-        var authData = beameUtils.getAuthToken(devAppDir + global.CertFileNames.PRIVATE_KEY, devAppDir + global.CertFileNames.X509, false, false, devAppDir, appHostname);
 
-        provisionApi.setAuthData(authData, function () {
-            beameUtils.selectBestProxy(global.loadBalancerEdnpoint).then(onEdgeServerSelected, onEdgeSelectionError);
-        });
+        beameUtils.selectBestProxy(global.loadBalancerEdnpoint).then(onEdgeServerSelected, onEdgeSelectionError);
+
     }
 
     function onValidationError(error) {
@@ -229,11 +229,13 @@ EdgeClientServices.prototype.getCert = function (developerHostname, appHostname,
     var devAppDir = devDir + appHostname + "/";
     var edgeClientDir = devAppDir + edgeHostname + "/";
 
-    function onRequestValidated(metadata) {
-        var authData = beameUtils.getAuthToken(devAppDir + global.CertFileNames.PRIVATE_KEY, devAppDir + global.CertFileNames.X509, true, true, edgeClientDir, edgeHostname);
 
-        provisionApi.setAuthData(authData, function (csr) {
-            if (!_.isEmpty(csr)) {
+    function onRequestValidated(metadata) {
+
+        dataServices.createCSR(edgeClientDir, edgeHostname).then(
+            function onCsrCreated(csr) {
+
+                provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir + global.CertFileNames.PRIVATE_KEY, devAppDir + global.CertFileNames.X509));
 
                 var postData = {
                     csr: csr,
@@ -244,7 +246,6 @@ EdgeClientServices.prototype.getCert = function (developerHostname, appHostname,
 
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
-
                         dataServices.saveCerts(edgeClientDir, payload, callback);
                     }
                     else {
@@ -253,13 +254,12 @@ EdgeClientServices.prototype.getCert = function (developerHostname, appHostname,
                         callback(errMsg, null);
                     }
                 });
-            }
-            else {
-                errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": edgeHostname});
-                console.error(errMsg);
-                callback && callback(errMsg, null);
-            }
-        });
+
+            },
+            function onCsrCreationFailed(error) {
+                console.error(error);
+                callback && callback(error, null);
+            });
     }
 
     function onValidationError(error) {

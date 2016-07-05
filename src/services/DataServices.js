@@ -8,7 +8,7 @@ var fs = require('fs');
 var exec = require('child_process').exec;
 var async = require('async');
 
-//private methods
+/**------------------------ private methods ---------------------**/
 function randomPassword(length) {
     var len = length || 16;
     var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
@@ -20,6 +20,7 @@ function randomPassword(length) {
 
     return pass;
 }
+
 /**
  *
  * @constructor
@@ -28,54 +29,86 @@ var DataServices = function () {
 
 };
 
-/**
- * check if directory or file exists
- * @param {String} path
- * @returns {boolean}
- */
-DataServices.prototype.isPathExists = function (path) {
-    try {
-        fs.accessSync(path, fs.F_OK);
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
-
-/**
- *
- * @param {String} path
- * @param {Array} nodeFiles
- * @param {String} module
- * @returns {boolean}
- */
-DataServices.prototype.isNodeFilesExists = function (path, nodeFiles, module) {
+/**------------------- create csr -----------------------**/
+DataServices.prototype.createCSR = function (path, hostname) {
     var self = this;
-    for (var i = 0; i < nodeFiles.length; i++) {
-        if (!self.isPathExists(path + nodeFiles[i])) {
-            console.error(global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, "cert missing", {
-                "path": path,
-                "file": nodeFiles[i]
-            }));
-            return false;
-        }
-    }
+    var errMsg;
 
-    return true;
+    return new Promise(function (resolve, reject) {
+
+        /* --------- generate RSA key: ------------------------------------------------*/
+        var cmd = "openssl genrsa 2048";
+
+        debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
+
+        exec(cmd, function (error, stdout, stderr) {
+            var devPK = stdout;
+
+            if (error !== null) {
+                /* -------  put error handler to deal with possible openssl failure -----------*/
+                errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
+                    "error": error,
+                    "stderr": stderr
+                });
+
+                reject(errMsg);
+                return;
+            }
+
+            var pkFile = path + global.CertFileNames.PRIVATE_KEY;
+
+            self.saveFile(pkFile, devPK, function (error) {
+                if (!error) {
+                    cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (global.csrSubj + hostname) + "\"";
+                    debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating CSR with", {"cmd": cmd}));
+
+                    try {
+                        exec(cmd,
+                            /**
+                             *
+                             * @param error
+                             * @param stdout => return CSR
+                             * @param stderr
+                             */
+                            function (error, stdout, stderr) {
+                                if (error !== null) {
+                                    errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate CSR", {
+                                        "error": error,
+                                        "stderr": stderr
+                                    });
+                                    console.error(errMsg);
+                                    reject(errMsg);
+                                }
+                                else {
+                                    resolve(stdout);
+                                }
+
+                            });
+                    }
+                    catch (error) {
+                        errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
+                        console.error(errMsg);
+                        reject(errMsg);
+                    }
+                }
+                else {
+                    errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to save Private Key", {
+                        "error": error,
+                        "stderr": stderr
+                    });
+                    console.error(errMsg);
+                    reject(errMsg);
+                }
+
+            });
+
+        });
+
+    });
 };
 
-/**
- * create directory for supplied path
- * @param {String} path
- */
-DataServices.prototype.createDir = function (path) {
-    try {
-        fs.accessSync(path, fs.F_OK);
-    }
-    catch (e) {
-        fs.mkdirSync(path);
-    }
-};
+
+/**------------------- save payload methods -----------------------**/
 
 /**
  * save provision payload to file
@@ -88,7 +121,7 @@ DataServices.prototype.createDir = function (path) {
 DataServices.prototype.savePayload = function (path, payload, keys, level, callback) {
     var self = this;
     var data = {
-        "level": level
+        "level": level.toLowerCase()
     };
 
     for (var i = 0; i < keys.length; i++) {
@@ -206,6 +239,58 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
         }
     );
 
+};
+
+
+/**------------------- folder/files methods -----------------------**/
+
+/**
+ * check if directory or file exists
+ * @param {String} path
+ * @returns {boolean}
+ */
+DataServices.prototype.isPathExists = function (path) {
+    try {
+        fs.accessSync(path, fs.F_OK);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+/**
+ *
+ * @param {String} path
+ * @param {Array} nodeFiles
+ * @param {String} module
+ * @returns {boolean}
+ */
+DataServices.prototype.isNodeFilesExists = function (path, nodeFiles, module) {
+    var self = this;
+    for (var i = 0; i < nodeFiles.length; i++) {
+        if (!self.isPathExists(path + nodeFiles[i])) {
+            console.error(global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, "cert missing", {
+                "path": path,
+                "file": nodeFiles[i]
+            }));
+            return false;
+        }
+    }
+
+    return true;
+};
+
+/**
+ * create directory for supplied path
+ * @param {String} path
+ */
+DataServices.prototype.createDir = function (path) {
+    try {
+        fs.accessSync(path, fs.F_OK);
+    }
+    catch (e) {
+        fs.mkdirSync(path);
+    }
 };
 
 /**
