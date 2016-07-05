@@ -42,7 +42,8 @@ var keyPair = function(baseDir, sourceDir, level, allDone){
             "key": fs.readFileSync(baseDir + sourceDir + "/private_key.pem")+ "",
             "cert": fs.readFileSync(baseDir + sourceDir + "/x509")+ "",
             "hostname": fs.readFileSync(baseDir + sourceDir + "/hostname")+ "",
-            "ca": fs.readFileSync(baseDir + sourceDir + "/ca")+ ""    
+            "ca": fs.readFileSync(baseDir + sourceDir + "/ca")+ "",
+			"pkcs7":  fs.readFileSync(baseDir + sourceDir + "/pkcs7")
         };
         if(this.level === 'instance') {
             this.credentials.edgeHostname = fs.readFileSync(baseDir + sourceDir + "/edgeHostname") + "";

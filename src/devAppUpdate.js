@@ -9,7 +9,7 @@ var helper = new Helper();
 var keys = ["updateStatus"];
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var appFiles = ["uid", "hostname"];
-var debug = require("debug")("./sr/devAppUpdate.js");
+var debug = require("debug")("devAppUpdate");
 
 
 if (process.argv.length < 5) {

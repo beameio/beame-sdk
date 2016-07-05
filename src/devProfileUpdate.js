@@ -9,7 +9,7 @@ var Helper = require('./helper.js');
 var helper = new Helper();
 var keys = ["updateStatus"];
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
-var debug = require("debug")("./src/devProfileUpdate.js");
+var debug = require("debug")("devProfileUpdate");
 
 
 

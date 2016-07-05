@@ -1,7 +1,7 @@
 /**
  * Created by zenit1 on 04/07/2016.
  */
-var debug = require("debug")("./src/services/EdgeClientServices.js");
+var debug = require("debug")("EdgeClientServices");
 var os = require('os');
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData

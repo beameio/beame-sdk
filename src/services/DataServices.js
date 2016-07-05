@@ -1,7 +1,7 @@
 /**
  * Created by zenit1 on 03/07/2016.
  */
-var debug = require("debug")("./src/services/DataServices.js");
+var debug = require("debug")("DataServices");
 var fs = require('fs');
 var exec = require('child_process').exec;
 var async = require('async');

@@ -9,7 +9,7 @@ var devPath = home + "/.beame/";              //path to store dev data: uid, hos
 var keys = ["x509", "pkcs7", "ca"];
 var Helper = require('./helper.js');
 var helper = new Helper();
-var debug = require("debug")("./src/devGetCert.js");
+var debug = require("debug")("devGetCert");
 
 
 /*

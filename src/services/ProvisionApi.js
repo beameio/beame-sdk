@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require("debug")("./src/services/ProvisionApi.js");
+var debug = require("debug")("ProvisionApi");
 var provisionSettings = require('../../config/ApiConfig.json');
 var beameUtils = require('../utils/BeameUtils');
 

@@ -1,5 +1,5 @@
 'use strict';
-var debug = require("debug")("./src/prov_api.js");
+var debug = require("debug")("prov_api");
 
 
 var commonEPprefix = "https://prov-staging.beameio.net/api";

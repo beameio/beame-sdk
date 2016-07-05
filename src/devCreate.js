@@ -1,6 +1,6 @@
 var test = require('./prov_api.js');
 var provApi = new test();
-var debug = require("debug")("./src/devCreate.js");
+var debug = require("debug")("devCreate");
 
 
 var fs = require('fs');

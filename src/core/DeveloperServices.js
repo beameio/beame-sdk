@@ -1,7 +1,7 @@
 /**
  * Created by zenit1 on 03/07/2016.
  */
-var debug = require("debug")("./src/services/DeveloperServices.js");
+var debug = require("debug")("DeveloperServices");
 var os = require('os');
 var home = os.homedir();
 var devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData

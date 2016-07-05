@@ -12,7 +12,7 @@ var keys = ["x509", "pkcs7", "ca"];//data that should be returned by the operati
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var appFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var edgeFiles = ["uid", "hostname"];
-var debug = require("debug")("./src/edgeClientGetCert.js");
+var debug = require("debug")("edgeClientGetCert");
 
 
 

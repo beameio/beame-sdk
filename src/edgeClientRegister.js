@@ -9,7 +9,7 @@ var helper = new Helper();
 var keys = ["uid", "hostname","edgeHostname"];
 var usrFiles = ["uid", "hostname", "edgeHostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var appFiles = ["uid", "hostname", "edgeHostname", "x509", "ca", "private_key.pem", "pkcs7"];
-var debug = require("debug")("./src/edgeClientRegister.js");
+var debug = require("debug")("edgeClientRegister");
 /*if (process.argv.length < 4){
  console.log('Usage: node '+__filename+' dev-hostname app-hostname');
  process.exit(-1);

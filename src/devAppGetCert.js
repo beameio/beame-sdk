@@ -11,7 +11,7 @@ var helper = new Helper();
 var keys = ["x509", "pkcs7", "ca"];
 var usrFiles = ["uid", "hostname", "x509", "ca", "private_key.pem", "pkcs7"];
 var appFiles = ["uid", "hostname"];
-var debug = require("debug")("./src/devAppGetCert.js");
+var debug = require("debug")("devAppGetCert");
 
 /*
  if (process.argv.length < 4) {
