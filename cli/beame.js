@@ -110,4 +110,23 @@ if(argv._.length < 2) {
     process.exit(1);
 }
 
+if(argv._[0] == 'complete') {
+	if(argv._[1] == 'commands') {
+		console.log(_.keys(commands).join(' '));
+		process.exit(0);
+	}
+	if(argv._[1] == 'sub-commands') {
+		console.log(_.keys(commands[argv._[2]]).join(' '));
+		process.exit(0);
+	}
+	if(argv._[1] == 'switches') {
+		var f = commands[argv._[2]][argv._[3]];
+		var paramsNames = getParamsNames(f);
+		var switches = paramsNames.map(function(p) { return "--" + p; }).join(' ');
+		console.log(switches);
+		process.exit(0);
+	}
+	process.exit(1);
+}
+
 main();
