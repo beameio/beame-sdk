@@ -7,7 +7,17 @@ var exec = require('child_process').exec;
 var async = require('async');
 
 //private methods
+function randomPassword(length) {
+    var len = length || 16;
+    var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
+    var pass = "";
+    for (var x = 0; x < len; x++) {
+        var i = Math.floor(Math.random() * chars.length);
+        pass += chars.charAt(i);
+    }
 
+    return pass;
+}
 /**
  *
  * @constructor
@@ -93,8 +103,6 @@ DataServices.prototype.savePayload = function (path, payload, keys, callback) {
  *
  * @param {String} dirPath
  * @param {OrderPemResponse} payload
- * @param {Array} keys
- * @param {boolean} createP7B
  * @param finalCallback
  */
 DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
@@ -139,26 +147,56 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
                 return;
             }
 
-            
-                exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
+
+            async.parallel(
+                [
+                    function(callback){
+                        exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
+                            if (error) {
+                                callback(error, null);
+                                return;
+                            }
+                            self.saveFileAsync(dirPath + global.CertFileNames.P7B, stdout, function(error){
+                                if(error){
+                                    callback(error,null);
+                                }
+                            });
+                        });
+                    },
+                    function(callback){
+                        var pwd = randomPassword();
+
+                        var cmd = "openssl pkcs12 -export -in " + dirPath + global.CertFileNames.X509 + " -certfile " + dirPath + global.CertFileNames.CA + " -inkey " + dirPath + global.CertFileNames.PRIVATE_KEY + " -password pass:'" + pwd + "' -out " + dirPath + global.CertFileNames.PKCS12;
+
+                        try{
+                            exec(cmd, function (error) {
+                                if (error) {
+                                    callback(error, null);
+                                    return;
+                                }
+                                self.saveFileAsync(dirPath + global.CertFileNames.PWD, pwd, function(error){
+                                    if(error){
+                                        callback(error,null);
+                                    }
+                                });
+                            });
+
+                        }
+                        catch(e){
+                            callback(e,null);
+                        }
+
+                    }
+                ],
+                function (error) {
                     if (error) {
-                        finalCallback && finalCallback(error, null);
+                        finalCallback(error, null);
                         return;
                     }
 
-                    try {
-
-                        fs.writeFileSync(dirPath + global.CertFileNames.P7B, stdout);
-                    }
-                    catch (error) {
-                        finalCallback && finalCallback(error, null);
-                    }
-
-
-                });
-           
-
-            finalCallback && finalCallback(null, payload);
+                    finalCallback && finalCallback(null, true);
+                }
+            );
         }
     );
 
