@@ -3,6 +3,7 @@
   "version": "1.0.4",
   "description": "run provision tests",
   "main": "main.js",
+  "engine": "node >= 4.4.0",
   "scripts": {
     "test": "node ./tests/testFullCycle.js"
   },
