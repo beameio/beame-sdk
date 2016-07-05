@@ -1,6 +1,34 @@
 /**
  * Created by zenit1 on 04/07/2016.
  */
+
+/**
+ * @typedef {Object} DebugMessage
+ * @param {String} module
+ * @param {String} code
+ * @param {String} message
+ * @param {Object} data
+ */
+
+/**
+ *
+ * @param {String} module
+ * @param {String} code
+ * @param {String} message
+ * @param {Object} data
+ * @returns {typeof DebugMessage}
+ */
+global.formatDebugMessage =function (module, code, message, data) {
+
+    return {
+        module: module,
+        code: code,
+        message: message,
+        data: data
+    };
+};
+
+
 /** @const {String} **/
 global.metadataFileName = "metadata.json";
 
@@ -20,6 +48,16 @@ global.CertFileNames = {
     "CA": "ca.pem",
     "PKCS7": "pkcs7.pem",
     "P7B": "p7b.cer"
+};
+
+/**
+ * Certificate response fields
+ *  @enum {string}
+ */
+global.CertRespponseFields = {
+    "x509": "x509",
+    "pkcs7" : "pkcs7",
+    "ca": "ca"
 };
 
 global.authData = {

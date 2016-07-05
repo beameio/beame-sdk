@@ -50,7 +50,7 @@ var createDeveloperRequest = function (developerName, cb) {
 
         }
         else {
-            var msg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.ApiRestError, "Rest Api Error", {"error": error});
+            var msg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.ApiRestError, "Rest Api Error", {"error": error});
             console.error(msg);
             cb && cb(msg, null);
         }
@@ -77,7 +77,7 @@ var DeveloperServices = function () {
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
     var self = this;
 
-    var debugMsg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.DebugInfo, "Call Create Developer", {
+    var debugMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.DebugInfo, "Call Create Developer", {
         "name": developerName,
         "email": developerEmail
     });
@@ -130,7 +130,7 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
     var errorJson;
 
     if (!hostname) {
-        errorJson = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
+        errorJson = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
         debug(errorJson);
 
         callback && callback(errorJson, null);
@@ -140,7 +140,7 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
     /*---------- check if developer exists -------------------*/
     var devDir = devPath + hostname + "/";
     if (!dataServices.isPathExists(devDir)) {//provided invalid hostname
-        errorJson = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
+        errorJson = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
         console.error(errorJson);
         callback(errorJson, null);
         return;
@@ -165,7 +165,7 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
 
-                        dataServices.saveCerts(devDir, payload, responseKeys.CertificateResponseKeys, false, callback);
+                        dataServices.saveCerts(devDir, payload, callback);
                     }
                     else {
                         errorJson = {"message": "CSR for " + hostname + " failed"};
@@ -175,7 +175,7 @@ DeveloperServices.prototype.getCert = function (hostname, callback) {
                 });
             }
             else {
-                errorJson = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": hostname});
+                errorJson = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": hostname});
                 console.error(errorJson);
                 callback && callback(errorJson, null);
             }
@@ -200,7 +200,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
     var devDir = devPath + hostname + "/";
 
     if (!dataServices.isNodeFilesExists(devDir, responseKeys.NodeFiles)) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": hostname});
+        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": hostname});
         console.error(errMsg);
         callback && callback(errMsg, null);
         return;
@@ -231,7 +231,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
                     callback(null, metadata);
                 }
                 else {
-                    errMsg = beameUtils.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.ApiRestError, "developer update profile API error", {"error": error});
+                    errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.ApiRestError, "developer update profile API error", {"error": error});
                     console.error(errMsg);
                     callback(error, null);
                 }

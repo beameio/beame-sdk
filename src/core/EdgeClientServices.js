@@ -25,7 +25,7 @@ var EdgeClientServices = function () {
 EdgeClientServices.prototype.createEdgeClient = function (developerHostname, appHostname, callback) {
     var self = this;
 
-    var debugMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.DebugInfo, "Call Create Atom", {
+    var debugMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.DebugInfo, "Call Create Atom", {
         "developer": developerHostname,
         "atom": appHostname
     });
@@ -58,7 +58,7 @@ EdgeClientServices.prototype.registerEdgeClient = function(developerHostname, ap
     var errMsg;
 
     if (!developerHostname) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get atom certs, developer hostname missing", {"error": "developer hostname missing"});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get atom certs, developer hostname missing", {"error": "developer hostname missing"});
         debug(errMsg);
 
         callback && callback(errMsg, null);
@@ -66,7 +66,7 @@ EdgeClientServices.prototype.registerEdgeClient = function(developerHostname, ap
     }
 
     if (!appHostname) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get atom certs, atom hostname missing", {"error": "atom hostname missing"});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get atom certs, atom hostname missing", {"error": "atom hostname missing"});
         debug(errMsg);
 
         callback && callback(errMsg, null);
@@ -78,7 +78,7 @@ EdgeClientServices.prototype.registerEdgeClient = function(developerHostname, ap
 
     /*---------- check if developer exists -------------------*/
     if (!dataServices.isNodeFilesExists(devDir, responseKeys.NodeFiles)) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": developerHostname});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": developerHostname});
         console.error(errMsg);
         callback && callback(errMsg, null);
         return;
@@ -86,7 +86,7 @@ EdgeClientServices.prototype.registerEdgeClient = function(developerHostname, ap
 
     /*---------- check if atom files exists -------------------*/
     if (!dataServices.isNodeFilesExists(devAppDir, responseKeys.NodeFiles)) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.NodeFilesMissing, "atom files not found", {"hostname": appHostname});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.NodeFilesMissing, "atom files not found", {"hostname": appHostname});
         console.error(errMsg);
         callback && callback(errMsg, null);
         return;
@@ -129,7 +129,7 @@ EdgeClientServices.prototype.registerEdgeClient = function(developerHostname, ap
 
                         }
                         else {
-                            errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.ApiRestError, "create edge client  API error", {"error": error});
+                            errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.ApiRestError, "create edge client  API error", {"error": error});
                             console.error(errMsg);
                             callback && callback(errMsg, null);
                         }
@@ -137,7 +137,7 @@ EdgeClientServices.prototype.registerEdgeClient = function(developerHostname, ap
 
             },
             function onError(error){
-                errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "select best proxy error", {"error": error,"lb":global.loadBalancerEdnpoint});
+                errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "select best proxy error", {"error": error,"lb":global.loadBalancerEdnpoint});
                 console.error(errMsg);
                 callback && callback(error,null);
             });
@@ -160,7 +160,7 @@ EdgeClientServices.prototype.getCert = function(developerHostname, appHostname, 
     var errMsg;
 
     if (!developerHostname) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get edge client certs, developer hostname missing", {"error": "developer hostname missing"});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get edge client certs, developer hostname missing", {"error": "developer hostname missing"});
         debug(errMsg);
 
         callback && callback(errMsg, null);
@@ -168,7 +168,7 @@ EdgeClientServices.prototype.getCert = function(developerHostname, appHostname, 
     }
 
     if (!appHostname) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get edge client certs, atom hostname missing", {"error": "atom hostname missing"});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get edge client certs, atom hostname missing", {"error": "atom hostname missing"});
         debug(errMsg);
 
         callback && callback(errMsg, null);
@@ -176,7 +176,7 @@ EdgeClientServices.prototype.getCert = function(developerHostname, appHostname, 
     }
 
     if (!edgeHostname) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get edge client certs, edge hostname missing", {"error": "edge hostname missing"});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get edge client certs, edge hostname missing", {"error": "edge hostname missing"});
         debug(errMsg);
 
         callback && callback(errMsg, null);
@@ -189,7 +189,7 @@ EdgeClientServices.prototype.getCert = function(developerHostname, appHostname, 
 
     /*---------- check if developer exists -------------------*/
     if (!dataServices.isNodeFilesExists(devDir, responseKeys.NodeFiles)) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": developerHostname});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.NodeFilesMissing, "developer files not found", {"hostname": developerHostname});
         console.error(errMsg);
         callback && callback(errMsg, null);
         return;
@@ -197,7 +197,7 @@ EdgeClientServices.prototype.getCert = function(developerHostname, appHostname, 
 
     /*---------- check if atom files exists -------------------*/
     if (!dataServices.isNodeFilesExists(devAppDir, responseKeys.NodeFiles)) {
-        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.NodeFilesMissing, "atom files not found", {"hostname": appHostname});
+        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.NodeFilesMissing, "atom files not found", {"hostname": appHostname});
         console.error(errMsg);
         callback && callback(errMsg, null);
         return;
@@ -221,17 +221,17 @@ EdgeClientServices.prototype.getCert = function(developerHostname, appHostname, 
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
 
-                        dataServices.saveCerts(edgeClientDir, payload, responseKeys.CertificateResponseKeys, true, callback);
+                        dataServices.saveCerts(edgeClientDir, payload, callback);
                     }
                     else {
-                        errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.ApiRestError, "atom get cert api error", {"hostname": edgeHostname});
+                        errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.ApiRestError, "atom get cert api error", {"hostname": edgeHostname});
                         console.error(errMsg);
                         callback(errMsg, null);
                     }
                 });
             }
             else {
-                errMsg = beameUtils.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": edgeHostname});
+                errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.CSRCreationFailed, "CSR not created", {"hostname": edgeHostname});
                 console.error(errMsg);
                 callback && callback(errMsg, null);
             }

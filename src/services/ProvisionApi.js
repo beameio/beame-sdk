@@ -100,7 +100,7 @@ var ProvApiService = function () {
 
     /** @member {String} **/
     this.provApiEndpoint = beameUtils.isAmazon() ? provisionSettings.Endpoints.Online : provisionSettings.Endpoints.Local;
-    debug(beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "Provision Api Constructor", {"endpoint": this.provApiEndpoint}));
+    debug(global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "Provision Api Constructor", {"endpoint": this.provApiEndpoint}));
 
 };
 
@@ -123,14 +123,14 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
         if (!authData.generateKeys)
             cmd = "echo \"" + devPK + "\"";
 
-        debug(beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
+        debug(global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
 
         var child = exec(cmd, function (error, stdout, stderr) {
             var devPK = stdout;
 //            debug('devPK: '  + devPK);
             if (error !== null) {
                 /* -------  put error handler to deal with possible openssl failure -----------*/
-                debug(beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
+                debug(global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
                     "error": error,
                     "stderr": stderr
                 }));
@@ -153,7 +153,7 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
                          */
                         function (error, stdout, stderr) {
                             if (error !== null) {
-                                errMsg = beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate CSR", {
+                                errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate CSR", {
                                     "error": error,
                                     "stderr": stderr
                                 });
@@ -167,13 +167,13 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
                         });
                 }
                 catch (error) {
-                    errMsg = beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
+                    errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
                     console.error(errMsg);
                     cb && cb(errMsg, null);
                 }
             }
             catch (error) {
-                errMsg = beameUtils.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to save Private Key", {"error": error});
+                errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to save Private Key", {"error": error});
                 console.error(errMsg);
                 cb && cb(errMsg, null);
             }
@@ -183,20 +183,6 @@ ProvApiService.prototype.setAuthData = function (authData, cb) {
         cb(null, null);
     }
 };
-
-// ProvApiService.prototype.getEndpoint = function (url, cb) {
-//     testData = {answerExpected: false};
-//     request.get(url)
-//         .on('response', function (res) {
-//             res.on('data', function (body) {
-//                 debug('Endpoint answer: ' + body);
-//                 cb(null, JSON.parse(body));
-//             });
-//         })
-//         .on('error', function (err) {
-//             cb(err, null);
-//         });
-// };
 
 /**
  *

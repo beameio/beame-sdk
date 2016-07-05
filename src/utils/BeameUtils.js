@@ -27,14 +27,6 @@ var dataServices = new (require('../services/DataServices'))();
 
 
 /**
- * @typedef {Object} DebugMessage
- * @param {String} module
- * @param {String} code
- * @param {String} message
- * @param {Object} data
- */
-
-/**
  * @typedef {Object} EdgeShortData
  * @property {String} endpoint
  * @property {String} region
@@ -46,25 +38,7 @@ var dataServices = new (require('../services/DataServices'))();
 var csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
 module.exports = {
-
-    /**
-     *
-     * @param {String} module
-     * @param {String} code
-     * @param {String} message
-     * @param {Object} data
-     * @returns {typeof DebugMessage}
-     */
-    formatDebugMessage: function (module, code, message, data) {
-
-        return {
-            module: module,
-            code: code,
-            message: message,
-            data: data
-        };
-    },
-
+    
     /**
      *
      * @param {String} path2Pk

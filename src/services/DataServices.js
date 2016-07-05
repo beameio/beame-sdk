@@ -95,41 +95,73 @@ DataServices.prototype.savePayload = function (path, payload, keys, callback) {
  * @param {OrderPemResponse} payload
  * @param {Array} keys
  * @param {boolean} createP7B
- * @param callback
+ * @param finalCallback
  */
-DataServices.prototype.saveCerts = function (dirPath, payload, keys, createP7B,callback) {
-    for (var i = 0; i < keys.length; i++) {
-        if (payload[keys[i]]) {
+DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
+    var self = this;
+    var errMsg;
 
-            fs.writeFileSync(dirPath + keys[i] + '.pem', payload[keys[i]]);
-        }
-        else {
-
-            callback({"message": "Error, missing <" + keys[i] + "> element in provisioning answer"}, null);
+    var saveCert = function (responseField, targetName, callback) {
+        if (!payload[responseField]) {
+            errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, responseField + " missing in API response", {"path": dirPath});
             return;
         }
-    }
 
-    if(createP7B){
-        exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
+        //save cert
+        self.saveFileAsync(dirPath + targetName, payload[responseField], function (error) {
             if (error) {
-                callback && callback(error, null);
+                errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, "Saving " + responseField + " failed", {"path": dirPath});
+                console.error(errMsg);
+                callback(errMsg, null);
                 return;
             }
 
-            try{
-
-                fs.writeFileSync(dirPath + global.CertFileNames.P7B,stdout);
-            }
-            catch(error){
-                callback && callback(error, null);
-            }
-
-
+            callback(null, true);
         });
-    }
-    
-    callback && callback(null, payload);
+    };
+
+    async.parallel(
+        [
+            function (callback) {
+                saveCert(global.CertRespponseFields.x509, global.CertFileNames.X509, callback);
+            },
+            function (callback) {
+                saveCert(global.CertRespponseFields.ca, global.CertFileNames.CA, callback);
+            },
+            function (callback) {
+                saveCert(global.CertRespponseFields.pkcs7, global.CertFileNames.PKCS7, callback);
+            }
+
+        ],
+        function (error) {
+            if (error) {
+                finalCallback(error, null);
+                return;
+            }
+
+            
+                exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
+                    if (error) {
+                        finalCallback && finalCallback(error, null);
+                        return;
+                    }
+
+                    try {
+
+                        fs.writeFileSync(dirPath + global.CertFileNames.P7B, stdout);
+                    }
+                    catch (error) {
+                        finalCallback && finalCallback(error, null);
+                    }
+
+
+                });
+           
+
+            finalCallback && finalCallback(null, payload);
+        }
+    );
+
 };
 
 /**
@@ -157,14 +189,15 @@ DataServices.prototype.saveFile = function (path, data, cb) {
  */
 DataServices.prototype.saveFileAsync = function (path, data, cb) {
     fs.writeFile(path, data, function (error) {
-        if(!cb) return;
+        if (!cb) return;
         if (error) {
             cb(error, null);
             return;
         }
         cb(null, true);
     });
-},
+};
+
 /**
  * read JSON file
  * @param {String} path
