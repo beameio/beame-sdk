@@ -1,8 +1,8 @@
 'use strict';
 var fs = require('fs');
-var path = require('path'); 
+var path = require('path');
 var _=require('underscore');
-var os = require('os'); 
+var os = require('os');
 var debug = require("debug")("collectauthdata");
 require('./../utils/Globals');
 var jmespath = require('jmespath');
@@ -66,7 +66,7 @@ function readBeameDir(startdir, start){
 		}
 	});
 	return currentLevelData;
-};
+}
 
 var tree = readBeameDir("", true);
 console.log(jmespath.search(tree, "Developer[*]"));
