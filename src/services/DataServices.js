@@ -266,7 +266,7 @@ DataServices.prototype.isPathExists = function (dir) {
 DataServices.prototype.isNodeFilesExists = function (dirPath, nodeFiles, module) {
     var self = this;
     for (var i = 0; i < nodeFiles.length; i++) {
-        if (!self.isPathExists(path.join(dirPath + nodeFiles[i]))) {
+        if (!self.isPathExists(path.join(dirPath, nodeFiles[i]))) {
             console.error(global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, "cert missing", {
                 "path": dirPath,
                 "file": nodeFiles[i]
