@@ -7,10 +7,6 @@ var debug = require("debug")("collectauthdata");
 require('./../utils/Globals');
 var jmespath = require('jmespath');
 
-var BeameDirServices = function(){
-
-};
-
 
 function makepath(){
 	var args = Array.prototype.slice.call(arguments);
@@ -48,37 +44,35 @@ function readBeameDir(startdir, start){
 		startdir = global.devPath;
 	}
     var subfolders = getDirectories(startdir);
-  	var currentLevelData = {};
-
+  	var currentLevelData = [];
+	var currentObject = {};
 	if(start != true){
-		currentLevelData = readCertData(startdir);
+		currentObject = readCertData(startdir)
+		currentLevelData.push(currentObject);
 	}
 
 	_.each(subfolders, function(dir) {
 		debug('found subdir ' + startdir);
 		var deeperLevel = readBeameDir(makepath(startdir, dir), false);
-		if (start) {
-			if(!currentLevelData[deeperLevel.metadata.level])
-				currentLevelData[deeperLevel.metadata.level] = [];
-			currentLevelData[deeperLevel.metadata.level].push(deeperLevel);
+		var levelName  = deeperLevel[0].metadata.level;
+		currentObject[deeperLevel[0].metadata.level] = deeperLevel;
+//		currentObject[deeperLevel[0].metadata.level][levelName] = deeperLevel;
+
+		if(start == true) {
+			currentLevelData.push(currentObject);
 		}
-		else {
-			if(!currentLevelData[deeperLevel.metadata.level])
-				currentLevelData[deeperLevel.metadata.level] = {};
-			currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname] = deeperLevel;
-			//currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname].push(deeperLevel);
-		}
+
+		//if(!currentLevelData[deeperLevel.metadata.level]){
+		//  currentLevelData[deeperLevel.metadata.level] = {};
+		//}
+		//currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname] = deeperLevel;
+		//currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname].push(deeperLevel);
+		//});
+
 	});
 	return currentLevelData;
 }
 
-
-BeameDirServices.prototype.scanBeameDir = function(startdir){
-	return readBeameDir(startdir);
-};
-
-//var tree = readBeameDir("", true);
-//console.log(jmespath.search(tree, "Developer[*]"));
+var tree = readBeameDir("", true);
+console.log(JSON.stringify(tree, null, 2));
 //scanBeameDir(os.homedir()+'/.beame/');
-
-module.exports = BeameDirServices;
