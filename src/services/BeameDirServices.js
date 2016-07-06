@@ -7,6 +7,10 @@ var debug = require("debug")("collectauthdata");
 require('./../utils/Globals');
 var jmespath = require('jmespath');
 
+var BeameDirServices = function(){
+
+};
+
 
 function makepath(){
 	var args = Array.prototype.slice.call(arguments);
@@ -68,6 +72,13 @@ function readBeameDir(startdir, start){
 	return currentLevelData;
 }
 
-var tree = readBeameDir("", true);
-console.log(jmespath.search(tree, "Developer[*]"));
+
+BeameDirServices.prototype.scanBeameDir = function(startdir){
+	return readBeameDir(startdir);
+};
+
+//var tree = readBeameDir("", true);
+//console.log(jmespath.search(tree, "Developer[*]"));
 //scanBeameDir(os.homedir()+'/.beame/');
+
+module.exports = BeameDirServices;

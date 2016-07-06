@@ -126,14 +126,20 @@ EdgeClientServices.prototype.createEdgeClient = function (developerHostname, app
 
     self.registerEdgeClient(developerHostname, appHostname, function (error, payload) {
         if (!error) {
+            
+            if(payload && payload.hostname){
+                var hostname = payload.hostname;
 
-            var hostname = payload.hostname;
-
-            self.getCert(developerHostname, appHostname, hostname, function (error) {
-                if (callback) {
-                    error ? callback(error, null) : callback(null, payload);
-                }
-            });
+                self.getCert(developerHostname, appHostname, hostname, function (error) {
+                    if (callback) {
+                        error ? callback(error, null) : callback(null, payload);
+                    }
+                });   
+            }
+            else{
+                console.error("unexpected error",payload);
+            }
+           
         }
         else {
             callback && callback(error, null);

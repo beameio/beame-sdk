@@ -1,7 +1,7 @@
 /**
  * Created by zenit1 on 04/07/2016.
  */
-
+var _ = require('underscore');
 var developerServices = new(require('../../src/core/DeveloperServices'))();
 var atomServices = new(require('../../src/core/AtomServices'))();
 var edgeClientServices = new(require('../../src/core/EdgeClientServices'))();
@@ -18,13 +18,20 @@ var createEdgeClient = function (devHostname,appHostName) {
     });
 };
 
-var createAtom = function(devHostname){
-    atomServices.createAtom(devHostname,'satom',function(error,payload){
+var createAtom = function(appName,devHostname,edges){
+    atomServices.createAtom(devHostname,appName,function(error,payload){
         if(!error){
             console.log('/**********Create Atom Response***********/');
             console.log(payload);
             var appHostname = payload.hostname;
-            createEdgeClient(devHostname,appHostname);
+
+            for (var i = 0; i < edges; i++) {
+                process.nextTick(
+                    function(){
+                        createEdgeClient(devHostname,appHostname);
+                    }
+                );
+            }
         }
         else{
             console.error(error);
@@ -32,13 +39,23 @@ var createAtom = function(devHostname){
     });
 };
 
-var createDeveloper = function(){
-    developerServices.createDeveloper('SergeD', 'sd@beame.io',function(error, payload){
+var createDeveloper = function(name, email, atoms, edges){
+    developerServices.createDeveloper(name, email,function(error, payload){
         if(!error){
             console.log('/**********Create Developer Response***********/');
             console.log(payload);
             var developerHostname = payload.hostname;
-            createAtom(developerHostname);
+
+            for (var i = 0; i < atoms; i++) {
+
+                process.nextTick(
+                    function (j) {
+                        createAtom(name + '-app_' + j,developerHostname,edges);
+                    }.bind(null,i)
+
+                );
+
+            }
         }
         else{
             console.error(error);
@@ -46,5 +63,25 @@ var createDeveloper = function(){
     });
 };
 
-createDeveloper();
+var start = function () {
+
+    var developers = process.argv[2] || 1;
+    var atoms = process.argv[3] || 1;
+    var edges = process.argv[4] || 1;
+
+
+    for (var i = 1; i <= developers; i++) {
+
+        process.nextTick(
+            function (j) {
+            createDeveloper('dev-' + j, 'dev-' + j + '@beame.io', atoms, edges);
+        }.bind(null,i)
+
+        );
+
+    }
+};
+
+
+start();
 
