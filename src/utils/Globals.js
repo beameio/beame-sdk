@@ -2,10 +2,10 @@
  * Created by zenit1 on 04/07/2016.
  */
 'use strict';
-
+var path = require('path');
 var os = require('os');
 var home = os.homedir();
-global.devPath = home + "/.beame/";              //path to store dev data: uid, hostname, key, certs, appData
+global.devPath = path.join(home ,".beame");              //path to store dev data: uid, hostname, key, certs, appData
 global.__homedir = home;
 
 /**

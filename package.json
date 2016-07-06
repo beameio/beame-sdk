@@ -31,7 +31,6 @@
     "request": "^2.72.0",
     "socket.io": "^1.4.8",
     "socket.io-client": "^1.4.6",
-    "sys": "0.0.1",
     "underscore": "^1.8.3"
   },
   "directories": {
