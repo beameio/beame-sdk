@@ -8,7 +8,7 @@ function show(type,  fqdn,format){
 
 function list(type,  fqdn,format){
 	debug("list %j %j %j", type,  fqdn, format);
-    var reader = require('../src/collectAuthData');
+    var reader = require('../src/services/collectAuthData');
     reader.scanBeameDir("", function (beameTree) {
             console.log(beameTree);
     })
