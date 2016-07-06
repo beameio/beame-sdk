@@ -41,7 +41,7 @@ function getDirectories(srcpath) {
 function readBeameDir(startdir, start){
 	debug("starting with " + startdir);
 	if(!startdir ||  startdir.length == 0){
-		startdir = makepath(os.homedir(), "/.beame/");
+		startdir = global.devPath;
 	}
     var subfolders = getDirectories(startdir);
   	var currentLevelData = {};

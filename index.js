@@ -6,6 +6,6 @@ module.exports = {
         devAppGetCert : require("./src/devAppGetCert.js"),
         edgeClientRegister : require("./src/edgeClientRegister.js"),
         edgeClientGetCert : require("./src/edgeClientGetCert.js"),
-        scanBeameDir : require("./src/services/collectAuthData.js")
-//        authDataCollection : require("./src/collectAuthData.js")
+        scanBeameDir : require("./src/services/BeameDirServices.js")
+//        authDataCollection : require("./src/BeameDirServices.js")
 };
