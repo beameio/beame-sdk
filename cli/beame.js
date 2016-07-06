@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+"use strict";
 var argv = require('minimist')(process.argv.slice(2));
 var _ = require('underscore');
 
-var commands = {}
+var commands = {};
 _.each(['creds', 'certs', 'data'], function(cmdName) {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
