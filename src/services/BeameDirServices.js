@@ -18,7 +18,9 @@ function readCertData(basedir){
 		var credentials = {};
 		_.map(global.CertFileNames, function(key, value){
 			credentials[value] = fs.readFileSync(makepath(basedir  , key));
-			credentials.metadata = JSON.parse(fs.readFileSync(makepath(basedir , "metadata.json")));
+			_.map(JSON.parse(fs.readFileSync(makepath(basedir , "metadata.json"))), function (key, value){
+				credentials[value] = key;
+			});
 		});
 		return credentials;
     } catch (e) {
@@ -38,41 +40,34 @@ function getDirectories(srcpath) {
     });
 }
 
-function readBeameDir(startdir, start){
+function readBeameDir(startdir) {
 	debug("starting with " + startdir);
+	var developers = [];
 	if(!startdir ||  startdir.length == 0){
 		startdir = global.devPath;
 	}
-    var subfolders = getDirectories(startdir);
-  	var currentLevelData = [];
-	var currentObject = {};
-	if(start != true){
-		currentObject = readCertData(startdir)
-		currentLevelData.push(currentObject);
-	}
-
+	var subfolders = getDirectories(startdir);
 	_.each(subfolders, function(dir) {
-		debug('found subdir ' + startdir);
-		var deeperLevel = readBeameDir(makepath(startdir, dir), false);
-		var levelName  = deeperLevel[0].metadata.level;
-		currentObject[deeperLevel[0].metadata.level] = deeperLevel;
-//		currentObject[deeperLevel[0].metadata.level][levelName] = deeperLevel;
-
-		if(start == true) {
-			currentLevelData.push(currentObject);
-		}
-
-		//if(!currentLevelData[deeperLevel.metadata.level]){
-		//  currentLevelData[deeperLevel.metadata.level] = {};
-		//}
-		//currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname] = deeperLevel;
-		//currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname].push(deeperLevel);
-		//});
-
+		var deverlopr = readSubDevDir(makepath(startdir, dir));
+		developers.push(deverlopr );
 	});
-	return currentLevelData;
+	return developers;
+};
+
+function readSubDevDir(devDir) {
+	var subfolders = getDirectories(devDir);
+	var currentObject = readCertData(devDir)
+
+	_.each(subfolders, function (dir) {
+		var deeperLevel = readSubDevDir(makepath(devDir, dir), false);
+		if(!currentObject[deeperLevel.level]){
+			currentObject[deeperLevel.level]=[];
+		}
+		currentObject[deeperLevel.level].push(deeperLevel);
+	});
+	return currentObject;
 }
 
 var tree = readBeameDir("", true);
-console.log(JSON.stringify(tree, null, 2));
+console.log(JSON.stringify(tree));
 //scanBeameDir(os.homedir()+'/.beame/');
