@@ -52,11 +52,11 @@ function readBeameDir(startdir) {
 		developers.push(deverlopr );
 	});
 	return developers;
-};
+}
 
 function readSubDevDir(devDir) {
 	var subfolders = getDirectories(devDir);
-	var currentObject = readCertData(devDir)
+	var currentObject = readCertData(devDir);
 
 	_.each(subfolders, function (dir) {
 		var deeperLevel = readSubDevDir(makepath(devDir, dir), false);
@@ -69,5 +69,6 @@ function readSubDevDir(devDir) {
 }
 
 var tree = readBeameDir("", true);
-console.log(JSON.stringify(tree));
+console.log(jmespath.search(tree, "[].atom[] | [].edgeclient[]"));
+;
 //scanBeameDir(os.homedir()+'/.beame/');
