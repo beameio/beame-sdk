@@ -166,7 +166,7 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
     /** @param {EdgeShortData} edge  **/
     function onEdgeServerSelected(edge) {
 
-        provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir + global.CertFileNames.PRIVATE_KEY, devAppDir + global.CertFileNames.X509));
+        provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
         var postData = {
             host: edge.endpoint
@@ -180,7 +180,7 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
 
                 dataServices.createDir(edgeClientDir);
 
-                dataServices.savePayload(edgeClientDir + global.metadataFileName, payload, global.ResponseKeys.EdgeClientResponseKeys, global.AppModules.EdgeClient, function (error) {
+                dataServices.savePayload(edgeClientDir, payload, global.ResponseKeys.EdgeClientResponseKeys, global.AppModules.EdgeClient, function (error) {
                     if (!callback) return;
 
                     if (!error) {
@@ -235,7 +235,7 @@ EdgeClientServices.prototype.getCert = function (developerHostname, appHostname,
         dataServices.createCSR(edgeClientDir, edgeHostname).then(
             function onCsrCreated(csr) {
 
-                provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir + global.CertFileNames.PRIVATE_KEY, devAppDir + global.CertFileNames.X509));
+                provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
                 var postData = {
                     csr: csr,

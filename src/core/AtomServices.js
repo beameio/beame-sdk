@@ -127,7 +127,7 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
     /*---------- private callbacks -------------------*/
     function onRequestValidated() {
 
-        provisionApi.setAuthData(beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509));
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
         var postData = {
             name: appName
@@ -143,7 +143,7 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
 
                 dataServices.createDir(devAppDir);
 
-                dataServices.savePayload(devAppDir + global.metadataFileName, payload, global.ResponseKeys.AtomCreateResponseKeys, global.AppModules.Atom, function (error) {
+                dataServices.savePayload(devAppDir, payload, global.ResponseKeys.AtomCreateResponseKeys, global.AppModules.Atom, function (error) {
                     if (!callback) return;
 
                     if (!error) {
@@ -188,7 +188,7 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
         dataServices.createCSR(devAppDir, appHostname).then(
             function onCsrCreated(csr) {
 
-                provisionApi.setAuthData(beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509));
+                provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
                 var postData = {
                     csr: csr,
@@ -244,7 +244,7 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
     /*---------- private callbacks -------------------*/
     function onRequestValidated(metadata) {
 
-        provisionApi.setAuthData(beameUtils.getAuthToken(devDir + global.CertFileNames.PRIVATE_KEY, devDir + global.CertFileNames.X509));
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
         var postData = {
             name: appName
@@ -255,7 +255,7 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
         provisionApi.runRestfulAPI(apiData, function (error) {
             if (!error) {
                 metadata.name = appName;
-                dataServices.saveFile(devAppDir + global.metadataFileName, beameUtils.stringify(metadata));
+                dataServices.saveFile(devAppDir, global.metadataFileName, beameUtils.stringify(metadata));
                 callback && callback(null, metadata);
             }
             else {

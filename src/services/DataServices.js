@@ -3,6 +3,7 @@
  */
 'use strict';
 require('../utils/Globals');
+var path = require('path');
 var debug = require("debug")("./src/services/DataServices.js");
 var fs = require('fs');
 var exec = require('child_process').exec;
@@ -30,7 +31,7 @@ var DataServices = function () {
 };
 
 /**------------------- create csr -----------------------**/
-DataServices.prototype.createCSR = function (path, hostname) {
+DataServices.prototype.createCSR = function (dirPath, hostname) {
     var self = this;
     var errMsg;
 
@@ -55,9 +56,9 @@ DataServices.prototype.createCSR = function (path, hostname) {
                 return;
             }
 
-            var pkFile = path + global.CertFileNames.PRIVATE_KEY;
+            var pkFile = path.join(dirPath,global.CertFileNames.PRIVATE_KEY);
 
-            self.saveFile(pkFile, devPK, function (error) {
+            self.saveFile(dirPath,global.CertFileNames.PRIVATE_KEY, devPK, function (error) {
                 if (!error) {
                     cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (global.csrSubj + hostname) + "\"";
                     debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating CSR with", {"cmd": cmd}));
@@ -99,7 +100,6 @@ DataServices.prototype.createCSR = function (path, hostname) {
                     console.error(errMsg);
                     reject(errMsg);
                 }
-
             });
 
         });
@@ -107,18 +107,17 @@ DataServices.prototype.createCSR = function (path, hostname) {
     });
 };
 
-
 /**------------------- save payload methods -----------------------**/
 
 /**
  * save provision payload to file
- * @param {String} path
+ * @param {String} dirPath
  * @param {Object} payload
  * @param {Array} keys
  * @param {String} level => Developer | Atom | EdgeClient
  * @param {Function} callback
  */
-DataServices.prototype.savePayload = function (path, payload, keys, level, callback) {
+DataServices.prototype.savePayload = function (dirPath, payload, keys, level, callback) {
     var self = this;
     var data = {
         "level": level.toLowerCase()
@@ -139,7 +138,7 @@ DataServices.prototype.savePayload = function (path, payload, keys, level, callb
         }
     }
 
-    self.saveFile(path, JSON.stringify(data, null, 2), callback);
+    self.saveFile(dirPath, global.metadataFileName, JSON.stringify(data, null, 2), callback);
 };
 
 /**
@@ -159,7 +158,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
         }
 
         //save cert
-        self.saveFileAsync(dirPath + targetName, payload[responseField], function (error) {
+        self.saveFileAsync(path.join(dirPath,targetName), payload[responseField], function (error) {
             if (error) {
                 errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, "Saving " + responseField + " failed", {"path": dirPath});
                 console.error(errMsg);
@@ -199,7 +198,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
                                 callback(error, null);
                                 return;
                             }
-                            self.saveFileAsync(dirPath + global.CertFileNames.P7B, stdout, function (error) {
+                            self.saveFileAsync(path.join(dirPath,global.CertFileNames.P7B), stdout, function (error) {
                                 error ? callback(error, null) : callback(null, true);
                             });
                         });
@@ -207,7 +206,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
                     function (callback) {
                         var pwd = randomPassword();
 
-                        var cmd = "openssl pkcs12 -export -in " + dirPath + global.CertFileNames.X509 + " -certfile " + dirPath + global.CertFileNames.CA + " -inkey " + dirPath + global.CertFileNames.PRIVATE_KEY + " -password pass:'" + pwd + "' -out " + dirPath + global.CertFileNames.PKCS12;
+                        var cmd = "openssl pkcs12 -export -in " + path.join(dirPath,global.CertFileNames.X509) + " -certfile " + path.join(dirPath,global.CertFileNames.CA) + " -inkey " + path.join(dirPath,global.CertFileNames.PRIVATE_KEY) + " -password pass:'" + pwd + "' -out " + path.join(dirPath + global.CertFileNames.PKCS12);
 
                         try {
                             exec(cmd, function (error) {
@@ -215,7 +214,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
                                     callback(error, null);
                                     return;
                                 }
-                                self.saveFileAsync(dirPath + global.CertFileNames.PWD, pwd, function (error) {
+                                self.saveFileAsync(path.join(dirPath,global.CertFileNames.PWD), pwd, function (error) {
                                     error ? callback(error, null) : callback(null, true);
                                 });
                             });
@@ -241,17 +240,16 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 
 };
 
-
 /**------------------- folder/files methods -----------------------**/
 
 /**
  * check if directory or file exists
- * @param {String} path
+ * @param {String} dir
  * @returns {boolean}
  */
-DataServices.prototype.isPathExists = function (path) {
+DataServices.prototype.isPathExists = function (dir) {
     try {
-        fs.accessSync(path, fs.F_OK);
+        fs.accessSync(dir, fs.F_OK);
         return true;
     } catch (e) {
         return false;
@@ -260,17 +258,17 @@ DataServices.prototype.isPathExists = function (path) {
 
 /**
  *
- * @param {String} path
+ * @param {String} dirPath
  * @param {Array} nodeFiles
  * @param {String} module
  * @returns {boolean}
  */
-DataServices.prototype.isNodeFilesExists = function (path, nodeFiles, module) {
+DataServices.prototype.isNodeFilesExists = function (dirPath, nodeFiles, module) {
     var self = this;
     for (var i = 0; i < nodeFiles.length; i++) {
-        if (!self.isPathExists(path + nodeFiles[i])) {
+        if (!self.isPathExists(path.join(dirPath + nodeFiles[i]))) {
             console.error(global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, "cert missing", {
-                "path": path,
+                "path": dirPath,
                 "file": nodeFiles[i]
             }));
             return false;
@@ -282,26 +280,27 @@ DataServices.prototype.isNodeFilesExists = function (path, nodeFiles, module) {
 
 /**
  * create directory for supplied path
- * @param {String} path
+ * @param {String} dirPath
  */
-DataServices.prototype.createDir = function (path) {
+DataServices.prototype.createDir = function (dirPath) {
     try {
-        fs.accessSync(path, fs.F_OK);
+        fs.accessSync(dirPath, fs.F_OK);
     }
     catch (e) {
-        fs.mkdirSync(path);
+        fs.mkdirSync(dirPath);
     }
 };
 
 /**
  *
- * @param {String} path
+ * @param {String} dirPath
+ * @param fileName
  * @param {Object} data
  * @param {Function|null} [cb]
  */
-DataServices.prototype.saveFile = function (path, data, cb) {
+DataServices.prototype.saveFile = function (dirPath, fileName,data, cb) {
     try {
-        fs.writeFileSync(path, data);
+        fs.writeFileSync(path.join(dirPath,fileName), data);
         cb && cb(null, true);
     }
     catch (error) {
@@ -312,12 +311,12 @@ DataServices.prototype.saveFile = function (path, data, cb) {
 
 /**
  *
- * @param {String} path
+ * @param {String} dirPath
  * @param {Object} data
  * @param {Function|null} [cb]
  */
-DataServices.prototype.saveFileAsync = function (path, data, cb) {
-    fs.writeFile(path, data, function (error) {
+DataServices.prototype.saveFileAsync = function (dirPath, data, cb) {
+    fs.writeFile(dirPath, data, function (error) {
         if (!cb) return;
         if (error) {
             cb(error, null);
@@ -329,12 +328,12 @@ DataServices.prototype.saveFileAsync = function (path, data, cb) {
 
 /**
  * read JSON file
- * @param {String} path
+ * @param {String} dirPath
  */
-DataServices.prototype.readJSON = function (path) {
-    if (this.isPathExists(path)) {
+DataServices.prototype.readJSON = function (dirPath) {
+    if (this.isPathExists(dirPath)) {
         try {
-            var file = fs.readFileSync(path);
+            var file = fs.readFileSync(dirPath);
             return JSON.parse(file);
         }
         catch (error) {

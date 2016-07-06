@@ -3,6 +3,7 @@
  */
 'use strict';
 require('./Globals');
+var path = require('path');
 var request = require('request');
 var _ = require('underscore');
 var dataServices = new (require('../services/DataServices'))();
@@ -37,14 +38,15 @@ var dataServices = new (require('../services/DataServices'))();
 module.exports = {
 
     /**
+     * @param {String} baseDir
      * @param {String} path2Pk
      * @param {String} path2X509
      * @returns {typeof AuthData}
      */
-    getAuthToken: function (path2Pk, path2X509) {
+    getAuthToken: function (baseDir,path2Pk, path2X509) {
         return {
-            pk: path2Pk,
-            x509: path2X509
+            pk: path.join(baseDir,path2Pk),
+            x509: path.join(baseDir,path2X509)
         }
     },
 
@@ -174,7 +176,7 @@ module.exports = {
 
         return new Promise(function (resolve, reject) {
 
-            var developerMetadataPath = devDir + global.metadataFileName;
+            var developerMetadataPath = path.join(devDir,global.metadataFileName);
             var metadata = dataServices.readJSON(developerMetadataPath);
 
             if (_.isEmpty(metadata)) {
