@@ -6,32 +6,48 @@ var developerServices = new(require('../../src/core/DeveloperServices'))();
 var atomServices = new(require('../../src/core/AtomServices'))();
 var edgeClientServices = new(require('../../src/core/EdgeClientServices'))();
 
-var createEdgeClient = function (devHostname,appHostName) {
-    edgeClientServices.createEdgeClient(devHostname,appHostName,function(error,payload){
+var createEdgeClient = function (devHostname,appHostName,callback) {
+    new(require('../../src/core/EdgeClientServices'))().createEdgeClient(devHostname,appHostName,function(error,payload){
         if(!error){
             console.log('/**********Create Edge Client Response***********/');
             console.log(payload);
+            callback(null,payload);
         }
         else{
             console.error(error);
+            callback(error,null);
         }
     });
 };
 
-var createAtom = function(appName,devHostname,edges){
+var createAtom = function(appName,devHostname,edges,callback){
     atomServices.createAtom(devHostname,appName,function(error,payload){
         if(!error){
             console.log('/**********Create Atom Response***********/');
             console.log(payload);
             var appHostname = payload.hostname;
 
-            for (var i = 0; i < edges; i++) {
-                process.nextTick(
-                    function(){
-                        createEdgeClient(devHostname,appHostname);
-                    }
-                );
-            }
+            var create = function(){
+                edges--;
+                createEdgeClient(devHostname,appHostname,edgeCb);
+            };
+
+            var edgeCb = function(error,data){
+                if(error){
+                    console.error('Edge not created for ' + appName,error);
+                }
+
+                if(edges>0){
+                   create();
+                }
+                else{
+                    callback && callback(null,true);
+                }
+            };
+
+            create();
+
+
         }
         else{
             console.error(error);
@@ -39,23 +55,33 @@ var createAtom = function(appName,devHostname,edges){
     });
 };
 
-var createDeveloper = function(name, email, atoms, edges){
+var createDeveloper = function(name, email, atoms, edges, callback){
     developerServices.createDeveloper(name, email,function(error, payload){
         if(!error){
             console.log('/**********Create Developer Response***********/');
             console.log(payload);
             var developerHostname = payload.hostname;
 
-            for (var i = 0; i < atoms; i++) {
+            var create = function () {
+                atoms--;
+                createAtom(name + '-app-' + atoms,developerHostname,edges,atomCb);
+            };
 
-                process.nextTick(
-                    function (j) {
-                        createAtom(name + '-app_' + j,developerHostname,edges);
-                    }.bind(null,i)
+            var atomCb = function(error,data){
+                if(error){
+                    console.error('Atom not created for ' + developerHostname,error);
+                }
 
-                );
+                if(atoms>0){
+                    create();
+                }
+                else{
+                    callback && callback(null,true);
+                }
+            };
 
-            }
+            create();
+
         }
         else{
             console.error(error);
@@ -69,17 +95,23 @@ var start = function () {
     var atoms = process.argv[3] || 1;
     var edges = process.argv[4] || 1;
 
+    var create = function () {
+        developers--;
+        createDeveloper('dev-' + developers, 'dev-' + developers + '@beame.io', atoms, edges,devCb);
+    };
 
-    for (var i = 1; i <= developers; i++) {
+    var devCb = function(error,data){
+        if(error){
+            console.error('Developer not created',error);
+        }
 
-        process.nextTick(
-            function (j) {
-            createDeveloper('dev-' + j, 'dev-' + j + '@beame.io', atoms, edges);
-        }.bind(null,i)
+        if(developers>0){
+            create();
+        }
 
-        );
+    };
 
-    }
+    create();
 };
 
 

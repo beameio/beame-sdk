@@ -78,7 +78,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 };
 
 var postToProvisionApi = function (url, options, type, callback) {
-   
+    debug('postToProvision: ' + url);
     request.post(
         url,
         options,
@@ -89,6 +89,7 @@ var postToProvisionApi = function (url, options, type, callback) {
                 }
                 else {
                     error.data.url = url;
+                    error.data.postData = options.form;
                     callback(error, null);
                 }
             });
