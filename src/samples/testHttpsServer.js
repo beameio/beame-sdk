@@ -46,13 +46,11 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback){
 		app.listen(0, function() {
 			//ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetHost, targetPort, options, agent, edgeClientCerts)
 			var onLocalServerCreated = function(data){
-				console.log("Host Host Registered successfully ", data);
 				hostOnlineCallback && hostOnlineCallback(data, app);
 
 			}
 			address = app.address();
 			var proxy =new ProxyClient("HTTPS", creds.hostname, creds.edgeHostname, 'localhost', app.address().port, {"onLocalServerCreated": onLocalServerCreated } , undefined, options);
-			console.log("Registered Instance : " + creds.hostname);
 		});
 
 	});
@@ -102,4 +100,4 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback){
 
 var server = new Server();*/
 module.exports = { "SampleBeameServer":SampleBeameServer}
-new SampleBeameServer();
+//new SampleBeameServer();
