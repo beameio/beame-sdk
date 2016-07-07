@@ -1,0 +1,12 @@
+Beame Dir Api 
+
+
+1. CreateDeveloper (for now works with authdata)
+2. CreateApp
+3. CreateInstance 
+4. Revoke // not for now 
+5. List (developers/apps/instances)
+6. Test Developer (is all ok)
+7. Export Credentials 
+:w
+

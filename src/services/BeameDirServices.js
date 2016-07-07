@@ -7,10 +7,6 @@ var debug = require("debug")("collectauthdata");
 require('./../utils/Globals');
 var jmespath = require('jmespath');
 
-var BeameDirServices = function(){
-
-};
-
 
 function makepath(){
 	var args = Array.prototype.slice.call(arguments);
@@ -22,17 +18,15 @@ function readCertData(basedir){
 		var credentials = {};
 		_.map(global.CertFileNames, function(key, value){
 			credentials[value] = fs.readFileSync(makepath(basedir  , key));
-			credentials.metadata = JSON.parse(fs.readFileSync(makepath(basedir , "metadata.json")));
+			_.map(JSON.parse(fs.readFileSync(makepath(basedir , "metadata.json"))), function (key, value){
+				credentials[value] = key;
+			});
 		});
 		return credentials;
     } catch (e) {
         debug("Error", e.toString());
-        return {
-            "name":"",
-            "key":"",
-            "cert":"",
-            "hostname":""
-        };
+		console.error("Directory reading failed ", e);
+        return {};
     }
 }
 
@@ -42,43 +36,37 @@ function getDirectories(srcpath) {
     });
 }
 
-function readBeameDir(startdir, start){
+function readBeameDir(startdir) {
 	debug("starting with " + startdir);
+	var developers = [];
 	if(!startdir ||  startdir.length == 0){
 		startdir = global.devPath;
 	}
-    var subfolders = getDirectories(startdir);
-  	var currentLevelData = {};
-
-	if(start != true){
-		currentLevelData = readCertData(startdir);
-	}
-
+	var subfolders = getDirectories(startdir);
 	_.each(subfolders, function(dir) {
-		debug('found subdir ' + startdir);
-		var deeperLevel = readBeameDir(makepath(startdir, dir), false);
-		if (start) {
-			if(!currentLevelData[deeperLevel.metadata.level])
-				currentLevelData[deeperLevel.metadata.level] = [];
-			currentLevelData[deeperLevel.metadata.level].push(deeperLevel);
-		}
-		else {
-			if(!currentLevelData[deeperLevel.metadata.level])
-				currentLevelData[deeperLevel.metadata.level] = {};
-			currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname] = deeperLevel;
-			//currentLevelData[deeperLevel.metadata.level][deeperLevel.metadata.hostname].push(deeperLevel);
-		}
+		var deverlopr = readSubDevDir(makepath(startdir, dir));
+		developers.push(deverlopr );
 	});
-	return currentLevelData;
+	return developers;
 }
 
+function readSubDevDir(devDir) {
+	var subfolders = getDirectories(devDir);
+	var currentObject = readCertData(devDir);
 
-BeameDirServices.prototype.scanBeameDir = function(startdir){
-	return readBeameDir(startdir);
-};
+	_.each(subfolders, function (dir) {
+		var deeperLevel = readSubDevDir(makepath(devDir, dir), false);
+		if(!currentObject[deeperLevel.level]){
+			currentObject[deeperLevel.level]=[];
+		}
+		currentObject[deeperLevel.level].push(deeperLevel);
+	});
+	return currentObject;
+}
 
 //var tree = readBeameDir("", true);
-//console.log(jmespath.search(tree, "Developer[*]"));
-//scanBeameDir(os.homedir()+'/.beame/');
 
-module.exports = BeameDirServices;
+//console.log(jmespath.search(tree, "[].atom[] | [].edgeclient[]"));
+;
+//scanBeameDir(os.homedir()+'/.beame/');
+module.exports =  {"readBeameDir": readBeameDir }
