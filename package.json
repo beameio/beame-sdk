@@ -1,6 +1,6 @@
 {
   "name": "beame-api",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "run provision tests",
   "main": "main.js",
   "engine": "node >= 4.4.0",
