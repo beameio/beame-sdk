@@ -96,7 +96,7 @@ CLI options:
 
 ### Certificate Commands 
 	
-	beame creds list   --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net  --format {json|text} 
+	beame creds list   --type {developer|atom|instance}  --format {json|text}
 	beame creds create --type {developer|atom|instance} --localip { ipaddress | auto } --format {json|text} 
 	beame creds renew  --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net} --format {json|text} 
 	beame creds purge  --type {developer|atom|instance} --localip { ipaddress | auto } --format {json|text}
