@@ -25,12 +25,8 @@ function readCertData(basedir){
 		return credentials;
     } catch (e) {
         debug("Error", e.toString());
-        return {
-            "name":"",
-            "key":"",
-            "cert":"",
-            "hostname":""
-        };
+		console.error("Directory reading failed ", e);
+        return {};
     }
 }
 
@@ -68,7 +64,9 @@ function readSubDevDir(devDir) {
 	return currentObject;
 }
 
-var tree = readBeameDir("", true);
-console.log(jmespath.search(tree, "[].atom[] | [].edgeclient[]"));
+//var tree = readBeameDir("", true);
+
+//console.log(jmespath.search(tree, "[].atom[] | [].edgeclient[]"));
 ;
 //scanBeameDir(os.homedir()+'/.beame/');
+module.exports =  {"readBeameDir": readBeameDir }
