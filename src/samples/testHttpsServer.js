@@ -47,7 +47,7 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback){
 			//ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetHost, targetPort, options, agent, edgeClientCerts)
 			var onLocalServerCreated = function(data){
 				console.log("Host Host Registered successfully ", data);
-				hostOnlineCallback && hostOnlineCallback();
+				hostOnlineCallback && hostOnlineCallback(data, app);
 
 			}
 			address = app.address();
