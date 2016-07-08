@@ -12,7 +12,7 @@ var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.AtomApi;
 
-
+/**----------------------Private methods ------------------------  **/
 var validateDeveloperHost = function (developerHostname) {
     var errMsg;
     return new Promise(function (resolve, reject) {
@@ -77,50 +77,11 @@ var isRequestValid = function (developerHostname, appHostname, devDir, devAppDir
 
 /**
  *
- * @constructor
- */
-var AtomServices = function () {
-};
-
-/**
- *
  * @param {String} developerHostname
  * @param {String} appName
  * @param {Function} callback
  */
-AtomServices.prototype.createAtom = function (developerHostname, appName, callback) {
-    var self = this;
-
-    var debugMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.DebugInfo, "Call Create Atom", {
-        "developer": developerHostname,
-        "name": appName
-    });
-    debug(debugMsg);
-
-    self.registerAtom(developerHostname, appName, function (error, payload) {
-        if (!error) {
-
-            var hostname = payload.hostname;
-
-            self.getCert(developerHostname, hostname, function (error) {
-                if (callback) {
-                    error ? callback(error, null) : callback(null, payload);
-                }
-            });
-        }
-        else {
-            callback && callback(error, null);
-        }
-    });
-};
-
-/**
- *
- * @param {String} developerHostname
- * @param {String} appName
- * @param {Function} callback
- */
-AtomServices.prototype.registerAtom = function (developerHostname, appName, callback) {
+var registerAtom = function (developerHostname, appName, callback) {
 
     var devDir = devPath + developerHostname + "/";
 
@@ -178,7 +139,7 @@ AtomServices.prototype.registerAtom = function (developerHostname, appName, call
  * @param {String}  appHostname
  * @param {Function} callback
  */
-AtomServices.prototype.getCert = function (developerHostname, appHostname, callback) {
+var getCert = function (developerHostname, appHostname, callback) {
     var devDir = devPath + developerHostname + "/";
     var devAppDir = devDir + appHostname + "/";
 
@@ -229,6 +190,44 @@ AtomServices.prototype.getCert = function (developerHostname, appHostname, callb
     isRequestValid(developerHostname, appHostname, devDir, devAppDir, false).then(onRequestValidated, onValidationError);
 
 };
+
+/**
+ *
+ * @constructor
+ */
+var AtomServices = function () {
+};
+
+/**
+ *
+ * @param {String} developerHostname
+ * @param {String} appName
+ * @param {Function} callback
+ */
+AtomServices.prototype.createAtom = function (developerHostname, appName, callback) {
+    var debugMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.DebugInfo, "Call Create Atom", {
+        "developer": developerHostname,
+        "name": appName
+    });
+    debug(debugMsg);
+
+    registerAtom(developerHostname, appName, function (error, payload) {
+        if (!error) {
+
+            var hostname = payload.hostname;
+
+            getCert(developerHostname, hostname, function (error) {
+                if (callback) {
+                    error ? callback(error, null) : callback(null, payload);
+                }
+            });
+        }
+        else {
+            callback && callback(error, null);
+        }
+    });
+};
+
 
 /**
  *
