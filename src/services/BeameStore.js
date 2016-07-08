@@ -36,7 +36,7 @@ BeameStore.prototype.jsearch= function (searchItem, level){
 	switch(level) {
 		case "developer":
 		{
-			queryString =  sprintf("[?(hostname=='%s' )|| (name =='%s' )].{name:name, hostname:hostname, level:level}", searchItem, searchItem );
+			queryString =  sprintf("[?(hostname=='%s' )|| (name =='%s' )].{name:name, hostname:hostname, level:level} ", searchItem, searchItem );
 			break;
 		}
 
@@ -63,40 +63,40 @@ BeameStore.prototype.jsearch= function (searchItem, level){
 
 BeameStore.prototype.searchDevelopers = function(name) {
 	var names = this.jsearch(name, "developer");
-	var returnDict = {};
+	var returnDict = [];
 
 	_.each(names, _.bind(function (item) {
-		var qString = sprintf("[?hostname == '%s']", item.hostname);
-		returnDict[item.hostname] = jmespath.search(this.beameStore, qString);
+		var qString = sprintf("[?hostname == '%s'] | []", item.hostname);
+		returnDict= returnDict.concat(jmespath.search(this.beameStore, qString));
 	}, this));
 	return returnDict;
 };
 
 BeameStore.prototype.searchAtoms = function(name){
 	var names = this.jsearch(name, "atom");
-	var returnDict = {};
+	var returnDict = [];
 
 	_.each(names, _.bind(function (item) {
 		var qString = sprintf("[].atom[?hostname == '%s'] | []", item.hostname);
-		returnDict[item.hostname] = jmespath.search(this.beameStore, qString);
+		returnDict= returnDict.concat(jmespath.search(this.beameStore, qString));
 	}, this));
 	return returnDict;
 };
 
 BeameStore.prototype.searchEdge =  function(name){
 	var names = this.jsearch(name, "edgeClient");
-	var returnDict = {};
+	var returnDict = [];
 
 	_.each(names, _.bind(function (item) {
 		var qString = sprintf("[].atom[].edgeclient[?hostname == '%s'] | []", item.hostname);
-		returnDict[item.hostname] = jmespath.search(this.beameStore, qString);
+		returnDict= returnDict.concat(jmespath.search(this.beameStore, qString));
 	}, this));
 	return returnDict;
 };
 
 
 BeameStore.prototype.listCurrentDevelopers = function() {
-	return jmespath.search(this.beameStore, "[*].{name:name, hostname:hostname, level:level}");
+	return jmespath.search(this.beameStore, "[*].{name:name, hostname:hostname, level:level} | []");
 }
 
 BeameStore.prototype.listCurrentAtoms = function(){
