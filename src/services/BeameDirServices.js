@@ -36,20 +36,6 @@ function getDirectories(srcpath) {
     });
 }
 
-function readBeameDir(startdir) {
-	debug("starting with " + startdir);
-	var developers = [];
-	if(!startdir ||  startdir.length == 0){
-		startdir = global.devPath;
-	}
-	var subfolders = getDirectories(startdir);
-	_.each(subfolders, function(dir) {
-		var deverlopr = readSubDevDir(makepath(startdir, dir));
-		developers.push(deverlopr );
-	});
-	return developers;
-}
-
 function readSubDevDir(devDir) {
 	var subfolders = getDirectories(devDir);
 	var currentObject = readCertData(devDir);
@@ -64,9 +50,18 @@ function readSubDevDir(devDir) {
 	return currentObject;
 }
 
-//var tree = readBeameDir("", true);
+function readBeameDir(startdir) {
+	debug("starting with " + startdir);
+	var developers = [];
+	if(!startdir ||  startdir.length === 0){
+		startdir = global.devPath;
+	}
+	var subfolders = getDirectories(startdir);
+	_.each(subfolders, function(dir) {
+		var deverlopr = readSubDevDir(makepath(startdir, dir));
+		developers.push(deverlopr );
+	});
+	return developers;
+}
 
-//console.log(jmespath.search(tree, "[].atom[] | [].edgeclient[]"));
-;
-//scanBeameDir(os.homedir()+'/.beame/');
-module.exports =  {"readBeameDir": readBeameDir }
+module.exports =  {"readBeameDir": readBeameDir };
