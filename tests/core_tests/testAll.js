@@ -7,7 +7,7 @@ var atomServices = new(require('../../src/core/AtomServices'))();
 var edgeClientServices = new(require('../../src/core/EdgeClientServices'))();
 
 var createEdgeClient = function (devHostname,appHostName,callback) {
-    new(require('../../src/core/EdgeClientServices'))().createEdgeClient(devHostname,appHostName,function(error,payload){
+    edgeClientServices.createEdgeClient(devHostname,appHostName,function(error,payload){
         if(!error){
             console.log('/**********Create Edge Client Response***********/');
             console.log(payload);

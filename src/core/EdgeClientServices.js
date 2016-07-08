@@ -57,103 +57,9 @@ var isEdgeHostValid = function (hostname) {
  *
  * @param {String} developerHostname
  * @param {String} appHostname
- * @param {String|null} [edgeHostname]
- * @param {String} devDir
- * @param {String} devAppDir
- * @param {String|null} [edgeClientDir]
- * @param {boolean} validateEdgeHostname
- * @returns {Promise}
- */
-var isRequestValid = function (developerHostname, appHostname, edgeHostname, devDir, devAppDir, edgeClientDir, validateEdgeHostname) {
-
-    return new Promise(function (resolve, reject) {
-
-        function onValidationError(error) {
-            reject(error);
-        }
-
-        function onMetadataReceived(metadata) {
-            resolve(metadata);
-        }
-
-        function getMetadata() {
-            beameUtils.getNodeMetadata(edgeClientDir || devAppDir, developerHostname, global.AppModules.Atom).then(onMetadataReceived, onValidationError);
-        }
-
-        function validateAtomCerts() {
-            beameUtils.isNodeCertsExists(devAppDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(getMetadata, onValidationError);
-        }
-
-        function validateDevCerts() {
-            beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(validateAtomCerts, onValidationError);
-        }
-
-        function validateEdgeClientHost() {
-            if (validateEdgeHostname) {
-                isEdgeHostValid(edgeHostname).then(validateDevCerts, onValidationError);
-            }
-            else {
-                validateDevCerts();
-            }
-        }
-
-        function validateAtomHost() {
-            isAtomHostValid(appHostname).then(validateEdgeClientHost, onValidationError);
-        }
-
-
-        validateDeveloperHost(developerHostname).then(validateAtomHost, onValidationError);
-    });
-};
-
-var EdgeClientServices = function () {
-};
-
-/**
- *
- * @param {String} developerHostname
- * @param {String} appHostname
  * @param {Function} callback
  */
-EdgeClientServices.prototype.createEdgeClient = function (developerHostname, appHostname, callback) {
-    var self = this;
-
-    var debugMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.DebugInfo, "Call Create Atom", {
-        "developer": developerHostname,
-        "atom": appHostname
-    });
-    debug(debugMsg);
-
-    self.registerEdgeClient(developerHostname, appHostname, function (error, payload) {
-        if (!error) {
-            
-            if(payload && payload.hostname){
-                var hostname = payload.hostname;
-
-                self.getCert(developerHostname, appHostname, hostname, function (error) {
-                    if (callback) {
-                        error ? callback(error, null) : callback(null, payload);
-                    }
-                });   
-            }
-            else{
-                console.error("unexpected error",payload);
-            }
-           
-        }
-        else {
-            callback && callback(error, null);
-        }
-    });
-};
-
-/**
- *
- * @param {String} developerHostname
- * @param {String} appHostname
- * @param {Function} callback
- */
-EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, appHostname, callback) {
+var registerEdgeClient = function (developerHostname, appHostname, callback) {
     var errMsg;
     var devDir = devPath + developerHostname + "/";
     var devAppDir = devDir + appHostname + "/";
@@ -228,9 +134,9 @@ EdgeClientServices.prototype.registerEdgeClient = function (developerHostname, a
  * @param {String} appHostname
  * @param {String} edgeHostname
  * @param {Function} callback
- */
-EdgeClientServices.prototype.getCert = function (developerHostname, appHostname, edgeHostname, callback) {
     var errMsg;
+ */
+var getCert = function (developerHostname, appHostname, edgeHostname, callback) {
     var devDir = devPath + developerHostname + "/";
     var devAppDir = devDir + appHostname + "/";
     var edgeClientDir = devAppDir + edgeHostname + "/";
@@ -275,5 +181,100 @@ EdgeClientServices.prototype.getCert = function (developerHostname, appHostname,
     isRequestValid(developerHostname, appHostname, edgeHostname, devDir, devAppDir, edgeClientDir, false).then(onRequestValidated, onValidationError);
 
 };
+
+/**
+ *
+ * @param {String} developerHostname
+ * @param {String} appHostname
+ * @param {String|null} [edgeHostname]
+ * @param {String} devDir
+ * @param {String} devAppDir
+ * @param {String|null} [edgeClientDir]
+ * @param {boolean} validateEdgeHostname
+ * @returns {Promise}
+ */
+var isRequestValid = function (developerHostname, appHostname, edgeHostname, devDir, devAppDir, edgeClientDir, validateEdgeHostname) {
+
+    return new Promise(function (resolve, reject) {
+
+        function onValidationError(error) {
+            reject(error);
+        }
+
+        function onMetadataReceived(metadata) {
+            resolve(metadata);
+        }
+
+        function getMetadata() {
+            beameUtils.getNodeMetadata(edgeClientDir || devAppDir, developerHostname, global.AppModules.Atom).then(onMetadataReceived, onValidationError);
+        }
+
+        function validateAtomCerts() {
+            beameUtils.isNodeCertsExists(devAppDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(getMetadata, onValidationError);
+        }
+
+        function validateDevCerts() {
+            beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(validateAtomCerts, onValidationError);
+        }
+
+        function validateEdgeClientHost() {
+            if (validateEdgeHostname) {
+                isEdgeHostValid(edgeHostname).then(validateDevCerts, onValidationError);
+            }
+            else {
+                validateDevCerts();
+            }
+        }
+
+        function validateAtomHost() {
+            isAtomHostValid(appHostname).then(validateEdgeClientHost, onValidationError);
+        }
+
+
+        validateDeveloperHost(developerHostname).then(validateAtomHost, onValidationError);
+    });
+};
+
+var EdgeClientServices = function () {
+};
+
+/**
+ *
+ * @param {String} developerHostname
+ * @param {String} appHostname
+ * @param {Function} callback
+ */
+EdgeClientServices.prototype.createEdgeClient = function (developerHostname, appHostname, callback) {
+  
+    var debugMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.DebugInfo, "Call Create Edge Client", {
+        "developer": developerHostname,
+        "atom": appHostname
+    });
+    debug(debugMsg);
+
+    registerEdgeClient(developerHostname, appHostname, function (error, payload) {
+        if (!error) {
+            
+            if(payload && payload.hostname){
+                var hostname = payload.hostname;
+
+                getCert(developerHostname, appHostname, hostname, function (error) {
+                    if (callback) {
+                        error ? callback(error, null) : callback(null, payload);
+                    }
+                });   
+            }
+            else{
+                console.error("unexpected error",payload);
+            }
+           
+        }
+        else {
+            callback && callback(error, null);
+        }
+    });
+};
+
+
 
 module.exports = EdgeClientServices;

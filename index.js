@@ -8,6 +8,9 @@ module.exports = {
         // edgeClientGetCert : require("./src/edgeClientGetCert.js"),
         beameDirServices : require("./src/services/BeameDirServices.js"),
         sampleNodeServer : require("./src/samples/testHttpsServer.js"),
-        provisionApiServices:require("./src/services/ProvisionApi")
+        provisionApiServices :require("./src/services/ProvisionApi"),
+        developerCervices : require('./src/core/DeveloperServices'),
+        atomServices : require('./src/core/AtomServices'),
+        edgeClientServices : require('./src/core/EdgeClientServices')
 //        authDataCollection : require("./src/BeameDirServices.js")
 };
