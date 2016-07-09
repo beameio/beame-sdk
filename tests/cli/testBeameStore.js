@@ -1,5 +1,5 @@
-var BeameStore = require("../src/services/BeameStore");
-var BeameDirectApi = require("../src/services/BeameDirServices");
+var BeameStore = require("../../src/services/BeameStore");
+var BeameDirectApi = require("../../src/services/BeameDirServices");
 var jmespath = require('jmespath');
 var tree = BeameDirectApi.readBeameDir();
 var debug =require("debug")("TestBeameStore");
@@ -14,10 +14,11 @@ var currentInstances = store.listCurrentInstances();
 function testBeameStruct(beameStruct, keyword, func, useNameSearch){
 	console.log("****************Listing " + keyword + " started *************");
 	_.each(beameStruct, function(item){
-		var beameRecord =  func.call(store, useNameSearch? item.name : item.hostname);
-		console.log("Testing:", item.name);
+		var name = useNameSearch? item.name : item.hostname
+		var beameRecord =  func.call(store, name);
+		console.log("Testing:", name);
 		if(!beameRecord || beameRecord.length === 0 || beameRecord.length != 1){
-			throw new Error(["Developers listing failered", item.name,  beameRecord]);
+			throw new Error(["Developers listing failered", name ,  beameRecord]);
 		}
 	});
 	console.log("****************Listing" + keyword + " started *************");
@@ -26,7 +27,7 @@ function testBeameStruct(beameStruct, keyword, func, useNameSearch){
 
 testBeameStruct(currentDevelopers, "developers", _.bind(store.searchDevelopers,store), true);
 testBeameStruct(currentDevelopers, "developers", _.bind(store.searchDevelopers,store) , false);
-
+	
 testBeameStruct(currentAtoms, "currentAtoms",         _.bind(store.searchAtoms, store) , true);
 testBeameStruct(currentAtoms, "currentAtoms",         _.bind(store.searchAtoms, store), false);
 testBeameStruct(currentInstances, "currentInstances", _.bind(store.searchEdge, store), false);

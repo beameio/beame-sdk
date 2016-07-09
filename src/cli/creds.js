@@ -5,7 +5,8 @@ var fs = require('fs');
 var jmespath = require('jmespath');
 var beameDirServices = require('../services/BeameDirServices');
 var debug = require("debug")("cred_api");
-
+var BeameDirectApi = require("../services/BeameDirServices");
+var BeameStore = require("../services/BeameStore");
 var store = new BeameStore();
 
 
@@ -16,7 +17,7 @@ function show(fqdn, format){
 
 function list(type,  fqdn,format){
 	debug("list %j %j %j", type,  fqdn, format);
-   
+   	
 	var object = beameDirServices.readBeameDir("");
 	
 
