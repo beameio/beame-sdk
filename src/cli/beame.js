@@ -10,11 +10,11 @@ _.each(['creds', 'certs', 'data'], function(cmdName) {
 
 var parametersSchema = {
 	'type': {
-		required: true,
-		options: ['developer', 'atom', 'instance']
+		required: false,
+		options: ['developer', 'atom', 'edgeclient']
 	},
 	'fqdn': {
-		required: true
+		required: false
 	},
 	'format': {
 		required: false,
