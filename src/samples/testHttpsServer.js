@@ -8,7 +8,7 @@ var fs = require('fs');
 var beameDirServices = require('../services/BeameDirServices');
 var debug = require("debug")("SampleBeameServer");
 
-var SampleBeameServer = function(instanceHostname, hostOnlineCallback
+var SampleBeameServer = function(instanceHostname, hostOnlineCallback){
     if(!instanceHostname) {
         new Error("No instance found");
     }
