@@ -9,15 +9,38 @@ var BeameDirectApi = require("../services/BeameDirServices");
 var BeameStore = require("../services/BeameStore");
 var store = new BeameStore();
 var Table = require('cli-table2');
+const x509 = require('x509');
+///
+// We want to print out
+// Level, hostname,
+//
 
 
 function show(type, fqdn, format){
 	debug("show %j %j %j", type,  fqdn, format);
+	var headers = ['Name', "Print", "Serial", "SigAlg" ];
+
 	var returnValues =listCreds(type, fqdn);
+	var certs = [];
+	var table = new Table({
+		head: headers
+		, colWidths: [25, 65, 30, 30]
+	});
+
 	_.each(returnValues, _.bind(function(cert){
 		var item = store.search(cert.hostname);
-		console.log(item);
+		const x509 = require('x509');
+		var cert = x509.parseCert(item[0].X509 + "");
+		table.push([cert.subject.commonName, cert.fingerPrint, cert.serial,  cert.signatureAlgorithm]);
+		certs.push(cert);
 	}, this));
+
+	if(format == "json") {
+		console.log(JSON.stringify(certs));
+	}
+	else {
+		console.log(table.toString());
+	}
 }
 
 function print_table(arrayToPrint, format){
