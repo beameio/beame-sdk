@@ -1,46 +1,28 @@
 var https = require("https");
 var ProxyClient = require("beame-ssl-proxy-client");
+var beamestore = require("../services/BeameStore");
+
 var _ = require('underscore');
 var fs = require('fs');
-var jmespath = require('jmespath');
 
 var beameDirServices = require('../services/BeameDirServices');
 var debug = require("debug")("SampleBeameServer");
 
-var SampleBeameServer = function(instanceHostname, hostOnlineCallback){
-	var object = beameDirServices.readBeameDir("");
-	
-	var instances = jmespath.search(object, "[].atom[] | [].edgeclient[]");
+var SampleBeameServer = function(instanceHostname, hostOnlineCallback
     if(!instanceHostname) {
         new Error("No instance found");
     }
-/*	if(!instanceHostname){
-		console.log("Avalible Instance Credentials:");
-		console.log("Hostname: \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t edgeHostname  ");
-		console.log("______________________________");
-		_.each(instances, function(instance){
+	var edgeCert = beamestore.searchEdge(instanceHostname);
+	var options = {
+		key: edgeCreds.PRIVATE_KEY,
+		cert: edgeCreds.P7B,
+		ca: edgeCreds.CA
 
-			console.log(instance.hostname, "\t\t ", instance.edgeHostname);
-		});
-		process.exit(1);
-	}*/
-	//"([].atom[].edgeclient[?hostname=='iozo38j6y8fx47wi.v1.r.d.edge.eu-central-1b-1.v1.beameio.net']) | []"
-	var filterPartOne = "([].atom[].edgeclient[?hostname==\'";
-	var filterPartTwo = "\'] | [] | []) ";
-	var fullFilter = filterPartOne + instanceHostname + filterPartTwo;
-	debug("Full Filter: ", fullFilter);
-	var results = jmespath.search(object,fullFilter);
-	_.each(results, function(creds){
-		var options = {
-			key: creds.PRIVATE_KEY,
-			cert: creds.P7B,
-			ca: creds.CA,
-
-			// Client certificates - start
+		// Client certificates - start
 //			requestCert: true,
 //			rejectUnauthorized: false
-			// Client certificates - end
-		};
+		// Client certificates - end
+	};
 
 		var app = https.createServer(options);
 		app.listen(0, function() {
