@@ -6,7 +6,7 @@ module.exports = {
         // devAppGetCert : require("./src/devAppGetCert.js"),
         // edgeClientRegister : require("./src/edgeClientRegister.js"),
         // edgeClientGetCert : require("./src/edgeClientGetCert.js"),
-        BeameCertStore: require("./services/BeameStore.js"),
+        BeameCertStore: require("./src/services/BeameStore.js"),
 		BeameDirServices : require("./src/services/BeameDirServices.js"),
 		sampleNodeServer : require("./src/samples/testHttpsServer.js"),
         provisionApiServices :require("./src/services/ProvisionApi"),
