@@ -1,17 +1,26 @@
 "use strict";
 
-var debug = require("debug")("creds");
+var _ = require('underscore');
+var fs = require('fs');
+var jmespath = require('jmespath');
+var beameDirServices = require('../services/BeameDirServices');
+var debug = require("debug")("cred_api");
+var BeameDirectApi = require("../services/BeameDirServices");
+var BeameStore = require("../services/BeameStore");
+var store = new BeameStore();
 
-function show(type,  fqdn,format){
+
+
+function show(fqdn, format){
 	debug("show %j %j %j", type,  fqdn, format);
 }
 
 function list(type,  fqdn,format){
 	debug("list %j %j %j", type,  fqdn, format);
-    var reader = require('../src/services/BeameDirServices');
-    reader.scanBeameDir("", function (beameTree) {
-            console.log(beameTree);
-    })
+   	
+	var object = beameDirServices.readBeameDir("");
+	
+
 }
 
 function create(type,  fqdn,format){
