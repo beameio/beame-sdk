@@ -17,8 +17,8 @@ function show(fqdn, format){
 
 function list(type,  fqdn,format){
 	debug("list %j %j %j", type,  fqdn, format);
-   	
-	var object = beameDirServices.readBeameDir("");
+
+	var returnValues = store.search(type);
 	
 
 }
