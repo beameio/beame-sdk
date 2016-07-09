@@ -20,7 +20,10 @@ var parametersSchema = {
 		required: false,
 		options: ['text', 'json'],
 		default: 'text'
-	}
+ 	},
+  'atom': {
+		required: false
+  }
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -91,6 +94,7 @@ function usage() {
 			var paramsNames = getParamsNames(subCmdFunc);
 			var params = paramsNames.map(function(paramName) {
 				var ret = '--' + paramName;
+        console.log("paramName " + paramName);
 				if(parametersSchema[paramName].options) {
 					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
 				} else {
