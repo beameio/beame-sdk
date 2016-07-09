@@ -32,6 +32,7 @@
     "request": "^2.72.0",
     "socket.io": "^1.4.8",
     "socket.io-client": "^1.4.6",
+    "sprintf": "^0.1.5",
     "underscore": "^1.8.3",
     "x509": "^0.2.6"
   },
