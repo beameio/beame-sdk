@@ -68,8 +68,8 @@ function readBeameDir(startdir) {
     }
     var subfolders = getDirectories(startdir);
     _.each(subfolders, function (dir) {
-        var deverlopr = readSubDevDir(makepath(startdir, dir));
-        developers.push(deverlopr);
+        var developer = readSubDevDir(makepath(startdir, dir));
+        developers.push(developer);
     });
     return developers;
 }
