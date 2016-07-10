@@ -71,7 +71,7 @@ BeameStore.prototype.jsearch= function (searchItem, level){
 		};
 		default:
 		{
-			new Error("Invalid level passed to search ", level);
+			throw new Error("Invalid level passed to search ", level);
 		}
 	}
 	debug("Query string " + queryString );

@@ -1,7 +1,11 @@
 #!/usr/bin/env node
+
 "use strict";
+
 var argv = require('minimist')(process.argv.slice(2));
 var _ = require('underscore');
+
+var BeameStore = require("../services/BeameStore");
 
 var commands = {};
 _.each(['creds', 'certs', 'data'], function(cmdName) {
@@ -20,10 +24,10 @@ var parametersSchema = {
 		required: false,
 		options: ['text', 'json'],
 		default: 'text'
- 	},
-  'atom': {
+	},
+	'atom': {
 		required: false
-  }
+	}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -132,6 +136,18 @@ if(argv._[0] == 'complete') {
 	}
 	if(argv._[1] == 'switch-value') {
 		var sw = argv._[2];
+		if(sw == 'fqdn') {
+			var fqdnType = argv._[3];
+			var store = new BeameStore();
+			var results;
+			if(fqdnType) {
+				results = store.list(fqdnType);
+			} else {
+				results = store.list();
+			}
+			console.log(_.map(results, function(r) { return r.hostname; }).join(' '));
+			process.exit(0);
+		}
 		if(parametersSchema[sw].options) {
 			console.log(parametersSchema[sw].options.join(' '));
 			process.exit(0);
