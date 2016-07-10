@@ -18,6 +18,21 @@ __beame_complete() {
 		return
 	fi
 
+	if [[ $prev == --fqdn ]];then
+		idx=0
+		t=""
+		for w in "${words[@]}";do
+			idx=$((idx+1))
+			if [[ $w == --type ]];then
+				t=${words[$((idx))]}
+				break
+			fi
+		done
+		switch_values=$($__BEAME_BIN complete switch-value fqdn "$t")
+		COMPREPLY=( $(compgen -W "${switch_values[@]}" -- "$cur") )
+		return
+	fi
+
 	if [[ $prev == --* ]];then
 		switch_values=$($__BEAME_BIN complete switch-value "${prev#--}")
 		COMPREPLY=( $(compgen -W "${switch_values[@]}" -- "$cur") )
