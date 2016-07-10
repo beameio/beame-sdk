@@ -11,7 +11,6 @@ var x509 = require('x509');
 var developerServices = new(require('../core/DeveloperServices'))();
 var atomServices = new(require('../core/AtomServices'))();
 var edgeClientServices = new(require('../core/EdgeClientServices'))();
-console.log("atomServices" + atomServices);
 var GlobalConfig = require('../../config/ApiConfig.json');
 var readline = require('readline');
 

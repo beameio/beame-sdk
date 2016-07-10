@@ -24,6 +24,7 @@
     "async": "^2.0.0-rc.6",
     "beame-ssl-proxy-client": "git+https://github.com/beameio/beame-ssl-proxy-client.git",
     "beame-utils": "git+https://github.com/beameio/beame-utils.git",
+    "cli-table2": "0.2.0",
     "debug": "^2.2.0",
     "jmespath": "^0.15.0",
     "minimist": "^1.2.0",
