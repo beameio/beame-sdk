@@ -1,6 +1,6 @@
 {
   "name": "beame-api",
-  "version": "1.0.11",
+  "version": "1.0.10",
   "description": "run provision tests",
   "main": "main.js",
   "engine": "node >= 4.4.0",
@@ -32,7 +32,9 @@
     "request": "^2.72.0",
     "socket.io": "^1.4.8",
     "socket.io-client": "^1.4.6",
-    "underscore": "^1.8.3"
+    "sprintf": "^0.1.5",
+    "underscore": "^1.8.3",
+    "x509": "^0.2.6"
   },
   "directories": {
     "test": "tests"
