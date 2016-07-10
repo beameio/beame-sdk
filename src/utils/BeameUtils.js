@@ -37,6 +37,10 @@ var dataServices = new (require('../services/DataServices'))();
 
 module.exports = {
 
+    makePath : function(baseDir,folder){
+        return path.join(baseDir,folder);
+    },
+
     /**
      * @param {String} baseDir
      * @param {String} path2Pk
@@ -50,21 +54,6 @@ module.exports = {
         }
     },
 
-    /**
-     * @param {String} version
-     * @param {String} endpoint
-     * @param {Object} postData
-     * @param {boolean} answerExpected
-     * @returns {typeof ApiData}
-     */
-    getApiCallData: function (version, endpoint, postData, answerExpected) {
-        return {
-            version: version,
-            api: endpoint,
-            postData: postData,
-            answerExpected: answerExpected
-        };
-    },
 
     /**
      * @param {String} endpoint

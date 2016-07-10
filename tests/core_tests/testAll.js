@@ -6,8 +6,8 @@ var developerServices = new(require('../../src/core/DeveloperServices'))();
 var atomServices = new(require('../../src/core/AtomServices'))();
 var edgeClientServices = new(require('../../src/core/EdgeClientServices'))();
 
-var createEdgeClient = function (devHostname,appHostName,callback) {
-    edgeClientServices.createEdgeClient(devHostname,appHostName,function(error,payload){
+var createEdgeClient = function (appHostName,callback) {
+    edgeClientServices.createEdgeClient(appHostName,function(error,payload){
         if(!error){
             console.log('/**********Create Edge Client Response***********/');
             console.log(payload);
@@ -29,7 +29,7 @@ var createAtom = function(appName,devHostname,edges,callback){
 
             var create = function(){
                 edges--;
-                createEdgeClient(devHostname,appHostname,edgeCb);
+                createEdgeClient(appHostname,edgeCb);
             };
 
             var edgeCb = function(error,data){

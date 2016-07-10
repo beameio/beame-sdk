@@ -25,6 +25,7 @@
     "beame-ssl-proxy-client": "git+https://github.com/beameio/beame-ssl-proxy-client.git",
     "beame-utils": "git+https://github.com/beameio/beame-utils.git",
     "debug": "^2.2.0",
+    "glob": "^7.0.5",
     "jmespath": "^0.15.0",
     "minimist": "^1.2.0",
     "node-uuid": "^1.4.7",

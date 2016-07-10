@@ -83,7 +83,7 @@ var isRequestValid = function (developerHostname, appHostname, devDir, devAppDir
  */
 var registerAtom = function (developerHostname, appName, callback) {
 
-    var devDir = devPath + developerHostname + "/";
+    var devDir = beameUtils.makePath(devPath, developerHostname + "/");
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated() {
@@ -140,8 +140,8 @@ var registerAtom = function (developerHostname, appName, callback) {
  * @param {Function} callback
  */
 var getCert = function (developerHostname, appHostname, callback) {
-    var devDir = devPath + developerHostname + "/";
-    var devAppDir = devDir + appHostname + "/";
+    var devDir = beameUtils.makePath(devPath, developerHostname + "/");
+    var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated(metadata) {
@@ -228,7 +228,6 @@ AtomServices.prototype.createAtom = function (developerHostname, appName, callba
     });
 };
 
-
 /**
  *
  * @param {String} developerHostname
@@ -237,8 +236,8 @@ AtomServices.prototype.createAtom = function (developerHostname, appName, callba
  * @param {Function} callback
  */
 AtomServices.prototype.updateAtom = function (developerHostname, appHostname, appName, callback) {
-    var devDir = devPath + developerHostname + "/";
-    var devAppDir = devDir + appHostname + "/";
+    var devDir = beameUtils.makePath(devPath, developerHostname + "/");
+    var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated(metadata) {

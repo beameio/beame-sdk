@@ -5,26 +5,12 @@
 require('../utils/Globals');
 var debug = require("debug")("./src/services/EdgeClientServices.js");
 var _ = require('underscore');
-var devPath = global.devPath;
-
+var dirServices = require('../services/BeameDirServices');
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.EdgeClient;
 
-
-var validateDeveloperHost = function (developerHostname) {
-    var errMsg;
-    return new Promise(function (resolve, reject) {
-        if (_.isEmpty(developerHostname)) {
-            errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.HostnameRequired, "Get atom certs, developer hostname missing", {"error": "developer hostname missing"});
-            reject(errMsg);
-            return;
-        }
-
-        resolve(true);
-    });
-};
 
 var isAtomHostValid = function (appHostname) {
     var errMsg;
@@ -55,15 +41,13 @@ var isEdgeHostValid = function (hostname) {
 
 /**
  *
- * @param {String} developerHostname
  * @param {String} appHostname
  * @param {Function} callback
+ * @this {EdgeClientServices}
  */
-var registerEdgeClient = function (developerHostname, appHostname, callback) {
+var registerEdgeClient = function (appHostname, callback) {
+    var self = this;
     var errMsg;
-    var devDir = devPath + developerHostname + "/";
-    var devAppDir = devDir + appHostname + "/";
-
 
     /*---------- private callbacks -------------------*/
     function onEdgeSelectionError(error) {
@@ -78,7 +62,7 @@ var registerEdgeClient = function (developerHostname, appHostname, callback) {
     /** @param {EdgeShortData} edge  **/
     function onEdgeServerSelected(edge) {
 
-        provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+        provisionApi.setAuthData(beameUtils.getAuthToken(self.devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
         var postData = {
             host: edge.endpoint
@@ -88,7 +72,7 @@ var registerEdgeClient = function (developerHostname, appHostname, callback) {
 
         provisionApi.runRestfulAPI(apiData, function (error, payload) {
             if (!error) {
-                var edgeClientDir = devAppDir + payload.hostname + '/';
+                var edgeClientDir = beameUtils.makePath(self.devAppDir, payload.hostname + '/');
 
                 dataServices.createDir(edgeClientDir);
 
@@ -96,7 +80,9 @@ var registerEdgeClient = function (developerHostname, appHostname, callback) {
                     if (!callback) return;
 
                     if (!error) {
+
                         beameUtils.getNodeMetadata(edgeClientDir, payload.hostname, global.AppModules.EdgeClient).then(function (metadata) {
+                            self.edgeClientDir = edgeClientDir;
                             callback(null, metadata);
                         }, callback);
                     }
@@ -125,29 +111,27 @@ var registerEdgeClient = function (developerHostname, appHostname, callback) {
         callback(error, null);
     }
 
-    isRequestValid(developerHostname, appHostname, null, devDir, devAppDir, null, false).then(onRequestValidated, onValidationError);
+    isRequestValid(appHostname, null, self.devAppDir, null, false).then(onRequestValidated, onValidationError);
 };
 
 /**
  *
- * @param {String} developerHostname
  * @param {String} appHostname
  * @param {String} edgeHostname
  * @param {Function} callback
-    var errMsg;
+ * @this {EdgeClientServices}
  */
-var getCert = function (developerHostname, appHostname, edgeHostname, callback) {
-    var devDir = devPath + developerHostname + "/";
-    var devAppDir = devDir + appHostname + "/";
-    var edgeClientDir = devAppDir + edgeHostname + "/";
+var getCert = function (appHostname, edgeHostname, callback) {
+    var self = this;
+    var errMsg;
 
 
     function onRequestValidated(metadata) {
 
-        dataServices.createCSR(edgeClientDir, edgeHostname).then(
+        dataServices.createCSR(self.edgeClientDir, edgeHostname).then(
             function onCsrCreated(csr) {
 
-                provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+                provisionApi.setAuthData(beameUtils.getAuthToken(self.devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
                 var postData = {
                     csr: csr,
@@ -158,7 +142,7 @@ var getCert = function (developerHostname, appHostname, edgeHostname, callback) 
 
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
-                        dataServices.saveCerts(edgeClientDir, payload, callback);
+                        dataServices.saveCerts(self.edgeClientDir, payload, callback);
                     }
                     else {
                         error.data.hostname = edgeHostname;
@@ -178,22 +162,20 @@ var getCert = function (developerHostname, appHostname, edgeHostname, callback) 
         callback(error, null);
     }
 
-    isRequestValid(developerHostname, appHostname, edgeHostname, devDir, devAppDir, edgeClientDir, false).then(onRequestValidated, onValidationError);
+    isRequestValid(appHostname, edgeHostname, self.devAppDir, self.edgeClientDir, false).then(onRequestValidated, onValidationError);
 
 };
 
 /**
  *
- * @param {String} developerHostname
  * @param {String} appHostname
  * @param {String|null} [edgeHostname]
- * @param {String} devDir
  * @param {String} devAppDir
  * @param {String|null} [edgeClientDir]
  * @param {boolean} validateEdgeHostname
  * @returns {Promise}
  */
-var isRequestValid = function (developerHostname, appHostname, edgeHostname, devDir, devAppDir, edgeClientDir, validateEdgeHostname) {
+var isRequestValid = function (appHostname, edgeHostname, devAppDir, edgeClientDir, validateEdgeHostname) {
 
     return new Promise(function (resolve, reject) {
 
@@ -206,32 +188,24 @@ var isRequestValid = function (developerHostname, appHostname, edgeHostname, dev
         }
 
         function getMetadata() {
-            beameUtils.getNodeMetadata(edgeClientDir || devAppDir, developerHostname, global.AppModules.Atom).then(onMetadataReceived, onValidationError);
+            beameUtils.getNodeMetadata(edgeClientDir || devAppDir, appHostname, global.AppModules.Atom).then(onMetadataReceived, onValidationError);
         }
 
         function validateAtomCerts() {
-            beameUtils.isNodeCertsExists(devAppDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(getMetadata, onValidationError);
+            beameUtils.isNodeCertsExists(devAppDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, appHostname, global.AppModules.Developer).then(getMetadata, onValidationError);
         }
 
-        function validateDevCerts() {
-            beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(validateAtomCerts, onValidationError);
-        }
 
         function validateEdgeClientHost() {
             if (validateEdgeHostname) {
-                isEdgeHostValid(edgeHostname).then(validateDevCerts, onValidationError);
+                isEdgeHostValid(edgeHostname).then(validateAtomCerts, onValidationError);
             }
             else {
-                validateDevCerts();
+                validateAtomCerts();
             }
         }
 
-        function validateAtomHost() {
-            isAtomHostValid(appHostname).then(validateEdgeClientHost, onValidationError);
-        }
-
-
-        validateDeveloperHost(developerHostname).then(validateAtomHost, onValidationError);
+        isAtomHostValid(appHostname).then(validateEdgeClientHost, onValidationError);
     });
 };
 
@@ -240,41 +214,52 @@ var EdgeClientServices = function () {
 
 /**
  *
- * @param {String} developerHostname
  * @param {String} appHostname
  * @param {Function} callback
  */
-EdgeClientServices.prototype.createEdgeClient = function (developerHostname, appHostname, callback) {
-  
+EdgeClientServices.prototype.createEdgeClient = function (appHostname, callback) {
+
+    var self = this;
+
     var debugMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.DebugInfo, "Call Create Edge Client", {
-        "developer": developerHostname,
         "atom": appHostname
     });
     debug(debugMsg);
 
-    registerEdgeClient(developerHostname, appHostname, function (error, payload) {
-        if (!error) {
-            
-            if(payload && payload.hostname){
-                var hostname = payload.hostname;
 
-                getCert(developerHostname, appHostname, hostname, function (error) {
-                    if (callback) {
-                        error ? callback(error, null) : callback(null, payload);
-                    }
-                });   
-            }
-            else{
-                console.error("unexpected error",payload);
-            }
-           
+    dirServices.findHostPath(global.devPath, appHostname, function (error, path) {
+        if (error) {
+            callback('Atom folder not found', null);
+            return;
         }
-        else {
-            callback && callback(error, null);
-        }
+
+        /** @member {String} **/
+        self.devAppDir = path;
+
+        registerEdgeClient.call(self, appHostname, function (error, payload) {
+            if (!error) {
+
+                if (payload && payload.hostname) {
+                    var hostname = payload.hostname;
+
+                    getCert.call(self, appHostname, hostname, function (error) {
+                        if (callback) {
+                            error ? callback(error, null) : callback(null, payload);
+                        }
+                    });
+                }
+                else {
+                    console.error("unexpected error", payload);
+                }
+
+            }
+            else {
+                callback && callback(error, null);
+            }
+        });
     });
-};
 
+};
 
 
 module.exports = EdgeClientServices;

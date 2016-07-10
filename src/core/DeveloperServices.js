@@ -35,7 +35,7 @@ var saveDeveloper = function (developerName, callback) {
 
             payload.name = developerName;
 
-            var devDir = devPath + payload.hostname + '/';
+            var devDir = beameUtils.makePath(devPath, payload.hostname + '/');
 
             dataServices.createDir(devDir);
 
@@ -69,7 +69,7 @@ var saveDeveloper = function (developerName, callback) {
  */
 var getCert = function (hostname, callback) {
     var errMsg;
-    var devDir = devPath + hostname + "/";
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
 
     if (_.isEmpty(hostname)) {
         errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
@@ -174,7 +174,7 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
  * @param {String} uid
  * @param {Function} callback
  */
-DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, uid,callback) {
+DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, uid, callback) {
     var errMsg;
 
     if (_.isEmpty(hostname)) {
@@ -184,14 +184,14 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
         return;
     }
 
-    var devDir = devPath + hostname + "/";
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
 
     dataServices.createDir(devDir);
 
     var payload = {
-        hostname : hostname,
-        uid : uid,
-        name : hostname
+        hostname: hostname,
+        uid: uid,
+        name: hostname
     };
 
     dataServices.savePayload(devDir, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
@@ -215,7 +215,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
                 var postData = {
                     csr: csr,
-                    hostname : metadata.hostname,
+                    hostname: metadata.hostname,
                     uid: metadata.uid
                 };
 
@@ -251,7 +251,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
  * @param {Function} callback
  */
 DeveloperServices.prototype.updateProfile = function (hostname, email, name, callback) {
-    var devDir = devPath + hostname + "/";
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
 
     /*---------- private callbacks -------------------*/
     function onMetaInfoReceived(metadata) {
