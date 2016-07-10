@@ -90,12 +90,22 @@ function list(type,  fqdn,format){
 	}
 }
 
-function createTestDeveloper(developerName, developerEmail){
+function printLine(data, error, format){
+	if(format == "json"){
+		console.log(JSON.stringify(data));
+	}else{
+		_.map(data, function(value, key) { 
 
+			console.log("Key %j, %j", key, value);
+		} )
+	}
+}
+
+function createTestDeveloper(developerName, developerEmail){
 	debug ( "createTestDeveloper %j ",developerName, developerEmail );
 	developerServices.createDeveloper(developerName, developerEmail, function(error, data){
 		if(!error){
-			console.log(JSON.stringify(data));
+			printLine(data, error,'json');
 			process.exit(0);
 		}
 		else{
@@ -105,13 +115,28 @@ function createTestDeveloper(developerName, developerEmail){
 	}) 
 }
 
-function create(type,  fqdn, uid, atom, format){
-	debug ( "create %j %j %j",  type,  fqdn, uid, atom, format);
-
-	if(type == "developer" && fqdn && uid){
-		console.log("dev create");
-		developerServices.completeDeveloperRegistration(fqdn ,uid,function(error,payload){
+function createAtom(developerFqdn, atomName, format){
+	if(developerFqdn && atomName){
+		console.warn("Creating atom %j %j", developerFqdn, atomName);
+		atomServices.createAtom(developerFqdn, atomName, function(err, data) {
 			if(!error){
+				printLine(data, error,format);
+				process.exit(0);
+			}
+			else{
+				console.error(error);
+				process.exit(1);
+			}
+		});
+	}
+}
+
+function createDeveloper(developerFqdn, uid, format){
+	if(developer_fqdn && uid){
+		console.warn("dev create %j %j ", developerFqdn, uid);
+		developerServices.completeDeveloperRegistration(developer_fqdn ,uid, function(error, data){
+			if(!error){
+				printLine(data, error,format);
 				process.exit(0);
 			}
 			else{
@@ -120,27 +145,24 @@ function create(type,  fqdn, uid, atom, format){
 			}
 		});
 	};
-	
-	if(type == "atom" && fqdn && atom){
-		console.warn("Creating atom ", fqdn, atom);
-		atomServices.createAtom(fqdn,atom, function(err, data) {
-			console.log(data);
-		
-		});
-	}
-
-	if(type == "edgeclient" && fqdn) {
-		var appEntry = store.search(fqdn);
-	//	EdgeClientServices.prototype.createEdgeClient = function (appEntry.hostname, function () {
-			
-	//	}) {}
-		
-		// currently sserge requires paremetrs for dev hostname
-
-		//edgeClientServices.
-	}
-	
 }
+
+function createEdgeClient(atom_fqdn, format){
+	if(atom_fqdn){
+		console.warn("getting edge server certificate signed");
+		edgeClientServices.createEdgeClient(atom_fqdn, function(error, data){
+			if(!error){
+				printLine(data, error,format);
+				process.exit(0);
+			}
+			else{
+				console.error(error);
+				process.exit(1);
+			}
+		});
+	};
+}
+
 
 function renew(type,  fqdn,format){
 	debug ( "renew %j %j %j",  type,  fqdn, format);
@@ -154,8 +176,10 @@ function purge(type,  fqdn,format){
 module.exports = {
 	show:	show,
 	list:	list,
-	create:	create,
 	renew:	renew,
 	purge:	purge,
+	createAtom: createAtom,
+	createEdgeClient: createEdgeClient,
+	createDeveloper: createDeveloper,
 	createTestDeveloper: createTestDeveloper
 };

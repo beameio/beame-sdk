@@ -8,7 +8,7 @@ var _ = require('underscore');
 var BeameStore = require("../services/BeameStore");
 
 var commands = {};
-_.each(['creds', 'certs', 'data'], function(cmdName) {
+_.each(['creds', 'servers', 'crypto'], function(cmdName) {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 
@@ -25,8 +25,8 @@ var parametersSchema = {
 		options: ['text', 'json'],
 		default: 'text'
 	},
-	'atom': {
-		required: false
+	'atom_fqdn': {
+		required: true 
 	},
 	'uid': {
 		required: false
@@ -35,6 +35,15 @@ var parametersSchema = {
 		required: true
 	},
 	'developerEmail':{
+		required: true
+	},
+	'data':{
+		required:false 
+	},
+	'developerFqdn':{
+		required: false	
+	},
+	'edgeFqdn':{
 		required: true
 	}
 
