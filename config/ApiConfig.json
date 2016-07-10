@@ -1,7 +1,8 @@
 {
     "Endpoints": {
         "Local": "https://prov-staging.beameio.net",
-        "Online": "https://prov-staging.beameio.net"
+        "Online": "https://prov-staging.beameio.net",
+        "AuthServer": "https://gn1t3706w7cm8cs6.v1.r.d.edge.eu-central-1a-1.v1.beameio.net"
     },
     "Actions": {
         "DeveloperApi": {

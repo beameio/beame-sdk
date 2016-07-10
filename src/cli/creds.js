@@ -90,51 +90,56 @@ function list(type,  fqdn,format){
 	}
 }
 
-function create(type,  fqdn, atom, format){
-	debug ( "create %j %j %j",  type,  atom, fqdn, format);
-	var rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
+function createTestDeveloper(developerName, developerEmail){
 
-	if(type == "developer" && !fqdn){
-		console.log("Please open " + GlobalConfig.Endpoints.AuthServer + " in your browser and complete the signup proccess ");
-		rl.question("Please enter hostname form verification email:", function(hostname){
-			rl.question("Please enter UID from the verificaton email:", function(uid){ 
-				console.log("Getting Developer Certificates please wait... it takes about 30 seconds" + hostname + " " + uid);
-				developerServices.completeDeveloperRegistration(hostname,uid,function(error,payload){
-					if(!error){
-						console.log("Developer succesfully registered");
-						console.log('/**-------------Success----------------**/',payload);
-						process.exit(0);
-					}
-					else{
-						console.error(error);
-						process.exit(1);
-					}
-				});
+	debug ( "createTestDeveloper %j ",developerName, developerEmail );
+	developerServices.createDeveloper(developerName, developerEmail, function(error, data){
+		if(!error){
+			console.log(JSON.stringify(data));
+			process.exit(0);
+		}
+		else{
+			console.error(error);
+			process.exit(1);
+		}
+	}) 
+}
 
-			});
+function create(type,  fqdn, uid, atom, format){
+	debug ( "create %j %j %j",  type,  fqdn, uid, atom, format);
 
+	if(type == "developer" && fqdn && uid){
+		console.log("dev create");
+		developerServices.completeDeveloperRegistration(fqdn ,uid,function(error,payload){
+			if(!error){
+				process.exit(0);
+			}
+			else{
+				console.error(error);
+				process.exit(1);
+			}
 		});
-	}
+	};
 	
 	if(type == "atom" && fqdn && atom){
-		console.log("Creating atom ", fqdn, atom);
+		console.warn("Creating atom ", fqdn, atom);
 		atomServices.createAtom(fqdn,atom, function(err, data) {
 			console.log(data);
 		
 		});
 	}
+
 	if(type == "edgeclient" && fqdn) {
 		var appEntry = store.search(fqdn);
+	//	EdgeClientServices.prototype.createEdgeClient = function (appEntry.hostname, function () {
+			
+	//	}) {}
 		
 		// currently sserge requires paremetrs for dev hostname
 
 		//edgeClientServices.
 	}
-	//EdgeClientServices.prototype.createEdgeClient = function (developerHostname, appHostname, callback) {}
-	rl.close();
+	
 }
 
 function renew(type,  fqdn,format){
@@ -151,5 +156,6 @@ module.exports = {
 	list:	list,
 	create:	create,
 	renew:	renew,
-	purge:	purge
+	purge:	purge,
+	createTestDeveloper: createTestDeveloper
 };

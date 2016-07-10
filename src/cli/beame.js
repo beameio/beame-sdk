@@ -27,7 +27,19 @@ var parametersSchema = {
 	},
 	'atom': {
 		required: false
+	},
+	'uid': {
+		required: false
+	},
+	'developerName':{
+		required: true
+	},
+	'developerEmail':{
+		required: true
 	}
+
+
+	
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

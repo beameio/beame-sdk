@@ -112,7 +112,11 @@ CLI options:
 	beame data encrypt  jdafskljdasjkldsa.beameio.net
 	beame data decrypt ---type {developer|atom|instance} jdafskljdasjkldsa.beameio.net 
 
+### Import / Export 
+	
+	You can imoport beame creadentials only if you it has been exported for a developerid you poss:
 
+	beame import credpackage.beame
 ### Low Level Api 
 
 	beame cert fetch <fqdn>
