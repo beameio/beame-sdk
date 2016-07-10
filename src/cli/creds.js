@@ -23,62 +23,29 @@ var readline = require('readline');
 
 function show(type, fqdn, format){
 	debug("show %j %j %j", type,  fqdn, format);
-	var headers = ['Name', "Print", "Serial", "SigAlg" ];
 
-	var returnValues =listCreds(type, fqdn);
-	var certs = [];
-	var table = new Table({
-		head: headers, 
-		colWidths: [25, 65, 30, 30]
-	});
-
-	_.each(returnValues, _.bind(function(cert){
+	var returnValues = listCreds(type, fqdn);
+	var certs = _.map(returnValues, function(cert) {
 		var item = store.search(cert.hostname);
 		var xcert = x509.parseCert(item[0].X509 + "");
-		table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,  xcert.signatureAlgorithm]);
-		certs.push(xcert);
-	}, this));
+		return xcert;
+	});
 
 	if(format == "json") {
 		console.log(JSON.stringify(certs));
-	}
-	else {
+	} else {
+		var table = new Table({
+			head: ['Name', "Print", "Serial", "SigAlg"],
+			colWidths: [25, 65, 30, 30]
+		});
+
+		_.each(certs, function(xcert) {
+			table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,  xcert.signatureAlgorithm]);
+		});
+
 		console.log(table.toString());
 	}
 }
-
-function print_table(arrayToPrint, format){
-	switch(format) {
-		case "json":
-		{
-			console.log(JSON.stringify(arrayToPrint));
-			break;
-		};
-
-		case "text":
-		default:
-		{
-			var headers = [];
-			_.each(arrayToPrint, function (item) {
-				_.map(item, function(key, value ){
-					headers.push(value);
-				})
-			});
-			headers = _.uniq(headers);
-
-			var table = new Table({
-				head: headers
-				, colWidths: [15, 70, 15]
-			});
-			_.each(arrayToPrint, function (item) {
-				table.push([item.name, item.hostname, item.level]);
-			});
-
-			console.log(table.toString());
-
-		};
-	}
-};
 
 function listCreds(type, fqdn){
 	var returnValues = [];
@@ -98,8 +65,29 @@ function list(type,  fqdn,format){
 	debug("list %j %j %j", type,  fqdn, format);
 	var returnValues = listCreds(type, fqdn);
 
-	print_table(returnValues, format);
+	switch(format) {
 
+		case "json": {
+			console.log(JSON.stringify(returnValues));
+			break;
+		};
+
+		case "text": {
+			var table = new Table({
+				head: ['name', 'hostname', 'level'],
+				colWidths: [15, 70, 15]
+			});
+			_.each(returnValues, function (item) {
+				table.push([item.name, item.hostname, item.level]);
+			});
+			console.log(table.toString());
+			break;
+		};
+
+		default: {
+			throw new Error("Invalid print_table format: " + format);
+		}
+	}
 }
 
 function create(type,  fqdn, atom, format){
