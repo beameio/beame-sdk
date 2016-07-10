@@ -94,7 +94,6 @@ function usage() {
 			var paramsNames = getParamsNames(subCmdFunc);
 			var params = paramsNames.map(function(paramName) {
 				var ret = '--' + paramName;
-        console.log("paramName " + paramName);
 				if(parametersSchema[paramName].options) {
 					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
 				} else {
