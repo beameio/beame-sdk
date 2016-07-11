@@ -18,6 +18,12 @@ __beame_complete() {
 		return
 	fi
 
+	if [[ $prev == --developerFqdn ]];then
+		switch_values=$($__BEAME_BIN complete switch-value fqdn developer)
+		COMPREPLY=( $(compgen -W "${switch_values[@]}" -- "$cur") )
+		return
+	fi
+
 	if [[ $prev == --fqdn ]];then
 		idx=0
 		t=""
