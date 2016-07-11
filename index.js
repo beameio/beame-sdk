@@ -8,10 +8,11 @@ module.exports = {
         // edgeClientGetCert : require("./src/edgeClientGetCert.js"),
         BeameCertStore: require("./src/services/BeameStore.js"),
 		BeameDirServices : require("./src/services/BeameDirServices.js"),
-		sampleNodeServer : require("./src/samples/BasicHttpsServer.js"),
+		sampleNodeServer : require("./src/services/BaseHttpsServer.js"),
         provisionApiServices :require("./src/services/ProvisionApi"),
         developerCervices : require('./src/core/DeveloperServices'),
         atomServices : require('./src/core/AtomServices'),
-        edgeClientServices : require('./src/core/EdgeClientServices')
-//        authDataCollection : require("./src/BeameDirServices.js")
+        edgeClientServices : require('./src/core/EdgeClientServices'),
+        crypto: require('./src/cli/crypto')
+    //        authDataCollection : require("./src/BeameDirServices.js")
 };

@@ -1,7 +1,7 @@
 "use strict";
 var debug = require("debug")("beame_servers");
 var BeameStore = require("../services/BeameStore");
-var BeameServer = require("../samples/BasicHttpsServer").SampleBeameServer;
+var BeameServer = require("BasicHttpsServer").SampleBeameServer;
 
 var store = new BeameStore();
 
