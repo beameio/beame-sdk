@@ -1,7 +1,7 @@
 'euse strict' 
 var https = require("https");
 var ProxyClient = require("beame-ssl-proxy-client");
-var BeameStore = require("BeameStore");
+var BeameStore = require("BeameCertStore");
 
 var _ = require('underscore');
 var fs = require('fs');
