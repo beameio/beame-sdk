@@ -1,5 +1,5 @@
 {
-  "name": "beame-api",
+  "name": "beame-sdk",
   "version": "1.0.19",
   "description": "run provision tests",
   "main": "main.js",

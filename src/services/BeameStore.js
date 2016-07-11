@@ -24,7 +24,7 @@ var sprintf = require('sprintf');
 
 function BeameStore(beamedir) {
     if (!beamedir || beamedir.length === 0) {
-        beamedir = global.devPath;
+		beamedir = process.env.BEAME_DIR || global.devPath;
     }
 
     this.beameStore = beameDirApi.readBeameDir(beamedir);
