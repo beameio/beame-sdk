@@ -1,14 +1,15 @@
 'euse strict' 
 var https = require("https");
 var ProxyClient = require("beame-ssl-proxy-client");
-var BeameStore = require("BeameCertStore");
+var BeameStore = require("./BeameStore");
 
 var _ = require('underscore');
 var fs = require('fs');
 
-var beameDirServices = require('BeameDirServices');
+var beameDirServices = require('./BeameDirServices');
 var debug = require("debug")("SampleBeameServer");
 var beamestore = new BeameStore();
+
 var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 {
 	var edgeCert = beamestore.search(instanceHostname)[0];
