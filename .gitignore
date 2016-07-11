@@ -2,16 +2,13 @@
 .beame
 .DS_Store
 authData
-bck
 node_modules
 # Elastic Beanstalk Files
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 test/output/*
 build
-*.swp
 npm-debug.log
 system
 runEmpty.json
 unit_test
-serges_tasks.txt
