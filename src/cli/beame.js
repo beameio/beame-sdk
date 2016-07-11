@@ -48,6 +48,9 @@ var parametersSchema = {
 	},
 	'edgeFqdn':{
 		required: true
+	},
+	'signature':{
+		required: true
 	}
 
 

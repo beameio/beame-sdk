@@ -119,7 +119,7 @@ function createAtom(developerFqdn, atomName, format){
 	if(developerFqdn && atomName){
 		console.warn("Creating atom %j %j", developerFqdn, atomName);
 		atomServices.createAtom(developerFqdn, atomName, function(err, data) {
-			if(!error){
+			if(!err){
 				printLine(data, error,format);
 				process.exit(0);
 			}
