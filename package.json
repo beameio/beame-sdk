@@ -1,6 +1,6 @@
 {
   "name": "beame-sdk",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "run provision tests",
   "main": "main.js",
   "engine": "node >= 4.4.0",
