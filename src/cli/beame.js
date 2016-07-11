@@ -28,6 +28,9 @@ var parametersSchema = {
 	'atom_fqdn': {
 		required: true 
 	},
+	'atomName': {
+		required: true
+	},
 	'uid': {
 		required: false
 	},
@@ -119,6 +122,8 @@ function usage() {
 			var paramsNames = getParamsNames(subCmdFunc);
 			var params = paramsNames.map(function(paramName) {
 				var ret = '--' + paramName;
+				if(!parametersSchema[paramName])
+					throw new Error("Missing "+paramName);
 				if(parametersSchema[paramName].options) {
 					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
 				} else {
