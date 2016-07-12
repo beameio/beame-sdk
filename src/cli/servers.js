@@ -5,13 +5,13 @@ var BeameServer = require("../services/BaseHttpsServer").SampleBeameServer;
 
 var store = new BeameStore();
 
-function HttpsServerTestStart(edgeFqdn){
-	debug("Starting %j", edgeFqdn);
-	var lcreds = store.search(edgeFqdn);
+function HttpsServerTestStart(edgeClientFqdn){
+	debug("Starting %j", edgeClientFqdn);
+	var lcreds = store.search(edgeClientFqdn);
 	debug("lcreds %j", lcreds.length);
 	if(lcreds.length != 1){
 		console.error("store search returned %j", creds);
-		throw new Error("store.search(edgeFqdn)");
+		throw new Error("store.search(edgeClientFqdn)");
 	}
 	var newBeameServer = new BeameServer(lcreds[0].hostname, function(data, app){
 		console.log(data);

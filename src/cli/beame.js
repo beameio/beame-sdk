@@ -19,7 +19,7 @@ var parametersSchema = {
 	'developerEmail': { required: true  },
 	'developerFqdn':  { required: false },
 	'developerName':  { required: true  },
-	'edgeFqdn':       { required: true  },
+	'edgeClientFqdn': { required: true  },
 	'format':         { required: false, options: ['text', 'json'], default: 'text' },
 	'fqdn':           { required: false },
 	'signature':      { required: true  },
