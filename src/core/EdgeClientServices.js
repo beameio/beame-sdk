@@ -94,8 +94,8 @@ var registerEdgeClient = function (appHostname, callback) {
             }
             else {
                 error.data.hostname = appHostname;
-                console.error(error);
-                callback && callback(errMsg, null);
+                // console.error(error);
+                callback && callback(error, null);
             }
         });
 
