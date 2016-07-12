@@ -95,7 +95,7 @@ function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetH
     }, this));
 
     this.socketio.on('create_connection', _.bind(function (data) {
-        this.createLocalServerConnection.call(this, data, this.options && this.options.onLocalServerCreated);
+        this.createLocalServerConnection.call(this, data, this.options && this.options.onConnection);
     }, this));
 
     this.socketio.on('hostRegistered', _.bind(function (data) {
