@@ -48,7 +48,7 @@ function show(type, fqdn){
 	return certs;
 }
 
-show.toTable = function(certs) {
+show.toText = function(certs) {
 	var table = new Table({
 		head: ['Name', "Print", "Serial", "SigAlg"],
 		colWidths: [25, 65, 30, 30]
@@ -65,7 +65,7 @@ function list(type, fqdn){
 	return listCreds(type, fqdn);
 }
 
-list.toTable = function(creds) {
+list.toText = function(creds) {
 	var table = new Table({
 		head: ['name', 'hostname', 'level'],
 		colWidths: [15, 70, 15]
@@ -76,30 +76,26 @@ list.toTable = function(creds) {
 	return table;
 }
 
-
-function printLine(data, error, format){
-	if(format == "json") {
-		console.log(JSON.stringify(data));
-	} else {
-		_.map(data, function(value, key) { 
-			console.log("Key %j, %j", key, value);
-		})
-	}
+function lineToText(line) {
+	console.log('lineToText', line);
+	return _.map(line, function(value, key) {
+		return key + '=' + value.toString();
+	}).join('\n');
 }
 
-function createTestDeveloper(developerName, developerEmail){
+function createTestDeveloper(developerName, developerEmail, callback){
 	debug("createTestDeveloper %j ", developerName, developerEmail);
-	developerServices.createDeveloper(developerName, developerEmail, function(error, data){
-		if(!error){
-			printLine(data, error,'json');
-			process.exit(0);
-		}
-		else{
+	developerServices.createDeveloper(developerName, developerEmail, function(error, data) {
+		console.log('ED %j %j', error, data);
+		if(error) {
 			console.error(error);
 			process.exit(1);
+		} else {
+			callback(data);
 		}
 	}) 
 }
+createTestDeveloper.toText = lineToText;
 
 function createAtom(developerFqdn, atomName, format){
 	if(developerFqdn && atomName){

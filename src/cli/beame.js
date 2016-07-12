@@ -42,9 +42,21 @@ function getParamsNames(fun) {
 		.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
 		.replace(/\s+/g, '').split(',');
 	var ret = (names.length == 1 && !names[0] ? [] : names);
-	if(fun.toTable) {
+	if(fun.toText) {
 		ret.push('format');
 	}
+	var useCallback = false;
+	// console.log('PARAMS', ret);
+	ret = _.filter(ret, function(x) {
+		// console.log('X', x);
+		if(x == 'callback') {
+			useCallback = true;
+			return false;
+		} else {
+			return true;
+		}
+	});
+	ret.useCallback = useCallback;
 	return ret;
 }
 
@@ -89,14 +101,25 @@ function main() {
 		return argv[paramName];
 	});
 
-	// Run the command
-	var output = commands[cmdName][subCmdName].apply(null, args);
-	if(argv.format == 'json' && commands[cmdName][subCmdName].toTable) {
-		output = JSON.stringify(output);
-	} else {
-		output = commands[cmdName][subCmdName].toTable(output).toString();
+	// console.log('CB', paramsNames.useCallback);
+	// console.log('P', paramsNames);
+	function commandResultsReady(output) {
+		if(argv.format == 'json' || !commands[cmdName][subCmdName].toText) {
+			output = JSON.stringify(output);
+		} else {
+			output = commands[cmdName][subCmdName].toText(output).toString();
+		}
+		console.log(output);
 	}
-	console.log(output);
+
+	// Run the command
+	if(paramsNames.useCallback) {
+		args.push(commandResultsReady);
+		commands[cmdName][subCmdName].apply(null, args);
+	} else {
+		var output = commands[cmdName][subCmdName].apply(null, args);
+		commandResultsReady(output);
+	}
 }
 
 function usage() {
