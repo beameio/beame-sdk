@@ -2,7 +2,7 @@
     "Endpoints": {
         "Local": "https://prov-staging.beameio.net",
         "Online": "https://prov-staging.beameio.net",
-        "AuthServer": "https://gn1t3706w7cm8cs6.v1.r.d.edge.eu-central-1a-1.v1.beameio.net"
+        "AuthServer": "https://registration.beameio.net"
     },
     "Actions": {
         "DeveloperApi": {
@@ -13,7 +13,7 @@
                 "endpoint": "/api/v1/dev/create"
             },
             "GetCert": {
-                "endpoint": "/api/v1/dev/getCert"
+                "endpoint": "/api/v1/dev/cert/get"
             },
             "UpdateProfile": {
                 "endpoint": "/api/v1/dev/profile/update"
@@ -21,13 +21,13 @@
         },
         "AtomApi": {
             "CreateAtom": {
-                "endpoint": "/api/v1/dev/app/save"
+                "endpoint": "/api/v1/atom/save"
             },
             "GetCert": {
-                "endpoint": "/api/v1/dev/getAppCert"
+                "endpoint": "/api/v1/atom/cert/get"
             },
             "UpdateAtom": {
-                "endpoint": "/api/v1/dev/app/{{UID}}/update"
+                "endpoint": "/api/v1/atom/{{UID}}/update"
             }
         },
         "EdgeClient":{
