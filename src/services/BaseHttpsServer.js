@@ -1,4 +1,5 @@
-'euse strict'
+'use strict';
+
 var https = require("https");
 var ProxyClient = require("./ProxyClient");
 var BeameStore = require("./BeameStore");

@@ -83,7 +83,7 @@ function _stdCallback(callback) {
 }
 
 function createTestDeveloper(developerName, developerEmail, callback){
-	debug("createTestDeveloper developerName=%j developerEmail=%j", developerName, developerEmail);
+	debug("Creating test developer developerName=%j developerEmail=%j", developerName, developerEmail);
 	developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
 }
 createTestDeveloper.toText = lineToText;
@@ -108,11 +108,11 @@ createEdgeClient.toText = lineToText;
 
 
 function renew(type, fqdn){
-	debug ( "renew %j %j",  type,  fqdn);
+	debug ("renew %j %j",  type,  fqdn);
 }
 
 function purge(type, fqdn){
-	debug ( "purge %j %j",  type,  fqdn);
+	debug ("purge %j %j",  type,  fqdn);
 }
 
 

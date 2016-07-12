@@ -5,15 +5,15 @@ var BeameServer = require("../services/BaseHttpsServer").SampleBeameServer;
 
 var store = new BeameStore();
 
-function HttpsServerTestStart(edgeClientFqdn){
+function HttpsServerTestStart(edgeClientFqdn) {
 	debug("Starting %j", edgeClientFqdn);
 	var lcreds = store.search(edgeClientFqdn);
 	debug("lcreds %j", lcreds.length);
 	if(lcreds.length != 1){
-		console.error("store search returned %j", creds);
-		throw new Error("store.search(edgeClientFqdn)");
+		console.error("store search returned %j", lcreds);
+		throw new Error("Could not find credentials for edgeClientFqdn " + edgeClientFqdn);
 	}
-	var newBeameServer = new BeameServer(lcreds[0].hostname, function(data, app){
+	new BeameServer(lcreds[0].hostname, function(data, app) {
 		console.log(data);
 		app.on("request", function(req, resp){
 			resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});
@@ -33,6 +33,6 @@ function HttpsServerTestStart(edgeClientFqdn){
 	});
 }
 
-module.exports ={ 
+module.exports = {
 	HttpsServerTestStart: HttpsServerTestStart
 };
