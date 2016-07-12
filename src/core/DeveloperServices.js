@@ -18,14 +18,16 @@ var apiActions = require('../../config/ApiConfig.json').Actions.DeveloperApi;
 /**
  *
  * @param {String|null|undefined} [developerName]
+ * @param {String} email
  * @param {Function} callback
  */
-var saveDeveloper = function (developerName, callback) {
+var saveDeveloper = function (email, developerName, callback) {
 
     provisionApi.setAuthData(beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH));
 
     var postData = {
-        name: developerName
+        name: developerName,
+        email: email
     };
 
     var apiData = beameUtils.getApiData(apiActions.CreateDeveloper.endpoint, postData, true);
@@ -140,7 +142,6 @@ var DeveloperServices = function () {
  * @param {Function} callback
  */
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
-    var self = this;
 
     var debugMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.DebugInfo, "Call Create Developer", {
         "name": developerName,
@@ -148,14 +149,15 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
     });
     debug(debugMsg);
 
-    saveDeveloper(developerName, function (error, payload) {
+    saveDeveloper(developerEmail, developerName, function (error, payload) {
         if (!error) {
 
             var hostname = payload.hostname;
 
             getCert(hostname, function (error) {
                 if (!error) {
-                    self.updateProfile(hostname, developerEmail, developerName, callback);
+                    //self.updateProfile(hostname, developerEmail, developerName, callback);
+                    callback && callback(null, payload);
                 }
                 else {
                     callback && callback(error, null);
@@ -242,7 +244,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
 };
 
-
+//noinspection JSUnusedGlobalSymbols
 /**
  *
  * @param {String} hostname => developer hostname
@@ -296,6 +298,58 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
 
     beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
 
+};
+
+DeveloperServices.prototype.revokeCert = function (hostname, callback) {
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
+
+    /*---------- private callbacks -------------------*/
+    function onMetaInfoReceived(metadata) {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        var postData = {
+            hostname: hostname
+        };
+
+        var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
+
+        provisionApi.runRestfulAPI(apiData, function (error, payload) {
+            if (!error) {
+
+                dataServices.saveFile(devDir, global.recoveryFileName, beameUtils.stringify(payload), function (error) {
+                    if (!callback) return;
+
+                    if (!error) {
+                        callback(null, true);
+                    }
+                    else {
+                        callback(error, null);
+                    }
+                });
+
+                callback(null, metadata);
+            }
+            else {
+                error.data.hostname = hostname;
+                console.error(error);
+                callback(error, null);
+            }
+        });
+
+
+    }
+
+    function onCertsValidated() {
+        /*---------- read developer data and proceed -------------*/
+        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetaInfoReceived, onValidationError);
+    }
+
+    function onValidationError(error) {
+        callback(error, null);
+    }
+
+    beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
 };
 
 module.exports = DeveloperServices;

@@ -13,48 +13,18 @@ _.each(['creds', 'servers', 'crypto'], function(cmdName) {
 });
 
 var parametersSchema = {
-	'type': {
-		required: false,
-		options: ['developer', 'atom', 'edgeclient']
-	},
-	'fqdn': {
-		required: false
-	},
-	'format': {
-		required: false,
-		options: ['text', 'json'],
-		default: 'text'
-	},
-	'atom_fqdn': {
-		required: true 
-	},
-	'atomName': {
-		required: true
-	},
-	'uid': {
-		required: false
-	},
-	'developerName':{
-		required: true
-	},
-	'developerEmail':{
-		required: true
-	},
-	'data':{
-		required:false 
-	},
-	'developerFqdn':{
-		required: false	
-	},
-	'edgeFqdn':{
-		required: true
-	},
-	'signature':{
-		required: true
-	}
-
-
-	
+	'atomFqdn':       { required: true  },
+	'atomName':       { required: true  },
+	'data':           { required: false },
+	'developerEmail': { required: true  },
+	'developerFqdn':  { required: true  },
+	'developerName':  { required: true  },
+	'edgeClientFqdn': { required: true  },
+	'format':         { required: false, options: ['text', 'json'], default: 'text' },
+	'fqdn':           { required: false },
+	'signature':      { required: true  },
+	'type':           { required: false, options: ['developer', 'atom', 'edgeclient'] },
+	'uid':            { required: true  }
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -69,7 +39,21 @@ function getParamsNames(fun) {
 	var names = fun.toString().match(/^[\s\(]*function[^(]*\(([^)]*)\)/)[1]
 		.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
 		.replace(/\s+/g, '').split(',');
-	return names.length == 1 && !names[0] ? [] : names;
+	var ret = (names.length == 1 && !names[0] ? [] : names);
+	var useCallback = false;
+	// console.log('PARAMS', ret);
+	ret = _.filter(ret, function(x) {
+		// console.log('X', x);
+		if(x == 'callback') {
+			useCallback = true;
+			return false;
+		} else {
+			return true;
+		}
+	});
+	ret.hasFormat = !!fun.toText;
+	ret.useCallback = useCallback;
+	return ret;
 }
 
 function main() {
@@ -113,8 +97,25 @@ function main() {
 		return argv[paramName];
 	});
 
+	// console.log('CB', paramsNames.useCallback);
+	// console.log('P', paramsNames);
+	function commandResultsReady(output) {
+		if(argv.format == 'json' || !commands[cmdName][subCmdName].toText) {
+			output = JSON.stringify(output);
+		} else {
+			output = commands[cmdName][subCmdName].toText(output).toString();
+		}
+		console.log(output);
+	}
+
 	// Run the command
-	commands[cmdName][subCmdName].apply(null, args);
+	if(paramsNames.useCallback) {
+		args.push(commandResultsReady);
+		commands[cmdName][subCmdName].apply(null, args);
+	} else {
+		var output = commands[cmdName][subCmdName].apply(null, args);
+		commandResultsReady(output);
+	}
 }
 
 function usage() {
@@ -123,6 +124,9 @@ function usage() {
 	_.each(commands, function(subCommands, cmdName) {
 		_.each(subCommands, function(subCmdFunc, subCmdName) {
 			var paramsNames = getParamsNames(subCmdFunc);
+			if(paramsNames.hasFormat) {
+				paramsNames.push('format');
+			}
 			var params = paramsNames.map(function(paramName) {
 				var ret = '--' + paramName;
 				if(!parametersSchema[paramName])
@@ -159,6 +163,9 @@ if(argv._[0] == 'complete') {
 	if(argv._[1] == 'switches') {
 		var f = commands[argv._[2]][argv._[3]];
 		var paramsNames = getParamsNames(f);
+		if(paramsNames.hasFormat) {
+			paramsNames.push('format');
+		}
 		var switches = paramsNames.map(function(p) { return "--" + p; }).join(' ');
 		console.log(switches);
 		process.exit(0);

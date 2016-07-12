@@ -1,6 +1,7 @@
-'euse strict' 
+'use strict';
+
 var https = require("https");
-var ProxyClient = require("beame-ssl-proxy-client");
+var ProxyClient = require("./ProxyClient");
 var BeameStore = require("./BeameStore");
 
 var _ = require('underscore');
@@ -12,7 +13,11 @@ var beamestore = new BeameStore();
 
 var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 {
-	var edgeCert = beamestore.search(instanceHostname)[0];
+	var edgeCert = beamestore.search(instanceHostname);
+	if(edgeCert.length != 1){
+		throw new Error("Could not find certificate for " + instanceHostname);
+	}
+	edgeCert = edgeCert[0];
 	var options = {
 		key: edgeCert.PRIVATE_KEY,
 		cert: edgeCert.P7B,
@@ -21,18 +26,17 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 
 	var app = https.createServer(options);
 	app.listen(0, function() {
-		var onLocalServerCreated = function(data){
+		function onLocalServerCreated(data){
 			if(hostOnlineCallback){
 				hostOnlineCallback(data, app);
 			}
 		};
 
-		address = app.address();
-		var proxy =new ProxyClient("HTTPS", edgeCert.hostname, 
-									edgeCert.edgeHostname, 'localhost', 
-									app.address().port, {"onLocalServerCreated": onLocalServerCreated } ,
+		var proxy = new ProxyClient("HTTPS", edgeCert.hostname,
+									edgeCert.edgeHostname, 'localhost',
+									app.address().port, {onLocalServerCreated: onLocalServerCreated},
 									undefined, options);
-		});
+	});
 };
 
-module.exports = { "SampleBeameServer":SampleBeameServer};
+module.exports = {SampleBeameServer: SampleBeameServer};

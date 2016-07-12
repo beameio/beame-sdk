@@ -5,16 +5,11 @@ var BeameServer = require("../services/BaseHttpsServer").SampleBeameServer;
 
 var store = new BeameStore();
 
-function HttpsServerTestStart(edgeFqdn){
-	debug("Starting %j", edgeFqdn);
-	var lcreds = store.search(edgeFqdn);
-	debug("lcreds %j", lcreds.length);
-	if(lcreds.length != 1){
-		console.error("store search returned %j", creds);
-		throw new Error("store.search(edgeFqdn)");
-	}
-	var newBeameServer = new BeameServer(lcreds[0].hostname, function(data, app){
-		console.log(data);
+function HttpsServerTestStart(edgeClientFqdn) {
+	debug("Starting server %j", edgeClientFqdn);
+	new BeameServer(edgeClientFqdn, function(data, app) {
+		debug("BeameServer callback got %j", data);
+		// console.log('XXX', data);
 		app.on("request", function(req, resp){
 			resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});
 			resp.end('hello world\n');
@@ -22,6 +17,7 @@ function HttpsServerTestStart(edgeFqdn){
 		});
 
 		var socketio = require('socket.io')(app);
+		socketio.set('transports', ['websocket']);
 
 		socketio.on('connection', function (socket) {
 			console.log("Socketio connection");
@@ -33,6 +29,6 @@ function HttpsServerTestStart(edgeFqdn){
 	});
 }
 
-module.exports ={ 
+module.exports = {
 	HttpsServerTestStart: HttpsServerTestStart
 };

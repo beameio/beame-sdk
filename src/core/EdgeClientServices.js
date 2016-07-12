@@ -72,6 +72,8 @@ var registerEdgeClient = function (appHostname, callback) {
 
         provisionApi.runRestfulAPI(apiData, function (error, payload) {
             if (!error) {
+                payload.atom_fqdn = appHostname;
+
                 var edgeClientDir = beameUtils.makePath(self.devAppDir, payload.hostname + '/');
 
                 dataServices.createDir(edgeClientDir);
@@ -94,8 +96,8 @@ var registerEdgeClient = function (appHostname, callback) {
             }
             else {
                 error.data.hostname = appHostname;
-                console.error(error);
-                callback && callback(errMsg, null);
+                // console.error(error);
+                callback && callback(error, null);
             }
         });
 
