@@ -18,6 +18,19 @@ __beame_complete() {
 		return
 	fi
 
+	# TODO: factor out
+	if [[ $prev == --edgeClientFqdn ]];then
+		switch_values=$($__BEAME_BIN complete switch-value fqdn edgeclient)
+		COMPREPLY=( $(compgen -W "${switch_values[@]}" -- "$cur") )
+		return
+	fi
+
+	if [[ $prev == --atomFqdn ]];then
+		switch_values=$($__BEAME_BIN complete switch-value fqdn atom)
+		COMPREPLY=( $(compgen -W "${switch_values[@]}" -- "$cur") )
+		return
+	fi
+
 	if [[ $prev == --developerFqdn ]];then
 		switch_values=$($__BEAME_BIN complete switch-value fqdn developer)
 		COMPREPLY=( $(compgen -W "${switch_values[@]}" -- "$cur") )

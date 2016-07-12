@@ -7,7 +7,8 @@ require('./../utils/Globals');
 var jmespath = require('jmespath');
 var beameDirApi = require('./BeameDirServices');
 var sprintf = require('sprintf');
-
+var mkdirp = require('mkdirp');
+var path = require('path');
 // The idea is this object framework above BeameDirServices.js
 // BeameStore will load the directory and manage it in memory as well be capabale proving high level
 // API to work with JSON.
@@ -23,10 +24,13 @@ var sprintf = require('sprintf');
 //
 
 function BeameStore(beamedir) {
+		
     if (!beamedir || beamedir.length === 0) {
 		beamedir = process.env.BEAME_DIR || global.devPath;
     }
-
+	debug("reading beamedir %j", beamedir);
+	mkdirp(path.join(beamedir, "v1", 'local'));
+	mkdirp(path.join(beamedir, "v1", 'remote'));
     this.beameStore = beameDirApi.readBeameDir(beamedir);
     this.listFunctions = [];
     this.searchFunctions = [];
