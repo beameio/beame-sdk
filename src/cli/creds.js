@@ -21,32 +21,6 @@ var readline = require('readline');
 //
 
 
-function show(type, fqdn, format){
-	debug("show %j %j %j", type,  fqdn, format);
-
-	var returnValues = listCreds(type, fqdn);
-	var certs = _.map(returnValues, function(cert) {
-		var item = store.search(cert.hostname);
-		var xcert = x509.parseCert(item[0].X509 + "");
-		return xcert;
-	});
-
-	if(format == "json") {
-		console.log(JSON.stringify(certs));
-	} else {
-		var table = new Table({
-			head: ['Name', "Print", "Serial", "SigAlg"],
-			colWidths: [25, 65, 30, 30]
-		});
-
-		_.each(certs, function(xcert) {
-			table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,  xcert.signatureAlgorithm]);
-		});
-
-		console.log(table.toString());
-	}
-}
-
 function listCreds(type, fqdn){
 	var returnValues = [];
 	if(type && !fqdn) {
@@ -61,48 +35,60 @@ function listCreds(type, fqdn){
 	return returnValues;
 }
 
-function list(type,  fqdn,format){
-	debug("list %j %j %j", type,  fqdn, format);
-	var returnValues = listCreds(type, fqdn);
+function show(type, fqdn){
+	debug("show %j %j", type,  fqdn);
 
-	switch(format) {
+	var creds = listCreds(type, fqdn);
+	var certs = _.map(creds, function(cert) {
+		var item = store.search(cert.hostname);
+		var xcert = x509.parseCert(item[0].X509 + "");
+		return xcert;
+	});
 
-		case "json": {
-			console.log(JSON.stringify(returnValues));
-			break;
-		};
-
-		case "text": {
-			var table = new Table({
-				head: ['name', 'hostname', 'level'],
-				colWidths: [15, 70, 15]
-			});
-			_.each(returnValues, function (item) {
-				table.push([item.name, item.hostname, item.level]);
-			});
-			console.log(table.toString());
-			break;
-		};
-
-		default: {
-			throw new Error("Invalid print_table format: " + format);
-		}
-	}
+	return certs;
 }
 
-function printLine(data, error, format){
-	if(format == "json"){
-		console.log(JSON.stringify(data));
-	}else{
-		_.map(data, function(value, key) { 
+show.toTable = function(certs) {
+	var table = new Table({
+		head: ['Name', "Print", "Serial", "SigAlg"],
+		colWidths: [25, 65, 30, 30]
+	});
 
+	_.each(certs, function(xcert) {
+		table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,  xcert.signatureAlgorithm]);
+	});
+	return table;
+}
+
+function list(type, fqdn){
+	debug("list %j %j", type,  fqdn);
+	return listCreds(type, fqdn);
+}
+
+list.toTable = function(creds) {
+	var table = new Table({
+		head: ['name', 'hostname', 'level'],
+		colWidths: [15, 70, 15]
+	});
+	_.each(creds, function (item) {
+		table.push([item.name, item.hostname, item.level]);
+	});
+	return table;
+}
+
+
+function printLine(data, error, format){
+	if(format == "json") {
+		console.log(JSON.stringify(data));
+	} else {
+		_.map(data, function(value, key) { 
 			console.log("Key %j, %j", key, value);
-		} )
+		})
 	}
 }
 
 function createTestDeveloper(developerName, developerEmail){
-	debug ( "createTestDeveloper %j ",developerName, developerEmail );
+	debug("createTestDeveloper %j ", developerName, developerEmail);
 	developerServices.createDeveloper(developerName, developerEmail, function(error, data){
 		if(!error){
 			printLine(data, error,'json');

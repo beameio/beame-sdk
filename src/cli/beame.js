@@ -5,6 +5,8 @@
 var argv = require('minimist')(process.argv.slice(2));
 var _ = require('underscore');
 
+var Table = require('cli-table2');
+
 var BeameStore = require("../services/BeameStore");
 
 var commands = {};
@@ -39,7 +41,11 @@ function getParamsNames(fun) {
 	var names = fun.toString().match(/^[\s\(]*function[^(]*\(([^)]*)\)/)[1]
 		.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
 		.replace(/\s+/g, '').split(',');
-	return names.length == 1 && !names[0] ? [] : names;
+	var ret = (names.length == 1 && !names[0] ? [] : names);
+	if(fun.toTable) {
+		ret.push('format');
+	}
+	return ret;
 }
 
 function main() {
@@ -84,7 +90,13 @@ function main() {
 	});
 
 	// Run the command
-	commands[cmdName][subCmdName].apply(null, args);
+	var output = commands[cmdName][subCmdName].apply(null, args);
+	if(argv.format == 'json' && commands[cmdName][subCmdName].toTable) {
+		output = JSON.stringify(output);
+	} else {
+		output = commands[cmdName][subCmdName].toTable(output).toString();
+	}
+	console.log(output);
 }
 
 function usage() {
