@@ -18,14 +18,16 @@ var apiActions = require('../../config/ApiConfig.json').Actions.DeveloperApi;
 /**
  *
  * @param {String|null|undefined} [developerName]
+ * @param {String} email
  * @param {Function} callback
  */
-var saveDeveloper = function (developerName, callback) {
+var saveDeveloper = function (email, developerName, callback) {
 
     provisionApi.setAuthData(beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH));
 
     var postData = {
-        name: developerName
+        name: developerName,
+        email: email
     };
 
     var apiData = beameUtils.getApiData(apiActions.CreateDeveloper.endpoint, postData, true);
@@ -140,7 +142,6 @@ var DeveloperServices = function () {
  * @param {Function} callback
  */
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
-    var self = this;
 
     var debugMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.DebugInfo, "Call Create Developer", {
         "name": developerName,
@@ -148,14 +149,15 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
     });
     debug(debugMsg);
 
-    saveDeveloper(developerName, function (error, payload) {
+    saveDeveloper(developerEmail, developerName, function (error, payload) {
         if (!error) {
 
             var hostname = payload.hostname;
 
             getCert(hostname, function (error) {
                 if (!error) {
-                    self.updateProfile(hostname, developerEmail, developerName, callback);
+                    //self.updateProfile(hostname, developerEmail, developerName, callback);
+                    callback && callback(null, payload);
                 }
                 else {
                     callback && callback(error, null);
@@ -242,6 +244,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
 };
 
+//noinspection JSUnusedGlobalSymbols
 /**
  *
  * @param {String} hostname => developer hostname
@@ -297,7 +300,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
 
 };
 
-DeveloperServices.prototype.revokeCert = function(hostname){
+DeveloperServices.prototype.revokeCert = function (hostname, callback) {
     var devDir = beameUtils.makePath(devPath, hostname + "/");
 
     /*---------- private callbacks -------------------*/
@@ -306,19 +309,19 @@ DeveloperServices.prototype.revokeCert = function(hostname){
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
         var postData = {
-            hostname : hostname
+            hostname: hostname
         };
 
         var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
 
-        provisionApi.runRestfulAPI(apiData, function (error,payload) {
+        provisionApi.runRestfulAPI(apiData, function (error, payload) {
             if (!error) {
 
-                dataServices.savePayload(devDir, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
+                dataServices.saveFile(devDir, global.recoveryFileName, beameUtils.stringify(payload), function (error) {
                     if (!callback) return;
 
                     if (!error) {
-                       callback(null,true);
+                        callback(null, true);
                     }
                     else {
                         callback(error, null);

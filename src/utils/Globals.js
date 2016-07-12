@@ -41,6 +41,9 @@ global.csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN
 global.metadataFileName = "metadata.json";
 
 /** @const {String} **/
+global.recoveryFileName = "recovery";
+
+/** @const {String} **/
 global.apiUIDTemplatePattern = "{{UID}}";
 
 /** @const {String} **/
@@ -160,8 +163,8 @@ global.AwsRegions = [
 global.ResponseKeys = {
     "NodeFiles": [global.metadataFileName, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509, global.CertFileNames.CA, global.CertFileNames.PKCS7, global.CertFileNames.P7B, global.CertFileNames.PKCS12, global.CertFileNames.PWD],
     "DeveloperCreateResponseKeys": ["hostname", "uid", "name"],
-    "AtomCreateResponseKeys": ["hostname", "uid", "name"],
-    "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname"],
+    "AtomCreateResponseKeys": ["hostname", "uid", "name","developer_fqdn"],
+    "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname","atom_fqdn"],
     "CertificateResponseKeys": ["x509", "pkcs7", "ca"],
     "RevokeDevCertResponseKeys" : ["recovery_code"]
 };
