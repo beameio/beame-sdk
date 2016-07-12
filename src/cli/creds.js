@@ -83,67 +83,46 @@ function lineToText(line) {
 	}).join('\n');
 }
 
-function createTestDeveloper(developerName, developerEmail, callback){
-	debug("createTestDeveloper %j ", developerName, developerEmail);
-	developerServices.createDeveloper(developerName, developerEmail, function(error, data) {
-		console.log('ED %j %j', error, data);
+function _stdCallback(callback) {
+	return function(error, data) {
 		if(error) {
 			console.error(error);
 			process.exit(1);
 		} else {
 			callback(data);
 		}
-	}) 
-}
-createTestDeveloper.toText = lineToText;
-
-function createAtom(developerFqdn, atomName, format){
-	if(developerFqdn && atomName){
-		console.warn("Creating atom %j %j", developerFqdn, atomName);
-		atomServices.createAtom(developerFqdn, atomName, function(err, data) {
-			if(!err){
-				printLine(data, error,format);
-				process.exit(0);
-			}
-			else{
-				console.error(error);
-				process.exit(1);
-			}
-		});
 	}
 }
 
-function createDeveloper(developerFqdn, uid, format){
+function createTestDeveloper(developerName, developerEmail, callback){
+	debug("createTestDeveloper %j ", developerName, developerEmail);
+	developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
+}
+createTestDeveloper.toText = lineToText;
+
+function createAtom(developerFqdn, atomName, callback){
+	if(developerFqdn && atomName){
+		console.warn("Creating atom %j %j", developerFqdn, atomName);
+		atomServices.createAtom(developerFqdn, atomName, _stdCallback(callback));
+	}
+}
+createAtom.toText = lineToText;
+
+function createDeveloper(developerFqdn, uid, callback){
 	if(developer_fqdn && uid){
 		console.warn("dev create %j %j ", developerFqdn, uid);
-		developerServices.completeDeveloperRegistration(developer_fqdn ,uid, function(error, data){
-			if(!error){
-				printLine(data, error,format);
-				process.exit(0);
-			}
-			else{
-				console.error(error);
-				process.exit(1);
-			}
-		});
+		developerServices.completeDeveloperRegistration(developer_fqdn ,uid, _stdCallback(callback));
 	};
 }
+createDeveloper.toText = lineToText;
 
-function createEdgeClient(atomFqdn, format){
+function createEdgeClient(atomFqdn, callback){
 	if(atomFqdn){
 		console.warn("getting edge server certificate signed");
-		edgeClientServices.createEdgeClient(atomFqdn, function(error, data){
-			if(!error){
-				printLine(data, error,format);
-				process.exit(0);
-			}
-			else{
-				console.error(error);
-				process.exit(1);
-			}
-		});
+		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
 	};
 }
+createEdgeClient.toText = lineToText;
 
 
 function renew(type,  fqdn,format){
