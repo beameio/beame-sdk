@@ -25,7 +25,7 @@ var parametersSchema = {
 		options: ['text', 'json'],
 		default: 'text'
 	},
-	'atom_fqdn': {
+	'atomFqdn': {
 		required: true 
 	},
 	'atomName': {
@@ -52,9 +52,6 @@ var parametersSchema = {
 	'signature':{
 		required: true
 	}
-
-
-	
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

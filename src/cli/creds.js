@@ -147,10 +147,10 @@ function createDeveloper(developerFqdn, uid, format){
 	};
 }
 
-function createEdgeClient(atom_fqdn, format){
-	if(atom_fqdn){
+function createEdgeClient(atomFqdn, format){
+	if(atomFqdn){
 		console.warn("getting edge server certificate signed");
-		edgeClientServices.createEdgeClient(atom_fqdn, function(error, data){
+		edgeClientServices.createEdgeClient(atomFqdn, function(error, data){
 			if(!error){
 				printLine(data, error,format);
 				process.exit(0);
