@@ -32,12 +32,11 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 			}
 		};
 
-		var address = app.address();
 		var proxy = new ProxyClient("HTTPS", edgeCert.hostname,
 									edgeCert.edgeHostname, 'localhost',
 									app.address().port, {"onLocalServerCreated": onLocalServerCreated } ,
 									undefined, options);
-		});
+	});
 };
 
 module.exports = { "SampleBeameServer":SampleBeameServer};
