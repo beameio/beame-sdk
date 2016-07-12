@@ -29,22 +29,45 @@ var create =  function (){
     });
 };
 
+var restore = function(host){
+    developerServices.restoreCert(host,function(error, payload){
+        if(!error){
+            console.log(payload);
+        }
+        else{
+            console.error(error);
+        }
+    });
+};
+
+var complete = function(host,uid){
+    developerServices.completeDeveloperRegistration(host,uid,function(error, payload){
+        if(!error){
+            console.log(payload);
+        }
+        else{
+            console.error(error);
+        }
+    });
+};
+
 
 
 var test = function(){
-    var test = argv['test'] || 'revoke';
+    var test = argv['test'] || 'complete';
 
     if(_.isEmpty(test)){
         console.error('test required');
         process.exit(1);
     }
 
+    var host = argv['host'] || 'jx988ffuwtg0bg0v.v1.beameio.net';
+
     switch (test){
         case 'create':
             create();
             return;
         case 'revoke':
-            var host = argv['host'] || 'rgqwxrybpysyc1yr.v1.beameio.net';
 
             if(_.isEmpty(host)){
                 console.error('host required');
@@ -52,7 +75,31 @@ var test = function(){
             }
             revoke(host);
             return;
+        case 'restore':
 
+            if(_.isEmpty(host)){
+                console.error('host required');
+                process.exit(1);
+            }
+            restore(host);
+            return;
+
+        case 'complete':
+
+            if(_.isEmpty(host)){
+                console.error('host required');
+                process.exit(1);
+            }
+
+            var uid = argv['uid'] || '6685c5a3-9a6e-4db5-99ed-8f3df98f2e9e';
+
+            if(_.isEmpty(uid)){
+                console.error('uid required');
+                process.exit(1);
+            }
+
+            complete(host,uid);
+            return;
     }
 };
 

@@ -14,6 +14,20 @@ var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.DeveloperApi;
 
+/**
+ * @typedef {Object} CompleteRegistrationRequestToken
+ * @property {String} csr
+ * @property {String} uid
+ * @property {String} hostname
+ */
+
+/**
+ * @typedef {Object} DeveloperRestoreCertRequestToken
+ * @property {String} csr
+ * @property {String} recovery_code
+ * @property {String} hostname
+ */
+
 /**-----------------Private services----------------**/
 /**
  *
@@ -190,6 +204,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
     dataServices.createDir(devDir);
 
+    /** @type {typeof CompleteRegistrationRequestToken} **/
     var payload = {
         hostname: hostname,
         uid: uid,
@@ -212,8 +227,6 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
         dataServices.createCSR(devDir, hostname).then(
             function onCsrCreated(csr) {
-
-                provisionApi.setAuthData(beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH));
 
                 var postData = {
                     csr: csr,
@@ -241,6 +254,63 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
                 callback && callback(error, null);
             });
     }
+
+};
+
+
+//noinspection JSUnusedGlobalSymbols
+DeveloperServices.prototype.restoreCert = function (hostname, callback) {
+    var errMsg;
+
+    if (_.isEmpty(hostname)) {
+        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
+        console.error(errMsg);
+        callback && callback(errMsg, null);
+        return;
+    }
+
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
+
+    var recoveryData = dataServices.readJSON(beameUtils.makePath(devDir, global.recoveryFileName));
+
+    if(_.isEmpty(recoveryData)){
+        callback('Recovery code not found',null);
+        return;
+    }
+
+    dataServices.createCSR(devDir, hostname).then(
+        function onCsrCreated(csr) {
+
+
+            /** @type {typeof DeveloperRestoreCertRequestToken} **/
+            var postData = {
+                csr: csr,
+                hostname: hostname,
+                recovery_code : recoveryData.recovery_code
+            };
+
+            var apiData = beameUtils.getApiData(apiActions.RestoreCert.endpoint, postData, true);
+
+            provisionApi.runRestfulAPI(apiData, function (error, payload) {
+                if (!error) {
+
+                    dataServices.saveCerts(devDir, payload, callback);
+                }
+                else {
+                    error.data.hostname = hostname;
+                    console.error(error);
+                    callback(error, null);
+                }
+            });
+
+        },
+        function onCsrCreationFailed(error) {
+            console.error(error);
+            callback && callback(error, null);
+        });
+
+
+
 
 };
 
@@ -300,6 +370,11 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
 
 };
 
+/**
+ *
+ * @param {String} hostname
+ * @param {Function} callback
+ */
 DeveloperServices.prototype.revokeCert = function (hostname, callback) {
     var devDir = beameUtils.makePath(devPath, hostname + "/");
 

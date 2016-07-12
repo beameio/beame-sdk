@@ -127,7 +127,7 @@ ProvApiService.prototype.setAuthData = function (authData) {
  */
 ProvApiService.prototype.runRestfulAPI = function (apiData, callback) {
 
-    var options = _.extend(this.options, {form: apiData.postData});
+    var options = _.extend(this.options || {}, {form: apiData.postData});
     var apiEndpoint = this.provApiEndpoint + apiData.api;
     debug('Posting to: ' + apiEndpoint);
     postToProvisionApi(apiEndpoint, options, apiData.api, callback);
