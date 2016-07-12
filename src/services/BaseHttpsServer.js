@@ -1,6 +1,6 @@
-'euse strict' 
+'euse strict'
 var https = require("https");
-var ProxyClient = require("beame-ssl-proxy-client");
+var ProxyClient = require("./ProxyClient");
 var BeameStore = require("./BeameStore");
 
 var _ = require('underscore');
@@ -28,8 +28,8 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 		};
 
 		address = app.address();
-		var proxy =new ProxyClient("HTTPS", edgeCert.hostname, 
-									edgeCert.edgeHostname, 'localhost', 
+		var proxy =new ProxyClient("HTTPS", edgeCert.hostname,
+									edgeCert.edgeHostname, 'localhost',
 									app.address().port, {"onLocalServerCreated": onLocalServerCreated } ,
 									undefined, options);
 		});

@@ -8,7 +8,7 @@ var uuid = require('node-uuid');
 var io = require('socket.io-client');
 
 var socketUtils = require('../utils/SocketUtils');
-var debug = require('debug')("beame-ssl-proxy-client");
+var debug = require('debug')("proxy-client");
 
 /**
  * @typedef {Object} HttpsProxyAgent
