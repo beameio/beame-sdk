@@ -15,6 +15,9 @@
             "GetCert": {
                 "endpoint": "/api/v1/dev/cert/get"
             },
+            "RevokeCert": {
+                "endpoint": "/api/v1/dev/cert/revoke"
+            },
             "UpdateProfile": {
                 "endpoint": "/api/v1/dev/profile/update"
             }

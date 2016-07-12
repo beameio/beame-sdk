@@ -162,5 +162,6 @@ global.ResponseKeys = {
     "DeveloperCreateResponseKeys": ["hostname", "uid", "name"],
     "AtomCreateResponseKeys": ["hostname", "uid", "name"],
     "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname"],
-    "CertificateResponseKeys": ["x509", "pkcs7", "ca"]
+    "CertificateResponseKeys": ["x509", "pkcs7", "ca"],
+    "RevokeDevCertResponseKeys" : ["recovery_code"]
 };

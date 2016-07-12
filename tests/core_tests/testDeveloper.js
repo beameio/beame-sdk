@@ -5,6 +5,8 @@
 
 var developerServices = new(require('../../src/core/DeveloperServices'))();
 
+
+
 developerServices.createDeveloper('Serge Zenit', 'zenit@beame.io',function(error, payload){
     if(!error){
         console.log(payload);
@@ -13,6 +15,15 @@ developerServices.createDeveloper('Serge Zenit', 'zenit@beame.io',function(error
         console.error(error);
     }
 });
+
+// developerServices.createDeveloper('Serge Zenit', 'zenit@beame.io',function(error, payload){
+//     if(!error){
+//         console.log(payload);
+//     }
+//     else{
+//         console.error(error);
+//     }
+// });
 
 
 
