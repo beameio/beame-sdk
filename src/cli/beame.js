@@ -13,45 +13,18 @@ _.each(['creds', 'servers', 'crypto'], function(cmdName) {
 });
 
 var parametersSchema = {
-	'type': {
-		required: false,
-		options: ['developer', 'atom', 'edgeclient']
-	},
-	'fqdn': {
-		required: false
-	},
-	'format': {
-		required: false,
-		options: ['text', 'json'],
-		default: 'text'
-	},
-	'atomFqdn': {
-		required: true 
-	},
-	'atomName': {
-		required: true
-	},
-	'uid': {
-		required: false
-	},
-	'developerName':{
-		required: true
-	},
-	'developerEmail':{
-		required: true
-	},
-	'data':{
-		required:false 
-	},
-	'developerFqdn':{
-		required: false	
-	},
-	'edgeFqdn':{
-		required: true
-	},
-	'signature':{
-		required: true
-	}
+	'atomFqdn':       { required: true  },
+	'atomName':       { required: true  },
+	'data':           { required: false },
+	'developerEmail': { required: true  },
+	'developerFqdn':  { required: false },
+	'developerName':  { required: true  },
+	'edgeFqdn':       { required: true  },
+	'format':         { required: false, options: ['text', 'json'], default: 'text' },
+	'fqdn':           { required: false },
+	'signature':      { required: true  },
+	'type':           { required: false, options: ['developer', 'atom', 'edgeclient'] },
+	'uid':            { required: false }
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
