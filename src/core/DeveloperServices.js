@@ -242,7 +242,6 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
 };
 
-
 /**
  *
  * @param {String} hostname => developer hostname
@@ -296,6 +295,58 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
 
     beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
 
+};
+
+DeveloperServices.prototype.revokeCert = function(hostname){
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
+
+    /*---------- private callbacks -------------------*/
+    function onMetaInfoReceived(metadata) {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        var postData = {
+            hostname : hostname
+        };
+
+        var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
+
+        provisionApi.runRestfulAPI(apiData, function (error,payload) {
+            if (!error) {
+
+                dataServices.savePayload(devDir, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
+                    if (!callback) return;
+
+                    if (!error) {
+                       callback(null,true);
+                    }
+                    else {
+                        callback(error, null);
+                    }
+                });
+
+                callback(null, metadata);
+            }
+            else {
+                error.data.hostname = hostname;
+                console.error(error);
+                callback(error, null);
+            }
+        });
+
+
+    }
+
+    function onCertsValidated() {
+        /*---------- read developer data and proceed -------------*/
+        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetaInfoReceived, onValidationError);
+    }
+
+    function onValidationError(error) {
+        callback(error, null);
+    }
+
+    beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
 };
 
 module.exports = DeveloperServices;

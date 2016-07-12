@@ -1,6 +1,6 @@
 {
   "name": "beame-sdk",
-  "version": "1.0.23",
+  "version": "1.0.25",
   "description": "run provision tests",
   "main": "main.js",
   "engine": "node >= 4.4.0",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:beameio/beame-api.git"
+    "url": "git@github.com:beameio/beame-sdk.git"
   },
   "keywords": [
     "beame"
@@ -22,8 +22,6 @@
   "homepage": "https://github.com/beameio/TestEnvironment#readme",
   "dependencies": {
     "async": "^2.0.0-rc.6",
-    "beame-ssl-proxy-client": "git+https://github.com/beameio/beame-ssl-proxy-client.git",
-    "beame-utils": "git+https://github.com/beameio/beame-utils.git",
     "cli-table2": "0.2.0",
     "debug": "^2.2.0",
     "glob": "^7.0.5",
