@@ -13,6 +13,7 @@ module.exports = {
         developerCervices : require('./src/core/DeveloperServices'),
         atomServices : require('./src/core/AtomServices'),
         edgeClientServices : require('./src/core/EdgeClientServices'),
-        crypto: require('./src/cli/crypto')
+        crypto: require('./src/cli/crypto'),
+		beameUtils : require('./src/utils/BeameUtils')
     //        authDataCollection : require("./src/BeameDirServices.js")
 };

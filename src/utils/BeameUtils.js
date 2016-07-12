@@ -56,6 +56,22 @@ module.exports = {
 
 
     /**
+     * @param {String} projName
+     * @returns {string}
+     */
+    getProjHostName: function (projName) {
+        var varName = "BEAME_PROJ_"+projName;
+        var host = process.env[varName];
+        if(host == undefined){
+            throw("Error: environment variable " + varName + " undefined, store project hostname in environment and rerun");
+        }
+        else
+        return host;
+    },
+
+
+
+    /**
      * @param {String} endpoint
      * @param {Object} postData
      * @param {boolean} answerExpected
