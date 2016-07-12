@@ -26,7 +26,7 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 
 	var app = https.createServer(options);
 	app.listen(0, function() {
-		var onLocalServerCreated = function(data){
+		function onLocalServerCreated(data){
 			if(hostOnlineCallback){
 				hostOnlineCallback(data, app);
 			}
@@ -34,9 +34,9 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 
 		var proxy = new ProxyClient("HTTPS", edgeCert.hostname,
 									edgeCert.edgeHostname, 'localhost',
-									app.address().port, {"onLocalServerCreated": onLocalServerCreated } ,
+									app.address().port, {onLocalServerCreated: onLocalServerCreated},
 									undefined, options);
 	});
 };
 
-module.exports = { "SampleBeameServer":SampleBeameServer};
+module.exports = {SampleBeameServer: SampleBeameServer};
