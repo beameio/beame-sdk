@@ -83,42 +83,36 @@ function _stdCallback(callback) {
 }
 
 function createTestDeveloper(developerName, developerEmail, callback){
-	debug("createTestDeveloper %j ", developerName, developerEmail);
+	debug("createTestDeveloper developerName=%j developerEmail=%j", developerName, developerEmail);
 	developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
 }
 createTestDeveloper.toText = lineToText;
 
 function createAtom(developerFqdn, atomName, callback){
-	if(developerFqdn && atomName){
-		console.warn("Creating atom %j %j", developerFqdn, atomName);
-		atomServices.createAtom(developerFqdn, atomName, _stdCallback(callback));
-	}
+	console.warn("Creating atom developerFqdn=%j atomName=%j", developerFqdn, atomName);
+	atomServices.createAtom(developerFqdn, atomName, _stdCallback(callback));
 }
 createAtom.toText = lineToText;
 
 function createDeveloper(developerFqdn, uid, callback){
-	if(developer_fqdn && uid){
-		console.warn("dev create %j %j ", developerFqdn, uid);
-		developerServices.completeDeveloperRegistration(developer_fqdn ,uid, _stdCallback(callback));
-	};
+	console.warn("Creating developer developerFqdn=%j uid=%j ", developerFqdn, uid);
+	developerServices.completeDeveloperRegistration(developerFqdn ,uid, _stdCallback(callback));
 }
 createDeveloper.toText = lineToText;
 
 function createEdgeClient(atomFqdn, callback){
-	if(atomFqdn){
-		console.warn("getting edge server certificate signed");
-		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
-	};
+	console.warn("Creating edge client atomFqdn=%j", atomFqdn);
+	edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
 }
 createEdgeClient.toText = lineToText;
 
 
-function renew(type,  fqdn,format){
-	debug ( "renew %j %j %j",  type,  fqdn, format);
+function renew(type, fqdn){
+	debug ( "renew %j %j",  type,  fqdn);
 }
 
-function purge(type,  fqdn,format){
-	debug ( "purge %j %j %j",  type,  fqdn, format);
+function purge(type, fqdn){
+	debug ( "purge %j %j",  type,  fqdn);
 }
 
 
