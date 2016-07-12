@@ -5,8 +5,6 @@
 var argv = require('minimist')(process.argv.slice(2));
 var _ = require('underscore');
 
-var Table = require('cli-table2');
-
 var BeameStore = require("../services/BeameStore");
 
 var commands = {};

@@ -1,25 +1,13 @@
 "use strict";
 
 var _ = require('underscore');
-var fs = require('fs');
-var jmespath = require('jmespath');
 var debug = require("debug")("cred_api");
-var BeameStore = require("../services/BeameStore");
-var store = new BeameStore();
+var store = new (require("../services/BeameStore"));
 var Table = require('cli-table2');
 var x509 = require('x509');
-var developerServices = new(require('../core/DeveloperServices'))();
-var atomServices = new(require('../core/AtomServices'))();
-var edgeClientServices = new(require('../core/EdgeClientServices'))();
-var GlobalConfig = require('../../config/ApiConfig.json');
-var readline = require('readline');
-
-///
-//
-// We want to print out
-// Level, hostname,
-//
-
+var developerServices = new(require('../core/DeveloperServices'));
+var atomServices = new(require('../core/AtomServices'));
+var edgeClientServices = new(require('../core/EdgeClientServices'));
 
 function listCreds(type, fqdn){
 	var returnValues = [];
