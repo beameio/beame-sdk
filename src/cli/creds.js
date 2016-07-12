@@ -77,7 +77,7 @@ list.toText = function(creds) {
 }
 
 function lineToText(line) {
-	console.log('lineToText', line);
+	// console.log('lineToText', line);
 	return _.map(line, function(value, key) {
 		return key + '=' + value.toString();
 	}).join('\n');

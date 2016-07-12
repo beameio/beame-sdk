@@ -42,9 +42,6 @@ function getParamsNames(fun) {
 		.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
 		.replace(/\s+/g, '').split(',');
 	var ret = (names.length == 1 && !names[0] ? [] : names);
-	if(fun.toText) {
-		ret.push('format');
-	}
 	var useCallback = false;
 	// console.log('PARAMS', ret);
 	ret = _.filter(ret, function(x) {
@@ -56,6 +53,7 @@ function getParamsNames(fun) {
 			return true;
 		}
 	});
+	ret.hasFormat = !!fun.toText;
 	ret.useCallback = useCallback;
 	return ret;
 }
@@ -128,6 +126,9 @@ function usage() {
 	_.each(commands, function(subCommands, cmdName) {
 		_.each(subCommands, function(subCmdFunc, subCmdName) {
 			var paramsNames = getParamsNames(subCmdFunc);
+			if(paramsNames.hasFormat) {
+				paramsNames.push('format');
+			}
 			var params = paramsNames.map(function(paramName) {
 				var ret = '--' + paramName;
 				if(!parametersSchema[paramName])
@@ -164,6 +165,9 @@ if(argv._[0] == 'complete') {
 	if(argv._[1] == 'switches') {
 		var f = commands[argv._[2]][argv._[3]];
 		var paramsNames = getParamsNames(f);
+		if(paramsNames.hasFormat) {
+			paramsNames.push('format');
+		}
 		var switches = paramsNames.map(function(p) { return "--" + p; }).join(' ');
 		console.log(switches);
 		process.exit(0);
