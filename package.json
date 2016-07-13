@@ -1,7 +1,7 @@
 {
   "name": "beame-sdk",
   "version": "1.0.32",
-  "description": "run provision tests",
+  "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "main.js",
   "engine": "node >= 4.4.0",
   "scripts": {
