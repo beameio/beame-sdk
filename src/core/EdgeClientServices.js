@@ -105,7 +105,8 @@ var registerEdgeClient = function (appHostname, callback) {
 
     function onRequestValidated() {
 
-        beameUtils.selectBestProxy(global.loadBalancerEdnpoint).then(onEdgeServerSelected, onEdgeSelectionError);
+        //TODO create permanent solution
+        beameUtils.selectBestProxy(global.loadBalancerEdnpoint,100, 1000).then(onEdgeServerSelected, onEdgeSelectionError);
 
     }
 

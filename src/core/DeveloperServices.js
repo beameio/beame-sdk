@@ -147,7 +147,6 @@ var getCert = function (hostname, callback) {
  */
 var DeveloperServices = function () {
 
-    dataServices.createDir(devPath);
 };
 
 /**
