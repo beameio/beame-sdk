@@ -2,12 +2,16 @@
 ##### BEING ONE OF THE FIRST ONES TO USE IT CONTACT LISA@BEAME.IO
 ##### WE PLAN TO RELEASE A BETA IN MID JULY 
 
-# What Beame.io does for you?
+# What does Beame.io do for you?
 
-##  Beame.io provides you with x509 (aka SSL aka TLS aka HTTPS) certificates
+##  Beame.io provides you with x509 (aka SSL/TLS) certificates
 
-The certificates are signed by a publically trusted CA, similar to any other site that uses HTTPS.
-You get a hostname (*Common Name* in the certificate) that is under Beame's domain and a matching certificate.
+The certificates are signed by a publicly trusted CA, similar to any other site that uses HTTPS.
+You get:
+
+1. A hostname (*Common Name* in the certificate) that is under Beame's domain.
+1. A matching certificate.
+
 Beame.io *provisioning* handles ... the provisioning of certificates.
 These certificates can be used for HTTPS on a server or any other cryptography such as authentication and encryption.
 
@@ -23,18 +27,18 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 
 ## Steps to use Beame.io
 
-At each of the following steps you are provided with a hostname under Beame's domain and a matching publically trusted x509 certificate. The keys for the certificates are generated locally on your computer and do not leave it (unless you specifically do it).
+At each of the following steps you are provided with a hostname under Beame's domain and a matching publicly trusted x509 certificate. The keys for the certificates are generated locally on your computer. The keys do not leave your computer (unless you specifically export them).
 
 1. Register as a *developer*
-1. Create an *atom* (roughly an application) under the *developer*
-1. Create an *edge client* (roughly a server) under the *atom*
+1. Create an *atom* (an application) under the *developer*
+1. Create an *edge client* (a user server) under the *atom*
 
-At this point you can proceed with one of the following usages:
+At this point you can proceed with any of the following actions:
 
-* Run a server (aka *edge client*) with publically trusted x509 certificate.
+* Run a server (aka *edge client*) with a publicly trusted x509 certificate.
 * Sign arbitrary data with any of your certificates
 * Check signatures of arbitrary data
-* Encrypt arbitrary data so that only specified entity (someone that has specific x509 certificate) can decrypt it.
+* Encrypt arbitrary data so that only a specified entity (someone that has a specific x509 certificate) can decrypt it.
 * Decrypt arbitrary data that was encrypted to one of the entities you own (encrypted to one of your certificates).
 
 # Beame.io SDK
@@ -47,7 +51,7 @@ At this point you can proceed with one of the following usages:
 
 ## Beame.io SDK data directory
 
-The structure of the Beame data folder is implementation detail. You should not directly work with it. Use API or CLI to store and retrieve the data.
+The structure of the Beame data folder is an implementation detail. You should not work with it directly. Use API or CLI to store and retrieve the data.
 
 ## Beame.io CLI
 
