@@ -2,27 +2,40 @@
 ##### BEING ONE OF THE FIRST ONES TO USE IT CONTACT LISA@BEAME.IO
 ##### WE PLAN TO RELEASE A BETA IN MID JULY 
 
+# What Beame.io does for you?
+
+##  Beame.io provides you with x509 (aka SSL aka HTTPS) certificates
+
+The certificates are signed by a publically trusted CA, similar to any other site that uses HTTPS.
+You get a hostname (*Common Name* in the certificate) that is under Beame's domain and a matching certificate.
+
+## Beame.io provides you with tunnelling service
+
+Tunnel servers allow routing of traffic to your servers even when your server does not have routable IP address.
+
+## Beame.io network diagram
+
+TODO
+
+## Steps to use Beame.io
+
+At each of the following steps you are provided with a hostname under Beame's domain and a matching publically trusted x509 certificate.
+
+1. Register as a *developer*
+1. Create an *atom* (roughly an application) under the *developer*.
+1. Create an *edge client* (roughly a server) under the *atom*.
+
+At this point you can proceed with one of the following usages:
+
+* Run a server (aka *edge client*) with publically trusted x509 certificate.
+* Sign arbitrary data with any of your certificates
+* Check signatures of arbitrary data
+* Encrypt arbitrary data so that only specified entity (someone that has specific x509 certificate) can decrypt it.
+* Decrypt arbitrary data that was encrypted to one of the entities you own (encrypted to one of your certificates).
+
 # Beame.io SDK
 
-## Installing Beame.io SDK
-
-To use tests from this repo, first run "npm install beame-api"
-
-## Beame.io SDK introduction
-
-1. The Beame.io SDK allows to register routable hostname for a device without
-   a routable IP address.
-
-2. Beame.io SDK provides ability to easily generate random hostnames, and get
-   matching certificates for them. These hostnames can be used for routing the
-   traffic to your device without a routable IP address.
-
-The Beame.io service is designed to be used in bulk. Its goal is providing
-strongly authenticated endpoint for accessing client devices, as well as easy
-and affordable access to use of x509 certificates.
-
-Essentially, what Beame.io allows to do is to get a random common name signed,
-and easily be able to receive https traffic on that endpoint.
+	npm install beame-sdk
 
 ## Beame.io SDK - High level architecture
 
@@ -63,89 +76,49 @@ can be controlled by setting the `BEAME_DIR` environment variable, export
 
 	BEAME_DIR='path' # /home/userz/.beame
 
+## Beame.io SDK environment variables
+
+* `BEAME_DIR` (defaults to `~/.beame`) - Beame.io SDK data directory
+
+## Beame.io SDK data directory
+
+The structure of the Beame data folder is implementation detail. You should not directly work with it. Use API or CLI to store and retrieve the data.
+
 ## Beame.io CLI
 
-### Setting up Beame.io CLI
+### Beame.io CLI - setting up [not ready]
 
 	beame init
 
-`beame init` will establish your credentials in our system and will store them in the `BEAME_DIR` folder. The structure of the folder is self-explanatory.
-On each level the will be a JSON file. At each level of the directory structure you will find:
-
-	private_key.pem 
-	x509
-	metadata.json
-
+`beame init` will establish your credentials in our system.
 
 After 'beame init' is ran, you can run:
-	beame credentials show 
+	beame credentials show
 
-	
-### Beame.io CLI - selecting acting entity
+### Beame.io CLI - credentials
 
-CLI options:
-	
-* `--developer name` (If there is only one developer, it will be used as default)
-* `--atom name`
-* `--instance name`
+The following commands are used for acquiring and manipulating certificates.
 
-### Beame.io CLI top level commands
+* `beame.js creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]`
+* `beame.js creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]`
+* `beame.js creds createDeveloper --developerFqdn developerFqdn --uid uid [--format {text|json}]`
+* `beame.js creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]`
+* `beame.js creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]`
+* `beame.js creds createTestDeveloper --developerName developerName --developerEmail developerEmail [--format {text|json}]`
+* `beame.js creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
+* `beame.js creds purge [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 
-	beame credentials export --password
- 	beame types list
+### Beame.io CLI - running test server
 
-### Certificate Commands 
-	
-	beame creds list   --type {developer|atom|instance}  --format {json|text}
-	beame creds create --type {developer|atom|instance} --localip { ipaddress | auto } --format {json|text} 
-	beame creds renew  --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net} --format {json|text} 
-	beame creds purge  --type {developer|atom|instance} --localip { ipaddress | auto } --format {json|text}
+* `beame.js servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn`
 
-### Cert Services 
+### Beame.io CLI - encryption
 
+* `beame.js crypto encrypt [--data data] [--fqdn fqdn]`
+* `beame.js crypto decrypt [--fqdn fqdn] [--data data]`
+* `beame.js crypto sign [--data data] [--fqdn fqdn]`
+* `beame.js crypto checkSignature [--fqdn fqdn] [--data data] --signature signature`
 
-	beame cert show	 jdafskljdasjkldsa.beameio.net  --format {json|text} 
-
-### Data Commands 
-
-	beame data sign    --type {developer|atom|instance} jdafskljdasjkldsa.beameio.net 
-	beame data encrypt  jdafskljdasjkldsa.beameio.net
-	beame data decrypt ---type {developer|atom|instance} jdafskljdasjkldsa.beameio.net 
-
-### Import / Export 
-	
-	You can imoport beame creadentials only if you it has been exported for a developerid you poss:
-
-	beame import credpackage.beame
-### Low Level Api 
-
-	beame cert fetch <fqdn>
-
-TODO
-
-	beame help 
-
-TODO
-
-	beame start demo-server --developer
-
-Start a server, and a subsequent set of clients, with some kind of performance benchmack.
-
-	beame start ssl-proxy --host --port [potentially multipe if we do an inbound sni sniff]
-
-TODO
-	
-	beame start http-proxy --host --port --hostname // Terminates encryption
-
-TODO
-	
-	beame start unit-test
-
-TODO
-	
-	beame start gateway-server-demo
-
-This is a demo which demonstrates how you can sign requests for beame for establishing credentialing in your atoms, but providing a crypto challange response. 
 	
 ## Beame.io NodeJS API
 
