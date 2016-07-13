@@ -17,6 +17,9 @@ global.__homedir = home;
  * @param {Object} data
  */
 
+
+
+
 /**
  *
  * @param {String} module
@@ -167,5 +170,5 @@ global.ResponseKeys = {
     "AtomCreateResponseKeys": ["hostname", "uid", "name","developer_fqdn"],
     "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname","atom_fqdn"],
     "CertificateResponseKeys": ["x509", "pkcs7", "ca"],
-    "RevokeDevCertResponseKeys" : ["recovery_code"]
+    "RevokeDevCertResponseKeys" : ["recovery_code"],
 };
