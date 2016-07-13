@@ -25,7 +25,7 @@ var parametersSchema = {
 	'signature':      { required: true  },
 	'type':           { required: false, options: ['developer', 'atom', 'edgeclient'] },
 	'uid':            { required: true  },
-	'targetFqdn':            { required: true  }
+	'targetFqdn':     { required: true  }
 
 };
 
