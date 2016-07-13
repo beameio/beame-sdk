@@ -21,6 +21,8 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 
 ## Beame.io network diagram
 
+Please note that this is a diagram designed to help understand how the service works. What's critical to understand that beame proxies SSL transperently without opening of the traffic. 
+
 ![Network diagram](readme-net-diag-small.png)
 
 [See larger network diagram](readme-net-diag-large.png)
