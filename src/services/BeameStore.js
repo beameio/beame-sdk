@@ -151,9 +151,9 @@ BeameStore.prototype.search = function (name) {
 };
 
 BeameStore.prototype.list = function (type, name) {
-    var newHaash = beameDirApi.generateDigiest(beamedir)
+    var newHaash = beameDirApi.generateDigiest(this.beamedir)
     if(this.digest !== newHaash){
-        this.beameStore = beameDirApi.readBeameDir(beamedir);
+        this.beameStore = beameDirApi.readBeameDir(this.beamedir);
         this.digest = newHaash;
     }
     
