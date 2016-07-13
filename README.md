@@ -11,7 +11,7 @@ You get a hostname (*Common Name* in the certificate) that is under Beame's doma
 
 ## Beame.io provides you with tunnelling service
 
-Tunnel servers allow routing of traffic to your servers even when your server does not have routable IP address.
+Our tunnel servers allow routing of traffic to your servers even when your server does not have a routable IP address.
 
 ## Beame.io network diagram
 
