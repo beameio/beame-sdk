@@ -9,6 +9,8 @@ var path = require('path');
 var homedir = global.__homedir;
 var devPath = global.devPath;
 
+new (require('../services/BeameStore'))();
+
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
