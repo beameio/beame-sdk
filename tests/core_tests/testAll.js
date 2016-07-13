@@ -2,6 +2,8 @@
  * Created by zenit1 on 04/07/2016.
  */
 var _ = require('underscore');
+
+var store = new(require('../../src/services/BeameStore'))();
 var developerServices = new(require('../../src/core/DeveloperServices'))();
 var atomServices = new(require('../../src/core/AtomServices'))();
 var edgeClientServices = new(require('../../src/core/EdgeClientServices'))();
@@ -92,12 +94,12 @@ var createDeveloper = function(name, email, atoms, edges, callback){
 var start = function () {
 
     var developers = process.argv[2] || 1;
-    var atoms = process.argv[3] || 1;
-    var edges = process.argv[4] || 1;
+    var atoms = process.argv[3] || 2;
+    var edges = process.argv[4] || 2;
 
     var create = function () {
         developers--;
-        createDeveloper('dev-' + developers, 'dev-' + developers + '@beame.io', atoms, edges,devCb);
+        createDeveloper('devst-' + developers, 'dev-7-test-' + developers + '@beame.io', atoms, edges,devCb);
     };
 
     var devCb = function(error,data){

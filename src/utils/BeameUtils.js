@@ -123,35 +123,67 @@ module.exports = {
     /**
      *
      * @param {String} loadBalancerEndpoint
+     * @param {Number} retries
+     * @param {Number} sleep
      * @returns {Promise.<typeof EdgeShortData>}
      */
-    selectBestProxy: function (loadBalancerEndpoint) {
-        var getRegionName = this.getRegionName;
-        var get = this.httpGet;
-
+    selectBestProxy: function (loadBalancerEndpoint,retries, sleep) {
+        var self = this;
+        var getRegionName = self.getRegionName;
+        var get = self.httpGet;
+        var selectBest =  self.selectBestProxy;
+        var consoleMessage;
         return new Promise(function (resolve, reject) {
 
-            get(loadBalancerEndpoint + "/instance", function (error, data) {
-                if (data) {
-                    var region = getRegionName(data.instanceData.endpoint);
 
-                    var edge = {
-                        endpoint: data.instanceData.endpoint,
-                        region: region,
-                        zone: data.instanceData.avlZone,
-                        publicIp: data.instanceData.publicipv4
-                    };
+            if(retries == 0){
+                consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
+                console.error(consoleMessage);
+                reject(consoleMessage);
+            }
+            else{
+                retries --;
 
-                    resolve(edge);
-                }
-                else {
+                get(loadBalancerEndpoint + "/instance",
+                    /**
+                     *
+                     * @param error
+                     * @param {Object} data
+                     */
+                    function (error, data) {
+                    if (data) {
+                        var region = getRegionName(data.instanceData.endpoint);
 
-                    var errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
-                    console.error(errMsg);
-                    reject(errMsg);
+                        var edge = {
+                            endpoint: data.instanceData.endpoint,
+                            region: region,
+                            zone: data.instanceData.avlZone,
+                            publicIp: data.instanceData.publicipv4
+                        };
 
-                }
-            });
+                        consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "lb instance found", edge);
+
+                        console.log(consoleMessage);
+
+                        resolve(edge);
+                    }
+                    else {
+
+                        sleep = sleep * (Math.random()+1.5);
+
+                        consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Retry to get lb instance", {"sleep": sleep, "retries" : retries});
+
+                        console.warn(consoleMessage);
+
+                        setTimeout(function(){
+                            selectBest.call(self, loadBalancerEndpoint, retries, sleep);
+                        },sleep);
+
+
+                    }
+                });
+            }
+
 
         });
     },

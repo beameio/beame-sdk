@@ -88,6 +88,9 @@ var postToProvisionApi = function (url, options, type, callback) {
                     callback(null, payload);
                 }
                 else {
+                    if (_.isEmpty(error.data)) {
+                        error.data = {};
+                    }
                     error.data.url = url;
                     error.data.postData = options.form;
                     callback(error, null);
