@@ -7,6 +7,9 @@
   "scripts": {
     "test": "node ./tests/testFullCycle.js"
   },
+  "bin": {
+    "beame": "src/cli/beame.js"
+  },
   "repository": {
     "type": "git",
     "url": "git@github.com:beameio/beame-sdk.git"
