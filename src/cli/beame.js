@@ -25,7 +25,7 @@ var parametersSchema = {
 	'signature':      { required: true  },
 	'type':           { required: false, options: ['developer', 'atom', 'edgeclient'] },
 	'uid':            { required: true  },
-	'targetFqdn':            { required: true  }
+	'targetFqdn':     { required: true  }
 
 };
 
@@ -124,8 +124,9 @@ function main() {
 }
 
 function usage() {
+	var path = require('path');
 	var myname = 'beame.js';
-    console.log("Usage:");
+	console.log("Usage:");
 	_.each(commands, function(subCommands, cmdName) {
 		_.each(subCommands, function(subCmdFunc, subCmdName) {
 			var paramsNames = getParamsNames(subCmdFunc);
@@ -149,11 +150,20 @@ function usage() {
 			console.log('  ' + myname + ' ' + cmdName + ' ' + subCmdName + ' ' + params.join(' '));
 		})
 	});
+	console.log("");
+	console.log("Registration URL: https://registration.beameio.net/");
+	console.log("");
+	console.log("Setting up bash completion:");
+	console.log("  * Make sure you are using bash version 4");
+	console.log("  * Make sure you have set up the bash-completion package");
+	console.log("	 (check with 'type _init_completion &>/dev/null && echo OK || echo FAIL')")
+	console.log("  * Add 'source " + path.resolve(__dirname, 'completion.sh') + "'");
+	console.log("	 to your ~/.bashrc or ~/.bash_profile (depends on your system)");
 }
 
 if(argv._.length < 2) {
-    usage();
-    process.exit(1);
+	usage();
+	process.exit(1);
 }
 
 if(argv._[0] == 'complete') {
