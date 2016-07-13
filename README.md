@@ -23,11 +23,11 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 
 ## Steps to use Beame.io
 
-At each of the following steps you are provided with a hostname under Beame's domain and a matching publically trusted x509 certificate.
+At each of the following steps you are provided with a hostname under Beame's domain and a matching publically trusted x509 certificate. The keys for the certificates are generated locally on your computer and do not leave it (unless you specifically do it).
 
 1. Register as a *developer*
-1. Create an *atom* (roughly an application) under the *developer*.
-1. Create an *edge client* (roughly a server) under the *atom*.
+1. Create an *atom* (roughly an application) under the *developer*
+1. Create an *edge client* (roughly a server) under the *atom*
 
 At this point you can proceed with one of the following usages:
 
