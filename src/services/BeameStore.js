@@ -24,29 +24,36 @@ var path = require('path');
 //
 
 function BeameStore(beamedir) {
-		
-    if (!beamedir || beamedir.length === 0) {
-		beamedir = process.env.BEAME_DIR || global.globalPath;
+    if(global.store == null) {
+        if (!beamedir || beamedir.length === 0) {
+            this.beamedir = process.env.BEAME_DIR || global.globalPath;
+        }
+        this.digest = beameDirApi.generateDigiest(this.beamedir);
+
+        debug("reading beamedir %j", this.beamedir);
+
+        mkdirp.sync(path.join(this.beamedir, "v1", 'local'));
+        mkdirp.sync(path.join(this.beamedir, "v1", 'remote'));
+        this.beamedir = path.join(this.beamedir, "v1", 'local');
+        this.beameStore = beameDirApi.readBeameDir(this.beamedir);
+        this.listFunctions = [];
+        this.searchFunctions = [];
+
+        this.listFunctions.push({type: "developer", 'func': this.listCurrentDevelopers});
+        this.listFunctions.push({type: "atom", 'func': this.listCurrentAtoms});
+        this.listFunctions.push({type: "edgeclient", 'func': this.listCurrentEdges});
+
+
+        this.searchFunctions.push({type: "developer", 'func': this.searchDevelopers});
+        this.searchFunctions.push({type: "atom", 'func': this.searchAtoms});
+        this.searchFunctions.push({type: "edgeclient", 'func': this.searchEdge});
+        global.store = this;
     }
-	debug("reading beamedir %j", beamedir);
-	
-    mkdirp.sync(path.join(beamedir, "v1", 'local'));
-	mkdirp.sync(path.join(beamedir, "v1", 'remote'));
-    beamedir = path.join(beamedir, "v1", 'local');
-	this.beameStore = beameDirApi.readBeameDir(beamedir);
-    this.listFunctions = [];
-    this.searchFunctions = [];
-
-    this.listFunctions.push({type: "developer", 'func': this.listCurrentDevelopers});
-    this.listFunctions.push({type: "atom", 'func': this.listCurrentAtoms});
-    this.listFunctions.push({type: "edgeclient", 'func': this.listCurrentEdges});
-
-
-    this.searchFunctions.push({type: "developer", 'func': this.searchDevelopers});
-    this.searchFunctions.push({type: "atom", 'func': this.searchAtoms});
-    this.searchFunctions.push({type: "edgeclient", 'func': this.searchEdge});
-
+    else{
+        return global.store ;
+    }
 }
+
 
 BeameStore.prototype.jsearch = function (searchItem, level) {
     if (!searchItem) {
@@ -129,6 +136,12 @@ BeameStore.prototype.listCurrentEdges = function () {
 };
 
 BeameStore.prototype.search = function (name) {
+    var newHaash = beameDirApi.generateDigiest(this.beamedir)
+    if(this.digest !== newHaash){
+        this.beameStore = beameDirApi.readBeameDir(this.beamedir);
+        this.digest = newHaash;
+    }
+
     var fullResult = [];
     _.each(this.searchFunctions, _.bind(function (item) {
         var newArray = item.func.call(this, name);
@@ -138,6 +151,12 @@ BeameStore.prototype.search = function (name) {
 };
 
 BeameStore.prototype.list = function (type, name) {
+    var newHaash = beameDirApi.generateDigiest(beamedir)
+    if(this.digest !== newHaash){
+        this.beameStore = beameDirApi.readBeameDir(beamedir);
+        this.digest = newHaash;
+    }
+    
     var returnArray = [];
     if (type && type.length) {
         var listFunc = _.where(this.listFunctions, {'type': type});
