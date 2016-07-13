@@ -26,12 +26,14 @@ var path = require('path');
 function BeameStore(beamedir) {
 		
     if (!beamedir || beamedir.length === 0) {
-		beamedir = process.env.BEAME_DIR || global.devPath;
+		beamedir = process.env.BEAME_DIR || global.globalPath;
     }
 	debug("reading beamedir %j", beamedir);
-	mkdirp(path.join(beamedir, "v1", 'local'));
-	mkdirp(path.join(beamedir, "v1", 'remote'));
-    this.beameStore = beameDirApi.readBeameDir(beamedir);
+	
+    mkdirp.sync(path.join(beamedir, "v1", 'local'));
+	mkdirp.sync(path.join(beamedir, "v1", 'remote'));
+    beamedir = path.join(beamedir, "v1", 'local');
+	this.beameStore = beameDirApi.readBeameDir(beamedir);
     this.listFunctions = [];
     this.searchFunctions = [];
 

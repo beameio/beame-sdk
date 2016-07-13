@@ -15,9 +15,6 @@ var BeameStore = require("../services/BeameStore");
 var store = new BeameStore();
 var x509 = require("x509");
 
-//
-// support multiple
-//
 
 function encrypt(data, fqdn){
 	var elemenet = store.search(fqdn)[0];
@@ -25,11 +22,11 @@ function encrypt(data, fqdn){
 		var xcert = x509.parseCert(elemenet.X509 + "");
 		if(xcert){
 			var publicKey = xcert.publicKey;
-			var modules1 = new Buffer(publicKey.n, 'hex');
+			var modulus = new Buffer(publicKey.n, 'hex');
 			var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
 			var midheader = new Buffer("0203", "hex");
 			var exponent = new Buffer("010001", "hex");
-			var buffer = Buffer.concat([header, modules1, midheader, exponent]);
+			var buffer = Buffer.concat([header, modulus, midheader, exponent]);
 			var rsaKey = new NodeRsa(buffer, "public-der");
 			rsaKey.importKey(buffer, "public-der");
 			var encryptedData = rsaKey.encrypt(data, "base64", "utf8");

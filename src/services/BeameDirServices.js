@@ -7,8 +7,9 @@ var debug = require("debug")("beamedirservices");
 require('./../utils/Globals');
 var jmespath = require('jmespath');
 
+
 function findHostPath(baseDir, host, callback) {
-    glob(baseDir + '*/' + host, function (err, files) {
+    glob(baseDir + '/**/**/' + host, function (err, files) {
         if (files && files.length == 1) {
             callback && callback(null, files[0]);
         }
@@ -24,20 +25,23 @@ function makepath() {
 }
 
 function readCertData(basedir) {
-    try {
-        var credentials = {};
-        _.map(global.CertFileNames, function (key, value) {
+    var credentials = {};
+
+    _.map(global.CertFileNames, function (key, value) {
+        try {
             credentials[value] = fs.readFileSync(makepath(basedir, key));
-            _.map(JSON.parse(fs.readFileSync(makepath(basedir, "metadata.json"))), function (key, value) {
-                credentials[value] = key;
-            });
-        });
-        return credentials;
-    } catch (e) {
-        debug("Error", e.toString());
-        console.error("Directory reading failed ", e);
-        return {};
-    }
+        }
+        catch (e) {
+            debug("Error", e.toString());
+            //console.error("Directory reading failed ", e);
+        }
+    });
+    credentials['path'] = basedir;
+
+    _.map(JSON.parse(fs.readFileSync(makepath(basedir, "metadata.json"))), function (key, value) {
+        credentials[value] = key;
+    });
+    return credentials;
 }
 
 function getDirectories(srcpath) {
@@ -64,13 +68,10 @@ function readBeameDir(startdir) {
     debug("starting with " + startdir);
     var developers = [];
     if (!startdir || startdir.length === 0) {
-        startdir = global.devPath;
+        startdir =global.globalPath;
     }
     var subfolders = getDirectories(startdir);
     _.each(subfolders, function (dir) {
-		if(dir == 'v1'){
-			return;
-		}
         var developer = readSubDevDir(makepath(startdir, dir));
         developers.push(developer);
     });

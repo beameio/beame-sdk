@@ -27,10 +27,9 @@ function show(type, fqdn){
 	debug("show %j %j", type,  fqdn);
 
 	var creds = listCreds(type, fqdn);
-	var certs = _.map(creds, function(cert) {
+	_.map(creds, function(cert) {
 		var item = store.search(cert.hostname);
-		var xcert = x509.parseCert(item[0].X509 + "");
-		return xcert;
+		return  x509.parseCert(item[0].X509 + "");
 	});
 
 	return certs;
@@ -106,6 +105,13 @@ function createEdgeClient(atomFqdn, callback){
 }
 createEdgeClient.toText = lineToText;
 
+function exportCredentials(fqdn, targetFqdn){
+	var creds = store.search(fqdn);
+	var jsonString = JSON.stringify(creds[0]);
+	var crypto = require('./crypto');
+
+	return crypto.encrypt(jsonString, targetFqdn);
+}
 
 function renew(type, fqdn){
 	debug ("renew %j %j",  type,  fqdn);
@@ -124,5 +130,6 @@ module.exports = {
 	createAtom: createAtom,
 	createEdgeClient: createEdgeClient,
 	createDeveloper: createDeveloper,
-	createTestDeveloper: createTestDeveloper
+	createTestDeveloper: createTestDeveloper,
+	exportCredentials:exportCredentials
 };

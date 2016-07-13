@@ -29,6 +29,7 @@
     "minimist": "^1.2.0",
     "mkdir": "0.0.2",
     "mkdirp": "^0.5.1",
+    "node-archiver": "^0.3.0",
     "node-rsa": "^0.4.0",
     "node-uuid": "^1.4.7",
     "pem": "^1.8.3",
