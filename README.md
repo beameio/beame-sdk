@@ -4,10 +4,11 @@
 
 # What Beame.io does for you?
 
-##  Beame.io provides you with x509 (aka SSL aka HTTPS) certificates
+##  Beame.io provides you with x509 (aka SSL aka TLS aka HTTPS) certificates
 
 The certificates are signed by a publically trusted CA, similar to any other site that uses HTTPS.
 You get a hostname (*Common Name* in the certificate) that is under Beame's domain and a matching certificate.
+These certificates can be used for HTTPS on a server or any other cryptography such as authentication and encryption.
 
 ## Beame.io provides you with tunnelling service
 
@@ -37,45 +38,6 @@ At this point you can proceed with one of the following usages:
 
 	npm install beame-sdk
 
-## Beame.io SDK - High level architecture
-
-The Beame.io SDK credentials system is build around two concepts:
-
-1. Transport Layer Security - proving ownership of certain common name
-   (hostname), via client side certificate or server side certificate.
-2. Provisioning Authentication Proof of ownership of keys via a web API
-
-
-You will be issued an organization certificate. It will have a hostname.  In
-order to take actions as your organization your will be required to prove
-ownership of the cert (hostname).  This can happen one of two ways:
-
-1. Using it as a client cert and access Beame.io .
-2. Using it as a server cert when Beame.io accesses you with push of freshly issued certificate.
-
-
-In fact we have three layers (organizational, you will only have one), atom, is
-essentially a logical separation of instances in our particular environment.
-
-## Typical deployment
-
-1. Gateway server (equipped with atom keys)
-2. Instance contacts the gateway server and requests to sign its request to Beame.
-3. The gateway server will sign the request using its private key and common name.
-4. Instance will send this signed request to Beame, and automatically deliver the x509 cert signing server.
-
-
-	-+Developer
-	|
-	+ Atom
-		+ Instances
-
-
-This is also the structure of the `~/.beame` folder. The location of the folder
-can be controlled by setting the `BEAME_DIR` environment variable, export
-
-	BEAME_DIR='path' # /home/userz/.beame
-
 ## Beame.io SDK environment variables
 
 * `BEAME_DIR` (defaults to `~/.beame`) - Beame.io SDK data directory
@@ -99,25 +61,25 @@ After 'beame init' is ran, you can run:
 
 The following commands are used for acquiring and manipulating certificates.
 
-* `beame.js creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]`
-* `beame.js creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]`
-* `beame.js creds createDeveloper --developerFqdn developerFqdn --uid uid [--format {text|json}]`
-* `beame.js creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]`
-* `beame.js creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]`
-* `beame.js creds createTestDeveloper --developerName developerName --developerEmail developerEmail [--format {text|json}]`
+* `beame.js creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - list certificates
+* `beame.js creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificates' details
+* `beame.js creds createDeveloper --developerFqdn developerFqdn --uid uid [--format {text|json}]` - create *developer* entity
+* `beame.js creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under the given *developer*
+* `beame.js creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]` - create *edge client* entity under the given *atom*
+* `beame.js creds createTestDeveloper --developerName developerName --developerEmail developerEmail [--format {text|json}]` - used for internal Beame tests, do not use
 * `beame.js creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 * `beame.js creds purge [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 
 ### Beame.io CLI - running test server
 
-* `beame.js servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn`
+* `beame.js servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run an HTTPS server for the specified hostname
 
 ### Beame.io CLI - encryption
 
-* `beame.js crypto encrypt [--data data] [--fqdn fqdn]`
-* `beame.js crypto decrypt [--fqdn fqdn] [--data data]`
-* `beame.js crypto sign [--data data] [--fqdn fqdn]`
-* `beame.js crypto checkSignature [--fqdn fqdn] [--data data] --signature signature`
+* `beame.js crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity could decrypt it
+* `beame.js crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be owner of the given entity
+* `beame.js crypto sign [--data data] [--fqdn fqdn]` - signes the given data as the specified entity
+* `beame.js crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - checks the correctness of the signature
 
 	
 ## Beame.io NodeJS API
