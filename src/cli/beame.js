@@ -24,7 +24,9 @@ var parametersSchema = {
 	'fqdn':           { required: false },
 	'signature':      { required: true  },
 	'type':           { required: false, options: ['developer', 'atom', 'edgeclient'] },
-	'uid':            { required: true  }
+	'uid':            { required: true  },
+	'targetFqdn':            { required: true  }
+
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
