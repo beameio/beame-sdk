@@ -8,15 +8,18 @@
 
 The certificates are signed by a publically trusted CA, similar to any other site that uses HTTPS.
 You get a hostname (*Common Name* in the certificate) that is under Beame's domain and a matching certificate.
+Beame.io *provisioning* handles ... the provisioning of certificates.
 These certificates can be used for HTTPS on a server or any other cryptography such as authentication and encryption.
 
-## Beame.io provides you with tunnelling service
+## Beame.io provides you with a tunnelling service
 
-Our tunnel servers allow routing of traffic to your servers even when your server does not have a routable IP address.
+Our tunnel servers (the *edge servers*) allow routing of traffic to your servers even when your server does not have a routable IP address.
 
 ## Beame.io network diagram
 
-TODO
+![Network diagram](readme-net-diag-small.png)
+
+[See larger network diagram](readme-net-diag-large.png)
 
 ## Steps to use Beame.io
 
