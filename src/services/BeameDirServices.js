@@ -64,6 +64,26 @@ function readSubDevDir(devDir) {
     return currentObject;
 }
 
+function generateDigiest(startPath){
+    var data = JSON.stringify(scanDigestDir(startPath));
+    var hash = require('crypto').createHash('sha224').update(data).digest("hex");
+    return hash;
+}
+
+function scanDigestDir(startPath) {
+    var files = fs.readdirSync(startPath);
+    var listToDigest = {};
+
+    _.each(files, function(file){
+        if(fs.statSync(path.join(startPath, file)).isDirectory()){
+            listToDigest[file]  =  scanDigestDir(path.join(startPath, file))
+        }else{
+            listToDigest[file] = fs.statSync(path.join(startPath, file));
+        }
+    });
+    return listToDigest;
+}
+
 function readBeameDir(startdir) {
     debug("starting with " + startdir);
     var developers = [];
@@ -78,4 +98,4 @@ function readBeameDir(startdir) {
     return developers;
 }
 
-module.exports = {"readBeameDir": readBeameDir, "findHostPath": findHostPath};
+module.exports = {"readBeameDir": readBeameDir, "findHostPath": findHostPath, "generateDigiest":generateDigiest};
