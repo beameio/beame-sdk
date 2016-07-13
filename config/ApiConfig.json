@@ -1,6 +1,6 @@
 {
     "Endpoints": {
-        "Local": "https://zenit.office.beameio.net",
+        "Local": "https://prov-staging.beameio.net",
         "Online": "https://prov-staging.beameio.net",
         "AuthServer": "https://registration.beameio.net"
     },
@@ -45,14 +45,19 @@
             "RevokeCert": {
                 "endpoint": "/api/v1/atom/cert/revoke"
             }
-
         },
         "EdgeClient":{
             "CreateEdgeClient": {
                 "endpoint" : "/api/v1/client/register"
             },
             "GetCert": {
-                "endpoint" : "/api/v1/client/getCert"
+                "endpoint" : "/api/v1/client/cert/get"
+            },
+            "RenewCert": {
+                "endpoint": "/api/v1/client/cert/renew"
+            },
+            "RevokeCert": {
+                "endpoint": "/api/v1/client/cert/revoke"
             }
         }
     }

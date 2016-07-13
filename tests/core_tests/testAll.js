@@ -94,12 +94,12 @@ var createDeveloper = function(name, email, atoms, edges, callback){
 var start = function () {
 
     var developers = process.argv[2] || 1;
-    var atoms = process.argv[3] || 2;
-    var edges = process.argv[4] || 2;
+    var atoms = process.argv[3] || 1;
+    var edges = process.argv[4] || 1;
 
     var create = function () {
         developers--;
-        createDeveloper('devst-' + developers, 'dev-7-test-' + developers + '@beame.io', atoms, edges,devCb);
+        createDeveloper('devst-' + developers, 'dev-14-test-' + developers + '@beame.io', atoms, edges,devCb);
     };
 
     var devCb = function(error,data){

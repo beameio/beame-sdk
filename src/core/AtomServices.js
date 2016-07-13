@@ -275,8 +275,13 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
 
 };
 
-
 //noinspection JSUnusedGlobalSymbols
+/**
+ *
+ * @param {String} developerHostname
+ * @param {String} appHostname
+ * @param {Function} callback
+ */
 AtomServices.prototype.renewCert = function (developerHostname, appHostname, callback) {
     var devDir = beameUtils.makePath(devPath, developerHostname + "/");
     var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
@@ -286,7 +291,7 @@ AtomServices.prototype.renewCert = function (developerHostname, appHostname, cal
 
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
-        dataServices.createCSR(devDir, appHostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
+        dataServices.createCSR(devAppDir, appHostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
             function onCsrCreated(csr) {
 
                 var postData = {
@@ -299,9 +304,9 @@ AtomServices.prototype.renewCert = function (developerHostname, appHostname, cal
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
 
-                        dataServices.renameFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
+                        dataServices.renameFile(devAppDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
                             if (!error) {
-                                dataServices.saveCerts(devDir, payload, callback);
+                                dataServices.saveCerts(devAppDir, payload, callback);
                             }
                             else {
                                 callback && callback(error, null);
@@ -311,9 +316,8 @@ AtomServices.prototype.renewCert = function (developerHostname, appHostname, cal
                     }
                     else {
 
-                        dataServices.deleteFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY);
+                        dataServices.deleteFile(devAppDir, global.CertFileNames.TEMP_PRIVATE_KEY);
 
-                        error.data.hostname = hostname;
                         console.error(error);
                         callback(error, null);
                     }
@@ -334,7 +338,12 @@ AtomServices.prototype.renewCert = function (developerHostname, appHostname, cal
 };
 
 //noinspection JSUnusedGlobalSymbols
-
+/**
+ *
+ * @param {String} developerHostname
+ * @param {String} appHostname
+ * @param {Function} callback
+ */
 AtomServices.prototype.revokeCert = function (developerHostname, appHostname, callback) {
     var devDir = beameUtils.makePath(devPath, developerHostname + "/");
     var devAppDir = beameUtils.makePath(devDir, appHostname + "/");

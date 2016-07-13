@@ -24,7 +24,6 @@
     "async": "^2.0.0-rc.6",
     "cli-table2": "0.2.0",
     "debug": "^2.2.0",
-    "glob": "^7.0.5",
     "jmespath": "^0.15.0",
     "minimist": "^1.2.0",
     "mkdir": "0.0.2",

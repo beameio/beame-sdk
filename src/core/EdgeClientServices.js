@@ -5,7 +5,6 @@
 require('../utils/Globals');
 var debug = require("debug")("./src/services/EdgeClientServices.js");
 var _ = require('underscore');
-var dirServices = require('../services/BeameDirServices');
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
@@ -198,7 +197,6 @@ var isRequestValid = function (appHostname, edgeHostname, devAppDir, edgeClientD
             beameUtils.isNodeCertsExists(devAppDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, appHostname, global.AppModules.Developer).then(getMetadata, onValidationError);
         }
 
-
         function validateEdgeClientHost() {
             if (validateEdgeHostname) {
                 isEdgeHostValid(edgeHostname).then(validateAtomCerts, onValidationError);
@@ -230,12 +228,7 @@ EdgeClientServices.prototype.createEdgeClient = function (appHostname, callback)
     debug(debugMsg);
 
 
-    dirServices.findHostPath(global.devPath, appHostname, function (error, path) {
-        if (error) {
-            callback('Atom folder not found', null);
-            return;
-        }
-
+    beameUtils.findHostPath(appHostname).then( function onAtomPathReceived(path) {
         /** @member {String} **/
         self.devAppDir = path;
 
@@ -260,9 +253,143 @@ EdgeClientServices.prototype.createEdgeClient = function (appHostname, callback)
                 callback && callback(error, null);
             }
         });
+    }, function onSearchFailed(){
+        callback('Atom folder not found', null);
     });
 
 };
 
+//noinspection JSUnusedGlobalSymbols
+/**
+ * @param {String} edgeHostname
+ * @param {Function} callback
+ */
+EdgeClientServices.prototype.renewCert = function (edgeHostname,callback) {
+
+    var edgeClientDir,devAppDir;
+
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated() {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        dataServices.createCSR(edgeClientDir, edgeHostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
+            function onCsrCreated(csr) {
+
+                var postData = {
+                    hostname: edgeHostname,
+                    csr: csr
+                };
+
+                var apiData = beameUtils.getApiData(apiActions.RenewCert.endpoint, postData, true);
+
+                provisionApi.runRestfulAPI(apiData, function (error, payload) {
+                    if (!error) {
+
+                        dataServices.renameFile(edgeClientDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
+                            if (!error) {
+                                dataServices.saveCerts(edgeClientDir, payload, callback);
+                            }
+                            else {
+                                callback && callback(error, null);
+                            }
+                        });
+
+                    }
+                    else {
+
+                        dataServices.deleteFile(edgeClientDir, global.CertFileNames.TEMP_PRIVATE_KEY);
+
+                        console.error(error);
+                        callback(error, null);
+                    }
+                });
+
+            },
+            function onCsrCreationFailed(error) {
+                console.error(error);
+                callback && callback(error, null);
+            });
+    }
+
+    function onValidationError(error) {
+        callback && callback(error, null);
+    }
+
+    function onAtomPathReceived(path) {
+
+        edgeClientDir = path;
+
+        devAppDir = path.substring(0, path.lastIndexOf('/') );
+
+        isRequestValid(devAppDir.substring(devAppDir.lastIndexOf('/')+1), edgeHostname, devAppDir, edgeClientDir, false).then(onRequestValidated, onValidationError);
+
+    }
+
+
+    beameUtils.findHostPath(edgeHostname).then(onAtomPathReceived, function onSearchFailed(){
+        callback('Atom folder not found', null);
+    });
+
+
+
+};
+
+//noinspection JSUnusedGlobalSymbols
+/**
+ * @param {String} edgeHostname
+ * @param {Function} callback
+ */
+EdgeClientServices.prototype.revokeCert = function (edgeHostname,callback) {
+
+    var edgeClientDir,devAppDir;
+
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated() {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        var postData = {
+            hostname: edgeHostname
+        };
+
+        var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
+
+        provisionApi.runRestfulAPI(apiData, function (error) {
+            if (!error) {
+
+                //TODO delete old certs
+
+                callback && callback(null, 'done');
+            }
+            else {
+                console.error(error);
+                callback && callback(error, null);
+            }
+        });
+    }
+
+    function onValidationError(error) {
+        callback && callback(error, null);
+    }
+
+    function onAtomPathReceived(path) {
+
+        edgeClientDir = path;
+
+        devAppDir = path.substring(0, path.lastIndexOf('/'));
+
+        isRequestValid(devAppDir.substring(devAppDir.lastIndexOf('/')+1), edgeHostname, devAppDir, edgeClientDir, false).then(onRequestValidated, onValidationError);
+
+    }
+
+
+    beameUtils.findHostPath(edgeHostname).then(onAtomPathReceived, function onSearchFailed(){
+        callback('Atom folder not found', null);
+    });
+
+
+
+};
 
 module.exports = EdgeClientServices;

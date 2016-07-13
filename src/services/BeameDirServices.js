@@ -1,23 +1,11 @@
 'use strict';
 var fs = require('fs');
 var path = require('path');
-var glob = require('glob');
 var _ = require('underscore');
 var debug = require("debug")("beamedirservices");
 require('./../utils/Globals');
 var jmespath = require('jmespath');
 
-
-function findHostPath(baseDir, host, callback) {
-    glob(baseDir + '/**/**/' + host, function (err, files) {
-        if (files && files.length == 1) {
-            callback && callback(null, files[0]);
-        }
-        else {
-            callback && callback('Not found', null);
-        }
-    });
-}
 
 function makepath() {
     var args = Array.prototype.slice.call(arguments);
@@ -78,4 +66,4 @@ function readBeameDir(startdir) {
     return developers;
 }
 
-module.exports = {"readBeameDir": readBeameDir, "findHostPath": findHostPath};
+module.exports = {"readBeameDir": readBeameDir};

@@ -7,6 +7,7 @@ var path = require('path');
 var request = require('request');
 var _ = require('underscore');
 var dataServices = new (require('../services/DataServices'))();
+var beameStore = new (require('../services/BeameStore'))();
 
 /**
  * @typedef {Object} AuthData
@@ -37,8 +38,8 @@ var dataServices = new (require('../services/DataServices'))();
 
 module.exports = {
 
-    makePath : function(baseDir,folder){
-        return path.join(baseDir,folder);
+    makePath: function (baseDir, folder) {
+        return path.join(baseDir, folder);
     },
 
     /**
@@ -47,10 +48,10 @@ module.exports = {
      * @param {String} path2X509
      * @returns {typeof AuthData}
      */
-    getAuthToken: function (baseDir,path2Pk, path2X509) {
+    getAuthToken: function (baseDir, path2Pk, path2X509) {
         return {
-            pk: path.join(baseDir,path2Pk),
-            x509: path.join(baseDir,path2X509)
+            pk: path.join(baseDir, path2Pk),
+            x509: path.join(baseDir, path2X509)
         }
     },
 
@@ -60,15 +61,14 @@ module.exports = {
      * @returns {string}
      */
     getProjHostName: function (projName) {
-        var varName = "BEAME_PROJ_"+projName;
+        var varName = "BEAME_PROJ_" + projName;
         var host = process.env[varName];
-        if(host == undefined){
+        if (host == undefined) {
             throw("Error: environment variable " + varName + " undefined, store project hostname in environment and rerun");
         }
         else
-        return host;
+            return host;
     },
-
 
 
     /**
@@ -127,22 +127,22 @@ module.exports = {
      * @param {Number} sleep
      * @returns {Promise.<typeof EdgeShortData>}
      */
-    selectBestProxy: function (loadBalancerEndpoint,retries, sleep) {
+    selectBestProxy: function (loadBalancerEndpoint, retries, sleep) {
         var self = this;
         var getRegionName = self.getRegionName;
         var get = self.httpGet;
-        var selectBest =  self.selectBestProxy;
+        var selectBest = self.selectBestProxy;
         var consoleMessage;
         return new Promise(function (resolve, reject) {
 
 
-            if(retries == 0){
+            if (retries == 0) {
                 consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
                 console.error(consoleMessage);
                 reject(consoleMessage);
             }
-            else{
-                retries --;
+            else {
+                retries--;
 
                 get(loadBalancerEndpoint + "/instance",
                     /**
@@ -151,37 +151,40 @@ module.exports = {
                      * @param {Object} data
                      */
                     function (error, data) {
-                    if (data) {
-                        var region = getRegionName(data.instanceData.endpoint);
+                        if (data) {
+                            var region = getRegionName(data.instanceData.endpoint);
 
-                        var edge = {
-                            endpoint: data.instanceData.endpoint,
-                            region: region,
-                            zone: data.instanceData.avlZone,
-                            publicIp: data.instanceData.publicipv4
-                        };
+                            var edge = {
+                                endpoint: data.instanceData.endpoint,
+                                region: region,
+                                zone: data.instanceData.avlZone,
+                                publicIp: data.instanceData.publicipv4
+                            };
 
-                        consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "lb instance found", edge);
+                            consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "lb instance found", edge);
 
-                        console.log(consoleMessage);
+                            console.log(consoleMessage);
 
-                        resolve(edge);
-                    }
-                    else {
+                            resolve(edge);
+                        }
+                        else {
 
-                        sleep = sleep * (Math.random()+1.5);
+                            sleep = sleep * (Math.random() + 1.5);
 
-                        consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Retry to get lb instance", {"sleep": sleep, "retries" : retries});
+                            consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Retry to get lb instance", {
+                                "sleep": sleep,
+                                "retries": retries
+                            });
 
-                        console.warn(consoleMessage);
+                            console.warn(consoleMessage);
 
-                        setTimeout(function(){
-                            selectBest.call(self, loadBalancerEndpoint, retries, sleep);
-                        },sleep);
+                            setTimeout(function () {
+                                selectBest.call(self, loadBalancerEndpoint, retries, sleep);
+                            }, sleep);
 
 
-                    }
-                });
+                        }
+                    });
             }
 
 
@@ -213,7 +216,7 @@ module.exports = {
 
         return new Promise(function (resolve, reject) {
 
-            var developerMetadataPath = path.join(devDir,global.metadataFileName);
+            var developerMetadataPath = path.join(devDir, global.metadataFileName);
             var metadata = dataServices.readJSON(developerMetadataPath);
 
             if (_.isEmpty(metadata)) {
@@ -275,5 +278,25 @@ module.exports = {
                 resolve(true);
             }
         });
+    },
+
+    /**
+     * @param host
+     * @returns {Promise.<String>}
+     */
+    findHostPath: function (host) {
+
+        return new Promise(function (resolve, reject) {
+            var files = beameStore.search(host);
+
+            if (files && files.length == 1) {
+                resolve(files[0].path);
+            }
+            else {
+                reject('Not found');
+            }
+        });
+
+
     }
 };
