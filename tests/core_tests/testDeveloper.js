@@ -19,7 +19,7 @@ var revoke = function(host){
 };
 
 var create =  function (){
-    developerServices.createDeveloper('Serge Zenit', 'zenit1@beame.io',function(error, payload){
+    developerServices.createDeveloper('Serge Zenit', 'zenit123@beame.io',function(error, payload){
         if(!error){
             console.log(payload);
         }
@@ -31,6 +31,16 @@ var create =  function (){
 
 var restore = function(host){
     developerServices.restoreCert(host,function(error, payload){
+        if(!error){
+            console.log(payload);
+        }
+        else{
+            console.error(error);
+        }
+    });
+};
+var renew = function(host){
+    developerServices.renewCert(host,function(error, payload){
         if(!error){
             console.log(payload);
         }
@@ -54,14 +64,14 @@ var complete = function(host,uid){
 
 
 var test = function(){
-    var test = argv['test'] || 'complete';
+    var test = argv['test'] || 'renew';
 
     if(_.isEmpty(test)){
         console.error('test required');
         process.exit(1);
     }
 
-    var host = argv['host'] || 'jx988ffuwtg0bg0v.v1.beameio.net';
+    var host = argv['host'] || 'oon7l59bzzdc7c6j.v1.beameio.net';
 
     switch (test){
         case 'create':
@@ -82,6 +92,14 @@ var test = function(){
                 process.exit(1);
             }
             restore(host);
+            return;
+        case 'renew':
+
+            if(_.isEmpty(host)){
+                console.error('host required');
+                process.exit(1);
+            }
+            renew(host);
             return;
 
         case 'complete':

@@ -31,7 +31,14 @@ var DataServices = function () {
 };
 
 /**------------------- create csr -----------------------**/
-DataServices.prototype.createCSR = function (dirPath, hostname) {
+/**
+ *
+ * @param {String} dirPath
+ * @param {String} hostname
+ * @param {String|null|undefined} [pkName]
+ * @returns {Promise}
+ */
+DataServices.prototype.createCSR = function (dirPath, hostname,pkName) {
     var self = this;
     var errMsg;
 
@@ -56,9 +63,11 @@ DataServices.prototype.createCSR = function (dirPath, hostname) {
                 return;
             }
 
-            var pkFile = path.join(dirPath,global.CertFileNames.PRIVATE_KEY);
+            var pkFileName = pkName || global.CertFileNames.PRIVATE_KEY;
 
-            self.saveFile(dirPath,global.CertFileNames.PRIVATE_KEY, devPK, function (error) {
+            var pkFile = path.join(dirPath,pkFileName);
+
+            self.saveFile(dirPath,pkFileName, devPK, function (error) {
                 if (!error) {
                     cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (global.csrSubj + hostname) + "\"";
                     debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating CSR with", {"cmd": cmd}));
@@ -308,6 +317,41 @@ DataServices.prototype.saveFile = function (dirPath, fileName,data, cb) {
     }
 
 };
+
+/**
+ *
+ * @param {String} dirPath
+ * @param fileName
+ * @param {Function|null} [cb]
+ */
+DataServices.prototype.deleteFile = function (dirPath, fileName, cb) {
+    try {
+        fs.unlink(path.join(dirPath,fileName));
+        cb && cb(null, true);
+    }
+    catch (error) {
+        cb && cb(error, null);
+    }
+
+};
+/**
+ *
+ * @param {String} dirPath
+ * @param {String} oldName
+ * @param {String} newName
+ * @param {Function|null} [cb]
+ */
+DataServices.prototype.renameFile = function (dirPath, oldName, newName, cb) {
+    try {
+        fs.rename(path.join(dirPath,oldName),path.join(dirPath,newName));
+        cb && cb(null, true);
+    }
+    catch (error) {
+        cb && cb(error, null);
+    }
+
+};
+
 
 /**
  *

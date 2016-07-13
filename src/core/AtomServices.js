@@ -229,6 +229,7 @@ AtomServices.prototype.createAtom = function (developerHostname, appName, callba
     });
 };
 
+//noinspection JSUnusedGlobalSymbols
 /**
  *
  * @param {String} developerHostname
@@ -267,8 +268,107 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
     }
 
     function onValidationError(error) {
-        callback(error, null);
+        callback && callback(error, null);
     }
+
+    isRequestValid(developerHostname, appHostname, devDir, devAppDir, true).then(onRequestValidated, onValidationError);
+
+};
+
+
+//noinspection JSUnusedGlobalSymbols
+AtomServices.prototype.renewCert = function (developerHostname, appHostname, callback) {
+    var devDir = beameUtils.makePath(devPath, developerHostname + "/");
+    var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
+
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated() {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        dataServices.createCSR(devDir, appHostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
+            function onCsrCreated(csr) {
+
+                var postData = {
+                    hostname: appHostname,
+                    csr: csr
+                };
+
+                var apiData = beameUtils.getApiData(apiActions.RenewCert.endpoint, postData, true);
+
+                provisionApi.runRestfulAPI(apiData, function (error, payload) {
+                    if (!error) {
+
+                        dataServices.renameFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
+                            if (!error) {
+                                dataServices.saveCerts(devDir, payload, callback);
+                            }
+                            else {
+                                callback && callback(error, null);
+                            }
+                        });
+
+                    }
+                    else {
+
+                        dataServices.deleteFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY);
+
+                        error.data.hostname = hostname;
+                        console.error(error);
+                        callback(error, null);
+                    }
+                });
+
+            },
+            function onCsrCreationFailed(error) {
+                console.error(error);
+                callback && callback(error, null);
+            });
+    }
+
+    function onValidationError(error) {
+        callback && callback(error, null);
+    }
+
+    isRequestValid(developerHostname, appHostname, devDir, devAppDir, true).then(onRequestValidated, onValidationError);
+};
+
+//noinspection JSUnusedGlobalSymbols
+
+AtomServices.prototype.revokeCert = function (developerHostname, appHostname, callback) {
+    var devDir = beameUtils.makePath(devPath, developerHostname + "/");
+    var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
+
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated() {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        var postData = {
+            hostname: appHostname
+        };
+
+        var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
+
+        provisionApi.runRestfulAPI(apiData, function (error) {
+            if (!error) {
+
+                //TODO delete old certs
+
+                callback && callback(null, 'done');
+            }
+            else {
+                console.error(error);
+                callback && callback(error, null);
+            }
+        });
+
+    }
+
+    function onValidationError(error) {
+        callback && callback(error, null);
+    }
+
 
     isRequestValid(developerHostname, appHostname, devDir, devAppDir, true).then(onRequestValidated, onValidationError);
 

@@ -11,3 +11,13 @@ console.log('dev path is ', devPath);
 
 console.log('homedir is ', __homedir);
 
+var dataServices = new (require('../../src/services/DataServices'))();
+
+dataServices.renameFile('./', 'b', 'a',function(error){
+    if(!error){
+        process.exit(0);
+    }
+    else{
+        process.exit(1);
+    }
+});

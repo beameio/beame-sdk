@@ -40,8 +40,6 @@ global.csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN
 /** @const {String} **/
 global.metadataFileName = "metadata.json";
 
-/** @const {String} **/
-global.recoveryFileName = "recovery";
 
 /** @const {String} **/
 global.apiUIDTemplatePattern = "{{UID}}";
@@ -55,12 +53,14 @@ global.loadBalancerEdnpoint = "http://lb-dev.luckyqr.io";
  */
 global.CertFileNames = {
     "PRIVATE_KEY": "private_key.pem",
+    "TEMP_PRIVATE_KEY": "temp_private_key.pem",
     "X509": "x509.pem",
     "CA": "ca.pem",
     "PKCS7": "pkcs7.pem",
     "P7B": "p7b.cer",
     "PKCS12": "cert.pfx",
-    "PWD": "pwd.txt"
+    "PWD": "pwd.txt",
+    "RECOVERY" : "recovery"
 };
 
 /**
@@ -162,7 +162,7 @@ global.AwsRegions = [
 
 global.ResponseKeys = {
     "NodeFiles": [global.metadataFileName, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509, global.CertFileNames.CA, global.CertFileNames.PKCS7, global.CertFileNames.P7B, global.CertFileNames.PKCS12, global.CertFileNames.PWD],
-    "DeveloperCreateResponseKeys": ["hostname", "uid", "name"],
+    "DeveloperCreateResponseKeys": ["hostname", "uid", "name","email"],
     "AtomCreateResponseKeys": ["hostname", "uid", "name","developer_fqdn"],
     "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname","atom_fqdn"],
     "CertificateResponseKeys": ["x509", "pkcs7", "ca"],

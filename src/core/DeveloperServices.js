@@ -50,6 +50,7 @@ var saveDeveloper = function (email, developerName, callback) {
         if (!error) {
 
             payload.name = developerName;
+            payload.email = email;
 
             var devDir = beameUtils.makePath(devPath, payload.hostname + '/');
 
@@ -208,7 +209,8 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
     var payload = {
         hostname: hostname,
         uid: uid,
-        name: hostname
+        name: hostname,
+        email: hostname
     };
 
     dataServices.savePayload(devDir, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
@@ -257,63 +259,6 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
 };
 
-
-//noinspection JSUnusedGlobalSymbols
-DeveloperServices.prototype.restoreCert = function (hostname, callback) {
-    var errMsg;
-
-    if (_.isEmpty(hostname)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        console.error(errMsg);
-        callback && callback(errMsg, null);
-        return;
-    }
-
-    var devDir = beameUtils.makePath(devPath, hostname + "/");
-
-    var recoveryData = dataServices.readJSON(beameUtils.makePath(devDir, global.recoveryFileName));
-
-    if(_.isEmpty(recoveryData)){
-        callback('Recovery code not found',null);
-        return;
-    }
-
-    dataServices.createCSR(devDir, hostname).then(
-        function onCsrCreated(csr) {
-
-
-            /** @type {typeof DeveloperRestoreCertRequestToken} **/
-            var postData = {
-                csr: csr,
-                hostname: hostname,
-                recovery_code : recoveryData.recovery_code
-            };
-
-            var apiData = beameUtils.getApiData(apiActions.RestoreCert.endpoint, postData, true);
-
-            provisionApi.runRestfulAPI(apiData, function (error, payload) {
-                if (!error) {
-
-                    dataServices.saveCerts(devDir, payload, callback);
-                }
-                else {
-                    error.data.hostname = hostname;
-                    console.error(error);
-                    callback(error, null);
-                }
-            });
-
-        },
-        function onCsrCreationFailed(error) {
-            console.error(error);
-            callback && callback(error, null);
-        });
-
-
-
-
-};
-
 //noinspection JSUnusedGlobalSymbols
 /**
  *
@@ -326,7 +271,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
     var devDir = beameUtils.makePath(devPath, hostname + "/");
 
     /*---------- private callbacks -------------------*/
-    function onMetaInfoReceived(metadata) {
+    function onMetadataReceived(metadata) {
 
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
@@ -359,7 +304,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
 
     function onCertsValidated() {
         /*---------- read developer data and proceed -------------*/
-        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetaInfoReceived, onValidationError);
+        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
     }
 
     function onValidationError(error) {
@@ -367,6 +312,132 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
     }
 
     beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
+
+};
+
+//noinspection JSUnusedGlobalSymbols
+/**
+ *
+ * @param {String} hostname
+ * @param {Function} callback
+ */
+DeveloperServices.prototype.renewCert = function (hostname, callback) {
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
+
+    /*---------- private callbacks -------------------*/
+    function onMetadataReceived() {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        dataServices.createCSR(devDir, hostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
+            function onCsrCreated(csr) {
+
+                var postData = {
+                    csr: csr
+                };
+
+                var apiData = beameUtils.getApiData(apiActions.RenewCert.endpoint, postData, true);
+
+                provisionApi.runRestfulAPI(apiData, function (error, payload) {
+                    if (!error) {
+
+                        dataServices.renameFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
+                            if (!error) {
+                                dataServices.saveCerts(devDir, payload, callback);
+                            }
+                            else {
+                                callback && callback(error, null);
+                            }
+                        });
+
+                    }
+                    else {
+
+                        dataServices.deleteFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY);
+
+                        error.data.hostname = hostname;
+                        console.error(error);
+                        callback(error, null);
+                    }
+                });
+
+            },
+            function onCsrCreationFailed(error) {
+                console.error(error);
+                callback && callback(error, null);
+            });
+    }
+
+    function onCertsValidated() {
+        /*---------- read developer data and proceed -------------*/
+        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
+    }
+
+    function onValidationError(error) {
+        callback(error, null);
+    }
+
+    beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
+};
+
+//noinspection JSUnusedGlobalSymbols
+/**
+ *
+ * @param {String} hostname
+ * @param {Function} callback
+ */
+DeveloperServices.prototype.restoreCert = function (hostname, callback) {
+    var errMsg;
+
+    if (_.isEmpty(hostname)) {
+        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
+        console.error(errMsg);
+        callback && callback(errMsg, null);
+        return;
+    }
+
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
+
+    var recoveryData = dataServices.readJSON(beameUtils.makePath(devDir, global.CertFileNames.RECOVERY));
+
+    if (_.isEmpty(recoveryData)) {
+        callback('Recovery code not found', null);
+        return;
+    }
+
+    dataServices.createCSR(devDir, hostname).then(
+        function onCsrCreated(csr) {
+
+
+            /** @type {typeof DeveloperRestoreCertRequestToken} **/
+            var postData = {
+                csr: csr,
+                hostname: hostname,
+                recovery_code: recoveryData.recovery_code
+            };
+
+            var apiData = beameUtils.getApiData(apiActions.RestoreCert.endpoint, postData, true);
+
+            provisionApi.runRestfulAPI(apiData, function (error, payload) {
+                if (!error) {
+
+                    dataServices.deleteFile(devDir, global.CertFileNames.RECOVERY);
+
+                    dataServices.saveCerts(devDir, payload, callback);
+                }
+                else {
+                    error.data.hostname = hostname;
+                    console.error(error);
+                    callback(error, null);
+                }
+            });
+
+        },
+        function onCsrCreationFailed(error) {
+            console.error(error);
+            callback && callback(error, null);
+        });
+
 
 };
 
@@ -392,11 +463,13 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
         provisionApi.runRestfulAPI(apiData, function (error, payload) {
             if (!error) {
 
-                dataServices.saveFile(devDir, global.recoveryFileName, beameUtils.stringify(payload), function (error) {
+                //TODO delete old certs
+
+                dataServices.saveFile(devDir, global.CertFileNames.RECOVERY, beameUtils.stringify(payload), function (error) {
                     if (!callback) return;
 
                     if (!error) {
-                        callback(null, true);
+                        callback(null, 'done');
                     }
                     else {
                         callback(error, null);

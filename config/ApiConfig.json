@@ -18,6 +18,9 @@
             "GetCert": {
                 "endpoint": "/api/v1/dev/cert/get"
             },
+            "RenewCert": {
+                "endpoint": "/api/v1/dev/cert/renew"
+            },
             "RevokeCert": {
                 "endpoint": "/api/v1/dev/cert/revoke"
             },
@@ -29,12 +32,20 @@
             "CreateAtom": {
                 "endpoint": "/api/v1/atom/save"
             },
+
+            "UpdateAtom": {
+                "endpoint": "/api/v1/atom/{{UID}}/update"
+            },
             "GetCert": {
                 "endpoint": "/api/v1/atom/cert/get"
             },
-            "UpdateAtom": {
-                "endpoint": "/api/v1/atom/{{UID}}/update"
+            "RenewCert": {
+                "endpoint": "/api/v1/atom/cert/renew"
+            },
+            "RevokeCert": {
+                "endpoint": "/api/v1/atom/cert/revoke"
             }
+
         },
         "EdgeClient":{
             "CreateEdgeClient": {
