@@ -43,7 +43,11 @@ At this point you can proceed with any of the following actions:
 
 # Beame.io SDK
 
-	npm install beame-sdk
+# Installing Beame.io SDK
+
+	npm install -g beame-sdk
+
+Bash completion is available, run `beame` to see instructions.
 
 ## Beame.io SDK environment variables
 

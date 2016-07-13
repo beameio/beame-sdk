@@ -1,11 +1,14 @@
 {
   "name": "beame-sdk",
-  "version": "1.0.30",
-  "description": "run provision tests",
+  "version": "1.0.34",
+  "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "main.js",
   "engine": "node >= 4.4.0",
   "scripts": {
     "test": "node ./tests/testFullCycle.js"
+  },
+  "bin": {
+    "beame": "src/cli/beame.js"
   },
   "repository": {
     "type": "git",
@@ -17,9 +20,9 @@
   "author": "az",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/beameio/TestEnvironment/issues"
+    "url": "https://github.com/beameio/beame-sdk/issues"
   },
-  "homepage": "https://github.com/beameio/TestEnvironment#readme",
+  "homepage": "https://github.com/beameio/beame-sdk#readme",
   "dependencies": {
     "async": "^2.0.0-rc.6",
     "cli-table2": "0.2.0",
