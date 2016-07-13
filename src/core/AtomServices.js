@@ -39,7 +39,7 @@ var isAtomHostValid = function (appHostname) {
     });
 };
 
-var isRequestValid = function (developerHostname, appHostname, devDir, devAppDir, validateAppCerts) {
+var isRequestValid = function (developerHostname, appHostname, devDir, atomDir, validateAppCerts) {
 
     return new Promise(function (resolve, reject) {
         function onValidationError(error) {
@@ -51,12 +51,12 @@ var isRequestValid = function (developerHostname, appHostname, devDir, devAppDir
         }
 
         function getMetadata() {
-            beameUtils.getNodeMetadata(devAppDir || devDir, developerHostname, global.AppModules.Atom).then(onMetadataReceived, onValidationError);
+            beameUtils.getNodeMetadata(atomDir || devDir, developerHostname, global.AppModules.Atom).then(onMetadataReceived, onValidationError);
         }
 
         function validateAtomCerts() {
             if (validateAppCerts) {
-                beameUtils.isNodeCertsExists(devAppDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(getMetadata, onValidationError);
+                beameUtils.isNodeCertsExists(atomDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, developerHostname, global.AppModules.Developer).then(getMetadata, onValidationError);
             }
             else {
                 getMetadata();
@@ -101,15 +101,15 @@ var registerAtom = function (developerHostname, appName, callback) {
                 payload.name = appName;
                 payload.developer_fqdn = developerHostname;
 
-                var devAppDir = devDir + payload.hostname + '/';
+                var atomDir = devDir + payload.hostname + '/';
 
-                dataServices.createDir(devAppDir);
+                dataServices.createDir(atomDir);
 
-                dataServices.savePayload(devAppDir, payload, global.ResponseKeys.AtomCreateResponseKeys, global.AppModules.Atom, function (error) {
+                dataServices.savePayload(atomDir, payload, global.ResponseKeys.AtomCreateResponseKeys, global.AppModules.Atom, function (error) {
                     if (!callback) return;
 
                     if (!error) {
-                        beameUtils.getNodeMetadata(devAppDir, payload.hostname, global.AppModules.Atom).then(function (metadata) {
+                        beameUtils.getNodeMetadata(atomDir, payload.hostname, global.AppModules.Atom).then(function (metadata) {
                             callback(null, metadata);
                         }, callback);
                     }
@@ -142,12 +142,12 @@ var registerAtom = function (developerHostname, appName, callback) {
  */
 var getCert = function (developerHostname, appHostname, callback) {
     var devDir = beameUtils.makePath(devPath, developerHostname + "/");
-    var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
+    var atomDir = beameUtils.makePath(devDir, appHostname + "/");
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated(metadata) {
 
-        dataServices.createCSR(devAppDir, appHostname).then(
+        dataServices.createCSR(atomDir, appHostname).then(
             function onCsrCreated(csr) {
 
                 provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
@@ -167,7 +167,7 @@ var getCert = function (developerHostname, appHostname, callback) {
                     function (error, payload) {
                         if (!error) {
 
-                            dataServices.saveCerts(devAppDir, payload, callback);
+                            dataServices.saveCerts(atomDir, payload, callback);
                         }
                         else {
                             //noinspection JSUnresolvedVariable
@@ -188,7 +188,7 @@ var getCert = function (developerHostname, appHostname, callback) {
         callback(error, null);
     }
 
-    isRequestValid(developerHostname, appHostname, devDir, devAppDir, false).then(onRequestValidated, onValidationError);
+    isRequestValid(developerHostname, appHostname, devDir, atomDir, false).then(onRequestValidated, onValidationError);
 
 };
 
@@ -239,7 +239,7 @@ AtomServices.prototype.createAtom = function (developerHostname, appName, callba
  */
 AtomServices.prototype.updateAtom = function (developerHostname, appHostname, appName, callback) {
     var devDir = beameUtils.makePath(devPath, developerHostname + "/");
-    var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
+    var atomDir = beameUtils.makePath(devDir, appHostname + "/");
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated(metadata) {
@@ -247,15 +247,16 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
         var postData = {
+            hostname: appHostname,
             name: appName
         };
 
-        var apiData = beameUtils.getApiData(apiActions.UpdateAtom.endpoint.replace(global.apiUIDTemplatePattern, metadata.uid), postData, false);
+        var apiData = beameUtils.getApiData(apiActions.UpdateAtom.endpoint, postData, false);
 
         provisionApi.runRestfulAPI(apiData, function (error) {
             if (!error) {
                 metadata.name = appName;
-                dataServices.saveFile(devAppDir, global.metadataFileName, beameUtils.stringify(metadata));
+                dataServices.saveFile(atomDir, global.metadataFileName, beameUtils.stringify(metadata));
                 callback && callback(null, metadata);
             }
             else {
@@ -264,14 +265,63 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
                 callback && callback(error, null);
             }
         });
-
     }
 
     function onValidationError(error) {
         callback && callback(error, null);
     }
 
-    isRequestValid(developerHostname, appHostname, devDir, devAppDir, true).then(onRequestValidated, onValidationError);
+    isRequestValid(developerHostname, appHostname, devDir, atomDir, true).then(onRequestValidated, onValidationError);
+
+};
+
+
+//noinspection JSUnusedGlobalSymbols
+/**
+ * @param {String} developerHostname
+ * @param {String} appHostname
+ * @param {Function} callback
+ */
+AtomServices.prototype.deleteAtom = function (developerHostname, appHostname, callback) {
+    var devDir = beameUtils.makePath(devPath, developerHostname + "/");
+    var atomDir = beameUtils.makePath(devDir, appHostname + "/");
+
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated() {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        var postData = {
+            hostname: appHostname
+        };
+
+        var apiData = beameUtils.getApiData(apiActions.DeleteAtom.endpoint, postData, false);
+
+        provisionApi.runRestfulAPI(apiData, function (error) {
+            if (!error) {
+                //delete atom folder
+                dataServices.deleteFolder(atomDir,function (error) {
+                    if(!error){
+                        callback(null,'done');
+                        return;
+                    }
+
+                    callback && callback(error, null);
+                });
+            }
+            else {
+                error.data.hostname = appHostname;
+                console.error(error);
+                callback && callback(error, null);
+            }
+        });
+    }
+
+    function onValidationError(error) {
+        callback && callback(error, null);
+    }
+
+    isRequestValid(developerHostname, appHostname, devDir, atomDir, true).then(onRequestValidated, onValidationError);
 
 };
 
@@ -284,14 +334,14 @@ AtomServices.prototype.updateAtom = function (developerHostname, appHostname, ap
  */
 AtomServices.prototype.renewCert = function (developerHostname, appHostname, callback) {
     var devDir = beameUtils.makePath(devPath, developerHostname + "/");
-    var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
+    var atomDir = beameUtils.makePath(devDir, appHostname + "/");
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated() {
 
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
-        dataServices.createCSR(devAppDir, appHostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
+        dataServices.createCSR(atomDir, appHostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
             function onCsrCreated(csr) {
 
                 var postData = {
@@ -304,9 +354,9 @@ AtomServices.prototype.renewCert = function (developerHostname, appHostname, cal
                 provisionApi.runRestfulAPI(apiData, function (error, payload) {
                     if (!error) {
 
-                        dataServices.renameFile(devAppDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
+                        dataServices.renameFile(atomDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
                             if (!error) {
-                                dataServices.saveCerts(devAppDir, payload, callback);
+                                dataServices.saveCerts(atomDir, payload, callback);
                             }
                             else {
                                 callback && callback(error, null);
@@ -316,7 +366,7 @@ AtomServices.prototype.renewCert = function (developerHostname, appHostname, cal
                     }
                     else {
 
-                        dataServices.deleteFile(devAppDir, global.CertFileNames.TEMP_PRIVATE_KEY);
+                        dataServices.deleteFile(atomDir, global.CertFileNames.TEMP_PRIVATE_KEY);
 
                         console.error(error);
                         callback(error, null);
@@ -334,7 +384,7 @@ AtomServices.prototype.renewCert = function (developerHostname, appHostname, cal
         callback && callback(error, null);
     }
 
-    isRequestValid(developerHostname, appHostname, devDir, devAppDir, true).then(onRequestValidated, onValidationError);
+    isRequestValid(developerHostname, appHostname, devDir, atomDir, true).then(onRequestValidated, onValidationError);
 };
 
 //noinspection JSUnusedGlobalSymbols
@@ -346,7 +396,7 @@ AtomServices.prototype.renewCert = function (developerHostname, appHostname, cal
  */
 AtomServices.prototype.revokeCert = function (developerHostname, appHostname, callback) {
     var devDir = beameUtils.makePath(devPath, developerHostname + "/");
-    var devAppDir = beameUtils.makePath(devDir, appHostname + "/");
+    var atomDir = beameUtils.makePath(devDir, appHostname + "/");
 
     /*---------- private callbacks -------------------*/
     function onRequestValidated() {
@@ -379,7 +429,7 @@ AtomServices.prototype.revokeCert = function (developerHostname, appHostname, ca
     }
 
 
-    isRequestValid(developerHostname, appHostname, devDir, devAppDir, true).then(onRequestValidated, onValidationError);
+    isRequestValid(developerHostname, appHostname, devDir, atomDir, true).then(onRequestValidated, onValidationError);
 
 };
 

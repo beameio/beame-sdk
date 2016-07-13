@@ -8,6 +8,7 @@ var debug = require("debug")("./src/services/DataServices.js");
 var fs = require('fs');
 var exec = require('child_process').exec;
 var async = require('async');
+var rimraf = require('rimraf');
 
 /**------------------------ private methods ---------------------**/
 function randomPassword(length) {
@@ -334,6 +335,15 @@ DataServices.prototype.deleteFile = function (dirPath, fileName, cb) {
     }
 
 };
+
+/**
+ * @param {String} dirPath
+ * @param {Function} callback
+ */
+DataServices.prototype.deleteFolder = function (dirPath,callback) {
+    rimraf(dirPath, callback);
+};
+
 /**
  *
  * @param {String} dirPath

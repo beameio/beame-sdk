@@ -264,6 +264,63 @@ EdgeClientServices.prototype.createEdgeClient = function (appHostname, callback)
  * @param {String} edgeHostname
  * @param {Function} callback
  */
+EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname,callback) {
+
+    var edgeClientDir,devAppDir;
+
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated() {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devAppDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        var postData = {
+            hostname: edgeHostname
+        };
+
+        var apiData = beameUtils.getApiData(apiActions.DeleteEdgeClient.endpoint, postData, false);
+
+        provisionApi.runRestfulAPI(apiData, function (error) {
+            if (!error) {
+
+                dataServices.deleteFolder(edgeClientDir,function(error){
+                    if(!error){
+                        callback && callback(null, 'done');
+                        return;
+                    }
+                    callback && callback(error, null);
+                });
+            }
+            else {
+                console.error(error);
+                callback && callback(error, null);
+            }
+        });
+    }
+
+    function onValidationError(error) {
+        callback && callback(error, null);
+    }
+
+    function onAtomPathReceived(path) {
+
+        edgeClientDir = path;
+
+        devAppDir = path.substring(0, path.lastIndexOf('/'));
+
+        isRequestValid(devAppDir.substring(devAppDir.lastIndexOf('/')+1), edgeHostname, devAppDir, edgeClientDir, false).then(onRequestValidated, onValidationError);
+
+    }
+
+    beameUtils.findHostPath(edgeHostname).then(onAtomPathReceived, function onSearchFailed(){
+        callback('Atom folder not found', null);
+    });
+};
+
+//noinspection JSUnusedGlobalSymbols
+/**
+ * @param {String} edgeHostname
+ * @param {Function} callback
+ */
 EdgeClientServices.prototype.renewCert = function (edgeHostname,callback) {
 
     var edgeClientDir,devAppDir;
@@ -383,13 +440,9 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname,callback) {
 
     }
 
-
     beameUtils.findHostPath(edgeHostname).then(onAtomPathReceived, function onSearchFailed(){
         callback('Atom folder not found', null);
     });
-
-
-
 };
 
 module.exports = EdgeClientServices;

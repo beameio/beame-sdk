@@ -32,9 +32,11 @@
             "CreateAtom": {
                 "endpoint": "/api/v1/atom/save"
             },
-
+            "DeleteAtom": {
+                "endpoint": "/api/v1/atom/delete"
+            },
             "UpdateAtom": {
-                "endpoint": "/api/v1/atom/{{UID}}/update"
+                "endpoint": "/api/v1/atom/update"
             },
             "GetCert": {
                 "endpoint": "/api/v1/atom/cert/get"
@@ -49,6 +51,9 @@
         "EdgeClient":{
             "CreateEdgeClient": {
                 "endpoint" : "/api/v1/client/register"
+            },
+            "DeleteEdgeClient": {
+                "endpoint" : "/api/v1/client/delete"
             },
             "GetCert": {
                 "endpoint" : "/api/v1/client/cert/get"

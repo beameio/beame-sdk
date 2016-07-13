@@ -6,18 +6,24 @@ var os = require('os');
 var home = os.homedir();
 var devPath = path.join(home ,".beame/");              //path to store dev data: uid, hostname, key, certs, appData
 var __homedir = home;
+var rimraf = require('rimraf');
 
 console.log('dev path is ', devPath);
 
 console.log('homedir is ', __homedir);
 
 var dataServices = new (require('../../src/services/DataServices'))();
-
-dataServices.renameFile('./', 'b', 'a',function(error){
-    if(!error){
-        process.exit(0);
-    }
-    else{
-        process.exit(1);
-    }
+rimraf('./temp', function(err) {
+    if (err) { throw err; }
+    // done
+    console.log('done');
 });
+
+// dataServices.renameFile('./', 'b', 'a',function(error){
+//     if(!error){
+//         process.exit(0);
+//     }
+//     else{
+//         process.exit(1);
+//     }
+// });
