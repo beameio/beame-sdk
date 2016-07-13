@@ -4,7 +4,6 @@
 
 var _ = require('underscore');
 var net = require('net');
-var uuid = require('node-uuid');
 var io = require('socket.io-client');
 
 var socketUtils = require('../utils/SocketUtils');
