@@ -99,7 +99,7 @@ var registerAtom = function (developerHostname, appName, callback) {
         provisionApi.runRestfulAPI(apiData, function (error, payload) {
             if (!error) {
                 payload.name = appName;
-                payload.developer_fqdn = developerHostname;
+                payload.parent_fqdn = developerHostname;
 
                 var atomDir = devDir + payload.hostname + '/';
 
