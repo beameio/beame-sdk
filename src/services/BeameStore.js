@@ -123,6 +123,17 @@ BeameStore.prototype.searchEdge = function (name) {
     return returnDict;
 };
 
+BeameStore.prototype.searchItemAndParentFolderPath  = function(fqdn){
+	var item = this.search(fqdn)[0];
+	if(!(item && item.path))
+		return {};
+	if(item.parent_fqdn != null){
+		var parent = this.search(item.parent_fqdn);
+		return { path: item.path, parent_path: parent.path };
+	}
+	return { path: item.path};
+}
+
 BeameStore.prototype.listCurrentDevelopers = function () {
     return jmespath.search(this.beameStore, "[*].{name:name, hostname:hostname, level:level} | []");
 };
@@ -151,9 +162,9 @@ BeameStore.prototype.search = function (name) {
 };
 
 BeameStore.prototype.list = function (type, name) {
-    var newHaash = beameDirApi.generateDigiest(beamedir)
+    var newHaash = beameDirApi.generateDigiest(this.beamedir)
     if(this.digest !== newHaash){
-        this.beameStore = beameDirApi.readBeameDir(beamedir);
+        this.beameStore = beameDirApi.readBeameDir(this.beamedir);
         this.digest = newHaash;
     }
     

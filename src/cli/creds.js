@@ -2,12 +2,12 @@
 
 var _ = require('underscore');
 var debug = require("debug")("cred_api");
-var store = new (require("../services/BeameStore"));
+var store = new (require("../services/BeameStore"))();
 var Table = require('cli-table2');
 var x509 = require('x509');
-var developerServices = new(require('../core/DeveloperServices'));
-var atomServices = new(require('../core/AtomServices'));
-var edgeClientServices = new(require('../core/EdgeClientServices'));
+var developerServices = new(require('../core/DeveloperServices'))();
+var atomServices = new(require('../core/AtomServices'))();
+var edgeClientServices = new(require('../core/EdgeClientServices'))();
 
 function listCreds(type, fqdn){
 	var returnValues = [];
@@ -45,7 +45,8 @@ show.toText = function(certs) {
 		table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,  xcert.signatureAlgorithm]);
 	});
 	return table;
-}
+};
+
 
 function list(type, fqdn){
 	debug("list %j %j", type,  fqdn);
@@ -61,7 +62,7 @@ list.toText = function(creds) {
 		table.push([item.name, item.hostname, item.level]);
 	});
 	return table;
-}
+};
 
 function lineToText(line) {
 	// console.log('lineToText', line);
@@ -78,7 +79,7 @@ function _stdCallback(callback) {
 		} else {
 			callback(data);
 		}
-	}
+	};
 }
 
 function createTestDeveloper(developerName, developerEmail, callback){
@@ -110,7 +111,54 @@ function exportCredentials(fqdn, targetFqdn){
 	var jsonString = JSON.stringify(creds[0]);
 	var crypto = require('./crypto');
 
-	return crypto.encrypt(jsonString, targetFqdn);
+	var message= {
+			signedData :{
+				data: crypto.encrypt(jsonString, targetFqdn),
+				signedby: fqdn,
+				encryptedfor: targetFqdn
+			},
+	};
+	message.signature = crypto.sign(JSON.stringify(message.signedData), fqdn );
+
+	return message ;
+}
+
+function importCredentials(){
+	var stdin = process.stdin,
+		stdout = process.stdout,
+		inputChunks = [];
+	var crypto = require('./crypto');
+	stdin.resume();
+	stdin.setEncoding('utf8');
+
+	stdin.on('data', function (chunk) {
+		inputChunks.push(chunk);
+	});
+
+	stdin.on('end', function () {
+		var inputJSON = inputChunks.join();
+
+		var parsedData = JSON.parse(inputJSON);
+		var signatureStatus = crypto.checkSignature(parsedData.signedData.signedby, parsedData.signedData, parsedData.signature)
+		
+
+		console.log(JSON.stringify(crypto.decrypt(parsedData.signedData.encryptedfor, parsedData.signedData.data)));
+	});
+
+	/*var creds = store.search(fqdn);
+	var jsonString = JSON.stringify(creds[0]);
+	var crypto = require('./crypto');
+
+	var message= {
+		signedData :{
+			data: crypto.encrypt(jsonString, targetFqdn),
+			signedby: fqdn,
+			encryptedfor: targetFqdn
+		},
+	};
+	message.signature = crypto.sign(message,fqdn );
+
+	return message ;*/
 }
 
 function renew(type, fqdn){
@@ -131,5 +179,6 @@ module.exports = {
 	createEdgeClient: createEdgeClient,
 	createDeveloper: createDeveloper,
 	createTestDeveloper: createTestDeveloper,
-	exportCredentials:exportCredentials
+	exportCredentials:exportCredentials,
+	importCredentials:importCredentials
 };
