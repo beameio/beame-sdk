@@ -52,7 +52,7 @@ function readSubDevDir(devDir) {
     return currentObject;
 }
 
-function generateDigiest(startPath){
+function generateDigest(startPath){
     var data = JSON.stringify(scanDigestDir(startPath));
     var hash = require('crypto').createHash('sha224').update(data).digest("hex");
     return hash;
@@ -86,4 +86,4 @@ function readBeameDir(startdir) {
     return developers;
 }
 
-module.exports = {"readBeameDir": readBeameDir, "findHostPath": findHostPath};
+module.exports = {"readBeameDir": readBeameDir, "generateDigest": generateDigest};

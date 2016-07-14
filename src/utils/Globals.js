@@ -167,8 +167,8 @@ global.AwsRegions = [
 global.ResponseKeys = {
     "NodeFiles": [global.metadataFileName, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509, global.CertFileNames.CA, global.CertFileNames.PKCS7, global.CertFileNames.P7B, global.CertFileNames.PKCS12, global.CertFileNames.PWD],
     "DeveloperCreateResponseKeys": ["hostname", "uid", "name","email"],
-    "AtomCreateResponseKeys": ["hostname", "uid", "name","developer_fqdn"],
-    "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname","atom_fqdn"],
+    "AtomCreateResponseKeys": ["hostname", "uid", "name","parent_fqdn"],
+    "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname","parent_fqdn"],
     "CertificateResponseKeys": ["x509", "pkcs7", "ca"],
     "RevokeDevCertResponseKeys" : ["recovery_code"],
 };
