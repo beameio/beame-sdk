@@ -147,10 +147,10 @@ BeameStore.prototype.listCurrentEdges = function () {
 };
 
 BeameStore.prototype.search = function (name) {
-    var newHaash = beameDirApi.generateDigest(this.beamedir)
-    if(this.digest !== newHaash){
+    var newHash = beameDirApi.generateDigest(this.beamedir);
+    if(this.digest !== newHash){
         this.beameStore = beameDirApi.readBeameDir(this.beamedir);
-        this.digest = newHaash;
+        this.digest = newHash;
     }
 
     var fullResult = [];
@@ -162,7 +162,7 @@ BeameStore.prototype.search = function (name) {
 };
 
 BeameStore.prototype.list = function (type, name) {
-    var newHash = beameDirApi.generateDigest(this.beamedir)
+    var newHash = beameDirApi.generateDigest(this.beamedir);
     if(this.digest !== newHash){
         this.beameStore = beameDirApi.readBeameDir(this.beamedir);
         this.digest = newHash;
