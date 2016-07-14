@@ -24,11 +24,11 @@ var path = require('path');
 //
 
 function BeameStore(beamedir) {
-    if(global.store == null) {
+    if (global.store == null) {
         if (!beamedir || beamedir.length === 0) {
             this.beamedir = process.env.BEAME_DIR || global.globalPath;
         }
-        this.digest = beameDirApi.generateDigiest(this.beamedir);
+        this.digest = beameDirApi.generateDigest(this.beamedir);
 
         debug("reading beamedir %j", this.beamedir);
 
@@ -49,8 +49,8 @@ function BeameStore(beamedir) {
         this.searchFunctions.push({type: "edgeclient", 'func': this.searchEdge});
         global.store = this;
     }
-    else{
-        return global.store ;
+    else {
+        return global.store;
     }
 }
 
@@ -63,25 +63,21 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
     var queryString = "";
 
     switch (level) {
-        case "developer":
-        {
+        case "developer": {
             queryString = sprintf("[?(hostname=='%s' )|| (name =='%s' )].{name:name, hostname:hostname, level:level} ", searchItem, searchItem);
             break;
         }
 
-        case "atom":
-        {
+        case "atom": {
             queryString = sprintf("[].atom[?(hostname=='%s') || (name=='%s')].{name:name, hostname:hostname, level:level}| []", searchItem, searchItem);
             break;
         }
 
-        case "edgeclient":
-        {
+        case "edgeclient": {
             queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s')].{name:name, hostname:hostname, level:level} | []", searchItem, searchItem);
             break;
         }
-        default:
-        {
+        default: {
             throw new Error("Invalid level passed to search ", level);
         }
     }
@@ -123,15 +119,32 @@ BeameStore.prototype.searchEdge = function (name) {
     return returnDict;
 };
 
-BeameStore.prototype.searchItemAndParentFolderPath  = function(fqdn){
-	var item = this.search(fqdn)[0];
-	if(!(item && item.path))
-		return {};
-	if(item.parent_fqdn != null){
-		var parent = this.search(item.parent_fqdn);
-		return { path: item.path, parent_path: parent.path };
-	}
-	return { path: item.path};
+/**
+ * @typedef {Object} ItemAndParentFolderPath
+ * @param {String} path
+ * @param {String} parent_path
+ */
+
+/**
+ *
+ * @param {String} fqdn
+ * @returns {typeof ItemAndParentFolderPath}
+ */
+
+BeameStore.prototype.searchItemAndParentFolderPath = function (fqdn) {
+    try {
+        var item = this.search(fqdn)[0];
+        if (!(item && item.path))
+            return {};
+        if (item.parent_fqdn != null) {
+            var parent = this.search(item.parent_fqdn)[0];
+            return {path: item.path, parent_path: parent.path};
+        }
+        return {path: item.path};
+    }
+    catch (e) {
+        return {};
+    }
 };
 
 BeameStore.prototype.listCurrentDevelopers = function () {
@@ -148,7 +161,7 @@ BeameStore.prototype.listCurrentEdges = function () {
 
 BeameStore.prototype.search = function (name) {
     var newHash = beameDirApi.generateDigest(this.beamedir);
-    if(this.digest !== newHash){
+    if (this.digest !== newHash) {
         this.beameStore = beameDirApi.readBeameDir(this.beamedir);
         this.digest = newHash;
     }
@@ -163,7 +176,7 @@ BeameStore.prototype.search = function (name) {
 
 BeameStore.prototype.list = function (type, name) {
     var newHash = beameDirApi.generateDigest(this.beamedir);
-    if(this.digest !== newHash){
+    if (this.digest !== newHash) {
         this.beameStore = beameDirApi.readBeameDir(this.beamedir);
         this.digest = newHash;
     }

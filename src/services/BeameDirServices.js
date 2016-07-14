@@ -54,8 +54,7 @@ function readSubDevDir(devDir) {
 
 function generateDigest(startPath){
     var data = JSON.stringify(scanDigestDir(startPath));
-    var hash = require('crypto').createHash('sha224').update(data).digest("hex");
-    return hash;
+    return require('crypto').createHash('sha224').update(data).digest("hex");
 }
 
 function scanDigestDir(startPath) {
