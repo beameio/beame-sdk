@@ -384,7 +384,7 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 
                         dataServices.renameFile(atomDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
                             if (!error) {
-                                dataServices.saveCerts(atomDir, payload, callback);
+                                dataServices.saveCerts(beameUtils.makePath(atomDir,'/'), payload, callback);
                             }
                             else {
                                 callback && callback(error, null);

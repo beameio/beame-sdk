@@ -163,18 +163,7 @@ var appHostName = 'meviv8tls5wtw23b.sco0aua73sfynn28.v1.beameio.net';
 // });
 
 
-// edgeClientServices.revokeCert('ukpvjrfkk1zvvuj9.v1.r.d.edge.eu-central-1b-1.v1.beameio.net',function(error,payload){
-//     if(!error){
-//         console.log(payload);
-//         process.exit(0);
-//     }
-//     else{
-//         console.error(error);
-//         process.exit(1);
-//     }
-// });
-
-edgeClientServices.renewCert('ukpvjrfkk1zvvuj9.v1.r.d.edge.eu-central-1b-1.v1.beameio.net',function(error,payload){
+edgeClientServices.deleteEdgeClient('pzi0qlisimrdawrn.v1.r.d.edge.eu-central-1a-1.v1.beameio.net',function(error,payload){
     if(!error){
         console.log(payload);
         process.exit(0);
@@ -184,6 +173,28 @@ edgeClientServices.renewCert('ukpvjrfkk1zvvuj9.v1.r.d.edge.eu-central-1b-1.v1.be
         process.exit(1);
     }
 });
+
+// edgeClientServices.revokeCert('p0mksbche7x91hk7.v1.r.d.edge.eu-central-1a-1.v1.beameio.net',function(error,payload){
+//     if(!error){
+//         console.log(payload);
+//         process.exit(0);
+//     }
+//     else{
+//         console.error(error);
+//         process.exit(1);
+//     }
+// });
+//
+// edgeClientServices.renewCert('pzi0qlisimrdawrn.v1.r.d.edge.eu-central-1a-1.v1.beameio.net',function(error,payload){
+//     if(!error){
+//         console.log(payload);
+//         process.exit(0);
+//     }
+//     else{
+//         console.error(error);
+//         process.exit(1);
+//     }
+// });
 
 // edgeClientServices.createEdgeClient('pdxz2ngkxzojgnx2.lh5ftk76qu9f801w.v1.beameio.net',function(error,payload){
 //     if(!error){

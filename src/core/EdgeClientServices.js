@@ -302,11 +302,11 @@ EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname, callback
         callback && callback(error, null);
     }
 
-    function onAtomPathReceived(path) {
+    function onAtomPathReceived(data) {
 
-        edgeClientDir = path;
+        edgeClientDir = data['path'];
 
-        atomDir = path.substring(0, path.lastIndexOf('/'));
+        atomDir = data['parent_path'];
 
         isRequestValid(edgeHostname, atomDir, edgeClientDir, false).then(onRequestValidated, onValidationError);
 
@@ -346,7 +346,7 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 
                         dataServices.renameFile(edgeClientDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
                             if (!error) {
-                                dataServices.saveCerts(edgeClientDir, payload, callback);
+                                dataServices.saveCerts(beameUtils.makePath(edgeClientDir,'/'), payload, callback);
                             }
                             else {
                                 callback && callback(error, null);
@@ -374,11 +374,11 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
         callback && callback(error, null);
     }
 
-    function onAtomPathReceived(path) {
+    function onAtomPathReceived(data) {
 
-        edgeClientDir = path;
+        edgeClientDir = data['path'];
 
-        atomDir = path.substring(0, path.lastIndexOf('/'));
+        atomDir = data['parent_path'];
 
         isRequestValid(edgeHostname, atomDir, edgeClientDir, false).then(onRequestValidated, onValidationError);
 
