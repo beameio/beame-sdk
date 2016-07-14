@@ -19,6 +19,19 @@ These certificates can be used for HTTPS on a server or any other cryptography s
 
 Our tunnel servers (the *edge servers*) allow routing of traffic to your servers even when your server does not have a routable IP address.
 
+## Getting Started The Easy Way 
+
+1. run npm install -g beame-sdk
+2. Go to https://registration.beameio.net/ with a regular web browser.
+2. Put in your name and email, and wait for a confirmation email. 
+3. In the confirmation email, you should see a command that looks like this, run it, 
+ 	`beame.js creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`  
+	
+	`
+	
+
+
+
 ## Beame.io network diagram
 
 Please note that this is a diagram designed to help understand how the service works. What's critical to understand that beame proxies SSL transperently without opening of the traffic. 
