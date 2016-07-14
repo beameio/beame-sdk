@@ -267,7 +267,7 @@ module.exports = {
         return new Promise(function (resolve, reject) {
 
             if (!dataServices.isNodeFilesExists(path, nodeFiles, module)) {
-                var errMsg = global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, nodeLevel + "files not found", {
+                var errMsg = global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, nodeLevel + " files not found", {
                     "level": nodeLevel,
                     "hostname": hostname
                 });
@@ -282,21 +282,19 @@ module.exports = {
 
     /**
      * @param host
-     * @returns {Promise.<String>}
+     * @returns {Promise.<ItemAndParentFolderPath>}
      */
-    findHostPath: function (host) {
+    findHostPathAndParent: function (host) {
 
         return new Promise(function (resolve, reject) {
-            var files = beameStore.search(host);
+            var data = beameStore.searchItemAndParentFolderPath(host);
 
-            if (files && files.length == 1) {
-                resolve(files[0].path);
+            if (!_.isEmpty(data)) {
+                resolve(data);
             }
             else {
                 reject('Not found');
             }
         });
-
-
     }
 };

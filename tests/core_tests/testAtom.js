@@ -10,8 +10,8 @@ var atomServices = new(require('../../src/core/AtomServices'))();
 
 
 
-var revoke = function(devHost,appHost){
-    atomServices.revokeCert(devHost,appHost,function(error, payload){
+var revoke = function(appHost){
+    atomServices.revokeCert(appHost,function(error, payload){
         if(!error){
             console.log(payload);
             process.exit(0);
@@ -44,8 +44,34 @@ var create =  function (devHostname,appName){
     });
 };
 
-var renew = function(devHost,appHost){
-    atomServices.renewCert(devHost,appHost,function(error, payload){
+var renew = function(appHost){
+    atomServices.renewCert(appHost,function(error, payload){
+        if(!error){
+            console.log(payload);
+            process.exit(0);
+        }
+        else{
+            console.error(error);
+            process.exit(1);
+        }
+    });
+};
+
+var deleteAtom = function(appHost){
+    atomServices.deleteAtom(appHost,function(error, payload){
+        if(!error){
+            console.log(payload);
+            process.exit(0);
+        }
+        else{
+            console.error(error);
+            process.exit(1);
+        }
+    });
+};
+
+var updateAtom = function(appHost,name){
+    atomServices.updateAtom(appHost,name,function(error, payload){
         if(!error){
             console.log(payload);
             process.exit(0);
@@ -65,9 +91,9 @@ var test = function(){
         process.exit(1);
     }
 
-    var devHost = argv['devhost'] || 'l6nvbpxlf91odbl1.v1.beameio.net';
+    var devHost = argv['devhost'] || 'bufp77dx7bemrqv4.v1.beameio.net';
 
-    var host = argv['host'] || 'ajcn56e4a856vmmu.l6nvbpxlf91odbl1.v1.beameio.net';
+    var host = argv['host'] || 'wvcne1q5cjfxilg8.me7lke5g5acrxh17.v1.beameio.net';
 
 
 
@@ -78,31 +104,41 @@ var test = function(){
                 console.error('devHost required');
                 process.exit(1);
             }
-            create(devHost,argv['name'] || 'test app');
+            create(devHost,argv['name'] || 'test app-6');
             return;
         case 'revoke':
-            if(_.isEmpty(devHost)){
-                console.error('devHost required');
-                process.exit(1);
-            }
+
             if(_.isEmpty(host)){
                 console.error('host required');
                 process.exit(1);
             }
-            revoke(devHost,host);
+            revoke(host);
             return;
 
         case 'renew':
-            if(_.isEmpty(devHost)){
-                console.error('devHost required');
-                process.exit(1);
-            }
+
             if(_.isEmpty(host)){
                 console.error('host required');
                 process.exit(1);
             }
 
-            renew(devHost,host);
+            renew(host);
+            return;
+        case 'update':
+            if(_.isEmpty(host)){
+                console.error('host required');
+                process.exit(1);
+            }
+
+            updateAtom(host,'apa-ahuyapa');
+            return;
+        case 'delete':
+            if(_.isEmpty(host)){
+                console.error('host required');
+                process.exit(1);
+            }
+
+            deleteAtom(host);
             return;
 
     }
