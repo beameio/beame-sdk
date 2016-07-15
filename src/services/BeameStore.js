@@ -213,4 +213,33 @@ BeameStore.prototype.list = function (type, name) {
 
 };
 
+BeameStore.prototype.importCredentials =function(data){
+    var credToImport = JSON.parse(data);
+    var host = credToImport.hostname;
+    var targetPath = global.devPath;
+
+    if(credToImport.type === 'developer'){
+        targetPath = path.join(global.devPath, host);
+    } else{
+        targetPath = path.join(global.devPath, credToImport.hostname);
+    }
+    if(fs.existsSync(targetPath)) {
+        console.warn/("Directory already exists exiting.");
+        return;
+    }
+    mkdirp(targetPath);
+    var metadata = {};
+    _.map(credToImport, function(value, key){
+        //console.log("Value %j %j", key, value)
+        var filepath = path.join(targetPath, value);
+        if(global.CertFileNames[key]){
+            fs.writeFileSync(filepath, value);
+        }else{
+            metadata[key] = value;
+        }
+    });
+    fs.writeFileSync(path.join(targetPath, "metadata.json"), value);
+
+};
+
 module.exports = BeameStore;

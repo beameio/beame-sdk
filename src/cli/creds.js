@@ -8,6 +8,7 @@ var x509 = require('x509');
 var developerServices = new(require('../core/DeveloperServices'))();
 var atomServices = new(require('../core/AtomServices'))();
 var edgeClientServices = new(require('../core/EdgeClientServices'))();
+var beameDirService = require('../services/BeameDirServices')
 
 function listCreds(type, fqdn){
 	var returnValues = [];
@@ -110,24 +111,27 @@ function exportCredentials(fqdn, targetFqdn){
 	var creds = store.search(fqdn);
 	var jsonString = JSON.stringify(creds[0]);
 	var crypto = require('./crypto');
+	var encryptedString;
+	try{
+		encryptedString = crypto.encrypt(jsonString, targetFqdn);
+	} catch(e){ console.error("Cound not encrypt", e); return {}; } 
 
 	var message= {
-			signedData :{
-				data: crypto.encrypt(jsonString, targetFqdn),
-				signedby: fqdn,
-				encryptedfor: targetFqdn
-			},
+		signedData :{
+			data: encryptedString, 
+			signedby: fqdn,
+			encryptedfor: targetFqdn
+		}
 	};
 	message.signature = crypto.sign(JSON.stringify(message.signedData), fqdn );
 
 	return message ;
 }
-
-function importCredentials(){
+function readStdinStream(callback){
 	var stdin = process.stdin,
 		stdout = process.stdout,
 		inputChunks = [];
-	var crypto = require('./crypto');
+
 	stdin.resume();
 	stdin.setEncoding('utf8');
 
@@ -136,29 +140,36 @@ function importCredentials(){
 	});
 
 	stdin.on('end', function () {
-		var inputJSON = inputChunks.join();
-
-		var parsedData = JSON.parse(inputJSON);
-		var signatureStatus = crypto.checkSignature(parsedData.signedData.signedby, parsedData.signedData, parsedData.signature)
-		
-
-		console.log(JSON.stringify(crypto.decrypt(parsedData.signedData.encryptedfor, parsedData.signedData.data)));
+		callback(inputChunks.join());
 	});
+}
 
-	/*var creds = store.search(fqdn);
-	var jsonString = JSON.stringify(creds[0]);
+function  decryptCreds(data) {
 	var crypto = require('./crypto');
+	var parsedData = JSON.parse(data);
 
-	var message= {
-		signedData :{
-			data: crypto.encrypt(jsonString, targetFqdn),
-			signedby: fqdn,
-			encryptedfor: targetFqdn
-		},
-	};
-	message.signature = crypto.sign(message,fqdn );
+	console.log("Sp1");
+	var signatureStatus = crypto.checkSignature(parsedData.signedData.signedby, parsedData.signedData, parsedData.signature)
+	if(signatureStatus == true) {
+		var creds = store.search(parsedData.signedData.encryptedfor)[0];
+		var decryptedcreds = crypto.decrypt(parsedData.signedData.data);
+		console.log(decryptedcreds );
+		return decryptedcreds;
+	}
+}
 
-	return message ;*/
+function importCredentials(data){
+	var credsToImport;
+	var decryptedCreds;
+	if(!data) {
+		readStdinStream(function (data) {
+			decryptedCreds = decryptCreds(data);
+			store.importCredentials(data);
+		});
+	}else {
+		decryptedCreds = decryptCreds(data);
+		store.importCredentials(decryptedCreds);
+	}
 }
 
 function renew(type, fqdn){

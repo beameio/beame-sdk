@@ -15,7 +15,9 @@ function testBeameStruct(beameStruct, keyword, func, useNameSearch){
 	_.each(beameStruct, function(item){
 		var name = useNameSearch? item.name : item.hostname
 		var beameRecord =  func.call(store, name);
-		if(!beameRecord || beameRecord.length === 0 || beameRecord.length != 1){
+
+
+		if(!beameRecord || beameRecord.length === 0 || (beameRecord.length != 1 && useNameSearch == false)){
 			throw new Error(["Developers listing failered", name ,  beameRecord]);
 		}
 	});
@@ -42,6 +44,11 @@ store.search("atom", currentDevelopers[0].hostname);
 store.search("edgeclient", currentDevelopers[0].hostname);
 
 store.search("", currentDevelopers[0].hostname);
+
+
+store.searchItemAndParentFolderPath('bmvaow3ewjji3vfy.v1.beameio.net');
+store.searchItemAndParentFolderPath('w9tlixkmx5exsesm.vbo7y31f7o98qwpe.v1.beameio.net');
+store.searchItemAndParentFolderPath('ri5vmbuj8ezu79k8.v1.r.d.edge.eu-central-1a-1.v1.beameio.net');
 
 
 //
