@@ -15,7 +15,32 @@ var BeameStore = require("../services/BeameStore");
 var store = new BeameStore();
 var x509 = require("x509");
 
+function aesEncrypt(data){
+	var crypto = require('crypto');
+	var sharedSecret = crypto.randomBytes(32); // should be 128 (or 256) bits
+	var initializationVector = crypto.randomBytes(16); // IV is always 16-bytes
+	cipher = crypto.Cipheriv('aes-256-cbc', sharedSecret, initializationVector);
+	var encrypted = cipher.update(data, 'utf8', 'base64');
+	encrypted += cipher.final('base64');
+	
+	return [{ AES256CBC: encrypted },{IV:  initializationVector.toString('base64'), sharedCipher: sharedSecret.toString('base64')}];
 
+}
+
+function aesDecrypt(data){
+	//data = JSON.parse(data);
+	var crypto = require('crypto');
+	if(!(data[1].IV && data[1].sharedCipher && data[0].AES256CBC )){
+		return "";
+	}
+	var cipher  = new Buffer(data[1].sharedCipher, "base64");
+	var IV = new Buffer(data[1].IV, "base64");
+
+	decipher = crypto.createDecipheriv("aes-256-cbc", cipher, IV);
+	var dec = decipher.update(data[0].AES256CBC,'base64','utf8');
+	dec += decipher.final('utf8');
+	return dec;
+}
 function encrypt(data, fqdn){
 	var elemenet = store.search(fqdn)[0];
 	if(elemenet){
@@ -29,20 +54,51 @@ function encrypt(data, fqdn){
 			var buffer = Buffer.concat([header, modulus, midheader, exponent]);
 			var rsaKey = new NodeRsa(buffer, "public-der");
 			rsaKey.importKey(buffer, "public-der");
-			var encryptedData = rsaKey.encrypt(data, "base64", "utf8");
-			return encryptedData;
+			var sharedCiphered = aesEncrypt(data);
+			var symetricCipherElemenet = JSON.stringify(sharedCiphered[1]);
+			sharedCiphered[1] = "";
+
+			var message=  {
+					rsaCipheredKeys: rsaKey.encrypt(JSON.stringify(symetricCipherElemenet), "base64", "utf8"),
+					data: sharedCiphered[0], 
+					encryptedFor: fqdn
+			};
+
+			return JSON.stringify(message);
 		}
 	}
 }
 
-function decrypt(fqdn, data){
-	var elemenet = store.search(fqdn)[0];
-	if(elemenet) {
+function decrypt(data){
+	try{ 
+		var encryptedMessage  = JSON.parse(data);
+		console.log("Encrypted Message", encryptedMessage);
+		if(!encryptedMessage.encryptedFor){
+			console.error("Decrypting a wrongly formated message %j", data);
+			return -1;
+		}	
+		var elemenet = store.search(encryptedMessage.encryptedFor)[0];
+		if(!elemenet && !(elemenet.PRIVATE_KEY)){
+			console.error("private key for ", encryptedMessage.encryptedFor);
+			return -1;
+		}
 		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
-		return (rsaKey.decrypt(data) + "");
-	}
 
-}
+		var message =rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
+			var payload = JSON.parse(JSON.parse(message));
+
+		var dechipheredPayload = aesDecrypt([
+			encryptedMessage.data,
+			payload,
+		]);
+		if(!message){
+			return -1;
+		}
+	}catch(e){
+		console.error("decrypt error ", e);
+	}
+	return dechipheredPayload;
+};
 
 function sign(data, fqdn){
 	var elemenet = store.search(fqdn)[0];
@@ -65,5 +121,7 @@ module.exports = {
 	encrypt: encrypt,
 	decrypt: decrypt,
 	sign: sign,
-	checkSignature: checkSignature
+	checkSignature: checkSignature,
+	aesEncrypt: aesEncrypt,
+	aesDecrypt: aesDecrypt
 };
