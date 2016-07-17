@@ -8,7 +8,9 @@ var store = new (require("../services/BeameStore"))();
 var developerServices = new(require('../core/DeveloperServices'))();
 var atomServices = new(require('../core/AtomServices'))();
 var edgeClientServices = new(require('../core/EdgeClientServices'))();
-var beameDirService = require('../services/BeameDirServices')
+var beameDirService = require('../services/BeameDirServices');
+var path = require('path');
+var fs = require('fs');
 
 function listCreds(type, fqdn){
 	var returnValues = [];
@@ -106,9 +108,13 @@ function createEdgeClient(atomFqdn, callback){
 }
 createEdgeClient.toText = lineToText;
 
-function exportCredentials(fqdn, targetFqdn){
+function exportCredentials(fqdn, targetFqdn, file){
 	var creds = store.search(fqdn);
 	var jsonString = JSON.stringify(creds[0]);
+	if(!jsonString){
+		console.error("Credentials for exporting are not found");
+		return -1;
+	}
 	var crypto = require('./crypto');
 	var encryptedString;
 	try{
@@ -119,12 +125,19 @@ function exportCredentials(fqdn, targetFqdn){
 		signedData :{
 			data: encryptedString, 
 			signedby: fqdn,
-			encryptedfor: targetFqdn
+			encryptedFor: targetFqdn
 		}
 	};
-	message.signature = crypto.sign(JSON.stringify(message.signedData), fqdn );
+	message.signature = JSON.stringify(crypto.sign(message.signedData, fqdn ));
+	if(!file) {
 
-	return message ;
+	}
+	else{
+		var p = path.resolve(file);
+		fs.writeFileSync(p, JSON.stringify(message));
+		return p;
+	}
+
 }
 function readStdinStream(callback){
 	var stdin = process.stdin,
@@ -147,25 +160,34 @@ function  decryptCreds(data) {
 	var crypto = require('./crypto');
 	var parsedData = JSON.parse(data);
 
-	var signatureStatus = crypto.checkSignature(parsedData.signedData.signedby, parsedData.signedData, parsedData.signature)
-	if(signatureStatus == true) {
-		var creds = store.search(parsedData.signedData.encryptedfor)[0];
-		var decryptedcreds = crypto.decrypt(parsedData.signedData.data);
+	var signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedby, parsedData.signature);
+	if(signatureStatus === true) {
+		var creds = store.search(parsedData.signedData.encryptedFor)[0];
+		var decryptedcreds = crypto.decrypt(JSON.stringify(parsedData.signedData.data));
 		return decryptedcreds;
 	}
 }
 
-function importCredentials(data){
-	var credsToImport;
+function importCredentials(data, file){
 	var decryptedCreds;
-	if(!data) {
+	if(!data && !file) {
 		readStdinStream(function (data) {
 			decryptedCreds = decryptCreds(data);
 			store.importCredentials(data);
 		});
 	}else {
-		decryptedCreds = decryptCreds(data);
-		store.importCredentials(decryptedCreds);
+		if(file){
+			data = fs.readFileSync(path.resolve(file))+ "";
+			decryptedCreds = decryptCreds(data);
+			if(!decryptedCreds ){
+				console.error("No decrypted creds");
+				return -1;
+      		}
+			return store.importCredentials(decryptedCreds);
+		}else {
+			decryptedCreds = decryptCreds(JSON.parse(data));
+			return  store.importCredentials(decryptedCreds);
+		}
 	}
 }
 

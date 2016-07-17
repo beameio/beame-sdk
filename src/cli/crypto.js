@@ -33,7 +33,7 @@ function aesDecrypt(data){
 	if(!(data[1].IV && data[1].sharedCipher && data[0].AES256CBC )){
 		return "";
 	}
-	var cipher  = new Buffer(data[1].sharedCipher, "base64");
+	var cipher = new Buffer(data[1].sharedCipher, "base64");
 	var IV = new Buffer(data[1].IV, "base64");
 
 	decipher = crypto.createDecipheriv("aes-256-cbc", cipher, IV);
@@ -41,30 +41,40 @@ function aesDecrypt(data){
 	dec += decipher.final('utf8');
 	return dec;
 }
+
+function getPublicKey(cert){
+	var xcert = x509.parseCert(cert + "");
+	if(xcert) {
+		var publicKey = xcert.publicKey;
+		var modulus = new Buffer(publicKey.n, 'hex');
+		var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
+		var midheader = new Buffer("0203", "hex");
+		var exponent = new Buffer("010001", "hex");
+		var buffer = Buffer.concat([header, modulus, midheader, exponent]);
+		var rsaKey = new NodeRsa(buffer, "public-der");
+		rsaKey.importKey(buffer, "public-der");
+		return rsaKey
+	}
+	return {};
+}
+
 function encrypt(data, fqdn){
 	var elemenet = store.search(fqdn)[0];
 	if(elemenet){
-		var xcert = x509.parseCert(elemenet.X509 + "");
-		if(xcert){
-			var publicKey = xcert.publicKey;
-			var modulus = new Buffer(publicKey.n, 'hex');
-			var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
-			var midheader = new Buffer("0203", "hex");
-			var exponent = new Buffer("010001", "hex");
-			var buffer = Buffer.concat([header, modulus, midheader, exponent]);
-			var rsaKey = new NodeRsa(buffer, "public-der");
-			rsaKey.importKey(buffer, "public-der");
+		var rsaKey = getPublicKey(elemenet.X509);
+		if(rsaKey){
+
 			var sharedCiphered = aesEncrypt(data);
 			var symetricCipherElemenet = JSON.stringify(sharedCiphered[1]);
 			sharedCiphered[1] = "";
 
-			var message=  {
+			var message = {
 					rsaCipheredKeys: rsaKey.encrypt(JSON.stringify(symetricCipherElemenet), "base64", "utf8"),
-					data: sharedCiphered[0], 
+					data: sharedCiphered[0],
 					encryptedFor: fqdn
 			};
 
-			return JSON.stringify(message);
+			return message;
 		}
 	}
 }
@@ -72,7 +82,6 @@ function encrypt(data, fqdn){
 function decrypt(data){
 	try{ 
 		var encryptedMessage  = JSON.parse(data);
-		console.log("Encrypted Message", encryptedMessage);
 		if(!encryptedMessage.encryptedFor){
 			console.error("Decrypting a wrongly formated message %j", data);
 			return -1;
@@ -84,18 +93,19 @@ function decrypt(data){
 		}
 		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
 
-		var message =rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
-			var payload = JSON.parse(JSON.parse(message));
+		var message = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
+		var payload = JSON.parse(JSON.parse(message));
 
 		var dechipheredPayload = aesDecrypt([
 			encryptedMessage.data,
 			payload,
 		]);
 		if(!message){
+			console.error("No message");
 			return -1;
 		}
-	}catch(e){
-		console.error("decrypt error ", e);
+	} catch(e) {
+		console.error("decrypt error ", e.toString());
 	}
 	return dechipheredPayload;
 };
@@ -106,22 +116,29 @@ function sign(data, fqdn){
 		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
 		return rsaKey.sign(data, "base64", "utf8");
 	}
-	return data;
+	console.error("public key not found ");
+	return {};
 }
 
-function checkSignature(fqdn, data, signature){
+function checkSignature(data, fqdn, signature){
 	var elemenet = store.search(fqdn)[0];
+	var certBody;
+
 	if(elemenet) {
-		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
-		return rsaKey.verify(data, signature, "utf8", "base64");
+		certBody = elemenet.X509 + "";
+	}else{
+		certBody = store.getRemoteCertificate(fqdn) + "";
 	}
+	var rsaKey = getPublicKey(certBody);
+	var status = rsaKey.verify(data, signature, "utf8", "base64");
+	return status;
 }
 
 module.exports = {
-	encrypt: encrypt,
-	decrypt: decrypt,
-	sign: sign,
-	checkSignature: checkSignature,
-	aesEncrypt: aesEncrypt,
-	aesDecrypt: aesDecrypt
+	encrypt,
+	decrypt,
+	sign,
+	checkSignature,
+	aesEncrypt,
+	aesDecrypt
 };

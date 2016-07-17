@@ -9,6 +9,9 @@ var beameDirApi = require('./BeameDirServices');
 var sprintf = require('sprintf');
 var mkdirp = require('mkdirp');
 var path = require('path');
+var request = require('sync-request');
+var apiConfig = require("../../config/ApiConfig.json");
+var url = require('url');
 // The idea is this object framework above BeameDirServices.js
 // BeameStore will load the directory and manage it in memory as well be capabale proving high level
 // API to work with JSON.
@@ -209,7 +212,24 @@ BeameStore.prototype.list = function (type, name) {
         }, this));
         return returnArray;
     }
+};
 
+BeameStore.prototype.getRemoteCertificate = function(fqdn, callback){
+    var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
+    var certBody = "";
+    if(fs.existsSync(remoteCertPath)) {
+        certBody = fs.readFileSync(remoteCertPath);
+    }else {
+        var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+        var response = request('GET', requestPath);
+        certBody = response.getBody() + "";
+
+        if (response.statusCode == 200) {
+            mkdirp(path.parse(remoteCertPath).dir);
+            fs.writeFileSync(remoteCertPath, certBody);
+        }
+    }
+    return certBody;
 };
 
 BeameStore.prototype.importCredentials =function(data){
@@ -217,7 +237,7 @@ BeameStore.prototype.importCredentials =function(data){
     var host = credToImport.hostname;
     var targetPath = global.devPath;
 
-    if(credToImport.type === 'developer'){
+    if(credToImport.level === 'developer'){
         targetPath = path.join(global.devPath, host);
     } else{
         targetPath = path.join(global.devPath, credToImport.hostname);
@@ -229,15 +249,16 @@ BeameStore.prototype.importCredentials =function(data){
     mkdirp(targetPath);
     var metadata = {};
     _.map(credToImport, function(value, key){
-        //console.log("Value %j %j", key, value)
-        var filepath = path.join(targetPath, value);
+        console.log("key  %j value %j", key, value)
         if(global.CertFileNames[key]){
-            fs.writeFileSync(filepath, value);
+            var filepath = path.join(targetPath, key);
+            fs.writeFileSync(filepath, new Buffer(value.data));
+
         }else{
             metadata[key] = value;
         }
     });
-    fs.writeFileSync(path.join(targetPath, "metadata.json"), value);
+    fs.writeFileSync(path.join(targetPath, "metadata.json"), JSON.stringify(metadata));
 
 };
 
