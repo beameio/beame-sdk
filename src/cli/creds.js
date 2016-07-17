@@ -90,9 +90,14 @@ function createTestDeveloper(developerName, developerEmail, callback){
 }
 createTestDeveloper.toText = lineToText;
 
-function createAtom(developerFqdn, atomName, callback){
-	console.warn("Creating atom developerFqdn=%j atomName=%j", developerFqdn, atomName);
-	atomServices.createAtom(developerFqdn, atomName, _stdCallback(callback));
+function createAtom(developerFqdn, atomName, howMany, callback){
+	if(!howMany){
+		howMany =1;
+	}
+	for(var i = 0; i < howMany; i++){
+		console.warn("Creating atom developerFqdn=%j atomName=%j", developerFqdn, atomName);
+		atomServices.createAtom(developerFqdn, atomName+i, _stdCallback(callback));
+	}
 }
 createAtom.toText = lineToText;
 
@@ -102,15 +107,39 @@ function createDeveloper(developerFqdn, uid, callback){
 }
 createDeveloper.toText = lineToText;
 
-function createEdgeClient(atomFqdn, callback){
-	console.warn("Creating edge client atomFqdn=%j", atomFqdn);
-	edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
+function createEdgeClient(atomFqdn, howMany, callback ){
+	if(!howMany){
+		howMany =1;
+	}
+	for(var i = 0; i < howMany; i++){
+		console.warn("Creating edge client atomFqdn=%j", atomFqdn);
+		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
+	}
 }
+
 createEdgeClient.toText = lineToText;
 
+function constructRelateivePathElements(item){
+	var items = [];
+	var upShot = item;
+	items.push(upShot.hostname);
+	while(upShot.parent_fqdn){
+		upShot = store.search(upShot.parent_fqdn)[0];
+		items.unshift(upShot.hostname);
+	}
+	return items;
+}
+
 function exportCredentials(fqdn, targetFqdn, file){
-	var creds = store.search(fqdn);
-	var jsonString = JSON.stringify(creds[0]);
+	var creds = store.search(fqdn)[0];
+	var relateivePath = constructRelateivePathElements(creds);
+
+    creds.edgeclient = {};
+    creds.atom = {};
+    creds['relativePath'] = relateivePath;
+    creds.path = creds.path.replace(global.devPath, "");
+
+    var jsonString = JSON.stringify(creds);
 	if(!jsonString){
 		console.error("Credentials for exporting are not found");
 		return -1;
@@ -163,13 +192,19 @@ function  decryptCreds(data) {
 	var signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedby, parsedData.signature);
 	if(signatureStatus === true) {
 		var creds = store.search(parsedData.signedData.encryptedFor)[0];
-		var decryptedcreds = crypto.decrypt(JSON.stringify(parsedData.signedData.data));
+
+        if(!creds){
+            console.error("Private key for %j is not found", parsedData.signedData.encryptedFor)
+            return -1;
+        }
+        var decryptedcreds = crypto.decrypt(JSON.stringify(parsedData.signedData.data));
 		return decryptedcreds;
 	}
 }
 
 function importCredentials(data, file){
 	var decryptedCreds;
+
 	if(!data && !file) {
 		readStdinStream(function (data) {
 			decryptedCreds = decryptCreds(data);
@@ -179,7 +214,7 @@ function importCredentials(data, file){
 		if(file){
 			data = fs.readFileSync(path.resolve(file))+ "";
 			decryptedCreds = decryptCreds(data);
-			if(!decryptedCreds ){
+			if(!decryptedCreds || decryptedCreds  == -1){
 				console.error("No decrypted creds");
 				return -1;
       		}

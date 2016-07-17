@@ -126,9 +126,11 @@ function checkSignature(data, fqdn, signature){
 
 	if(elemenet) {
 		certBody = elemenet.X509 + "";
-	}else{
+	}
+	else{
 		certBody = store.getRemoteCertificate(fqdn) + "";
 	}
+	
 	var rsaKey = getPublicKey(certBody);
 	var status = rsaKey.verify(data, signature, "utf8", "base64");
 	return status;

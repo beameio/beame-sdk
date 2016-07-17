@@ -86,4 +86,4 @@ function readBeameDir(startdir) {
     return developers;
 }
 
-module.exports = {"readBeameDir": readBeameDir, "generateDigest": generateDigest};
+module.exports = {"readBeameDir": readBeameDir, "generateDigest": generateDigest, "makepath": makepath};

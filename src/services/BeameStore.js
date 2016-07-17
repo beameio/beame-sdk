@@ -237,21 +237,14 @@ BeameStore.prototype.importCredentials =function(data){
     var host = credToImport.hostname;
     var targetPath = global.devPath;
 
-    if(credToImport.level === 'developer'){
-        targetPath = path.join(global.devPath, host);
-    } else{
-        targetPath = path.join(global.devPath, credToImport.hostname);
-    }
-    if(fs.existsSync(targetPath)) {
-        console.warn("Directory already exists exiting.");
-        return;
-    }
+    targetPath = path.join(global.devPath, credToImport.path);
+	console.log("Target Path %j", targetPath);
     mkdirp(targetPath);
+
     var metadata = {};
     _.map(credToImport, function(value, key){
-        console.log("key  %j value %j", key, value)
         if(global.CertFileNames[key]){
-            var filepath = path.join(targetPath, key);
+            var filepath = path.join(targetPath, global.CertFileNames[key]);
             fs.writeFileSync(filepath, new Buffer(value.data));
 
         }else{
@@ -259,7 +252,8 @@ BeameStore.prototype.importCredentials =function(data){
         }
     });
     fs.writeFileSync(path.join(targetPath, "metadata.json"), JSON.stringify(metadata));
-
 };
+
+
 
 module.exports = BeameStore;
