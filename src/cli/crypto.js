@@ -107,7 +107,6 @@ function decrypt(data){
 	}catch(e){
 		console.error("decrypt error ", e.toString());
 	}
-	return dechipheredPayload;
 };
 
 function sign(data, fqdn){
