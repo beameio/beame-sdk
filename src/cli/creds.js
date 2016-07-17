@@ -2,9 +2,10 @@
 
 var _ = require('underscore');
 var debug = require("debug")("cred_api");
-var store = new (require("../services/BeameStore"))();
 var Table = require('cli-table2');
 var x509 = require('x509');
+
+var store = new (require("../services/BeameStore"))();
 var developerServices = new(require('../core/DeveloperServices'))();
 var atomServices = new(require('../core/AtomServices'))();
 var edgeClientServices = new(require('../core/EdgeClientServices'))();
