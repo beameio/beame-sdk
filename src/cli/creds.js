@@ -169,7 +169,6 @@ function  decryptCreds(data) {
 }
 
 function importCredentials(data, file){
-	var credsToImport;
 	var decryptedCreds;
 	if(!data && !file) {
 		readStdinStream(function (data) {
@@ -182,7 +181,7 @@ function importCredentials(data, file){
 			decryptedCreds = decryptCreds(data);
 			if(!decryptedCreds ){
 				return -1;
-      }
+      		}
 			return store.importCredentials(decryptedCreds);
 		}else {
 			decryptedCreds = decryptCreds(JSON.parse(data));

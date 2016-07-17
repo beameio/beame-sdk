@@ -126,10 +126,10 @@ function checkSignature(data, fqdn, signature){
 		var rsaKey = getPublicKey(elemenet.X509);
 		return rsaKey.verify(data, signature, "utf8", "base64");
 	}else{
-		store.getRemoteCertificate(fqdn, function(body){
-			var rsaKey = getPublicKey(elemenet.X509);
-			return rsaKey.verify(data, signature, "utf8", "base64");
-		});
+		var certBody = store.getRemoteCertificate(fqdn) + "";
+		var rsaKey = getPublicKey(certBody);
+		var status = rsaKey.verify(data, signature, "utf8", "base64");
+		return status;
 	}
 }
 

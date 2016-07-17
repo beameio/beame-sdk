@@ -9,7 +9,7 @@ var beameDirApi = require('./BeameDirServices');
 var sprintf = require('sprintf');
 var mkdirp = require('mkdirp');
 var path = require('path');
-var request = require('request');
+var request = require('sync-request');
 var apiConfig = require("../../config/ApiConfig.json");
 var url = require('url');
 // The idea is this object framework above BeameDirServices.js
@@ -215,21 +215,21 @@ BeameStore.prototype.list = function (type, name) {
 };
 
 BeameStore.prototype.getRemoteCertificate = function(fqdn, callback){
-    var remoteCertPath = path.join(global.globalPath, 'v1', 'local', fqdn, 'x509.pem');
+    var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
+    var certBody = "";
     if(fs.existsSync(remoteCertPath)) {
-        callback(fs.readFileSync(remoteCertPath));
-    }else{
-        var requestPath =  apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
-        request(requestPath , {}, function (error, response, body) {
+        certBody = fs.readFileSync(remoteCertPath);
+    }else {
+        var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+        var response = request('GET', requestPath);
+        certBody = response.getBody() + "";
+
+        if (response.statusCode == 200) {
             mkdirp(path.parse(remoteCertPath).dir);
-            if (!error && response.statusCode == 200) {
-
-                fs.writeFileSync(remoteCertPath, body);
-            }
-
-            callback(body);
-        })
+            fs.writeFileSync(remoteCertPath, certBody);
+        }
     }
+    return certBody;
 };
 
 BeameStore.prototype.importCredentials =function(data){
