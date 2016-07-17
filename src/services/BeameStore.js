@@ -159,12 +159,16 @@ BeameStore.prototype.listCurrentEdges = function () {
     return jmespath.search(this.beameStore, "[].atom[].edgeclient[*].{name:name, hostname:hostname, level:level} | []");
 };
 
-BeameStore.prototype.search = function (name) {
+BeameStore.prototype.ensureFreshBeameStore = function () {
     var newHash = beameDirApi.generateDigest(this.beamedir);
     if (this.digest !== newHash) {
         this.beameStore = beameDirApi.readBeameDir(this.beamedir);
         this.digest = newHash;
     }
+}
+
+BeameStore.prototype.search = function (name) {
+	this.ensureFreshBeameStore();
 
     var results = _.map(this.searchFunctions, _.bind(function (item) {
         return item.func.call(this, name);
@@ -174,11 +178,7 @@ BeameStore.prototype.search = function (name) {
 };
 
 BeameStore.prototype.list = function (type, name) {
-    var newHash = beameDirApi.generateDigest(this.beamedir);
-    if (this.digest !== newHash) {
-        this.beameStore = beameDirApi.readBeameDir(this.beamedir);
-        this.digest = newHash;
-    }
+	this.ensureFreshBeameStore();
 
     var returnArray = [];
     if (type && type.length) {
@@ -223,7 +223,7 @@ BeameStore.prototype.importCredentials =function(data){
         targetPath = path.join(global.devPath, credToImport.hostname);
     }
     if(fs.existsSync(targetPath)) {
-        console.warn/("Directory already exists exiting.");
+        console.warn("Directory already exists exiting.");
         return;
     }
     mkdirp(targetPath);
