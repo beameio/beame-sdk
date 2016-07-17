@@ -176,7 +176,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
                 return;
             }
 
-            callback(null, true);
+            callback(null, 'done');
         });
     };
 

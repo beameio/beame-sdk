@@ -481,4 +481,43 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
 
     beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(function(){onSearchFailed(callback)})};
 
+//noinspection JSUnusedGlobalSymbols
+AtomServices.prototype.getStats = function (atomHostname, callback) {
+    var devDir,atomDir;
+
+    /*---------- private callbacks -------------------*/
+    function onRequestValidated() {
+
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        var postData = {
+            hostname: atomHostname
+        };
+
+        var apiData = beameUtils.getApiData(apiActions.GetStats.endpoint, postData, false);
+
+        provisionApi.runRestfulAPI(apiData, callback ,'GET');
+
+    }
+
+    function onValidationError(error) {
+        callback && callback(error, null);
+    }
+
+    /**
+     *
+     * @param {ItemAndParentFolderPath} data
+     */
+    function onAtomPathReceived(data){
+
+        atomDir = data['path'];
+        devDir = data['parent_path'];
+
+        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
+    }
+
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback))
+};
+
+
 module.exports = AtomServices;
