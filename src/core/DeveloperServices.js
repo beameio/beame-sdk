@@ -73,7 +73,7 @@ var saveDeveloper = function (email, developerName, callback) {
 
         }
         else {
-            console.error(error);
+            //console.error(error);
             callback && callback(error, null);
         }
 
@@ -92,7 +92,7 @@ var getCert = function (hostname, callback) {
 
     if (_.isEmpty(hostname)) {
         errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        console.error(errMsg);
+        //console.error(errMsg);
         callback && callback(errMsg, null);
         return;
     }
@@ -119,14 +119,14 @@ var getCert = function (hostname, callback) {
                     }
                     else {
                         error.data.hostname = hostname;
-                        console.error(error);
+                        //console.error(error);
                         callback(error, null);
                     }
                 });
 
             },
             function onCsrCreationFailed(error) {
-                console.error(error);
+                //console.error(error);
                 callback && callback(error, null);
             });
     }
@@ -197,7 +197,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
     if (_.isEmpty(hostname)) {
         errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        console.error(errMsg);
+        //console.error(errMsg);
         callback && callback(errMsg, null);
         return;
     }
@@ -246,14 +246,14 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
                     }
                     else {
                         error.data.hostname = hostname;
-                        console.error(error);
+                        //console.error(error);
                         callback(error, null);
                     }
                 });
 
             },
             function onCsrCreationFailed(error) {
-                console.error(error);
+                //console.error(error);
                 callback && callback(error, null);
             });
     }
@@ -295,7 +295,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
             }
             else {
                 error.data.hostname = hostname;
-                console.error(error);
+                //console.error(error);
                 callback(error, null);
             }
         });
@@ -357,14 +357,14 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
                         dataServices.deleteFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY);
 
                         error.data.hostname = hostname;
-                        console.error(error);
+                        //console.error(error);
                         callback(error, null);
                     }
                 });
 
             },
             function onCsrCreationFailed(error) {
-                console.error(error);
+                //console.error(error);
                 callback && callback(error, null);
             });
     }
@@ -392,7 +392,7 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 
     if (_.isEmpty(hostname)) {
         errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        console.error(errMsg);
+        //console.error(errMsg);
         callback && callback(errMsg, null);
         return;
     }
@@ -428,14 +428,14 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
                 }
                 else {
                     error.data.hostname = hostname;
-                    console.error(error);
+                    //console.error(error);
                     callback(error, null);
                 }
             });
 
         },
         function onCsrCreationFailed(error) {
-            console.error(error);
+            //console.error(error);
             callback && callback(error, null);
         });
 
@@ -481,7 +481,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
             }
             else {
                 error.data.hostname = hostname;
-                console.error(error);
+                //console.error(error);
                 callback(error, null);
             }
         });

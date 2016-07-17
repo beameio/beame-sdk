@@ -170,5 +170,5 @@ global.ResponseKeys = {
     "AtomCreateResponseKeys": ["hostname", "uid", "name","parent_fqdn"],
     "EdgeClientResponseKeys": ["uid", "hostname", "edgeHostname","parent_fqdn"],
     "CertificateResponseKeys": ["x509", "pkcs7", "ca"],
-    "RevokeDevCertResponseKeys" : ["recovery_code"],
+    "RevokeDevCertResponseKeys" : ["recovery_code"]
 };
