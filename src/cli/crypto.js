@@ -41,19 +41,29 @@ function aesDecrypt(data){
 	dec += decipher.final('utf8');
 	return dec;
 }
+
+function getPublicKey(cert){
+	var xcert = x509.parseCert(cert + "");
+	if(xcert) {
+		var publicKey = xcert.publicKey;
+		var modulus = new Buffer(publicKey.n, 'hex');
+		var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
+		var midheader = new Buffer("0203", "hex");
+		var exponent = new Buffer("010001", "hex");
+		var buffer = Buffer.concat([header, modulus, midheader, exponent]);
+		var rsaKey = new NodeRsa(buffer, "public-der");
+		rsaKey.importKey(buffer, "public-der");
+		return rsaKey
+	}
+	return {};
+}
+
 function encrypt(data, fqdn){
 	var elemenet = store.search(fqdn)[0];
 	if(elemenet){
-		var xcert = x509.parseCert(elemenet.X509 + "");
-		if(xcert){
-			var publicKey = xcert.publicKey;
-			var modulus = new Buffer(publicKey.n, 'hex');
-			var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
-			var midheader = new Buffer("0203", "hex");
-			var exponent = new Buffer("010001", "hex");
-			var buffer = Buffer.concat([header, modulus, midheader, exponent]);
-			var rsaKey = new NodeRsa(buffer, "public-der");
-			rsaKey.importKey(buffer, "public-der");
+		var rsaKey = getPublicKey(elemenet.X509);
+		if(rsaKey ){
+
 			var sharedCiphered = aesEncrypt(data);
 			var symetricCipherElemenet = JSON.stringify(sharedCiphered[1]);
 			sharedCiphered[1] = "";
@@ -95,7 +105,7 @@ function decrypt(data){
 			return -1;
 		}
 	}catch(e){
-		console.error("decrypt error ", e);
+		console.error("decrypt error ", e.toString());
 	}
 	return dechipheredPayload;
 };
@@ -106,14 +116,21 @@ function sign(data, fqdn){
 		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
 		return rsaKey.sign(data, "base64", "utf8");
 	}
-	return data;
+	console.error("public key not found ");
+	return {};
 }
 
-function checkSignature(fqdn, data, signature){
+function checkSignature(data, fqdn, signature){
 	var elemenet = store.search(fqdn)[0];
+
 	if(elemenet) {
-		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
+		var rsaKey = getPublicKey(elemenet.X509);
 		return rsaKey.verify(data, signature, "utf8", "base64");
+	}else{
+		store.getRemoteCertificate(fqdn, function(body){
+			var rsaKey = getPublicKey(elemenet.X509);
+			return rsaKey.verify(data, signature, "utf8", "base64");
+		});
 	}
 }
 

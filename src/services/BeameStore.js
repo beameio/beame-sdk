@@ -9,6 +9,9 @@ var beameDirApi = require('./BeameDirServices');
 var sprintf = require('sprintf');
 var mkdirp = require('mkdirp');
 var path = require('path');
+var request = require('request');
+var apiConfig = require("../../config/ApiConfig.json");
+var url = require('url');
 // The idea is this object framework above BeameDirServices.js
 // BeameStore will load the directory and manage it in memory as well be capabale proving high level
 // API to work with JSON.
@@ -210,7 +213,24 @@ BeameStore.prototype.list = function (type, name) {
         }, this));
         return returnArray;
     }
+};
 
+BeameStore.prototype.getRemoteCertificate = function(fqdn, callback){
+    var remoteCertPath = path.join(global.globalPath, 'v1', 'local', fqdn, 'x509.pem');
+    if(fs.existsSync(remoteCertPath)) {
+        callback(fs.readFileSync(remoteCertPath));
+    }else{
+        var requestPath =  apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+        request(requestPath , {}, function (error, response, body) {
+            mkdirp(path.parse(remoteCertPath).dir);
+            if (!error && response.statusCode == 200) {
+
+                fs.writeFileSync(remoteCertPath, body);
+            }
+
+            callback(body);
+        })
+    }
 };
 
 BeameStore.prototype.importCredentials =function(data){
@@ -218,22 +238,23 @@ BeameStore.prototype.importCredentials =function(data){
     var host = credToImport.hostname;
     var targetPath = global.devPath;
 
-    if(credToImport.type === 'developer'){
+    if(credToImport.level === 'developer'){
         targetPath = path.join(global.devPath, host);
     } else{
         targetPath = path.join(global.devPath, credToImport.hostname);
     }
     if(fs.existsSync(targetPath)) {
-        console.warn/("Directory already exists exiting.");
-        return;
+        console.error("directory already exits ");
+       return -1;
     }
     mkdirp(targetPath);
     var metadata = {};
     _.map(credToImport, function(value, key){
-        //console.log("Value %j %j", key, value)
-        var filepath = path.join(targetPath, value);
+        console.log("key  %j value %j", key, value)
         if(global.CertFileNames[key]){
+            var filepath = path.join(targetPath, value);
             fs.writeFileSync(filepath, value);
+
         }else{
             metadata[key] = value;
         }
