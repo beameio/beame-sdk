@@ -68,13 +68,13 @@ function encrypt(data, fqdn){
 			var symetricCipherElemenet = JSON.stringify(sharedCiphered[1]);
 			sharedCiphered[1] = "";
 
-			var message=  {
+			var message = {
 					rsaCipheredKeys: rsaKey.encrypt(JSON.stringify(symetricCipherElemenet), "base64", "utf8"),
 					data: sharedCiphered[0], 
 					encryptedFor: fqdn
 			};
 
-			return JSON.stringify(message);
+			return message;
 		}
 	}
 }
