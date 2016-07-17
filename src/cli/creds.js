@@ -180,14 +180,14 @@ function purge(type, fqdn){
 
 
 module.exports = {
-	show:	show,
-	list:	list,
-	renew:	renew,
-	purge:	purge,
-	createAtom: createAtom,
-	createEdgeClient: createEdgeClient,
-	createDeveloper: createDeveloper,
-	createTestDeveloper: createTestDeveloper,
-	exportCredentials:exportCredentials,
-	importCredentials:importCredentials
+	show,
+	list,
+	renew,
+	purge,
+	createAtom,
+	createEdgeClient,
+	createDeveloper,
+	createTestDeveloper,
+	exportCredentials,
+	importCredentials
 };
