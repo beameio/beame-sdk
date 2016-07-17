@@ -251,14 +251,14 @@ BeameStore.prototype.importCredentials =function(data){
     _.map(credToImport, function(value, key){
         console.log("key  %j value %j", key, value)
         if(global.CertFileNames[key]){
-            var filepath = path.join(targetPath, value);
-            fs.writeFileSync(filepath, value);
+            var filepath = path.join(targetPath, key);
+            fs.writeFileSync(filepath, new Buffer(value.data));
 
         }else{
             metadata[key] = value;
         }
     });
-    fs.writeFileSync(path.join(targetPath, "metadata.json"), value);
+    fs.writeFileSync(path.join(targetPath, "metadata.json"), JSON.stringify(metadata));
 
 };
 

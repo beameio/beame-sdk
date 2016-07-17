@@ -125,7 +125,7 @@ function exportCredentials(fqdn, targetFqdn, file){
 		signedData :{
 			data: encryptedString, 
 			signedby: fqdn,
-			encryptedfor: targetFqdn
+			encryptedFor: targetFqdn
 		}
 	};
 	message.signature = JSON.stringify(crypto.sign(message.signedData, fqdn ));
@@ -162,8 +162,8 @@ function  decryptCreds(data) {
 
 	var signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedby, parsedData.signature);
 	if(signatureStatus === true) {
-		var creds = store.search(parsedData.signedData.encryptedfor)[0];
-		var decryptedcreds = crypto.decrypt(parsedData.signedData.data);
+		var creds = store.search(parsedData.signedData.encryptedFor)[0];
+		var decryptedcreds = crypto.decrypt(JSON.stringify(parsedData.signedData.data));
 		return decryptedcreds;
 	}
 }
@@ -180,6 +180,7 @@ function importCredentials(data, file){
 			data = fs.readFileSync(path.resolve(file))+ "";
 			decryptedCreds = decryptCreds(data);
 			if(!decryptedCreds ){
+				console.error("No decrypted creds");
 				return -1;
       		}
 			return store.importCredentials(decryptedCreds);

@@ -33,7 +33,7 @@ function aesDecrypt(data){
 	if(!(data[1].IV && data[1].sharedCipher && data[0].AES256CBC )){
 		return "";
 	}
-	var cipher  = new Buffer(data[1].sharedCipher, "base64");
+	var cipher = new Buffer(data[1].sharedCipher, "base64");
 	var IV = new Buffer(data[1].IV, "base64");
 
 	decipher = crypto.createDecipheriv("aes-256-cbc", cipher, IV);
@@ -62,7 +62,7 @@ function encrypt(data, fqdn){
 	var elemenet = store.search(fqdn)[0];
 	if(elemenet){
 		var rsaKey = getPublicKey(elemenet.X509);
-		if(rsaKey ){
+		if(rsaKey){
 
 			var sharedCiphered = aesEncrypt(data);
 			var symetricCipherElemenet = JSON.stringify(sharedCiphered[1]);
@@ -70,7 +70,7 @@ function encrypt(data, fqdn){
 
 			var message = {
 					rsaCipheredKeys: rsaKey.encrypt(JSON.stringify(symetricCipherElemenet), "base64", "utf8"),
-					data: sharedCiphered[0], 
+					data: sharedCiphered[0],
 					encryptedFor: fqdn
 			};
 
@@ -82,7 +82,6 @@ function encrypt(data, fqdn){
 function decrypt(data){
 	try{ 
 		var encryptedMessage  = JSON.parse(data);
-		console.log("Encrypted Message", encryptedMessage);
 		if(!encryptedMessage.encryptedFor){
 			console.error("Decrypting a wrongly formated message %j", data);
 			return -1;
@@ -94,19 +93,21 @@ function decrypt(data){
 		}
 		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
 
-		var message =rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
-			var payload = JSON.parse(JSON.parse(message));
+		var message = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
+		var payload = JSON.parse(JSON.parse(message));
 
 		var dechipheredPayload = aesDecrypt([
 			encryptedMessage.data,
 			payload,
 		]);
 		if(!message){
+			console.error("No message");
 			return -1;
 		}
-	}catch(e){
+	} catch(e) {
 		console.error("decrypt error ", e.toString());
 	}
+	return dechipheredPayload;
 };
 
 function sign(data, fqdn){
