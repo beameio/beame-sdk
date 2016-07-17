@@ -121,23 +121,23 @@ function sign(data, fqdn){
 
 function checkSignature(data, fqdn, signature){
 	var elemenet = store.search(fqdn)[0];
+	var certBody;
 
 	if(elemenet) {
-		var rsaKey = getPublicKey(elemenet.X509);
-		return rsaKey.verify(data, signature, "utf8", "base64");
+		certBody = elemenet.X509 + "";
 	}else{
-		var certBody = store.getRemoteCertificate(fqdn) + "";
-		var rsaKey = getPublicKey(certBody);
-		var status = rsaKey.verify(data, signature, "utf8", "base64");
-		return status;
+		certBody = store.getRemoteCertificate(fqdn) + "";
 	}
+	var rsaKey = getPublicKey(certBody);
+	var status = rsaKey.verify(data, signature, "utf8", "base64");
+	return status;
 }
 
 module.exports = {
-	encrypt: encrypt,
-	decrypt: decrypt,
-	sign: sign,
-	checkSignature: checkSignature,
-	aesEncrypt: aesEncrypt,
-	aesDecrypt: aesDecrypt
+	encrypt,
+	decrypt,
+	sign,
+	checkSignature,
+	aesEncrypt,
+	aesDecrypt
 };
