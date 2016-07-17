@@ -1,6 +1,6 @@
 {
     "Endpoints": {
-        "Local": "https://prov-staging.beameio.net",
+        "Local": "https://zenit.office.beameio.net",
         "Online": "https://prov-staging.beameio.net",
         "AuthServer": "https://registration.beameio.net",
         "CertEndpoint": "https://s3.amazonaws.com/beame-certs"
@@ -27,6 +27,9 @@
             },
             "UpdateProfile": {
                 "endpoint": "/api/v1/dev/profile/update"
+            },
+            "GetAtomsStats": {
+                "endpoint": "/api/v1/atom/stats"
             }
         },
         "AtomApi": {
@@ -47,6 +50,9 @@
             },
             "RevokeCert": {
                 "endpoint": "/api/v1/atom/cert/revoke"
+            },
+            "GetStats": {
+                "endpoint": "/api/v1/atom/stats"
             }
         },
         "EdgeClient":{
@@ -64,6 +70,9 @@
             },
             "RevokeCert": {
                 "endpoint": "/api/v1/client/cert/revoke"
+            },
+            "GetStats": {
+                "endpoint": "/api/v1/client/stats"
             }
         }
     }

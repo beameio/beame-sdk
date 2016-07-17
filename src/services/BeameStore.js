@@ -26,35 +26,34 @@ var url = require('url');
 // beame.store offers api for accessing beame.dir datastructre, upon construction it will parse the directory structure, and produce a json object structure.
 //
 
+var beameStoreInstance = null;
+
 function BeameStore(beamedir) {
-    if (global.store == null) {
-        if (!beamedir || beamedir.length === 0) {
-            this.beamedir = process.env.BEAME_DIR || global.globalPath;
-        }
-        this.digest = beameDirApi.generateDigest(this.beamedir);
 
-        debug("reading beamedir %j", this.beamedir);
-
-        mkdirp.sync(path.join(this.beamedir, "v1", 'local'));
-        mkdirp.sync(path.join(this.beamedir, "v1", 'remote'));
-        this.beamedir = path.join(this.beamedir, "v1", 'local');
-        this.beameStore = beameDirApi.readBeameDir(this.beamedir);
-        this.listFunctions = [];
-        this.searchFunctions = [];
-
-        this.listFunctions.push({type: "developer", 'func': this.listCurrentDevelopers});
-        this.listFunctions.push({type: "atom", 'func': this.listCurrentAtoms});
-        this.listFunctions.push({type: "edgeclient", 'func': this.listCurrentEdges});
-
-
-        this.searchFunctions.push({type: "developer", 'func': this.searchDevelopers});
-        this.searchFunctions.push({type: "atom", 'func': this.searchAtoms});
-        this.searchFunctions.push({type: "edgeclient", 'func': this.searchEdge});
-        global.store = this;
+    if(beameStoreInstance) {
+        return beameStoreInstance;
     }
-    else {
-        return global.store;
-    }
+
+    this.beamedir = beamedir || process.env.BEAME_DIR || global.globalPath;
+
+    mkdirp.sync(path.join(this.beamedir, "v1", 'local'));
+    mkdirp.sync(path.join(this.beamedir, "v1", 'remote'));
+    this.beamedir = path.join(this.beamedir, "v1", 'local');
+    this.ensureFreshBeameStore();
+
+    this.listFunctions = [
+        {type: "developer",  'func': this.listCurrentDevelopers},
+        {type: "atom",       'func': this.listCurrentAtoms},
+        {type: "edgeclient", 'func': this.listCurrentEdges}
+    ];
+
+    this.searchFunctions = [
+        {type: "developer",  'func': this.searchDevelopers},
+        {type: "atom",       'func': this.searchAtoms},
+        {type: "edgeclient", 'func': this.searchEdge}
+    ];
+
+    beameStoreInstance = this;
 }
 
 
@@ -162,27 +161,27 @@ BeameStore.prototype.listCurrentEdges = function () {
     return jmespath.search(this.beameStore, "[].atom[].edgeclient[*].{name:name, hostname:hostname, level:level} | []");
 };
 
-BeameStore.prototype.search = function (name) {
+BeameStore.prototype.ensureFreshBeameStore = function () {
     var newHash = beameDirApi.generateDigest(this.beamedir);
     if (this.digest !== newHash) {
+        debug("reading beamedir %j", this.beamedir);
         this.beameStore = beameDirApi.readBeameDir(this.beamedir);
         this.digest = newHash;
     }
+}
 
-    var fullResult = [];
-    _.each(this.searchFunctions, _.bind(function (item) {
-        var newArray = item.func.call(this, name);
-        fullResult = fullResult.concat(newArray);
+BeameStore.prototype.search = function (name) {
+	this.ensureFreshBeameStore();
+
+    var results = _.map(this.searchFunctions, _.bind(function (item) {
+        return item.func.call(this, name);
     }, this));
-    return fullResult;
+	results = _.flatten(results, true);
+    return results;
 };
 
 BeameStore.prototype.list = function (type, name) {
-    var newHash = beameDirApi.generateDigest(this.beamedir);
-    if (this.digest !== newHash) {
-        this.beameStore = beameDirApi.readBeameDir(this.beamedir);
-        this.digest = newHash;
-    }
+	this.ensureFreshBeameStore();
 
     var returnArray = [];
     if (type && type.length) {
@@ -244,8 +243,8 @@ BeameStore.prototype.importCredentials =function(data){
         targetPath = path.join(global.devPath, credToImport.hostname);
     }
     if(fs.existsSync(targetPath)) {
-        console.error("directory already exits ");
-       return -1;
+        console.warn("Directory already exists exiting.");
+        return;
     }
     mkdirp(targetPath);
     var metadata = {};

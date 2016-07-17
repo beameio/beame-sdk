@@ -100,6 +100,23 @@ var postToProvisionApi = function (url, options, type, callback) {
     );
 };
 
+var getFromProvisionApi = function (url, options, type, callback) {
+    request.get(
+        url,
+        options,
+        function (error, response, body) {
+            parseProvisionResponse(error, response, body, type, function (err, payload) {
+                if (payload) {
+                    callback(null, payload);
+                }
+                else {
+                    callback(err, null);
+                }
+            });
+        }
+    );
+};
+
 /**
  * Empty constructor
  * @constructor
@@ -127,13 +144,27 @@ ProvApiService.prototype.setAuthData = function (authData) {
  *
  * @param {ApiData} apiData
  * @param {Function} callback
+ * @param {String|null,undefined} [method] ==>  POST | GET
  */
-ProvApiService.prototype.runRestfulAPI = function (apiData, callback) {
+ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method) {
 
     var options = _.extend(this.options || {}, {form: apiData.postData});
     var apiEndpoint = this.provApiEndpoint + apiData.api;
     debug('Posting to: ' + apiEndpoint);
-    postToProvisionApi(apiEndpoint, options, apiData.api, callback);
+    var _method = method || 'POST';
+
+    switch (_method){
+        case 'POST' :
+            postToProvisionApi(apiEndpoint, options, apiData.api, callback);
+            return;
+        case 'GET' :
+            getFromProvisionApi(apiEndpoint, options, apiData.api, callback);
+            return;
+        default:
+            callback('Invalid method',null);
+            return;
+
+    }
 };
 
 

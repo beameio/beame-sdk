@@ -6,10 +6,6 @@ var _ = require('underscore');
 
 var atomServices = new(require('../../src/core/AtomServices'))();
 
-
-
-
-
 var revoke = function(appHost){
     atomServices.revokeCert(appHost,function(error, payload){
         if(!error){
@@ -57,6 +53,19 @@ var renew = function(appHost){
     });
 };
 
+var getStats = function(appHost){
+    atomServices.getStats(appHost,function(error, payload){
+        if(!error){
+            console.log(payload);
+            process.exit(0);
+        }
+        else{
+            console.error(error);
+            process.exit(1);
+        }
+    });
+};
+
 var deleteAtom = function(appHost){
     atomServices.deleteAtom(appHost,function(error, payload){
         if(!error){
@@ -84,20 +93,18 @@ var updateAtom = function(appHost,name){
 };
 
 var test = function(){
-    var test = argv['test'] || 'renew';
+    var cmd = argv['cmd'] || 'renew';
 
-    if(_.isEmpty(test)){
+    if(_.isEmpty(cmd)){
         console.error('test required');
         process.exit(1);
     }
 
     var devHost = argv['devhost'] || 'bufp77dx7bemrqv4.v1.beameio.net';
 
-    var host = argv['host'] || 'wvcne1q5cjfxilg8.me7lke5g5acrxh17.v1.beameio.net';
+    var host = argv['host'] || 'gbbnka2gaj5ggcvv.v1.r.d.edge.eu-central-1b-1.v1.beameio.ne';
 
-
-
-    switch (test){
+    switch (cmd){
         case 'create':
 
             if(_.isEmpty(devHost)){
@@ -139,6 +146,14 @@ var test = function(){
             }
 
             deleteAtom(host);
+            return;
+        case 'stats':
+            if(_.isEmpty(host)){
+                console.error('host required');
+                process.exit(1);
+            }
+
+            getStats(host);
             return;
 
     }

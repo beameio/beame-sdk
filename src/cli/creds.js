@@ -1,10 +1,10 @@
 "use strict";
 
-var _ = require('underscore');
 var debug = require("debug")("cred_api");
-var store = new (require("../services/BeameStore"))();
 var Table = require('cli-table2');
 var x509 = require('x509');
+
+var store = new (require("../services/BeameStore"))();
 var developerServices = new(require('../core/DeveloperServices'))();
 var atomServices = new(require('../core/AtomServices'))();
 var edgeClientServices = new(require('../core/EdgeClientServices'))();
@@ -30,9 +30,9 @@ function show(type, fqdn){
 	debug("show %j %j", type,  fqdn);
 
 	var creds = listCreds(type, fqdn);
-	_.map(creds, function(cert) {
-		var item = store.search(cert.hostname);
-		return  x509.parseCert(item[0].X509 + "");
+	var certs = creds.map(cert => {
+		var item = store.search(cert.hostname)[0];
+		return x509.parseCert(item.X509 + "");
 	});
 
 	return certs;
@@ -44,7 +44,7 @@ show.toText = function(certs) {
 		colWidths: [25, 65, 30, 30]
 	});
 
-	_.each(certs, function(xcert) {
+	certs.forEach(xcert => {
 		table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,  xcert.signatureAlgorithm]);
 	});
 	return table;
@@ -61,16 +61,15 @@ list.toText = function(creds) {
 		head: ['name', 'hostname', 'level'],
 		colWidths: [15, 70, 15]
 	});
-	_.each(creds, function (item) {
+	creds.forEach(item => {
 		table.push([item.name, item.hostname, item.level]);
 	});
 	return table;
 };
 
 function lineToText(line) {
-	// console.log('lineToText', line);
-	return _.map(line, function(value, key) {
-		return key + '=' + value.toString();
+	return Object.keys(line).map(k => {
+		return k + '=' + line[k].toString();
 	}).join('\n');
 }
 
@@ -161,12 +160,10 @@ function  decryptCreds(data) {
 	var crypto = require('./crypto');
 	var parsedData = JSON.parse(data);
 
-	console.log("Sp1");
 	var signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedby, parsedData.signature);
 	if(signatureStatus === true) {
 		var creds = store.search(parsedData.signedData.encryptedfor)[0];
 		var decryptedcreds = crypto.decrypt(parsedData.signedData.data);
-		console.log(decryptedcreds );
 		return decryptedcreds;
 	}
 }
@@ -204,14 +201,14 @@ function purge(type, fqdn){
 
 
 module.exports = {
-	show:	show,
-	list:	list,
-	renew:	renew,
-	purge:	purge,
-	createAtom: createAtom,
-	createEdgeClient: createEdgeClient,
-	createDeveloper: createDeveloper,
-	createTestDeveloper: createTestDeveloper,
-	exportCredentials:exportCredentials,
-	importCredentials:importCredentials
+	show,
+	list,
+	renew,
+	purge,
+	createAtom,
+	createEdgeClient,
+	createDeveloper,
+	createTestDeveloper,
+	exportCredentials,
+	importCredentials
 };
