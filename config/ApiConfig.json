@@ -27,8 +27,8 @@
             "UpdateProfile": {
                 "endpoint": "/api/v1/dev/profile/update"
             },
-            "GetAtomsStats": {
-                "endpoint": "/api/v1/atom/stats"
+            "GetStats": {
+                "endpoint": "/api/v1/dev/stats"
             }
         },
         "AtomApi": {

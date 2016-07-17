@@ -10,8 +10,13 @@ var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.EdgeClient;
 
-var onSearchFailed = function (callback) {
-    callback('Atom folder not found', null);
+/**
+ *
+ * @param {Function} callback
+ * @param {String|null|undefined} [message]
+ */
+var onSearchFailed = function (callback, message) {
+    callback(message || 'Edge folder not found', null);
 };
 
 /**
@@ -145,7 +150,7 @@ var registerEdgeClient = function (atomHostname, callback) {
         isRequestValid(atomHostname, atomDir, null, false).then(onRequestValidated).catch(onValidationError);
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(function(){onSearchFailed(callback)});
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback, 'Atom folder not found'));
 };
 
 /**
@@ -209,7 +214,7 @@ var getCert = function (atomHostname, edgeHostname, callback) {
     }
 
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(function(){onSearchFailed(callback)});
+    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(onSearchFailed.bind(null,callback));
 
 };
 
@@ -312,9 +317,7 @@ EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname, callback
 
     }
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived, function onSearchFailed() {
-        callback('Atom folder not found', null);
-    });
+    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived, onSearchFailed.bind(null,callback));
 };
 
 //noinspection JSUnusedGlobalSymbols
@@ -385,9 +388,7 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
     }
 
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived, function onSearchFailed() {
-        callback('Atom folder not found', null);
-    });
+    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived, onSearchFailed.bind(null,callback));
 
 
 };
@@ -440,9 +441,7 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
 
     }
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(function () {
-        onSearchFailed(callback)
-    });
+    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(onSearchFailed.bind(null,callback));
 };
 
 
@@ -482,8 +481,6 @@ EdgeClientServices.prototype.getStats = function (edgeHostname, callback) {
 
     }
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(function () {
-        onSearchFailed(callback)
-    });
+    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(onSearchFailed.bind(null,callback));
 };
 module.exports = EdgeClientServices;

@@ -50,8 +50,13 @@ var isRequestValid = function (hostname, devDir, atomDir, validateAppCerts) {
     });
 };
 
-var onSearchFailed = function (callback){
-    callback('Atom folder not found', null);
+/**
+ *
+ * @param {Function} callback
+ * @param {String|null|undefined} [message]
+ */
+var onSearchFailed = function (callback,message){
+    callback(message || 'Atom folder not found', null);
 };
 
 /**
@@ -121,7 +126,7 @@ var registerAtom = function (developerHostname, atomName, callback) {
         isRequestValid(developerHostname, devDir, null, false).then(onRequestValidated).catch(onValidationError);
     }
 
-    beameUtils.findHostPathAndParent(developerHostname).then(onDeveloperPathReceived).catch(function(){onSearchFailed(callback)});
+    beameUtils.findHostPathAndParent(developerHostname).then(onDeveloperPathReceived).catch(onSearchFailed.bind(null,callback,'Developer folder not found'));
 
 };
 
@@ -190,7 +195,7 @@ var getCert = function (developerHostname, atomHostname, callback) {
         isRequestValid(developerHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(function(){onSearchFailed(callback)});
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
 };
 
 /**
@@ -290,8 +295,7 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
         isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
     }
 
-
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(function(){onSearchFailed(callback)});
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
 
 };
 
@@ -351,7 +355,7 @@ AtomServices.prototype.deleteAtom = function (atomHostname, callback) {
     }
 
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(function(){onSearchFailed(callback)});
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
 
 };
 
@@ -425,7 +429,7 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
     }
 
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(function(){onSearchFailed(callback)});
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
 };
 
 //noinspection JSUnusedGlobalSymbols
@@ -479,7 +483,7 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
         isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(function(){onSearchFailed(callback)})};
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback))};
 
 //noinspection JSUnusedGlobalSymbols
 AtomServices.prototype.getStats = function (atomHostname, callback) {
