@@ -28,9 +28,9 @@ function show(type, fqdn){
 	debug("show %j %j", type,  fqdn);
 
 	var creds = listCreds(type, fqdn);
-	_.map(creds, function(cert) {
-		var item = store.search(cert.hostname);
-		return  x509.parseCert(item[0].X509 + "");
+	var certs = _.map(creds, function(cert) {
+		var item = store.search(cert.hostname)[0];
+		return  x509.parseCert(item.X509 + "");
 	});
 
 	return certs;
@@ -66,7 +66,6 @@ list.toText = function(creds) {
 };
 
 function lineToText(line) {
-	// console.log('lineToText', line);
 	return _.map(line, function(value, key) {
 		return key + '=' + value.toString();
 	}).join('\n');
@@ -148,12 +147,10 @@ function  decryptCreds(data) {
 	var crypto = require('./crypto');
 	var parsedData = JSON.parse(data);
 
-	console.log("Sp1");
 	var signatureStatus = crypto.checkSignature(parsedData.signedData.signedby, parsedData.signedData, parsedData.signature)
 	if(signatureStatus == true) {
 		var creds = store.search(parsedData.signedData.encryptedfor)[0];
 		var decryptedcreds = crypto.decrypt(parsedData.signedData.data);
-		console.log(decryptedcreds );
 		return decryptedcreds;
 	}
 }

@@ -166,12 +166,11 @@ BeameStore.prototype.search = function (name) {
         this.digest = newHash;
     }
 
-    var fullResult = [];
-    _.each(this.searchFunctions, _.bind(function (item) {
-        var newArray = item.func.call(this, name);
-        fullResult = fullResult.concat(newArray);
+    var results = _.map(this.searchFunctions, _.bind(function (item) {
+        return item.func.call(this, name);
     }, this));
-    return fullResult;
+	results = _.flatten(results, true);
+    return results;
 };
 
 BeameStore.prototype.list = function (type, name) {
