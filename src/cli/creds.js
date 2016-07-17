@@ -1,6 +1,5 @@
 "use strict";
 
-var _ = require('underscore');
 var debug = require("debug")("cred_api");
 var Table = require('cli-table2');
 var x509 = require('x509');
@@ -29,9 +28,9 @@ function show(type, fqdn){
 	debug("show %j %j", type,  fqdn);
 
 	var creds = listCreds(type, fqdn);
-	var certs = _.map(creds, function(cert) {
+	var certs = creds.map(cert => {
 		var item = store.search(cert.hostname)[0];
-		return  x509.parseCert(item.X509 + "");
+		return x509.parseCert(item.X509 + "");
 	});
 
 	return certs;
@@ -43,7 +42,7 @@ show.toText = function(certs) {
 		colWidths: [25, 65, 30, 30]
 	});
 
-	_.each(certs, function(xcert) {
+	certs.forEach(xcert => {
 		table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,  xcert.signatureAlgorithm]);
 	});
 	return table;
@@ -60,15 +59,15 @@ list.toText = function(creds) {
 		head: ['name', 'hostname', 'level'],
 		colWidths: [15, 70, 15]
 	});
-	_.each(creds, function (item) {
+	creds.forEach(item => {
 		table.push([item.name, item.hostname, item.level]);
 	});
 	return table;
 };
 
 function lineToText(line) {
-	return _.map(line, function(value, key) {
-		return key + '=' + value.toString();
+	return Object.keys(line).map(k => {
+		return k + '=' + line[k].toString();
 	}).join('\n');
 }
 
