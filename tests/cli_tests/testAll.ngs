@@ -118,7 +118,7 @@ if data_signature {
 	})
 	do_test("Check good signature for tampered data", F() {
 		 chk = ``$BEAME_BIN crypto checkSignature --data ${TEST_DATA+'xyz'} --fqdn ${atoms[0].hostname} --signature $data_signature``
-		 chk !== true throws TestFail("Good signature check did not return false for tampered data but '$chk'")
+		 chk !== false throws TestFail("Good signature check did not return false for tampered data but '$chk'")
 		 chk
 	})
 }
