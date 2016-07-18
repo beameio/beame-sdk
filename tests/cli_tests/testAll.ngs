@@ -7,6 +7,10 @@ if 'BEAME_DIR' in ENV {
 	throw Error("BEAME_DIR environment variable must be unset for tests")
 }
 
+if not(Path(ENV.HOME + '/authData')) {
+	throw Error("~/authData must be present for tests")
+}
+
 BEAME_DIR = ENV.HOME + '/.beame'
 BEAME_BIN = ENV.HOME + '/beame-sdk/src/cli/beame.js'
 
@@ -21,7 +25,7 @@ DEVELOPER_EMAIL = "beame-test-developer-${time()}@example.com"
 ATOMS_TO_CREATE = 1
 EDGE_CLIENTS_PER_ATOM = 1
 # TODO: test binary data
-DATA_TO_ENCRYPT = 'abcd0123~!@#'
+TEST_DATA = 'abcd0123~!@#'
 
 developer = null
 atoms = []
@@ -50,8 +54,7 @@ F do_test(name:Str, f:Fun) {
 }
 
 do_test("Create test developer", F() {
-	global developer
-	developer = ``$BEAME_BIN creds createTestDeveloper --developerName developerName $DEVELOPER_NAME --developerEmail $DEVELOPER_EMAIL --format json``
+	global developer = ``$BEAME_BIN creds createTestDeveloper --developerName developerName $DEVELOPER_NAME --developerEmail $DEVELOPER_EMAIL --format json``
 	developer is not Hash throws TestFail("Developer must be hash, not $developer")
 	developer.email != DEVELOPER_EMAIL throws TestFail("Developer email mismatch")
 	developer
@@ -83,7 +86,7 @@ each_idx_val(atoms, F(atom_idx, atom) {
 encrypted_data = null
 
 do_test("Encrypt data", F() {
-	global encrypted_data = `$BEAME_BIN crypto encrypt --data $DATA_TO_ENCRYPT --fqdn ${atoms[0].hostname}`
+	global encrypted_data = `$BEAME_BIN crypto encrypt --data $TEST_DATA --fqdn ${atoms[0].hostname}`
 	enc = encrypted_data.decode_json()
 	enc is not Hash throws TestFail("Encrypted data must be hash, not $atom")
 	%[rsaCipheredKeys data encryptedFor].each(F(k) k not in enc throws TestFail("Key $k is missing in 'encrypt' output"))
@@ -94,10 +97,32 @@ do_test("Encrypt data", F() {
 if encrypted_data {
 	do_test("Decrypt data", F() {
 		dec = ``$BEAME_BIN crypto decrypt --data $encrypted_data``
-		dec != DATA_TO_ENCRYPT throws TestFail("Decrypted data is not the same as the original data")
+		dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
 		"Decryped data was same as the original data"
 	})
 }
+
+data_signature = null
+do_test("Sign data", F() {
+	global data_signature = `$BEAME_BIN crypto sign --data $TEST_DATA --fqdn ${atoms[0].hostname}`
+	sig = data_signature.decode_json()
+	sig is not Str throws TestFail("Signature is not a string")
+	sig
+})
+
+if data_signature {
+	do_test("Check good signature", F() {
+		 chk = ``$BEAME_BIN crypto checkSignature --data $TEST_DATA --fqdn ${atoms[0].hostname} --signature $data_signature``
+		 chk !== true throws TestFail("Good signature check did not return true but '$chk'")
+		 chk
+	})
+	do_test("Check good signature for tampered data", F() {
+		 chk = ``$BEAME_BIN crypto checkSignature --data ${TEST_DATA+'xyz'} --fqdn ${atoms[0].hostname} --signature $data_signature``
+		 chk !== true throws TestFail("Good signature check did not return false for tampered data but '$chk'")
+		 chk
+	})
+}
+
 
 echo("--- info ---")
 echo("ATOMS: $atoms")
