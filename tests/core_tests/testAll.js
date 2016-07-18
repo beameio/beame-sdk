@@ -7,6 +7,8 @@ var store = new(require('../../src/services/BeameStore'))();
 var developerServices = new(require('../../src/core/DeveloperServices'))();
 var atomServices = new(require('../../src/core/AtomServices'))();
 var edgeClientServices = new(require('../../src/core/EdgeClientServices'))();
+var beameUtils = require('../../src/utils/BeameUtils');
+
 
 var createEdgeClient = function (appHostName,callback) {
     edgeClientServices.createEdgeClient(appHostName,function(error,payload){
@@ -99,7 +101,8 @@ var start = function () {
 
     var create = function () {
         developers--;
-        createDeveloper('devst-' + developers, 'dev-23-test-' + developers + '@beame.io', atoms, edges,devCb);
+        var rand = beameUtils.randomString(8);
+        createDeveloper(rand + '-' + developers, 'dev-' + rand + '-test-' + developers + '@beame.io', atoms, edges,devCb);
     };
 
     var devCb = function(error,data){

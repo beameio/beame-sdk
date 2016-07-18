@@ -11,6 +11,8 @@ var dataServices = new (require('../services/DataServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.AtomApi;
 
+var PATH_MISMATCH_DEFAULT_MSG = 'Atom folder not found';
+
 /**----------------------Private methods ------------------------  **/
 
 var isRequestValid = function (hostname, devDir, atomDir, validateAppCerts) {
@@ -38,26 +40,18 @@ var isRequestValid = function (hostname, devDir, atomDir, validateAppCerts) {
         }
 
         function validateDevCerts() {
-            beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, hostname, global.AppModules.Developer).then(validateAtomCerts, onValidationError);
+            beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, hostname, global.AppModules.Developer).then(validateAtomCerts).catch(onValidationError);
         }
 
         if(_.isEmpty(hostname)){
             reject('Hostname required');
         }
         else{
-            validateDevCerts();
+           validateDevCerts();
         }
     });
 };
 
-/**
- *
- * @param {Function} callback
- * @param {String|null|undefined} [message]
- */
-var onSearchFailed = function (callback,message){
-    callback(message || 'Atom folder not found', null);
-};
 
 /**
  *
@@ -111,10 +105,6 @@ var registerAtom = function (developerHostname, atomName, callback) {
 
     }
 
-    function onValidationError(error) {
-        callback(error, null);
-    }
-
     /**
      *
      * @param {ItemAndParentFolderPath} data
@@ -123,10 +113,10 @@ var registerAtom = function (developerHostname, atomName, callback) {
 
         devDir = data['path'];
 
-        isRequestValid(developerHostname, devDir, null, false).then(onRequestValidated).catch(onValidationError);
+        isRequestValid(developerHostname, devDir, null, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
     }
 
-    beameUtils.findHostPathAndParent(developerHostname).then(onDeveloperPathReceived).catch(onSearchFailed.bind(null,callback,'Developer folder not found'));
+    beameUtils.findHostPathAndParent(developerHostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null,callback,'Developer folder not found'));
 
 };
 
@@ -179,10 +169,6 @@ var getCert = function (developerHostname, atomHostname, callback) {
             });
     }
 
-    function onValidationError(error) {
-        callback(error, null);
-    }
-
     /**
      *
      * @param {ItemAndParentFolderPath} data
@@ -192,10 +178,10 @@ var getCert = function (developerHostname, atomHostname, callback) {
         atomDir = data['path'];
         devDir = data['parent_path'];
 
-        isRequestValid(developerHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
+        isRequestValid(developerHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 /**
@@ -279,10 +265,6 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
         });
     }
 
-    function onValidationError(error) {
-        callback && callback(error, null);
-    }
-
     /**
      *
      * @param {ItemAndParentFolderPath} data
@@ -292,10 +274,10 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
         atomDir = data['path'];
         devDir = data['parent_path'];
 
-        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
+        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
@@ -338,10 +320,6 @@ AtomServices.prototype.deleteAtom = function (atomHostname, callback) {
         });
     }
 
-    function onValidationError(error) {
-        callback && callback(error, null);
-    }
-
     /**
      *
      * @param {ItemAndParentFolderPath} data
@@ -351,11 +329,10 @@ AtomServices.prototype.deleteAtom = function (atomHostname, callback) {
         atomDir = data['path'];
         devDir = data['parent_path'];
 
-        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
+        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
@@ -412,10 +389,6 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
             });
     }
 
-    function onValidationError(error) {
-        callback && callback(error, null);
-    }
-
     /**
      *
      * @param {ItemAndParentFolderPath} data
@@ -425,11 +398,11 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
         atomDir = data['path'];
         devDir = data['parent_path'];
 
-        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
+        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 //noinspection JSUnusedGlobalSymbols
@@ -467,10 +440,6 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
 
     }
 
-    function onValidationError(error) {
-        callback && callback(error, null);
-    }
-
     /**
      *
      * @param {ItemAndParentFolderPath} data
@@ -480,10 +449,10 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
         atomDir = data['path'];
         devDir = data['parent_path'];
 
-        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
+        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback))};
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG))};
 
 //noinspection JSUnusedGlobalSymbols
 /**
@@ -509,10 +478,6 @@ AtomServices.prototype.getStats = function (atomHostname, callback) {
 
     }
 
-    function onValidationError(error) {
-        callback && callback(error, null);
-    }
-
     /**
      *
      * @param {ItemAndParentFolderPath} data
@@ -522,10 +487,10 @@ AtomServices.prototype.getStats = function (atomHostname, callback) {
         atomDir = data['path'];
         devDir = data['parent_path'];
 
-        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
+        isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 

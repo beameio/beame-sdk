@@ -71,7 +71,7 @@ var deleteEdge = function(edgeHost){
 };
 
 var test = function(){
-    var cmd = argv['cmd'] || 'renew';
+    var cmd = argv['cmd'] || 'stats';
 
     if(_.isEmpty(cmd)){
         console.error('test required');
@@ -80,7 +80,7 @@ var test = function(){
 
     var atomHost = argv['atom-host'] || 'cxdtgpfu6ate4gpc.s31udwye0z9eyck7.v1.beameio.net';
 
-    var host = argv['host'] || 'gbbnka2gaj5ggcvv.v1.r.d.edge.eu-central-1b-1.v1.beameio.net';
+    var host = argv['host'] || 'wd565lswi7j4aew3.v1.r.d.edge.eu-central-1a-1.v1.beameio.net';
 
     switch (cmd){
         case 'create':

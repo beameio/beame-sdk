@@ -195,6 +195,18 @@ module.exports = {
         return JSON.stringify(obj, null, 2);
     },
 
+    /**
+     *
+     * @param {Number} length
+     * @returns {String}
+     */
+    randomString: function (length) {
+        var chars = "abcdefghijklmnopqrstufwxyzABCDEFGHIJKLMNOPQRSTUFWXYZ1234567890";
+        var result = '';
+        for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+        return result;
+    },
+
     isAmazon: function () {
         return process.env.NODE_ENV ? true : false;
     },
@@ -292,5 +304,24 @@ module.exports = {
                 reject('Not found');
             }
         });
+    },
+
+    /** ---------- Validation  shared services **/
+    /**
+     *
+     * @param {Function} callback
+     * @param {Object} error
+     */
+    onValidationError: function (callback, error) {
+        callback && callback(error, null);
+    },
+
+    /**
+     *
+     * @param {Function} callback
+     * @param {String|null|undefined} [message]
+     */
+    onSearchFailed: function (callback, message) {
+        callback && callback(message, null);
     }
 };
