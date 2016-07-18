@@ -5,6 +5,7 @@ var _ = require('underscore');
 
 var argv = require('minimist')(process.argv.slice(2));
 var developerServices = new(require('../../src/core/DeveloperServices'))();
+var beameUtils = require('../../src/utils/BeameUtils');
 
 
 var revoke = function(host){
@@ -19,7 +20,8 @@ var revoke = function(host){
 };
 
 var create =  function (){
-    developerServices.createDeveloper('Serge Zenit', 'zenit123@beame.io',function(error, payload){
+    var rnd = beameUtils.randomString(12);
+    developerServices.createDeveloper('Serge Zenit ' + rnd, 'zenit' + rnd + '@beame.io',function(error, payload){
         if(!error){
             console.log(payload);
         }
@@ -41,6 +43,18 @@ var restore = function(host){
 };
 var renew = function(host){
     developerServices.renewCert(host,function(error, payload){
+        if(!error){
+            console.log(payload);
+        }
+        else{
+            console.error(error);
+        }
+    });
+};
+
+var update = function(host){
+    var rnd = beameUtils.randomString(12);
+    developerServices.updateProfile(host,'Serge Zenit Upd' + rnd, 'zenit' + rnd + '@beame.io',function(error, payload){
         if(!error){
             console.log(payload);
         }
@@ -75,14 +89,14 @@ var complete = function(host,uid){
 
 
 var test = function(){
-    var test = argv['test'] || 'stats';
+    var test = argv['cmd'] || 'stats';
 
     if(_.isEmpty(test)){
         console.error('test required');
         process.exit(1);
     }
 
-    var host = argv['host'] || 'lawhv2o7vw0j2td9.v1.beameio.net';
+    var host = argv['host'] || 'lmsuwxez6rff9t5k.v1.beameio.net';
 
     switch (test){
         case 'create':
@@ -119,6 +133,14 @@ var test = function(){
                 process.exit(1);
             }
             renew(host);
+            return;
+        case 'update':
+
+            if(_.isEmpty(host)){
+                console.error('host required');
+                process.exit(1);
+            }
+            update(host);
             return;
 
         case 'complete':

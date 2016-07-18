@@ -125,6 +125,8 @@ var test = function(){
 
             getStats(host);
             return;
+        case 'full':
+            return;
 
     }
 };

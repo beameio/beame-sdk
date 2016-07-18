@@ -31,6 +31,48 @@ var apiActions = require('../../config/ApiConfig.json').Actions.DeveloperApi;
  */
 
 /**-----------------Private services----------------**/
+
+var PATH_MISMATCH_DEFAULT_MSG = 'Developer folder not found';
+
+/**----------------------Private methods ------------------------  **/
+
+/**
+ *
+ * @param {String} hostname
+ * @returns {String}
+ */
+var makeDeveloperDir = function(hostname){
+    return  beameUtils.makePath(devPath, hostname + '/');
+};
+
+var isRequestValid = function (hostname, devDir) {
+
+    return new Promise(function (resolve, reject) {
+        function onValidationError(error) {
+            reject(error);
+        }
+
+        function onMetadataReceived(metadata) {
+            resolve(metadata);
+        }
+
+        function getMetadata() {
+            beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
+        }
+
+        function validateDevCerts() {
+            beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(getMetadata).catch(onValidationError);
+        }
+
+        if(_.isEmpty(hostname)){
+            reject('Hostname required');
+        }
+        else{
+            validateDevCerts();
+        }
+    });
+};
+
 /**
  *
  * @param {String|null|undefined} [developerName]
@@ -54,7 +96,7 @@ var saveDeveloper = function (email, developerName, callback) {
             payload.name = developerName;
             payload.email = email;
 
-            var devDir = beameUtils.makePath(devPath, payload.hostname + '/');
+            var devDir = makeDeveloperDir(payload.hostname);
 
             dataServices.createDir(devDir);
 
@@ -133,14 +175,10 @@ var getCert = function (hostname, callback) {
 
     function getDeveloperMetadata() {
         /*---------- read developer data and proceed -------------*/
-        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
+        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived).catch(beameUtils.onValidationError.bind(null, callback));
     }
 
-    function onValidationError(error) {
-        callback(error, null);
-    }
-
-    beameUtils.isHostnamePathValid(devDir, global.AppModules.Developer, hostname).then(getDeveloperMetadata, onValidationError);
+    beameUtils.isHostnamePathValid(devDir, global.AppModules.Developer, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
 };
 
 /**
@@ -202,7 +240,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
         return;
     }
 
-    var devDir = beameUtils.makePath(devPath, hostname + "/");
+    var devDir = makeDeveloperDir(hostname);
 
     dataServices.createDir(devDir);
 
@@ -260,7 +298,6 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
 };
 
-//noinspection JSUnusedGlobalSymbols
 /**
  *
  * @param {String} hostname => developer hostname
@@ -268,11 +305,11 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
  * @param {String|null|undefined} [name]
  * @param {Function} callback
  */
-DeveloperServices.prototype.updateProfile = function (hostname, email, name, callback) {
-    var devDir = beameUtils.makePath(devPath, hostname + "/");
+DeveloperServices.prototype.updateProfile = function (hostname, name, email, callback) {
+    var devDir;
 
     /*---------- private callbacks -------------------*/
-    function onMetadataReceived(metadata) {
+    function onRequestValidated(metadata) {
 
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
@@ -303,30 +340,31 @@ DeveloperServices.prototype.updateProfile = function (hostname, email, name, cal
 
     }
 
-    function onCertsValidated() {
-        /*---------- read developer data and proceed -------------*/
-        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
+    /**
+     *
+     * @param {ItemAndParentFolderPath} data
+     */
+    function onDeveloperPathReceived(data){
+
+        devDir = data['path'];
+
+        isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    function onValidationError(error) {
-        callback(error, null);
-    }
-
-    beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
+    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
-//noinspection JSUnusedGlobalSymbols
 /**
  *
  * @param {String} hostname
  * @param {Function} callback
  */
 DeveloperServices.prototype.renewCert = function (hostname, callback) {
-    var devDir = beameUtils.makePath(devPath, hostname + "/");
+    var devDir;
 
     /*---------- private callbacks -------------------*/
-    function onMetadataReceived() {
+    function onRequestValidated() {
 
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
@@ -344,7 +382,7 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 
                         dataServices.renameFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
                             if (!error) {
-                                dataServices.saveCerts(devDir, payload, callback);
+                                dataServices.saveCerts(beameUtils.makePath(devDir,'/'), payload, callback);
                             }
                             else {
                                 callback && callback(error, null);
@@ -369,45 +407,38 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
             });
     }
 
-    function onCertsValidated() {
-        /*---------- read developer data and proceed -------------*/
-        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
+
+    /**
+     *
+     * @param {ItemAndParentFolderPath} data
+     */
+    function onDeveloperPathReceived(data){
+
+        devDir = data['path'];
+
+        isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    function onValidationError(error) {
-        callback(error, null);
-    }
-
-    beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
+    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
-//noinspection JSUnusedGlobalSymbols
 /**
  *
  * @param {String} hostname
  * @param {Function} callback
  */
 DeveloperServices.prototype.restoreCert = function (hostname, callback) {
-    var errMsg;
+    var devDir;
 
-    if (_.isEmpty(hostname)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        //console.error(errMsg);
-        callback && callback(errMsg, null);
-        return;
-    }
+    function onRequestValidated() {
+        var recoveryData = dataServices.readJSON(beameUtils.makePath(devDir, global.CertFileNames.RECOVERY));
 
-    var devDir = beameUtils.makePath(devPath, hostname + "/");
+        if (_.isEmpty(recoveryData)) {
+            callback('Recovery code not found', null);
+            return;
+        }
 
-    var recoveryData = dataServices.readJSON(beameUtils.makePath(devDir, global.CertFileNames.RECOVERY));
-
-    if (_.isEmpty(recoveryData)) {
-        callback('Recovery code not found', null);
-        return;
-    }
-
-    dataServices.createCSR(devDir, hostname).then(
-        function onCsrCreated(csr) {
+        dataServices.createCSR(devDir, hostname).then(function onCsrCreated(csr) {
 
 
             /** @type {typeof DeveloperRestoreCertRequestToken} **/
@@ -424,7 +455,7 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 
                     dataServices.deleteFile(devDir, global.CertFileNames.RECOVERY);
 
-                    dataServices.saveCerts(devDir, payload, callback);
+                    dataServices.saveCerts(beameUtils.makePath(devDir,'/'), payload, callback);
                 }
                 else {
                     error.data.hostname = hostname;
@@ -433,12 +464,21 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
                 }
             });
 
-        },
-        function onCsrCreationFailed(error) {
-            //console.error(error);
-            callback && callback(error, null);
-        });
+        }).catch(beameUtils.onValidationError.bind(null,callback));
+    }
 
+    /**
+     *
+     * @param {ItemAndParentFolderPath} data
+     */
+    function onDeveloperPathReceived(data){
+
+        devDir = data['path'];
+
+        isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
+    }
+
+    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
@@ -448,18 +488,10 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
  * @param {Function} callback
  */
 DeveloperServices.prototype.revokeCert = function (hostname, callback) {
-    var errMsg;
-
-    if (_.isEmpty(hostname)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        callback && callback(errMsg, null);
-        return;
-    }
-
-    var devDir = beameUtils.makePath(devPath, hostname + "/");
+    var devDir;
 
     /*---------- private callbacks -------------------*/
-    function onMetaInfoReceived(metadata) {
+    function onRequestValidated(metadata) {
 
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
@@ -494,40 +526,33 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
             }
         });
 
-
     }
 
-    function onCertsValidated() {
-        /*---------- read developer data and proceed -------------*/
-        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetaInfoReceived, onValidationError);
+    /**
+     *
+     * @param {ItemAndParentFolderPath} data
+     */
+    function onDeveloperPathReceived(data){
+
+        devDir = data['path'];
+
+        isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    function onValidationError(error) {
-        callback(error, null);
-    }
+    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
-    beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
 };
 
-//noinspection JSUnusedGlobalSymbols
 /**
  *
  * @param {String} hostname
  * @param {Function} callback
  */
 DeveloperServices.prototype.getStats = function (hostname, callback) {
-    var errMsg;
-
-    if (_.isEmpty(hostname)) {
-        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-        callback && callback(errMsg, null);
-        return;
-    }
-
-    var devDir = beameUtils.makePath(devPath, hostname + "/");
+    var devDir;
 
     /*---------- private callbacks -------------------*/
-    function onCertsValidated() {
+    function onRequestValidated() {
         provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
         var apiData = beameUtils.getApiData(apiActions.GetStats.endpoint, {}, false);
@@ -535,11 +560,18 @@ DeveloperServices.prototype.getStats = function (hostname, callback) {
         provisionApi.runRestfulAPI(apiData, callback ,'GET');
     }
 
-    function onValidationError(error) {
-        callback(error, null);
+    /**
+     *
+     * @param {ItemAndParentFolderPath} data
+     */
+    function onDeveloperPathReceived(data){
+
+        devDir = data['path'];
+
+        isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
+    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
