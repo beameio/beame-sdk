@@ -161,10 +161,6 @@ module.exports = {
                                 publicIp: data.instanceData.publicipv4
                             };
 
-                            consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "lb instance found", edge);
-
-                            console.log(consoleMessage);
-
                             resolve(edge);
                         }
                         else {
