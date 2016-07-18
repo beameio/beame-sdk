@@ -19,9 +19,9 @@ function randomString(length) {
 describe('Test Developer flow', function () {
     this.timeout(100000);
 
-
-
-    describe('Creating developer', function () {
+    var developerHostName;
+    
+    function createDeveloper() {
         var name, email;
 
 
@@ -36,10 +36,18 @@ describe('Test Developer flow', function () {
                 assert.isNotNull(payload, error && error.message);
                 assert.equal(payload["email"], email, 'Response email is incorrect');
                 assert.equal(payload["name"], name, 'Response name is incorrect');
+                
+                
             });
 
         });
 
-    });
+    }
+
+    describe('Creating developer', createDeveloper);
+    
+    describe('Creating developer', createDeveloper);
+    
+    
 
 });

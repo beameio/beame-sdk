@@ -486,6 +486,11 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
     beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback))};
 
 //noinspection JSUnusedGlobalSymbols
+/**
+ *
+ * @param {String} atomHostname
+ * @param {Function} callback
+ */
 AtomServices.prototype.getStats = function (atomHostname, callback) {
     var devDir,atomDir;
 
@@ -520,7 +525,7 @@ AtomServices.prototype.getStats = function (atomHostname, callback) {
         isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(onValidationError);
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback))
+    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(onSearchFailed.bind(null,callback));
 };
 
 

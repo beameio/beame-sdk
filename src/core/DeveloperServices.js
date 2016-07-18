@@ -448,6 +448,14 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
  * @param {Function} callback
  */
 DeveloperServices.prototype.revokeCert = function (hostname, callback) {
+    var errMsg;
+
+    if (_.isEmpty(hostname)) {
+        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
+        callback && callback(errMsg, null);
+        return;
+    }
+
     var devDir = beameUtils.makePath(devPath, hostname + "/");
 
     /*---------- private callbacks -------------------*/
@@ -499,6 +507,40 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
     }
 
     beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
+};
+
+//noinspection JSUnusedGlobalSymbols
+/**
+ *
+ * @param {String} hostname
+ * @param {Function} callback
+ */
+DeveloperServices.prototype.getStats = function (hostname, callback) {
+    var errMsg;
+
+    if (_.isEmpty(hostname)) {
+        errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
+        callback && callback(errMsg, null);
+        return;
+    }
+
+    var devDir = beameUtils.makePath(devPath, hostname + "/");
+
+    /*---------- private callbacks -------------------*/
+    function onCertsValidated() {
+        provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+
+        var apiData = beameUtils.getApiData(apiActions.GetStats.endpoint, {}, false);
+
+        provisionApi.runRestfulAPI(apiData, callback ,'GET');
+    }
+
+    function onValidationError(error) {
+        callback(error, null);
+    }
+
+    beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(onCertsValidated, onValidationError);
+
 };
 
 module.exports = DeveloperServices;
