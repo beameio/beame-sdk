@@ -50,6 +50,17 @@ var renew = function(host){
     });
 };
 
+var stats = function(host){
+    developerServices.getStats(host,function(error, payload){
+        if(!error){
+            console.log(payload);
+        }
+        else{
+            console.error(error);
+        }
+    });
+};
+
 var complete = function(host,uid){
     developerServices.completeDeveloperRegistration(host,uid,function(error, payload){
         if(!error){
@@ -64,14 +75,14 @@ var complete = function(host,uid){
 
 
 var test = function(){
-    var test = argv['test'] || 'renew';
+    var test = argv['test'] || 'stats';
 
     if(_.isEmpty(test)){
         console.error('test required');
         process.exit(1);
     }
 
-    var host = argv['host'] || 'oon7l59bzzdc7c6j.v1.beameio.net';
+    var host = argv['host'] || 'lawhv2o7vw0j2td9.v1.beameio.net';
 
     switch (test){
         case 'create':
@@ -84,6 +95,14 @@ var test = function(){
                 process.exit(1);
             }
             revoke(host);
+            return;
+        case 'stats':
+
+            if(_.isEmpty(host)){
+                console.error('host required');
+                process.exit(1);
+            }
+            stats(host);
             return;
         case 'restore':
 
