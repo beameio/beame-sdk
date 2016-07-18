@@ -8,7 +8,7 @@ var _ = require('underscore');
 var BeameStore = require("../services/BeameStore");
 
 var commands = {};
-_.each([	'creds', 'servers', 'crypto', 'init'], function(cmdName) {
+_.each([	'creds', 'servers', 'crypto', 'system'], function(cmdName) {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 

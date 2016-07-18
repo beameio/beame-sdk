@@ -238,7 +238,7 @@ BeameStore.prototype.importCredentials =function(data){
     var targetPath = global.devPath;
 
     targetPath = path.join(global.devPath, credToImport.path);
-	console.log("Target Path %j", targetPath);
+    console.log("Target Path %j", targetPath);
     mkdirp(targetPath);
 
     var metadata = {};
