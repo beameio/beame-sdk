@@ -57,11 +57,11 @@ var isRequestValid = function (hostname, devDir) {
         }
 
         function getMetadata() {
-            beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
+            beameUtils.getNodeMetadataAsync(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
         }
 
         function validateDevCerts() {
-            beameUtils.isNodeCertsExists(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(getMetadata).catch(onValidationError);
+            beameUtils.isNodeCertsExistsAsync(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(getMetadata).catch(onValidationError);
         }
 
         if(_.isEmpty(hostname)){
@@ -104,7 +104,7 @@ var saveDeveloper = function (email, developerName, callback) {
                 if (!callback) return;
 
                 if (!error) {
-                    beameUtils.getNodeMetadata(devDir, payload.hostname, global.AppModules.Developer).then(function (metadata) {
+                    beameUtils.getNodeMetadataAsync(devDir, payload.hostname, global.AppModules.Developer).then(function (metadata) {
                         callback(null, metadata);
                     }, callback);
                 }
@@ -175,10 +175,10 @@ var getCert = function (hostname, callback) {
 
     function getDeveloperMetadata() {
         /*---------- read developer data and proceed -------------*/
-        beameUtils.getNodeMetadata(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived).catch(beameUtils.onValidationError.bind(null, callback));
+        beameUtils.getNodeMetadataAsync(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived).catch(beameUtils.onValidationError.bind(null, callback));
     }
 
-    beameUtils.isHostnamePathValid(devDir, global.AppModules.Developer, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
+    beameUtils.isHostnamePathValidAsync(devDir, global.AppModules.Developer, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
 };
 
 /**
@@ -256,7 +256,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
         if (!callback) return;
 
         if (!error) {
-            beameUtils.getNodeMetadata(devDir, payload.hostname, global.AppModules.Developer).then(onMetadataReceived, callback);
+            beameUtils.getNodeMetadataAsync(devDir, payload.hostname, global.AppModules.Developer).then(onMetadataReceived, callback);
         }
         else {
             callback(error, null);
@@ -351,7 +351,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
         isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
@@ -419,7 +419,7 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
         isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 /**
@@ -478,7 +478,7 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
         isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
@@ -517,7 +517,6 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
                     }
                 });
 
-                callback(null, metadata);
             }
             else {
                 error.data.hostname = hostname;
@@ -539,7 +538,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
         isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
@@ -571,7 +570,7 @@ DeveloperServices.prototype.getStats = function (hostname, callback) {
         isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null,callback));
     }
 
-    beameUtils.findHostPathAndParent(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 

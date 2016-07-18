@@ -60,15 +60,15 @@ module.exports = {
      * @param {String} projName
      * @returns {string}
      */
-    getProjHostName: function (projName) {
-        var varName = "BEAME_PROJ_" + projName;
-        var host = process.env[varName];
-        if (host == undefined) {
-            throw("Error: environment variable " + varName + " undefined, store project hostname in environment and rerun");
-        }
-        else
-            return host;
-    },
+    // getProjHostName: function (projName) {
+    //     var varName = "BEAME_PROJ_" + projName;
+    //     var host = process.env[varName];
+    //     if (host == undefined) {
+    //         throw("Error: environment variable " + varName + " undefined, store project hostname in environment and rerun");
+    //     }
+    //     else
+    //         return host;
+    // },
 
 
     /**
@@ -220,11 +220,12 @@ module.exports = {
      * @param {String} module
      * @returns {Promise.<Object>}
      */
-    getNodeMetadata: function (devDir, hostname, module) {
+    getNodeMetadataAsync: function (devDir, hostname, module) {
+        var self = this;
 
         return new Promise(function (resolve, reject) {
 
-            var developerMetadataPath = path.join(devDir, global.metadataFileName);
+            var developerMetadataPath = self.makePath(devDir, global.metadataFileName);
             var metadata = dataServices.readJSON(developerMetadataPath);
 
             if (_.isEmpty(metadata)) {
@@ -241,12 +242,37 @@ module.exports = {
 
     /**
      *
+     * @param {String} hostname
+     * @returns {Object}
+     */
+    getHostMetadataSync: function (hostname) {
+        var self = this;
+        var data = beameStore.searchItemAndParentFolderPath(hostname);
+        if (!_.isEmpty(data)) {
+            var path = data['path'];
+
+            if(!path) return false;
+
+            var metadataPath = self.makePath(path, global.metadataFileName);
+            var metadata = dataServices.readJSON(metadataPath);
+
+            return _.isEmpty(metadata) ? null : metadata;
+
+        }
+        else {
+            return null;
+        }
+
+    },
+
+    /**
+     *
      * @param {String} path
      * @param {String} module
      * @param {String} hostname
      * @returns {Promise}
      */
-    isHostnamePathValid: function (path, module, hostname) {
+    isHostnamePathValidAsync: function (path, module, hostname) {
 
         return new Promise(function (resolve, reject) {
 
@@ -270,7 +296,7 @@ module.exports = {
      * @param {String} nodeLevel => Developer | Atom | EdgeClient
      * @returns {Promise}
      */
-    isNodeCertsExists: function (path, nodeFiles, module, hostname, nodeLevel) {
+    isNodeCertsExistsAsync: function (path, nodeFiles, module, hostname, nodeLevel) {
 
         return new Promise(function (resolve, reject) {
 
@@ -289,13 +315,34 @@ module.exports = {
     },
 
     /**
-     * @param host
+     *
+     * @param {String} hostname
+     * @param {Array} nodeFiles
+     * @param {String} module
+     * @returns {boolean}
+     */
+    validateHostCertsSync: function (hostname, nodeFiles, module) {
+        var data = beameStore.searchItemAndParentFolderPath(hostname);
+        if (!_.isEmpty(data)) {
+            var path = data['path'];
+
+            if(!path) return false;
+
+            return dataServices.isNodeFilesExists(path, nodeFiles, module);
+        }
+        else {
+           return false;
+        }
+    },
+
+    /**
+     * @param hostname
      * @returns {Promise.<ItemAndParentFolderPath>}
      */
-    findHostPathAndParent: function (host) {
+    findHostPathAndParentAsync: function (hostname) {
 
         return new Promise(function (resolve, reject) {
-            var data = beameStore.searchItemAndParentFolderPath(host);
+            var data = beameStore.searchItemAndParentFolderPath(hostname);
 
             if (!_.isEmpty(data)) {
                 resolve(data);
@@ -305,6 +352,26 @@ module.exports = {
             }
         });
     },
+
+    /**
+     *
+     * @param {String} hostname
+     * @returns {String|null|undefined}
+     */
+    findHostPathSync: function (hostname) {
+
+        var data = beameStore.searchItemAndParentFolderPath(hostname);
+
+        if (!_.isEmpty(data)) {
+            return  data["path"];
+        }
+        else {
+            return null;
+        }
+
+    },
+
+
 
     /** ---------- Validation  shared services **/
     /**

@@ -88,7 +88,8 @@ global.AppModules = {
     "Atom": "Atom",
     "EdgeClient": "EdgeClient",
     "ProvisionApi": "ProvisionApi",
-    "DataServices": "DataServices"
+    "DataServices": "DataServices",
+    "UnitTest" : "UnitTest"
 };
 
 /**

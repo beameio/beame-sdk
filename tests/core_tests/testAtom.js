@@ -102,7 +102,7 @@ var test = function(){
 
     var devHost = argv['devhost'] || 'bufp77dx7bemrqv4.v1.beameio.net';
 
-    var host = argv['host'] || 'e9c9b6i4f1hfrybj.lawhv2o7vw0j2td9.v1.beameio.net';
+    var host = argv['host'] || 'hnfvpk8jxh0fin15.szwoo3vdui4f7qnt.v1.beameio.net';
 
     switch (cmd){
         case 'create':

@@ -32,11 +32,11 @@ var isRequestValid = function (hostname, atomDir, edgeClientDir, validateEdgeHos
         }
 
         function getMetadata() {
-            beameUtils.getNodeMetadata(edgeClientDir || atomDir, hostname, global.AppModules.Atom).then(onMetadataReceived).catch(onValidationError);
+            beameUtils.getNodeMetadataAsync(edgeClientDir || atomDir, hostname, global.AppModules.Atom).then(onMetadataReceived).catch(onValidationError);
         }
 
         function validateAtomCerts() {
-            beameUtils.isNodeCertsExists(atomDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, hostname, global.AppModules.Developer).then(getMetadata).catch(onValidationError);
+            beameUtils.isNodeCertsExistsAsync(atomDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, hostname, global.AppModules.Developer).then(getMetadata).catch(onValidationError);
         }
 
         function validateEdgeClientHost() {
@@ -103,7 +103,7 @@ var registerEdgeClient = function (atomHostname, callback) {
 
                     if (!error) {
 
-                        beameUtils.getNodeMetadata(edgeClientDir, payload.hostname, global.AppModules.EdgeClient).then(function (metadata) {
+                        beameUtils.getNodeMetadataAsync(edgeClientDir, payload.hostname, global.AppModules.EdgeClient).then(function (metadata) {
                             callback(null, metadata);
                         }, callback);
                     }
@@ -140,7 +140,7 @@ var registerEdgeClient = function (atomHostname, callback) {
         isRequestValid(atomHostname, atomDir, null, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
     }
 
-    beameUtils.findHostPathAndParent(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
+    beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
 };
 
 /**
@@ -200,7 +200,7 @@ var getCert = function (atomHostname, edgeHostname, callback) {
     }
 
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
@@ -299,7 +299,7 @@ EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname, callback
 
     }
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 //noinspection JSUnusedGlobalSymbols
@@ -365,7 +365,7 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 
     }
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 
 };
@@ -414,7 +414,7 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
 
     }
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 
@@ -450,7 +450,7 @@ EdgeClientServices.prototype.getStats = function (edgeHostname, callback) {
 
     }
 
-    beameUtils.findHostPathAndParent(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+    beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 module.exports = EdgeClientServices;
