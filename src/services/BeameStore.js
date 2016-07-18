@@ -221,11 +221,13 @@ BeameStore.prototype.getRemoteCertificate = function(fqdn, callback){
         certBody = fs.readFileSync(remoteCertPath);
     }else {
         var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
-        var response = request('GET', requestPath);
+        console.log("Certificate for %j was not found requesting %j", requestPath);
+		var response = request('GET', requestPath);
         certBody = response.getBody() + "";
 
         if (response.statusCode == 200) {
             mkdirp(path.parse(remoteCertPath).dir);
+			console.warn("Saving file to %j", remoteCertPath);
             fs.writeFileSync(remoteCertPath, certBody);
         }
     }

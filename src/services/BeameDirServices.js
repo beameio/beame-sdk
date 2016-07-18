@@ -25,10 +25,14 @@ function readCertData(basedir) {
         }
     });
     credentials['path'] = basedir;
-
-    _.map(JSON.parse(fs.readFileSync(makepath(basedir, "metadata.json"))), function (key, value) {
-        credentials[value] = key;
-    });
+    try {
+        var fileContent = fs.readFileSync(makepath(basedir, "metadata.json"));
+        _.map(JSON.parse(fileContent), function (key, value) {
+            credentials[value] = key;
+        });
+    }catch(e) {
+//        console.warn(e);
+    }
     return credentials;
 }
 
@@ -38,6 +42,21 @@ function getDirectories(srcpath) {
         return fs.statSync(path.join(srcpath, file)).isDirectory();
     });
 }
+
+function scanDigestDir(startPath) {
+    var files = fs.readdirSync(startPath);
+    var listToDigest = {};
+
+    _.each(files, function(file){
+        if(fs.statSync(path.join(startPath, file)).isDirectory()){
+            listToDigest[file]  =  scanDigestDir(path.join(startPath, file));
+        }else{
+            listToDigest[file] = fs.statSync(path.join(startPath, file));
+        }
+    });
+    return listToDigest;
+}
+
 
 function readSubDevDir(devDir) {
     var subfolders = getDirectories(devDir);
@@ -56,20 +75,6 @@ function readSubDevDir(devDir) {
 function generateDigest(startPath){
     var data = JSON.stringify(scanDigestDir(startPath));
     return require('crypto').createHash('sha224').update(data).digest("hex");
-}
-
-function scanDigestDir(startPath) {
-    var files = fs.readdirSync(startPath);
-    var listToDigest = {};
-
-    _.each(files, function(file){
-        if(fs.statSync(path.join(startPath, file)).isDirectory()){
-            listToDigest[file]  =  scanDigestDir(path.join(startPath, file))
-        }else{
-            listToDigest[file] = fs.statSync(path.join(startPath, file));
-        }
-    });
-    return listToDigest;
 }
 
 function readBeameDir(startdir) {
