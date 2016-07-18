@@ -20,10 +20,11 @@ if Path(BEAME_DIR) {
 
 DEVELOPER_NAME = "Cli Test Developer"
 DEVELOPER_EMAIL = "beame-test-developer-${time()}@example.com"
-ATOMS_TO_CREATE = 1
+ATOMS_TO_CREATE = 2
 EDGE_CLIENTS_PER_ATOM = 1
 # TODO: test binary data
 TEST_DATA = 'abcd0123~!@#'
+CREDS_FILE = "/tmp/beame-cli-test-creds-${time()}"
 
 developer = null
 atoms = []
@@ -31,6 +32,7 @@ edge_clients = []
 exit_code = 0
 
 echo("[INFO] DEVELOPER_EMAIL=$DEVELOPER_EMAIL")
+echo("[INFO] CREDS_FILE=$CREDS_FILE")
 
 { type TestFail(Error) }
 
@@ -42,10 +44,10 @@ F do_test(name:Str, f:Fun) {
 		"OK: $msg"
 	} catch(tf:TestFail) {
 		# TODO: .info should be .message when fixed in NGS
-		exit_code = 1
+		global exit_code = max([exit_code, 1])
 		"FAIL: ${tf.info}"
 	} catch(e) {
-		exit_code = 2
+		global exit_code = max([exit_code, 2])
 		"FAIL: $e"
 	}
 	echo("  RESULT: $result")
@@ -122,6 +124,47 @@ if data_signature {
 	})
 }
 
+creds_exported = false
+do_test("Export credentials", F() {
+	assert(atoms.len() >= 2)
+	exp = ``$BEAME_BIN creds exportCredentials --fqdn ${atoms[0].hostname} --targetFqdn targetFqdn --file $CREDS_FILE``
+	exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
+	exp != CREDS_FILE throws TestFail("exportCredentials returned '$exp', not the expected file $CREDS_FILE")
+	global creds_exported = true
+	exp
+})
+
+if creds_exported {
+	F test_creds_exist() {
+		ls = ``$BEAME_BIN creds list --fqdn ${atoms[0].hostname} --format json``
+		ls is not Arr throws TestFail("Creds list did not return an array")
+		ls.len() != 1 throws TestFail("Creds list length is not 1")
+		ls[0].hostname != atoms[0].hostname throws TestFail("Creds list returned the wrong item")
+		ls
+	}
+	do_test("[Import credentials] Test credentials exist before deleting them", test_creds_exist)
+	do_test("[Import credentials] Deleting exported credentials", F() {
+		# TODO: CLI command
+		$(rm -rf "$BEAME_DIR/v1/local/${developer.hostname}/${atoms[0].hostname}")
+		"deleted"
+	})
+	do_test("[Import credentials] Test credentials do not exist before importing", F() {
+		ls = ``$BEAME_BIN creds list --fqdn ${atoms[0].hostname} --format json``
+		ls is not Arr throws TestFail("Creds list did not return an array")
+		ls.len() != 0 throws TestFail("Creds list length is not 0")
+		ls
+	})
+	do_test("[Import credentials] Import", F() {
+		imp = ``$BEAME_BIN creds importCredentials --file $CREDS_FILE``
+		imp
+	})
+	do_test("[Import credentials] Test credentials exist after import", test_creds_exist)
+}
+
+if Path(CREDS_FILE) {
+	echo("+ Removing temporary credentials file $CREDS_FILE")
+	$(rm $CREDS_FILE)
+}
 
 echo("")
 echo("--- info ---")
