@@ -18,8 +18,6 @@ if Path(BEAME_DIR) {
 	throw Error("Beame directory exists ($BEAME_DIR). Will not run tests.")
 }
 
-mkdir -p $BEAME_DIR
-
 DEVELOPER_NAME = "Cli Test Developer"
 DEVELOPER_EMAIL = "beame-test-developer-${time()}@example.com"
 ATOMS_TO_CREATE = 1
@@ -77,6 +75,7 @@ each_idx_val(atoms, F(atom_idx, atom) {
 	for(i;EDGE_CLIENTS_PER_ATOM) {
 		do_test("Create edge #$i for atom ${atom.hostname}", F() {
 			edge_client = ``$BEAME_BIN creds createEdgeClient --atomFqdn ${atom.hostname} --format json``
+			# TODO: checks
 			edge_clients.push(edge_client)
 			edge_client
 		})
@@ -124,6 +123,7 @@ if data_signature {
 }
 
 
+echo("")
 echo("--- info ---")
 echo("ATOMS: $atoms")
 echo("EDGE CLIENTS: $edge_clients")
