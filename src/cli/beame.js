@@ -104,7 +104,7 @@ function main() {
 	// console.log('CB', paramsNames.useCallback);
 	// console.log('P', paramsNames);
 	function commandResultsReady(output) {
-		if(!output) {
+		if(output === undefined) {
 			return;
 		}
 		if(argv.format == 'json' || !commands[cmdName][subCmdName].toText) {

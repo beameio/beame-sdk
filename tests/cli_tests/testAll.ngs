@@ -1,0 +1,130 @@
+#!/usr/bin/env ngs
+
+# NGS language - https://github.com/ilyash/ngs/
+
+if 'BEAME_DIR' in ENV {
+	# TODO: support BEAME_DIR environment variable
+	throw Error("BEAME_DIR environment variable must be unset for tests")
+}
+
+if not(Path(ENV.HOME + '/authData')) {
+	throw Error("~/authData must be present for tests")
+}
+
+BEAME_DIR = ENV.HOME + '/.beame'
+BEAME_BIN = ENV.HOME + '/beame-sdk/src/cli/beame.js'
+
+if Path(BEAME_DIR) {
+	throw Error("Beame directory exists ($BEAME_DIR). Will not run tests.")
+}
+
+DEVELOPER_NAME = "Cli Test Developer"
+DEVELOPER_EMAIL = "beame-test-developer-${time()}@example.com"
+ATOMS_TO_CREATE = 1
+EDGE_CLIENTS_PER_ATOM = 1
+# TODO: test binary data
+TEST_DATA = 'abcd0123~!@#'
+
+developer = null
+atoms = []
+edge_clients = []
+exit_code = 0
+
+echo("[INFO] DEVELOPER_EMAIL=$DEVELOPER_EMAIL")
+
+{ type TestFail(Error) }
+
+F do_test(name:Str, f:Fun) {
+	echo("")
+	echo("==================== TEST: $name ====================")
+	result = try {
+		msg = f()
+		"OK: $msg"
+	} catch(tf:TestFail) {
+		# TODO: .info should be .message when fixed in NGS
+		exit_code = 1
+		"FAIL: ${tf.info}"
+	} catch(e) {
+		exit_code = 2
+		"FAIL: $e"
+	}
+	echo("  RESULT: $result")
+}
+
+do_test("Create test developer", F() {
+	global developer = ``$BEAME_BIN creds createTestDeveloper --developerName developerName $DEVELOPER_NAME --developerEmail $DEVELOPER_EMAIL --format json``
+	developer is not Hash throws TestFail("Developer must be hash, not $developer")
+	developer.email != DEVELOPER_EMAIL throws TestFail("Developer email mismatch")
+	developer
+})
+
+
+if developer {
+	for(i;ATOMS_TO_CREATE) {
+		do_test("Create atom #$i", F() {
+			atom = ``$BEAME_BIN creds createAtom --developerFqdn ${developer.hostname} --atomName "atom-$i" --format json``
+			atom is not Hash throws TestFail("Atom must be hash, not $atom")
+			atom.parent_fqdn != developer.hostname throws TestFail("Atom parent_fqdn mismatch")
+			atoms.push(atom)
+			atom
+		})
+	}
+}
+
+each_idx_val(atoms, F(atom_idx, atom) {
+	for(i;EDGE_CLIENTS_PER_ATOM) {
+		do_test("Create edge #$i for atom ${atom.hostname}", F() {
+			edge_client = ``$BEAME_BIN creds createEdgeClient --atomFqdn ${atom.hostname} --format json``
+			# TODO: checks
+			edge_clients.push(edge_client)
+			edge_client
+		})
+	}
+})
+
+encrypted_data = null
+
+do_test("Encrypt data", F() {
+	global encrypted_data = `$BEAME_BIN crypto encrypt --data $TEST_DATA --fqdn ${atoms[0].hostname}`
+	enc = encrypted_data.decode_json()
+	enc is not Hash throws TestFail("Encrypted data must be hash, not $atom")
+	%[rsaCipheredKeys data encryptedFor].each(F(k) k not in enc throws TestFail("Key $k is missing in 'encrypt' output"))
+	enc.encryptedFor != atoms[0].hostname throws TestFail("encryptedFor mismatch")
+	enc
+})
+
+if encrypted_data {
+	do_test("Decrypt data", F() {
+		dec = ``$BEAME_BIN crypto decrypt --data $encrypted_data``
+		dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
+		"Decryped data was same as the original data"
+	})
+}
+
+data_signature = null
+do_test("Sign data", F() {
+	global data_signature = `$BEAME_BIN crypto sign --data $TEST_DATA --fqdn ${atoms[0].hostname}`
+	sig = data_signature.decode_json()
+	sig is not Str throws TestFail("Signature is not a string")
+	sig
+})
+
+if data_signature {
+	do_test("Check good signature", F() {
+		 chk = ``$BEAME_BIN crypto checkSignature --data $TEST_DATA --fqdn ${atoms[0].hostname} --signature $data_signature``
+		 chk !== true throws TestFail("Good signature check did not return true but '$chk'")
+		 chk
+	})
+	do_test("Check good signature for tampered data", F() {
+		 chk = ``$BEAME_BIN crypto checkSignature --data ${TEST_DATA+'xyz'} --fqdn ${atoms[0].hostname} --signature $data_signature``
+		 chk !== false throws TestFail("Good signature check did not return false for tampered data but '$chk'")
+		 chk
+	})
+}
+
+
+echo("")
+echo("--- info ---")
+echo("ATOMS: $atoms")
+echo("EDGE CLIENTS: $edge_clients")
+{ exit_code }
