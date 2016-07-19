@@ -12,15 +12,15 @@ var rimraf = require('rimraf');
 
 /**------------------------ private methods ---------------------**/
 function randomPassword(length) {
-    var len = length || 16;
-    var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
-    var pass = "";
-    for (var x = 0; x < len; x++) {
-        var i = Math.floor(Math.random() * chars.length);
-        pass += chars.charAt(i);
-    }
+	var len = length || 16;
+	var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
+	var pass = "";
+	for (var x = 0; x < len; x++) {
+		var i = Math.floor(Math.random() * chars.length);
+		pass += chars.charAt(i);
+	}
 
-    return pass;
+	return pass;
 }
 
 /**
@@ -39,82 +39,82 @@ var DataServices = function () {
  * @param {String|null|undefined} [pkName]
  * @returns {Promise}
  */
-DataServices.prototype.createCSR = function (dirPath, hostname,pkName) {
-    var self = this;
-    var errMsg;
+DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
+	var self = this;
+	var errMsg;
 
-    return new Promise(function (resolve, reject) {
+	return new Promise(function (resolve, reject) {
 
-        /* --------- generate RSA key: ------------------------------------------------*/
-        var cmd = "openssl genrsa 2048";
+		/* --------- generate RSA key: ------------------------------------------------*/
+		var cmd = "openssl genrsa 2048";
 
-        debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
+		debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
 
-        exec(cmd, function (error, stdout, stderr) {
-            var devPK = stdout;
+		exec(cmd, function (error, stdout, stderr) {
+			var devPK = stdout;
 
-            if (error !== null) {
-                /* -------  put error handler to deal with possible openssl failure -----------*/
-                errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
-                    "error": error,
-                    "stderr": stderr
-                });
+			if (error !== null) {
+				/* -------  put error handler to deal with possible openssl failure -----------*/
+				errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
+					"error": error,
+					"stderr": stderr
+				});
 
-                reject(errMsg);
-                return;
-            }
+				reject(errMsg);
+				return;
+			}
 
-            var pkFileName = pkName || global.CertFileNames.PRIVATE_KEY;
+			var pkFileName = pkName || global.CertFileNames.PRIVATE_KEY;
 
-            var pkFile = path.join(dirPath,pkFileName);
+			var pkFile = path.join(dirPath, pkFileName);
 
-            self.saveFile(dirPath,pkFileName, devPK, function (error) {
-                if (!error) {
-                    cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (global.csrSubj + hostname) + "\"";
-                    debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating CSR with", {"cmd": cmd}));
+			self.saveFile(dirPath, pkFileName, devPK, function (error) {
+				if (!error) {
+					cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (global.csrSubj + hostname) + "\"";
+					debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating CSR with", {"cmd": cmd}));
 
-                    try {
-                        exec(cmd,
-                            /**
-                             *
-                             * @param error
-                             * @param stdout => return CSR
-                             * @param stderr
-                             */
-                            function (error, stdout, stderr) {
-                                if (error !== null) {
-                                    errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate CSR", {
-                                        "error": error,
-                                        "stderr": stderr
-                                    });
-                                    console.error(errMsg);
-                                    reject(errMsg);
-                                }
-                                else {
-                                    resolve(stdout);
-                                }
+					try {
+						exec(cmd,
+							/**
+							 *
+							 * @param error
+							 * @param stdout => return CSR
+							 * @param stderr
+							 */
+							function (error, stdout, stderr) {
+								if (error !== null) {
+									errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate CSR", {
+										"error": error,
+										"stderr": stderr
+									});
+									console.error(errMsg);
+									reject(errMsg);
+								}
+								else {
+									resolve(stdout);
+								}
 
-                            });
-                    }
-                    catch (error) {
-                        errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
-                        console.error(errMsg);
-                        reject(errMsg);
-                    }
-                }
-                else {
-                    errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to save Private Key", {
-                        "error": error,
-                        "stderr": stderr
-                    });
-                    console.error(errMsg);
-                    reject(errMsg);
-                }
-            });
+							});
+					}
+					catch (error) {
+						errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
+						console.error(errMsg);
+						reject(errMsg);
+					}
+				}
+				else {
+					errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to save Private Key", {
+						"error": error,
+						"stderr": stderr
+					});
+					console.error(errMsg);
+					reject(errMsg);
+				}
+			});
 
-        });
+		});
 
-    });
+	});
 };
 
 /**------------------- save payload methods -----------------------**/
@@ -128,27 +128,27 @@ DataServices.prototype.createCSR = function (dirPath, hostname,pkName) {
  * @param {Function} callback
  */
 DataServices.prototype.savePayload = function (dirPath, payload, keys, level, callback) {
-    var self = this;
-    var data = {
-        "level": level.toLowerCase()
-    };
+	var self = this;
+	var data = {
+		"level": level.toLowerCase()
+	};
 
-    for (var i = 0; i < keys.length; i++) {
-        if (payload[keys[i]]) {
-            data[keys[i]] = payload[keys[i]];
-        }
-        else {
-            var errMsg = global.formatDebugMessage(level, global.MessageCodes.InvalidPayload, "payload key missing", {
-                "payload": payload,
-                "key": keys[i]
-            });
-            console.error(errMsg);
-            callback(errMsg, null);
-            return;
-        }
-    }
+	for (var i = 0; i < keys.length; i++) {
+		if (payload[keys[i]]) {
+			data[keys[i]] = payload[keys[i]];
+		}
+		else {
+			var errMsg = global.formatDebugMessage(level, global.MessageCodes.InvalidPayload, "payload key missing", {
+				"payload": payload,
+				"key": keys[i]
+			});
+			console.error(errMsg);
+			callback(errMsg, null);
+			return;
+		}
+	}
 
-    self.saveFile(dirPath, global.metadataFileName, JSON.stringify(data, null, 2), callback);
+	self.saveFile(dirPath, global.metadataFileName, JSON.stringify(data, null, 2), callback);
 };
 
 /**
@@ -158,95 +158,95 @@ DataServices.prototype.savePayload = function (dirPath, payload, keys, level, ca
  * @param finalCallback
  */
 DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
-    var self = this;
-    var errMsg;
+	var self = this;
+	var errMsg;
 
-    var saveCert = function (responseField, targetName, callback) {
-        if (!payload[responseField]) {
-            errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, responseField + " missing in API response", {"path": dirPath});
-            callback(errMsg,null);
-        }
+	var saveCert = function (responseField, targetName, callback) {
+		if (!payload[responseField]) {
+			errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, responseField + " missing in API response", {"path": dirPath});
+			callback(errMsg, null);
+		}
 
-        //save cert
-        self.saveFileAsync(path.join(dirPath,targetName), payload[responseField], function (error) {
-            if (error) {
-                errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, "Saving " + responseField + " failed", {"path": dirPath});
-                console.error(errMsg);
-                callback(errMsg, null);
-                return;
-            }
+		//save cert
+		self.saveFileAsync(path.join(dirPath, targetName), payload[responseField], function (error) {
+			if (error) {
+				errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, "Saving " + responseField + " failed", {"path": dirPath});
+				console.error(errMsg);
+				callback(errMsg, null);
+				return;
+			}
 
-            callback(null, 'done');
-        });
-    };
+			callback(null, 'done');
+		});
+	};
 
-    async.parallel(
-        [
-            function (callback) {
-                saveCert(global.CertRespponseFields.x509, global.CertFileNames.X509, callback);
-            },
-            function (callback) {
-                saveCert(global.CertRespponseFields.ca, global.CertFileNames.CA, callback);
-            },
-            function (callback) {
-                saveCert(global.CertRespponseFields.pkcs7, global.CertFileNames.PKCS7, callback);
-            }
+	async.parallel(
+		[
+			function (callback) {
+				saveCert(global.CertRespponseFields.x509, global.CertFileNames.X509, callback);
+			},
+			function (callback) {
+				saveCert(global.CertRespponseFields.ca, global.CertFileNames.CA, callback);
+			},
+			function (callback) {
+				saveCert(global.CertRespponseFields.pkcs7, global.CertFileNames.PKCS7, callback);
+			}
 
-        ],
-        function (error) {
-            if (error) {
-                finalCallback(error, null);
-                return;
-            }
+		],
+		function (error) {
+			if (error) {
+				finalCallback(error, null);
+				return;
+			}
 
 
-            async.parallel(
-                [
-                    function (callback) {
-                        exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
-                            if (error) {
-                                callback(error, null);
-                                return;
-                            }
-                            self.saveFileAsync(path.join(dirPath,global.CertFileNames.P7B), stdout, function (error) {
-                                error ? callback(error, null) : callback(null, true);
-                            });
-                        });
-                    },
-                    function (callback) {
-                        var pwd = randomPassword();
+			async.parallel(
+				[
+					function (callback) {
+						exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
+							if (error) {
+								callback(error, null);
+								return;
+							}
+							self.saveFileAsync(path.join(dirPath, global.CertFileNames.P7B), stdout, function (error) {
+								error ? callback(error, null) : callback(null, true);
+							});
+						});
+					},
+					function (callback) {
+						var pwd = randomPassword();
 
-                        var cmd = "openssl pkcs12 -export -in " + path.join(dirPath,global.CertFileNames.X509) + " -certfile " + path.join(dirPath,global.CertFileNames.CA) + " -inkey " + path.join(dirPath,global.CertFileNames.PRIVATE_KEY) + " -password pass:'" + pwd + "' -out " + path.join(dirPath + global.CertFileNames.PKCS12);
+						var cmd = "openssl pkcs12 -export -in " + path.join(dirPath, global.CertFileNames.X509) + " -certfile " + path.join(dirPath, global.CertFileNames.CA) + " -inkey " + path.join(dirPath, global.CertFileNames.PRIVATE_KEY) + " -password pass:'" + pwd + "' -out " + path.join(dirPath + global.CertFileNames.PKCS12);
 
-                        try {
-                            exec(cmd, function (error) {
-                                if (error) {
-                                    callback(error, null);
-                                    return;
-                                }
-                                self.saveFileAsync(path.join(dirPath,global.CertFileNames.PWD), pwd, function (error) {
-                                    error ? callback(error, null) : callback(null, true);
-                                });
-                            });
+						try {
+							exec(cmd, function (error) {
+								if (error) {
+									callback(error, null);
+									return;
+								}
+								self.saveFileAsync(path.join(dirPath, global.CertFileNames.PWD), pwd, function (error) {
+									error ? callback(error, null) : callback(null, true);
+								});
+							});
 
-                        }
-                        catch (e) {
-                            callback(e, null);
-                        }
+						}
+						catch (e) {
+							callback(e, null);
+						}
 
-                    }
-                ],
-                function (error) {
-                    if (error) {
-                        finalCallback(error, null);
-                        return;
-                    }
+					}
+				],
+				function (error) {
+					if (error) {
+						finalCallback(error, null);
+						return;
+					}
 
-                    finalCallback && finalCallback(null, true);
-                }
-            );
-        }
-    );
+					finalCallback && finalCallback(null, true);
+				}
+			);
+		}
+	);
 
 };
 
@@ -258,12 +258,12 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
  * @returns {boolean}
  */
 DataServices.prototype.isPathExists = function (dir) {
-    try {
-        fs.accessSync(dir, fs.F_OK);
-        return true;
-    } catch (e) {
-        return false;
-    }
+	try {
+		fs.accessSync(dir, fs.F_OK);
+		return true;
+	} catch (e) {
+		return false;
+	}
 };
 
 /**
@@ -274,18 +274,18 @@ DataServices.prototype.isPathExists = function (dir) {
  * @returns {boolean}
  */
 DataServices.prototype.isNodeFilesExists = function (dirPath, nodeFiles, module) {
-    var self = this;
-    for (var i = 0; i < nodeFiles.length; i++) {
-        if (!self.isPathExists(path.join(dirPath, nodeFiles[i]))) {
-            console.error(global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, "cert missing", {
-                "path": dirPath,
-                "file": nodeFiles[i]
-            }));
-            return false;
-        }
-    }
+	var self = this;
+	for (var i = 0; i < nodeFiles.length; i++) {
+		if (!self.isPathExists(path.join(dirPath, nodeFiles[i]))) {
+			console.error(global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, "cert missing", {
+				"path": dirPath,
+				"file": nodeFiles[i]
+			}));
+			return false;
+		}
+	}
 
-    return true;
+	return true;
 };
 
 /**
@@ -293,12 +293,12 @@ DataServices.prototype.isNodeFilesExists = function (dirPath, nodeFiles, module)
  * @param {String} dirPath
  */
 DataServices.prototype.createDir = function (dirPath) {
-    try {
-        fs.accessSync(dirPath, fs.F_OK);
-    }
-    catch (e) {
-        fs.mkdirSync(dirPath);
-    }
+	try {
+		fs.accessSync(dirPath, fs.F_OK);
+	}
+	catch (e) {
+		fs.mkdirSync(dirPath);
+	}
 };
 
 /**
@@ -308,14 +308,14 @@ DataServices.prototype.createDir = function (dirPath) {
  * @param {Object} data
  * @param {Function|null} [cb]
  */
-DataServices.prototype.saveFile = function (dirPath, fileName,data, cb) {
-    try {
-        fs.writeFileSync(path.join(dirPath,fileName), data);
-        cb && cb(null, true);
-    }
-    catch (error) {
-        cb && cb(error, null);
-    }
+DataServices.prototype.saveFile = function (dirPath, fileName, data, cb) {
+	try {
+		fs.writeFileSync(path.join(dirPath, fileName), data);
+		cb && cb(null, true);
+	}
+	catch (error) {
+		cb && cb(error, null);
+	}
 
 };
 
@@ -326,13 +326,13 @@ DataServices.prototype.saveFile = function (dirPath, fileName,data, cb) {
  * @param {Function|null} [cb]
  */
 DataServices.prototype.deleteFile = function (dirPath, fileName, cb) {
-    try {
-        fs.unlink(path.join(dirPath,fileName));
-        cb && cb(null, true);
-    }
-    catch (error) {
-        cb && cb(error, null);
-    }
+	try {
+		fs.unlink(path.join(dirPath, fileName));
+		cb && cb(null, true);
+	}
+	catch (error) {
+		cb && cb(error, null);
+	}
 
 };
 
@@ -340,8 +340,8 @@ DataServices.prototype.deleteFile = function (dirPath, fileName, cb) {
  * @param {String} dirPath
  * @param {Function} callback
  */
-DataServices.prototype.deleteFolder = function (dirPath,callback) {
-    rimraf(dirPath, callback);
+DataServices.prototype.deleteFolder = function (dirPath, callback) {
+	rimraf(dirPath, callback);
 };
 
 /**
@@ -352,13 +352,13 @@ DataServices.prototype.deleteFolder = function (dirPath,callback) {
  * @param {Function|null} [cb]
  */
 DataServices.prototype.renameFile = function (dirPath, oldName, newName, cb) {
-    try {
-        fs.rename(path.join(dirPath,oldName),path.join(dirPath,newName));
-        cb && cb(null, true);
-    }
-    catch (error) {
-        cb && cb(error, null);
-    }
+	try {
+		fs.rename(path.join(dirPath, oldName), path.join(dirPath, newName));
+		cb && cb(null, true);
+	}
+	catch (error) {
+		cb && cb(error, null);
+	}
 
 };
 
@@ -370,14 +370,14 @@ DataServices.prototype.renameFile = function (dirPath, oldName, newName, cb) {
  * @param {Function|null} [cb]
  */
 DataServices.prototype.saveFileAsync = function (dirPath, data, cb) {
-    fs.writeFile(dirPath, data, function (error) {
-        if (!cb) return;
-        if (error) {
-            cb(error, null);
-            return;
-        }
-        cb(null, true);
-    });
+	fs.writeFile(dirPath, data, function (error) {
+		if (!cb) return;
+		if (error) {
+			cb(error, null);
+			return;
+		}
+		cb(null, true);
+	});
 };
 
 /**
@@ -385,17 +385,17 @@ DataServices.prototype.saveFileAsync = function (dirPath, data, cb) {
  * @param {String} dirPath
  */
 DataServices.prototype.readJSON = function (dirPath) {
-    if (this.isPathExists(dirPath)) {
-        try {
-            var file = fs.readFileSync(dirPath);
-            return JSON.parse(file);
-        }
-        catch (error) {
-            return {};
-        }
-    }
+	if (this.isPathExists(dirPath)) {
+		try {
+			var file = fs.readFileSync(dirPath);
+			return JSON.parse(file);
+		}
+		catch (error) {
+			return {};
+		}
+	}
 
-    return {};
+	return {};
 };
 
 module.exports = DataServices;

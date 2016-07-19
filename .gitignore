@@ -12,3 +12,5 @@ npm-debug.log
 system
 runEmpty.json
 unit_test
+tests/utils_tests
+#tests/core_tests
