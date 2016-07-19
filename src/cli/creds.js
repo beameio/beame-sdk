@@ -289,12 +289,20 @@ function revoke(fqdn){
 	debug ("revoke   %j",   fqdn);
 }
 
+function shred(fqdn) {
+	if(!fqdn) {
+		throw new Error("FQDN is required in shred");
+	}
+	return store.shredCredentials(fqdn);
+}
+
 
 module.exports = {
 	show,
 	list,
 	renew,
 	revoke,
+	shred,
 	createAtom,
 	createEdgeClient,
 	createDeveloper,

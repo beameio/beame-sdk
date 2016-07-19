@@ -255,17 +255,17 @@ BeameStore.prototype.importCredentials =function(data){
 	return true;
 };
 
-BeameStore.prototype.shredCredentials = function(fqdn) {	
+BeameStore.prototype.shredCredentials = function(fqdn) {
 	var item = this.search(fqdn)[0];
-	if(item){
-		var localDirPath = path.parse(item.path).dir;
-		var files = beameDirApi.getFiles(fqdn);
-		console.log(files);
-		
-	
+	if(!item){
+		console.error("Shredding failed fqdn %j not found ", fqdn);
+		return false;
 	}
-	console.error("Shreading failed fqdn %j not found ", fqdn);
 
+	var localDirPath = path.parse(item.path).dir;
+	var files = beameDirApi.getFiles(fqdn);
+	console.log(files);
+	return true;
 };
 
 

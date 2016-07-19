@@ -86,8 +86,8 @@ function generateDigest(startPath){
 function readBeameDir(startdir) {
     debug("starting with " + startdir);
     var developers = [];
-    if (!startdir || startdir.length === 0) {
-        startdir =global.globalPath;
+    if (!startdir) {
+        startdir = global.globalPath;
     }
     var subfolders = getDirectories(startdir);
     _.each(subfolders, function (dir) {
@@ -97,4 +97,9 @@ function readBeameDir(startdir) {
     return developers;
 }
 
-module.exports = {"readBeameDir": readBeameDir, "generateDigest": generateDigest, "makepath": makepath};
+module.exports = {
+	generateDigest,
+	getFiles,
+	makepath,
+	readBeameDir
+};
