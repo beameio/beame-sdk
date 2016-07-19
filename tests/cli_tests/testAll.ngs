@@ -21,7 +21,7 @@ if Path(BEAME_DIR) {
 DEVELOPER_NAME = "Cli Test Developer"
 DEVELOPER_EMAIL = "beame-test-developer-${time()}@example.com"
 ATOMS_TO_CREATE = 2
-EDGE_CLIENTS_PER_ATOM = 1
+EDGE_CLIENTS_PER_ATOM = 2
 # TODO: test binary data
 TEST_DATA = 'abcd0123~!@#'
 CREDS_FILE = "/tmp/beame-cli-test-creds-${time()}"
@@ -126,6 +126,7 @@ if data_signature {
 
 creds_exported = false
 do_test("Export credentials", F() {
+	ENV.get('SKIP_EXPORT', false) returns "SKIPPED"
 	assert(atoms.len() >= 2)
 	exp = ``$BEAME_BIN creds exportCredentials --fqdn ${atoms[0].hostname} --targetFqdn ${atoms[1].hostname} --file $CREDS_FILE``
 	exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
@@ -169,13 +170,40 @@ if creds_exported {
 	do_test("[Import credentials] Test credentials exist after import", test_creds_exist)
 }
 
+if edge_clients {
+	do_test('HTTPS servers', F() {
+
+		F bad_output(s:Str) 'hello world' not in s
+
+		servers = [null] * edge_clients.len()
+		edge_clients.each_idx_val(F(idx, edge_client) {
+			echo("  Starting server at https://${edge_client.hostname}/")
+			servers[idx] = Thread(F() $($BEAME_BIN servers HttpsServerTestStart --edgeClientFqdn ${edge_client.hostname}))
+		})
+		echo("  Waiting 5 seconds for servers to come up")
+		$(sleep 5)
+		echo("  Fetching URLs")
+		outputs = edge_clients.pmap(F(edge_client) {
+			`curl --silent --max-time 10 "https://${edge_client.hostname}/"`
+		})
+		echo("  Killing servers")
+		$(pkill -f HttpsServerTestStart)
+		servers.join()
+		echo("  Checking outputs")
+		outputs.any(is, ProcessFail) throws TestFail("Some curl processes failed: $outputs")
+		outputs.any(bad_output) throws TestFail("Some outputs were not OK: $outputs")
+		"All ${outputs.len()} outputs were correct"
+	})
+}
+
 if Path(CREDS_FILE) {
 	echo("+ Removing temporary credentials file $CREDS_FILE")
 	$(rm $CREDS_FILE)
 }
 
-echo("")
-echo("--- info ---")
-echo("ATOMS: $atoms")
-echo("EDGE CLIENTS: $edge_clients")
+# echo("")
+# echo("--- info ---")
+# echo("ATOMS: $atoms")
+# echo("EDGE CLIENTS: $edge_clients")
+echo("All tests done. Exit code: $exit_code")
 { exit_code }
