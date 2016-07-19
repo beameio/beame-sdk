@@ -49,6 +49,10 @@ function getFiles(srcpath) {
     });
 }
 
+function getCertsFiles(srcpath) {
+	return getFiles(srcpath).filter(f => f != global.metadataFileName);
+}
+
 function scanDigestDir(startPath) {
     var files = fs.readdirSync(startPath);
     var listToDigest = {};
@@ -100,6 +104,7 @@ function readBeameDir(startdir) {
 module.exports = {
 	generateDigest,
 	getFiles,
+	getCertsFiles,
 	makepath,
 	readBeameDir
 };

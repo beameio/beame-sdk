@@ -1,4 +1,6 @@
 'use strict';
+var async = require('async');
+var exec = require('child_process').exec;
 var fs = require('fs');
 var _ = require('underscore');
 var os = require('os');
@@ -255,17 +257,28 @@ BeameStore.prototype.importCredentials =function(data){
 	return true;
 };
 
-BeameStore.prototype.shredCredentials = function(fqdn) {
+BeameStore.prototype.shredCredentials = function(fqdn, callback) {
+	// XXX: Fix callback to get (err, data) instead of (data)
+	// XXX: Fix exit code
 	var item = this.search(fqdn)[0];
 	if(!item){
-		console.error("Shredding failed fqdn %j not found ", fqdn);
-		return false;
+		callback(`Shredding failed: fqdn ${fqdn} not found`);
+		return;
 	}
 
-	var localDirPath = path.parse(item.path).dir;
-	var files = beameDirApi.getFiles(fqdn);
-	console.log(files);
-	return true;
+	var dir = path.parse(item.path).dir;
+	var files = beameDirApi.getCertsFiles(dir);
+
+	var del_functions = files.map(f => {
+		return function(cb) {
+			exec(['echo', 'shred', '-u', path.join(dir, f)], (error, stdout, stderr) => {
+				console.log('STDOUT', stdout);
+				cb(error, null);
+			});
+		}
+	});
+
+	async.parallel(del_functions, callback);
 };
 
 

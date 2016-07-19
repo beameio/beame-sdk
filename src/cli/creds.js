@@ -289,11 +289,11 @@ function revoke(fqdn){
 	debug ("revoke   %j",   fqdn);
 }
 
-function shred(fqdn) {
+function shred(fqdn, callback) {
 	if(!fqdn) {
 		throw new Error("FQDN is required in shred");
 	}
-	return store.shredCredentials(fqdn);
+	store.shredCredentials(fqdn, callback);
 }
 
 
