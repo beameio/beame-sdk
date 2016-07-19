@@ -41,7 +41,7 @@ function run() {
 
 			atomServices.createAtom(developerHostname, name, function (error, payload) {
 
-				console.log('############ create atom response received with payload %j and error %j ############', payload, error);
+				console.log(`############ create atom response received with payload ${payload} and error ${error} ############`);
 
 				//validate payload & error
 				assert.isNull(error, error && error.message);
@@ -58,12 +58,12 @@ function run() {
 
 				//validate certificate structure
 				var certsCreated = beameUtils.validateHostCertsSync(atomHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
-				assert.isTrue(certsCreated, 'Certificates mismatch');
+				assert.isTrue(certsCreated, `Certificates mismatch for atom ${atomHostname}`);
 
 
 				//validate metadata json
 				var metadata = beameUtils.getHostMetadataSync(atomHostname);
-				assert.isNotNull(metadata, 'Metadata mismatch');
+				assert.isNotNull(metadata, `Metadata mismatch for atom ${atomHostname}`);
 
 				assert.equal(metadata["hostname"], atomHostname, 'Metadata hostname is incorrect');
 

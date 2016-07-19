@@ -428,7 +428,7 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
 		provisionApi.runRestfulAPI(apiData, function (error) {
 			if (!error) {
 
-				//TODO delete old certs
+				beameUtils.deleteHostCerts(atomHostname);
 
 				callback && callback(null, 'done');
 			}

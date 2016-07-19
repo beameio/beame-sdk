@@ -491,7 +491,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
-	function onRequestValidated(metadata) {
+	function onRequestValidated() {
 
 		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
 
@@ -504,7 +504,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
 
-				//TODO delete old certs
+				beameUtils.deleteHostCerts(hostname);
 
 				dataServices.saveFile(devDir, global.CertFileNames.RECOVERY, beameUtils.stringify(payload), function (error) {
 					if (!callback) return;

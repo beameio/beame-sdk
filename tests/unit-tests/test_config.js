@@ -9,8 +9,8 @@ var options = {
 	"run_cert": process.env.run_cert_serv || "false",
 	"run_stats": process.env.run_stats || "false",
 	"run_delete": process.env.run_delete || "false",
-	"developer_atoms" : parseInt(process.env.atoms || 1),
-	"atom_edges" : parseInt(process.env.edges || 2)
+	"developer_atoms" : parseInt(process.env.atoms || 3),
+	"atom_edges" : parseInt(process.env.edges || 5)
 };
 
 exports.options = options;

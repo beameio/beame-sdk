@@ -170,7 +170,7 @@ BeameStore.prototype.ensureFreshBeameStore = function () {
         this.beameStore = beameDirApi.readBeameDir(this.beamedir);
         this.digest = newHash;
     }
-}
+};
 
 BeameStore.prototype.search = function (name) {
 	this.ensureFreshBeameStore();
@@ -216,7 +216,7 @@ BeameStore.prototype.list = function (type, name) {
     }
 };
 
-BeameStore.prototype.getRemoteCertificate = function(fqdn, callback){
+BeameStore.prototype.getRemoteCertificate = function(fqdn){
     var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
     var certBody = "";
     if(fs.existsSync(remoteCertPath)) {
