@@ -256,6 +256,18 @@ BeameStore.prototype.importCredentials =function(data){
     fs.writeFileSync(path.join(targetPath, "metadata.json"), JSON.stringify(metadata));
 };
 
+BeameStore.prototype.shredCredentials = function(fqdn) {	
+	var item = this.search(fqdn)[0];
+	if(item){
+		var localDirPath = path.parse(item.path).dir;
+		var files = beameDirApi.getFiles(fqdn);
+		console.log(files);
+		
+	
+	}
+	console.error("Shreading failed fqdn %j not found ", fqdn);
+
+};
 
 
 module.exports = BeameStore;

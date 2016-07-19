@@ -43,6 +43,12 @@ function getDirectories(srcpath) {
     });
 }
 
+function getFiles(srcpath) {
+    return fs.readdirSync(srcpath).filter(function (file) {
+        return fs.statSync(path.join(srcpath, file)).isFile();
+    });
+}
+
 function scanDigestDir(startPath) {
     var files = fs.readdirSync(startPath);
     var listToDigest = {};

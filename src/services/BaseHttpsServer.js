@@ -14,6 +14,7 @@ var beamestore = new BeameStore();
 var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 {
 	var edgeCert = beamestore.search(instanceHostname);
+	var serverInfo;
 	if(edgeCert.length != 1){
 		throw new Error("Could not find certificate for " + instanceHostname);
 	}
@@ -28,7 +29,9 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 	app.listen(0, function() {
 		function onLocalServerCreated(data){
 			if(hostOnlineCallback){
+				serverInfo = data;
 				hostOnlineCallback(data, app);
+				console.error(data);
 			}
 		};
 
