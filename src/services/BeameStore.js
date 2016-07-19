@@ -252,6 +252,7 @@ BeameStore.prototype.importCredentials =function(data){
         }
     });
     fs.writeFileSync(path.join(targetPath, "metadata.json"), JSON.stringify(metadata));
+	return true;
 };
 
 

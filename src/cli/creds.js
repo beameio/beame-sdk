@@ -228,9 +228,10 @@ function importCredentials(data, file){
 	var decryptedCreds;
 
 	if(!data && !file) {
+		// XXX: to test
 		readStdinStream(function (data) {
 			decryptedCreds = decryptCreds(data);
-			store.importCredentials(data);
+			store.importCredentials(decryptedCreds);
 		});
 	}else {
 		if(file){
@@ -238,12 +239,12 @@ function importCredentials(data, file){
 			decryptedCreds = decryptCreds(data);
 			if(!decryptedCreds || decryptedCreds  == -1){
 				console.error("No decrypted creds");
-				return -1;
+				return false;
 			}
 			return store.importCredentials(decryptedCreds);
 		}else {
 			decryptedCreds = decryptCreds(JSON.parse(data));
-			return	store.importCredentials(decryptedCreds);
+			return store.importCredentials(decryptedCreds);
 		}
 	}
 }

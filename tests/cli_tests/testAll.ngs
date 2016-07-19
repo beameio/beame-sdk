@@ -157,12 +157,13 @@ if creds_exported {
 	do_test("[Import credentials] Check certificate exists", F() {
 		# https://beameio-net-certs-dev.s3.amazonaws.com/h9dgcv7wdlsff7oo.h7zujy4ch0hg8rgd.v1.beameio.net/x509.pem
 		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
-		$(curl $url)
+		$(curl -s $url)
 		"URL $url is available"
 	})
 	do_test("[Import credentials] Import", F() {
 		imp = ``$BEAME_BIN creds importCredentials --file $CREDS_FILE``
-		imp is not Hash throws TestFail("Import result must be hash, not '$imp'")
+		imp is not Bool throws TestFail("Import result must be a boolean, not '$imp'")
+		not(imp) throws TestFail("Import did not return true")
 		imp
 	})
 	do_test("[Import credentials] Test credentials exist after import", test_creds_exist)
