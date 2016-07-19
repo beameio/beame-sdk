@@ -266,7 +266,7 @@ BeameStore.prototype.shredCredentials = function(fqdn, callback) {
 		return;
 	}
 
-	var dir = path.parse(item.path).dir;
+	var dir = item.path;
 	var files = beameDirApi.getCertsFiles(dir);
 
 	var del_functions = files.map(f => {
