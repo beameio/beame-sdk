@@ -164,7 +164,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
     var saveCert = function (responseField, targetName, callback) {
         if (!payload[responseField]) {
             errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, responseField + " missing in API response", {"path": dirPath});
-            return;
+            callback(errMsg,null);
         }
 
         //save cert

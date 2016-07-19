@@ -1,12 +1,12 @@
 1. System Item -- to generate all certs including edge.
 2. Export and documentation of the node.js sdk and how to use the different functions 
-3. support aws cert storage 
+3. support aws cert storage -- done currnetly without cloudfront 
 4. support regular tls connect to cache certificate 
 5. command output to sdt erro ( for checking credentials) etc. 
 6. purge  of the folder. 
 7. renew & revoke 
 8. statistics
-
+9. check of software needs updating and print this as a wardning, i think this will be real important
 
 [system ]
 1. new envieroment for production (edge servers, provisioning, load balancer, new ).

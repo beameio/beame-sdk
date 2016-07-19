@@ -53,7 +53,7 @@ function getPublicKey(cert){
 		var buffer = Buffer.concat([header, modulus, midheader, exponent]);
 		var rsaKey = new NodeRsa(buffer, "public-der");
 		rsaKey.importKey(buffer, "public-der");
-		return rsaKey
+		return rsaKey;
 	}
 	return {};
 }
@@ -108,12 +108,13 @@ function decrypt(data){
 		console.error("decrypt error ", e.toString());
 	}
 	return dechipheredPayload;
-};
+}
 
 function sign(data, fqdn){
 	var elemenet = store.search(fqdn)[0];
 	if(elemenet) {
 		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
+		console.warn("signing using %j", fqdn);
 		return rsaKey.sign(data, "base64", "utf8");
 	}
 	console.error("public key not found ");
@@ -133,6 +134,7 @@ function checkSignature(data, fqdn, signature){
 	
 	var rsaKey = getPublicKey(certBody);
 	var status = rsaKey.verify(data, signature, "utf8", "base64");
+	console.warn("signing status is %j %j", status, fqdn);
 	return status;
 }
 

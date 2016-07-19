@@ -5,12 +5,16 @@ var Table = require('cli-table2');
 var x509 = require('x509');
 
 var store = new (require("../services/BeameStore"))();
+require('./../utils/Globals');
 var developerServices = new(require('../core/DeveloperServices'))();
 var atomServices = new(require('../core/AtomServices'))();
 var edgeClientServices = new(require('../core/EdgeClientServices'))();
+
 var beameDirService = require('../services/BeameDirServices');
 var path = require('path');
 var fs = require('fs');
+var apiConfig = require("../../config/ApiConfig.json");
+var mkdirp = require("mkdirp");
 
 function listCreds(type, fqdn){
 	var returnValues = [];
@@ -45,7 +49,7 @@ show.toText = function(certs) {
 	});
 
 	certs.forEach(xcert => {
-		table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,  xcert.signatureAlgorithm]);
+		table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial,	xcert.signatureAlgorithm]);
 	});
 	return table;
 };
@@ -130,16 +134,34 @@ function constructRelateivePathElements(item){
 	return items;
 }
 
+function importNonBeameCredentials(fqdn){
+  var tls = require('tls');
+	var creds = store.search(fqdn)[0];
+	var conn = tls.connect(443, fqdn, {host: fqdn}, function() {
+		var cert = conn.getPeerCertificate(true);
+		conn.end();		
+		var buffer = new Buffer(cert.raw, "hex");
+		var certBody = "-----BEGIN CERTIFICATE-----\r\n";
+		certBody+=buffer.toString("base64");
+		certBody+="-----END CERTIFICATE-----";
+		var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
+		var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+
+		mkdirp(path.parse(remoteCertPath).dir);
+		fs.writeFileSync(remoteCertPath, certBody);
+	});
+};
+
 function exportCredentials(fqdn, targetFqdn, file){
 	var creds = store.search(fqdn)[0];
 	var relateivePath = constructRelateivePathElements(creds);
 
-    creds.edgeclient = {};
-    creds.atom = {};
-    creds['relativePath'] = relateivePath;
-    creds.path = creds.path.replace(global.devPath, "");
+	creds.edgeclient = {};
+	creds.atom = {};
+	creds['relativePath'] = relateivePath;
+	creds.path = creds.path.replace(global.devPath, "");
 
-    var jsonString = JSON.stringify(creds);
+	var jsonString = JSON.stringify(creds);
 	if(!jsonString){
 		console.error("Credentials for exporting are not found");
 		return -1;
@@ -166,8 +188,8 @@ function exportCredentials(fqdn, targetFqdn, file){
 		fs.writeFileSync(p, JSON.stringify(message));
 		return p;
 	}
-
 }
+
 function readStdinStream(callback){
 	var stdin = process.stdin,
 		stdout = process.stdout,
@@ -193,11 +215,11 @@ function  decryptCreds(data) {
 	if(signatureStatus === true) {
 		var creds = store.search(parsedData.signedData.encryptedFor)[0];
 
-        if(!creds){
-            console.error("Private key for %j is not found", parsedData.signedData.encryptedFor)
-            return -1;
-        }
-        var decryptedcreds = crypto.decrypt(JSON.stringify(parsedData.signedData.data));
+		if(!creds){
+			console.error("Private key for %j is not found", parsedData.signedData.encryptedFor)
+			return -1;
+		}
+		var decryptedcreds = crypto.decrypt(JSON.stringify(parsedData.signedData.data));
 		return decryptedcreds;
 	}
 }
@@ -217,21 +239,53 @@ function importCredentials(data, file){
 			if(!decryptedCreds || decryptedCreds  == -1){
 				console.error("No decrypted creds");
 				return -1;
-      		}
+			}
 			return store.importCredentials(decryptedCreds);
 		}else {
 			decryptedCreds = decryptCreds(JSON.parse(data));
-			return  store.importCredentials(decryptedCreds);
+			return	store.importCredentials(decryptedCreds);
 		}
 	}
 }
 
 function renew(type, fqdn){
 	debug ("renew %j %j",  type,  fqdn);
+	
 }
 
-function purge(type, fqdn){
-	debug ("purge %j %j",  type,  fqdn);
+function revoke(fqdn){
+	
+	var creds = store.search(fqdn)[0];
+	console.log("creds level %j", creds.level);
+	switch(creds.level){
+		case 'developer':
+		{
+			console.error("Revoke for developer cert is not avalible");
+			return;
+		}
+		case 'atom':
+		{
+			atomServices.revokeCert(fqdn, function(error, payload){
+				if(error){
+					console.error("Error, %j", error);
+				}
+				console.log("Payload %j", payload);
+				return payload;
+			});
+		}
+		case 'edgeclient':
+		{
+			console.log("Calling revoke cert");
+			edgeClientServices.revokeCert(fqdn, function(error, payload){
+				if(error){
+					console.error("Error, %j", error);
+				}
+				console.log("Payload %j", payload);
+				return payload;
+			});
+		}
+	};
+	debug ("revoke   %j",   fqdn);
 }
 
 
@@ -239,11 +293,12 @@ module.exports = {
 	show,
 	list,
 	renew,
-	purge,
+	revoke,
 	createAtom,
 	createEdgeClient,
 	createDeveloper,
 	createTestDeveloper,
 	exportCredentials,
-	importCredentials
+	importCredentials,
+	importNonBeameCredentials
 };

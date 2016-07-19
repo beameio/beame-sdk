@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "beame-sdk",
   "version": "1.0.36",
   "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
@@ -49,4 +50,109 @@
   "directories": {
     "test": "tests"
   }
+||||||| merged common ancestors
+  "name": "beame-sdk",
+  "version": "1.0.35",
+  "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
+  "main": "main.js",
+  "engine": "node >= 4.4.0",
+  "scripts": {
+    "test_developer": "mocha ./tests/unit-tests/developer_test.js"
+  },
+  "bin": {
+    "beame": "src/cli/beame.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:beameio/beame-sdk.git"
+  },
+  "keywords": [
+    "beame"
+  ],
+  "author": "az",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/beameio/beame-sdk/issues"
+  },
+  "homepage": "https://github.com/beameio/beame-sdk#readme",
+  "dependencies": {
+    "async": "^2.0.0-rc.6",
+    "chai": "^3.5.0",
+    "cli-table2": "0.2.0",
+    "debug": "^2.2.0",
+    "jmespath": "^0.15.0",
+    "minimist": "^1.2.0",
+    "mkdir": "0.0.2",
+    "mkdirp": "^0.5.1",
+    "mocha": "^2.5.3",
+    "node-archiver": "^0.3.0",
+    "node-rsa": "^0.4.0",
+    "node-uuid": "^1.4.7",
+    "pem": "^1.8.3",
+    "request": "^2.72.0",
+    "rimraf": "^2.5.3",
+    "socket.io": "^1.4.8",
+    "socket.io-client": "^1.4.6",
+    "sprintf": "^0.1.5",
+    "sync-request": "^3.0.1",
+    "underscore": "^1.8.3",
+    "x509": "^0.2.6"
+  },
+  "directories": {
+    "test": "tests"
+  }
+=======
+    "name": "beame-sdk",
+    "version": "1.0.35",
+    "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
+    "main": "main.js",
+    "engine": "node >= 4.4.0",
+    "scripts": {
+        "test_developer": "mocha ./tests/unit-tests/developer_test.js",
+        "test_atom": "mocha ./tests/unit-tests/atom_test.js",
+        "test_edge": "mocha ./tests/unit-tests/edge_test.js"
+    },
+    "bin": {
+        "beame": "src/cli/beame.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:beameio/beame-sdk.git"
+    },
+    "keywords": [
+        "beame"
+    ],
+    "author": "az",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/beameio/beame-sdk/issues"
+    },
+    "homepage": "https://github.com/beameio/beame-sdk#readme",
+    "dependencies": {
+        "async": "^2.0.0-rc.6",
+        "chai": "^3.5.0",
+        "cli-table2": "0.2.0",
+        "debug": "^2.2.0",
+        "jmespath": "^0.15.0",
+        "minimist": "^1.2.0",
+        "mkdir": "0.0.2",
+        "mkdirp": "^0.5.1",
+        "mocha": "^2.5.3",
+        "node-archiver": "^0.3.0",
+        "node-rsa": "^0.4.0",
+        "node-uuid": "^1.4.7",
+        "pem": "^1.8.3",
+        "request": "^2.72.0",
+        "rimraf": "^2.5.3",
+        "socket.io": "^1.4.8",
+        "socket.io-client": "^1.4.6",
+        "sprintf": "^0.1.5",
+        "sync-request": "^3.0.1",
+        "underscore": "^1.8.3",
+        "x509": "^0.2.6"
+    },
+    "directories": {
+        "test": "tests"
+    }
+>>>>>>> c72a8d7f521caf16e2e457b4a89c9ff2a136e40c
 }
