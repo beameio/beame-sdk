@@ -31,90 +31,90 @@ var fs = require('fs');
 
 //private helpers
 var parseProvisionResponse = function (error, response, body, type, callback) {
-    var errMsg;
-    if (!response) {
-        callback && callback(new Error('empty response'), null);
-        return;
-    }
+	var errMsg;
+	if (!response) {
+		callback && callback(new Error('empty response'), null);
+		return;
+	}
 
-    if (error) {
-        errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api response error", {"error": error});
-        callback(errMsg, null);
-        return;
-    }
+	if (error) {
+		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api response error", {"error": error});
+		callback(errMsg, null);
+		return;
+	}
 
-    /** @type {Object|null|undefined} */
-    var payload;
+	/** @type {Object|null|undefined} */
+	var payload;
 
-    if (body) {
-        try {
-            payload = JSON.parse(body);
+	if (body) {
+		try {
+			payload = JSON.parse(body);
 
-            delete payload['$id'];
-        }
-        catch (err) {
-            payload = {message: body};
-        }
-    }
-    else {
-        payload = response.statusCode == 200 ? {updateStatus: 'pass'} : "empty";
-    }
+			delete payload['$id'];
+		}
+		catch (err) {
+			payload = {message: body};
+		}
+	}
+	else {
+		payload = response.statusCode == 200 ? {updateStatus: 'pass'} : "empty";
+	}
 
 
-    if (response.statusCode == 200) {
+	if (response.statusCode == 200) {
 
-        callback && callback(null, payload);
-    }
-    else {
-        //noinspection JSUnresolvedVariable
-        errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, payload.Message || "Provision Api response error", {
-            "status": response.statusCode,
-            "message": payload.Message || payload
-        });
+		callback && callback(null, payload);
+	}
+	else {
+		//noinspection JSUnresolvedVariable
+		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, payload.Message || "Provision Api response error", {
+			"status": response.statusCode,
+			"message": payload.Message || payload
+		});
 
-        callback && callback(errMsg, null);
-    }
+		callback && callback(errMsg, null);
+	}
 
 };
 
 var postToProvisionApi = function (url, options, type, callback) {
-    debug('postToProvision: ' + url);
-    request.post(
-        url,
-        options,
-        function (error, response, body) {
-            parseProvisionResponse(error, response, body, type, function (error, payload) {
-                if (payload) {
-                    callback(null, payload);
-                }
-                else {
-                    if (_.isEmpty(error.data)) {
-                        error.data = {};
-                    }
-                    error.data.url = url;
-                    error.data.postData = options.form;
-                    callback(error, null);
-                }
-            });
-        }
-    );
+	debug('postToProvision: ' + url);
+	request.post(
+		url,
+		options,
+		function (error, response, body) {
+			parseProvisionResponse(error, response, body, type, function (error, payload) {
+				if (payload) {
+					callback(null, payload);
+				}
+				else {
+					if (_.isEmpty(error.data)) {
+						error.data = {};
+					}
+					error.data.url = url;
+					error.data.postData = options.form;
+					callback(error, null);
+				}
+			});
+		}
+	);
 };
 
 var getFromProvisionApi = function (url, options, type, callback) {
-    request.get(
-        url,
-        options,
-        function (error, response, body) {
-            parseProvisionResponse(error, response, body, type, function (err, payload) {
-                if (payload) {
-                    callback(null, payload);
-                }
-                else {
-                    callback(err, null);
-                }
-            });
-        }
-    );
+	request.get(
+		url,
+		options,
+		function (error, response, body) {
+			parseProvisionResponse(error, response, body, type, function (err, payload) {
+				if (payload) {
+					callback(null, payload);
+				}
+				else {
+					callback(err, null);
+				}
+			});
+		}
+	);
 };
 
 /**
@@ -123,9 +123,9 @@ var getFromProvisionApi = function (url, options, type, callback) {
  */
 var ProvApiService = function () {
 
-    /** @member {String} **/
-    this.provApiEndpoint = beameUtils.isAmazon() ? provisionSettings.Endpoints.Online : provisionSettings.Endpoints.Local;
-    debug(global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "Provision Api Constructor", {"endpoint": this.provApiEndpoint}));
+	/** @member {String} **/
+	this.provApiEndpoint = beameUtils.isAmazon() ? provisionSettings.Endpoints.Online : provisionSettings.Endpoints.Local;
+	debug(global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "Provision Api Constructor", {"endpoint": this.provApiEndpoint}));
 
 };
 
@@ -134,10 +134,10 @@ var ProvApiService = function () {
  * @param {AuthData} authData
  */
 ProvApiService.prototype.setAuthData = function (authData) {
-    this.options = {
-        key: fs.readFileSync(authData.pk),
-        cert: fs.readFileSync(authData.x509)
-    };
+	this.options = {
+		key: fs.readFileSync(authData.pk),
+		cert: fs.readFileSync(authData.x509)
+	};
 };
 
 /**
@@ -148,23 +148,23 @@ ProvApiService.prototype.setAuthData = function (authData) {
  */
 ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method) {
 
-    var options = _.extend(this.options || {}, {form: apiData.postData});
-    var apiEndpoint = this.provApiEndpoint + apiData.api;
-    debug('Posting to: ' + apiEndpoint);
-    var _method = method || 'POST';
+	var options = _.extend(this.options || {}, {form: apiData.postData});
+	var apiEndpoint = this.provApiEndpoint + apiData.api;
+	debug('Posting to: ' + apiEndpoint);
+	var _method = method || 'POST';
 
-    switch (_method){
-        case 'POST' :
-            postToProvisionApi(apiEndpoint, options, apiData.api, callback);
-            return;
-        case 'GET' :
-            getFromProvisionApi(apiEndpoint, options, apiData.api, callback);
-            return;
-        default:
-            callback('Invalid method',null);
-            return;
+	switch (_method) {
+		case 'POST' :
+			postToProvisionApi(apiEndpoint, options, apiData.api, callback);
+			return;
+		case 'GET' :
+			getFromProvisionApi(apiEndpoint, options, apiData.api, callback);
+			return;
+		default:
+			callback('Invalid method', null);
+			return;
 
-    }
+	}
 };
 
 
