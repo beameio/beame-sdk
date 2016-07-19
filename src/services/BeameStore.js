@@ -272,7 +272,9 @@ BeameStore.prototype.shredCredentials = function(fqdn, callback) {
 	var del_functions = files.map(f => {
 		return function(cb) {
 			exec(`shred -u ${path.join(dir, f)}`, (error, stdout, stderr) => {
-				console.log('STDOUT', stdout);
+				if(stderr) {
+					console.error(`Shred command error: ${stderr}`);
+				}
 				cb(error, null);
 			});
 		}
