@@ -6,7 +6,7 @@ var BeameServer = require("../services/BaseHttpsServer").SampleBeameServer;
 var store = new BeameStore();
 
 function HttpsServerTestStart(edgeClientFqdn) {
-	debug("Starting server %j", edgeClientFqdn);
+	console.warn("Starting server %j", edgeClientFqdn);
 	new BeameServer(edgeClientFqdn, function(data, app) {
 		debug("BeameServer callback got %j", data);
 		// console.log('XXX', data);
