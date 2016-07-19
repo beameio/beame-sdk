@@ -221,7 +221,6 @@ BeameStore.prototype.getRemoteCertificate = function(fqdn, callback){
         certBody = fs.readFileSync(remoteCertPath);
     }else {
         var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
-        console.log("Certificate for %j was not found requesting %j", requestPath);
 		var response = request('GET', requestPath);
         certBody = response.getBody() + "";
 
@@ -240,7 +239,6 @@ BeameStore.prototype.importCredentials =function(data){
     var targetPath = global.devPath;
 
     targetPath = path.join(global.devPath, credToImport.path);
-    console.log("Target Path %j", targetPath);
     mkdirp(targetPath);
 
     var metadata = {};
@@ -254,6 +252,7 @@ BeameStore.prototype.importCredentials =function(data){
         }
     });
     fs.writeFileSync(path.join(targetPath, "metadata.json"), JSON.stringify(metadata));
+	return true;
 };
 
 

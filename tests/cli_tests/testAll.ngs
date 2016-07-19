@@ -89,7 +89,7 @@ encrypted_data = null
 do_test("Encrypt data", F() {
 	global encrypted_data = `$BEAME_BIN crypto encrypt --data $TEST_DATA --fqdn ${atoms[0].hostname}`
 	enc = encrypted_data.decode_json()
-	enc is not Hash throws TestFail("Encrypted data must be hash, not $atom")
+	enc is not Hash throws TestFail("Encrypted data must be hash, not $enc")
 	%[rsaCipheredKeys data encryptedFor].each(F(k) k not in enc throws TestFail("Key $k is missing in 'encrypt' output"))
 	enc.encryptedFor != atoms[0].hostname throws TestFail("encryptedFor mismatch")
 	enc
@@ -127,7 +127,7 @@ if data_signature {
 creds_exported = false
 do_test("Export credentials", F() {
 	assert(atoms.len() >= 2)
-	exp = ``$BEAME_BIN creds exportCredentials --fqdn ${atoms[0].hostname} --targetFqdn targetFqdn --file $CREDS_FILE``
+	exp = ``$BEAME_BIN creds exportCredentials --fqdn ${atoms[0].hostname} --targetFqdn ${atoms[1].hostname} --file $CREDS_FILE``
 	exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
 	exp != CREDS_FILE throws TestFail("exportCredentials returned '$exp', not the expected file $CREDS_FILE")
 	global creds_exported = true
@@ -154,8 +154,16 @@ if creds_exported {
 		ls.len() != 0 throws TestFail("Creds list length is not 0")
 		ls
 	})
+	do_test("[Import credentials] Check certificate exists", F() {
+		# https://beameio-net-certs-dev.s3.amazonaws.com/h9dgcv7wdlsff7oo.h7zujy4ch0hg8rgd.v1.beameio.net/x509.pem
+		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
+		$(curl -s $url)
+		"URL $url is available"
+	})
 	do_test("[Import credentials] Import", F() {
 		imp = ``$BEAME_BIN creds importCredentials --file $CREDS_FILE``
+		imp is not Bool throws TestFail("Import result must be a boolean, not '$imp'")
+		not(imp) throws TestFail("Import did not return true")
 		imp
 	})
 	do_test("[Import credentials] Test credentials exist after import", test_creds_exist)
