@@ -223,6 +223,7 @@ BeameStore.prototype.getRemoteCertificate = function(fqdn){
         certBody = fs.readFileSync(remoteCertPath);
     }else {
         var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+		console.warn(`Getting certificate from ${requestPath}`);
 		var response = request('GET', requestPath);
         certBody = response.getBody() + "";
 

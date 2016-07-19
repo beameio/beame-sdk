@@ -196,6 +196,22 @@ if edge_clients {
 	})
 }
 
+do_test("S3 credentials", F() {
+	results = ([developer] + atoms + edge_clients).hostname.map(F(hostname) {
+		echo("  Checking $hostname")
+		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
+		try {
+			$(curl -m 5 -s $url)
+			true
+		} catch(pf:ProcessFail) {
+			false
+		}
+	})
+	oks = results.count()
+	oks < results.len() throws TestFail("Only $oks out of ${results.len()} certificates are present in S3")
+	"All $oks certificates present in S3"
+})
+
 if Path(CREDS_FILE) {
 	echo("+ Removing temporary credentials file $CREDS_FILE")
 	$(rm $CREDS_FILE)
