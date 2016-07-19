@@ -270,14 +270,7 @@ BeameStore.prototype.shredCredentials = function(fqdn, callback) {
 	var files = beameDirApi.getCertsFiles(dir);
 
 	var del_functions = files.map(f => {
-		return function(cb) {
-			exec(`shred -u ${path.join(dir, f)}`, (error, stdout, stderr) => {
-				if(stderr) {
-					console.error(`Shred command error: ${stderr}`);
-				}
-				cb(error, null);
-			});
-		}
+		return cb => fs.unlink(path.join(dir, f), cb);
 	});
 
 	async.parallel(del_functions, error => {
@@ -285,7 +278,7 @@ BeameStore.prototype.shredCredentials = function(fqdn, callback) {
 		if(error) {
 			callback({"status": "error", "message": error});
 		} else {
-			callback({"status": "ok"});
+			callback({"status": "ok", "message": `${files.length} files deleted`});
 		}
 	})
 };
