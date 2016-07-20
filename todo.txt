@@ -10,4 +10,17 @@
 
 [system ]
 1. new envieroment for production (edge servers, provisioning, load balancer, new ).
-2. 
+
+
+
+[documentation and developer tools].
+
+1. Update the readme with the current command syntax -- Ilya /Zeev 
+2. Naming and organization of export modules "indexjs" from beame-sdk Serge, and generation of code examples.
+3. beame system start --- to issue all the nessesary credentials, and start a demo server -- zeev 
+4. info messages throguth key commands.(error/sucess)  Zeev/Alex 
+5. list for remote certs in creds Zev/Ilya 
+6. momitor current npm verion and notify user of upgrades. 
+7. output statistics in clie
+8. envieroment for production 
+9. lauch 
