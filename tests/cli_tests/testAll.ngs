@@ -86,14 +86,16 @@ each_idx_val(atoms, F(atom_idx, atom) {
 
 encrypted_data = null
 
-do_test("Encrypt data", F() {
-	global encrypted_data = `$BEAME_BIN crypto encrypt --data $TEST_DATA --fqdn ${atoms[0].hostname}`
-	enc = encrypted_data.decode_json()
-	enc is not Hash throws TestFail("Encrypted data must be hash, not $enc")
-	%[rsaCipheredKeys data encryptedFor].each(F(k) k not in enc throws TestFail("Key $k is missing in 'encrypt' output"))
-	enc.encryptedFor != atoms[0].hostname throws TestFail("encryptedFor mismatch")
-	enc
-})
+if atoms {
+	do_test("Encrypt data", F() {
+		global encrypted_data = `$BEAME_BIN crypto encrypt --data $TEST_DATA --fqdn ${atoms[0].hostname}`
+		enc = encrypted_data.decode_json()
+		enc is not Hash throws TestFail("Encrypted data must be hash, not $enc")
+		%[rsaCipheredKeys data encryptedFor].each(F(k) k not in enc throws TestFail("Key $k is missing in 'encrypt' output"))
+		enc.encryptedFor != atoms[0].hostname throws TestFail("encryptedFor mismatch")
+		enc
+	})
+}
 
 if encrypted_data {
 	do_test("Decrypt data", F() {
@@ -104,12 +106,14 @@ if encrypted_data {
 }
 
 data_signature = null
-do_test("Sign data", F() {
-	global data_signature = `$BEAME_BIN crypto sign --data $TEST_DATA --fqdn ${atoms[0].hostname}`
-	sig = data_signature.decode_json()
-	sig is not Str throws TestFail("Signature is not a string")
-	sig
-})
+if atoms {
+	do_test("Sign data", F() {
+		global data_signature = `$BEAME_BIN crypto sign --data $TEST_DATA --fqdn ${atoms[0].hostname}`
+		sig = data_signature.decode_json()
+		sig is not Str throws TestFail("Signature is not a string")
+		sig
+	})
+}
 
 if data_signature {
 	do_test("Check good signature", F() {
@@ -125,15 +129,16 @@ if data_signature {
 }
 
 creds_exported = false
-do_test("Export credentials", F() {
-	ENV.get('SKIP_EXPORT', false) returns "SKIPPED"
-	assert(atoms.len() >= 2)
-	exp = ``$BEAME_BIN creds exportCredentials --fqdn ${atoms[0].hostname} --targetFqdn ${atoms[1].hostname} --file $CREDS_FILE``
-	exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
-	exp != CREDS_FILE throws TestFail("exportCredentials returned '$exp', not the expected file $CREDS_FILE")
-	global creds_exported = true
-	exp
-})
+if atoms.len() >= 2 {
+	do_test("Export credentials", F() {
+		ENV.get('SKIP_EXPORT', false) returns "SKIPPED"
+		exp = ``$BEAME_BIN creds exportCredentials --fqdn ${atoms[0].hostname} --targetFqdn ${atoms[1].hostname} --file $CREDS_FILE``
+		exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
+		exp != CREDS_FILE throws TestFail("exportCredentials returned '$exp', not the expected file $CREDS_FILE")
+		global creds_exported = true
+		exp
+	})
+}
 
 if creds_exported {
 	F test_creds_exist() {
@@ -175,10 +180,9 @@ if edge_clients {
 
 		F bad_output(s:Str) 'hello world' not in s
 
-		servers = [null] * edge_clients.len()
-		edge_clients.each_idx_val(F(idx, edge_client) {
+		servers = edge_clients.map(F(edge_client) {
 			echo("  Starting server at https://${edge_client.hostname}/")
-			servers[idx] = Thread(F() $($BEAME_BIN servers HttpsServerTestStart --edgeClientFqdn ${edge_client.hostname}))
+			Thread(F() $($BEAME_BIN servers HttpsServerTestStart --edgeClientFqdn ${edge_client.hostname}))
 		})
 		echo("  Waiting 5 seconds for servers to come up")
 		$(sleep 5)
@@ -195,6 +199,22 @@ if edge_clients {
 		"All ${outputs.len()} outputs were correct"
 	})
 }
+
+do_test("S3 credentials", F() {
+	results = ([developer] + atoms + edge_clients).hostname.map(F(hostname) {
+		echo("  Checking $hostname")
+		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
+		try {
+			$(curl -m 5 -s $url)
+			true
+		} catch(pf:ProcessFail) {
+			false
+		}
+	})
+	oks = results.count()
+	oks < results.len() throws TestFail("Only $oks out of ${results.len()} certificates are present in S3")
+	"All $oks certificates present in S3"
+})
 
 if Path(CREDS_FILE) {
 	echo("+ Removing temporary credentials file $CREDS_FILE")

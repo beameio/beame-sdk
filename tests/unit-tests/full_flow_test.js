@@ -17,7 +17,7 @@ describe("Testing full flow", function () {
 	for (var i = 0; i < options.developer_atoms; i++) {
 		describe('Testing Atom process', function () {
 			atomTest.run();
-			for (var j = 0; j < options.developer_atoms; j++) {
+			for (var j = 0; j < options.atom_edges; j++) {
 				describe('Testing Edge process', edgeTest.run)
 			}
 		});

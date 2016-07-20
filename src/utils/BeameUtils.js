@@ -314,6 +314,10 @@ module.exports = {
 		});
 	},
 
+	deleteHostCerts : function(fqdn,callback){
+		beameStore.shredCredentials(fqdn,callback || function(){});
+	},
+
 	/**
 	 *
 	 * @param {String} hostname

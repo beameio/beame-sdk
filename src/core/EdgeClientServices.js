@@ -393,7 +393,7 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
 		provisionApi.runRestfulAPI(apiData, function (error) {
 			if (!error) {
 
-				//TODO delete old certs
+				beameUtils.deleteHostCerts(edgeHostname);
 
 				callback && callback(null, 'done');
 			}
