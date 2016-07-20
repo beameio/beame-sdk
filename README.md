@@ -64,6 +64,22 @@ At this point you can proceed with any of the following actions:
 
 Bash completion is available, run `beame` to see instructions.
 
+## If current shell version does not support auto completion, please follow instructions below:
+First ensure, that your bash version is 4.3 or higher. If not - upgrade it.
+Next run in terminal:
+
+    brew tap homebrew/versions
+    brew rm bash-completion
+    brew install bash-completion2
+
+Add following instructions to your .bashrc file:
+
+    if [ -f $(brew --prefix)/share/bash-completion/bash_completion ]; then
+        . $(brew --prefix)/share/bash-completion/bash_completion
+    fi
+
+    source /usr/local/lib/node_modules/beame-sdk/src/cli/completion.sh
+
 ## Beame.io SDK environment variables
 
 * `BEAME_DIR` (defaults to `~/.beame`) - Beame.io SDK data directory
@@ -196,4 +212,30 @@ will receive routable hostname + unique ID from provision. Directory to hold cli
 
 Create private key + CSR, as result the key and a set of certs will be written into client folder
 created in step 7
+
+## beame-sdk provides example https server, that allows beame client to build and run fully functional https server
+## with express support and with credentials created in steps described above
+
+run in your server folder:
+    npm install beame-sdk -save
+
+In your server main.js include following:
+    var beameSDK = require ("beame-sdk");
+
+Export environment variable named 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-client-hostname (edgeClientFqdn)
+Create your server with following command:
+
+    var appExpress = require('express');
+    var host = beameSDK.beameUtils.getProjHostName("YOURPROJECTNAME");
+//...
+    var BeameServer = beameSDK.sampleNodeServer.SampleBeameServer(host, appExpress,
+        function (data, app) {
+            //your code
+        });
+
+Arrange your front-end and run your new beame server with:
+
+    node your_server.js
+
+The run will print your routable hostname into console
 
