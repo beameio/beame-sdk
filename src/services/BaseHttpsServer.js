@@ -11,7 +11,7 @@ var beameDirServices = require('./BeameDirServices');
 var debug = require("debug")("SampleBeameServer");
 var beamestore = new BeameStore();
 
-var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
+var SampleBeameServer = function(instanceHostname, usrExpress, hostOnlineCallback)
 {
 	var edgeCert = beamestore.search(instanceHostname);
 	var serverInfo;
@@ -25,7 +25,14 @@ var SampleBeameServer = function(instanceHostname, hostOnlineCallback)
 		ca: edgeCert.CA
 	};
 
-	var app = https.createServer(options);
+	if(usrExpress){
+		var xprsApp = https.createServer(options, usrExpress);
+		app = xprsApp.listen.apply(xprsApp);
+	}
+	else {
+		app = https.createServer(options);
+	}
+
 	app.listen(0, function() {
 		function onLocalServerCreated(data){
 			if(hostOnlineCallback){

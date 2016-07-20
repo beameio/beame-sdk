@@ -25,7 +25,7 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 2. Go to https://registration.beameio.net/ with a regular web browser.
 2. Put in your name and email, and wait for a confirmation email. 
 3. In the confirmation email, you should see a command that looks like this, run it, 
- 	`beame.js creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`  
+ 	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`  
 	
 	`
 	
@@ -87,25 +87,25 @@ After 'beame init' is ran, you can run:
 
 The following commands are used for acquiring and manipulating certificates.
 
-* `beame.js creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - list certificates
-* `beame.js creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificates' details
-* `beame.js creds createDeveloper --developerFqdn developerFqdn --uid uid [--format {text|json}]` - create *developer* entity
-* `beame.js creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under the given *developer*
-* `beame.js creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]` - create *edge client* entity under the given *atom*
-* `beame.js creds createTestDeveloper --developerName developerName --developerEmail developerEmail [--format {text|json}]` - used for internal Beame tests, do not use
-* `beame.js creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
-* `beame.js creds purge [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
+* `beame creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - list certificates
+* `beame creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificates' details
+* `beame creds createDeveloper --developerFqdn developerFqdn --uid uid [--format {text|json}]` - create *developer* entity
+* `beame creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under the given *developer*
+* `beame creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]` - create *edge client* entity under the given *atom*
+* `beame creds createTestDeveloper --developerName developerName --developerEmail developerEmail [--format {text|json}]` - used for internal Beame tests, do not use
+* `beame creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
+* `beame creds purge [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 
 ### Beame.io CLI - running test server
 
-* `beame.js servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run an HTTPS server for the specified hostname
+* `beame servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run an HTTPS server for the specified hostname
 
 ### Beame.io CLI - encryption
 
-* `beame.js crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity could decrypt it
-* `beame.js crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be owner of the given entity
-* `beame.js crypto sign [--data data] [--fqdn fqdn]` - signes the given data as the specified entity
-* `beame.js crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - checks the correctness of the signature
+* `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity could decrypt it
+* `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be owner of the given entity
+* `beame crypto sign [--data data] [--fqdn fqdn]` - signes the given data as the specified entity
+* `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - checks the correctness of the signature
 
 	
 ## Beame.io NodeJS API
