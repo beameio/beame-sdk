@@ -296,7 +296,12 @@ function shred(fqdn, callback) {
 	store.shredCredentials(fqdn, callback);
 }
 
+function stats(fqdn, format){
 
+	return {show: "stats"};
+}
+
+stats.toText = lineToText;
 module.exports = {
 	show,
 	list,
@@ -309,5 +314,6 @@ module.exports = {
 	createTestDeveloper,
 	exportCredentials,
 	importCredentials,
-	importNonBeameCredentials
+	importNonBeameCredentials,
+	stats
 };
