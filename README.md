@@ -179,15 +179,15 @@ Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-clie
         });
 ```
 ### Input parameters:
-    `host - edge hostName (pass <null> if you use environment variable - see below)`
-    `PROJECT_NAME - name of environment variable that contains edgeClient hostname`
-    `(pass <null> if you provided full hostname in first parameter)`
-    `appExpress - express object. If you don't need express in your pplication, pass <null>`
-    `function(data,app){} - callback, returned app - created http object`
+    host - edge hostName (pass <null> if you use environment variable - see below)
+    PROJECT_NAME - name of environment variable that contains edgeClient hostname
+    (pass <null> if you provided full hostname in first parameter)
+    appExpress - express object. If you don't need express in your pplication, pass <null>
+    function(data,app){} - callback, returned app - created http object
 
 
 ### Arrange your front-end and run your new beame server with:
-    `node your_new_server.js`
+    ```node your_new_server.js```
 
 This will print your routable hostname into console in case of successful run.
 
