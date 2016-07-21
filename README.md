@@ -61,6 +61,11 @@ Bash completion is available, run `beame` to see instructions.
 
 ## If current shell version does not support auto completion, please follow instructions below:
 First ensure, that your bash version is 4.3 or higher. If not - upgrade it.
+
+    sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
+Change to the new shell
+    chsh -s /usr/local/bin/bash 
+
 Next run in terminal:
 
     brew tap homebrew/versions
@@ -74,12 +79,10 @@ Add following instructions to your .bashrc file:
     fi
 
     source /usr/local/lib/node_modules/beame-sdk/src/cli/completion.sh
-    sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
-    # Change to the new shell
-    chsh -s /usr/local/bin/bash 
+
 ## Beame.io SDK environment variables
 
-* `BEAME_DIR` (defaults to `~/.beame`) - Beame.io SDK data directory
+* `BEAME_DIR` (defaults to `~/.beame`) - Beame.io SDK data directory - all created credentials
 
 ## Beame.io SDK data directory
 
@@ -102,10 +105,8 @@ The following commands are used for acquiring and manipulating certificates.
 
 * `beame creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - list certificates
 * `beame creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificates' details
-* `beame creds createDeveloper --developerFqdn developerFqdn --uid uid [--format {text|json}]` - create *developer* entity
 * `beame creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under the given *developer*
 * `beame creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]` - create *edge client* entity under the given *atom*
-* `beame creds createTestDeveloper --developerName developerName --developerEmail developerEmail [--format {text|json}]` - used for internal Beame tests, do not use
 * `beame creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 * `beame creds purge [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 
@@ -120,95 +121,41 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame crypto sign [--data data] [--fqdn fqdn]` - signes the given data as the specified entity
 * `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - checks the correctness of the signature
 
-	
-## Beame.io NodeJS API
+##############################################################################
+##                            Beame.io NodeJS API                           ##
 
-The idea behind the node.js implementation is so that you can easily contact a
-gateway server, generate your own keys in RSA format, and request them to be
-signed.  Once they are signed they and receive publicly trusted SSL
-certificates. You can get lots of SSL certificates, very quickly.
+The idea behind the node.js sdk APIs is, that you can employ Beame.io CLI functionality in your own
+node js project. Receive publicly trusted cert with pseudo-random routable hostname and run your new SSL server
+in the same flow (or later, whenever you see it fit).
 
-### Top level commands
+Provided APIs should be used after you have performed first two steps described above:
+global npm install beame-sdk and email based developer creation.
 
-	init()
+Exported nodeJS APIs allow creation of 2 levels of credentials:
+- atom - application under developer
+- edgeClient - host under atom, intended to be exposed to the outer world
 
-	backup_credentials(password)
+Current SDK release indends extensive CLI usage (see description above). So nodeJS APIs provide high level of access.
+Be aware, that API on each level require credentials created on previous/higher level:
+To use any API from beame-sdk include
 
-	list_all_credentials()
+    var beameSDK = require ("beame-sdk");
 
-### Credentials commands
+### atom level commands
+##  require developer credentials (developer fqdn/hostname) + appName (your application name)
+##  to create new atom under current developer:
 
-	developer_register()
+    beameSDK.atomServices.createAtom(devHostname,appName, cb(err, data){
+        //atom level hostname returned in: <data.hostname>
+    });
 
-TODO
-name, email, verification
+### edgeClient level commands
+##  require atom credentials (atom fqdn/hostname). appHostName - atom level hostname created in previous step
+##  To create new edgeClient under current atom:
 
-	package_developer_credentials()
-
-TODO
-
-	list_developers()
-
-TODO
-
-	set_default_developer()
-
-TODO
-if there is only one developer record
-
-### Atom level commands
-
-	atom_add(name)
-
-	atom_delete(local)
-
-All sequence is defined in `runData.json` file. `runData.template` contains full
-sequence without additional parameters (all needed parameters will be defined
-in runtime).
-
-### Running the wrapper
-
-	node index.js [userCfgFile.json]
-
-### API calls examples
-
-	node devCreate.js <developerName>
-
-As result of this call directory containing developer data will be created
-under `./.beame` directory will be named by hostname received from provision.
-
-	node devGetCert.js <developerHostname>
-
-Create private key + CSR, as result the key and a set of certs will be written
-into developer directory (created in running `devCreate.js`)
-
-	node devProfileUpdate.js <developerHostname>
-
-Issues a call to provision, signed with new developer certificate
-
-	node devAppSave.js <developerHostname> <appName>
-
-Receive from provision hostname and uid for new app. Directory named with new hostname will be created
-under ./.beame/<developerHostname> directory
-
-	node devAppGetCert.js <developerHostname> <appHostname>
-
-Create private key + CSR, as result the key and a set of certs will be written into app folder
-created in step 4
-
-	node devAppUpdate.js <developerHostname> <appHostname> <newAppName>
-
-Change appName to provision, signed with app cert
-
-	node edgeClientRegister.js <developerHostname> <appHostname>
-
-will receive routable hostname + unique ID from provision. Directory to hold client data, named with 
-<clientHostname> will be created under ./.beame/<developerHostname>/<appHostname>
-
-	node edgeClientGetCert.js <developer hostname> <app hostname> <client hostname>
-
-Create private key + CSR, as result the key and a set of certs will be written into client folder
-created in step 7
+    beameSDK.edgeClientServices.createEdgeClient(appHostName, cb(err, data){
+        //edge level hostname returned in: <data.hostname>
+    });
 
 ## beame-sdk provides example https server, that allows beame client to build and run fully functional https server
 ## with express support and with credentials created in steps described above
@@ -216,22 +163,28 @@ created in step 7
 run in your server folder:
     npm install beame-sdk -save
 
-Export environment variable named 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-client-hostname (edgeClientFqdn)
+Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-client-hostname (edgeClientFqdn)
 
 In your server main.js include following:
     var beameSDK = require ("beame-sdk");
     var appExpress = require('express');
-    var host = beameSDK.beameUtils.getProjHostName("YOURPROJECTNAME");
 
 Create your server with following command:
-    var BeameServer = beameSDK.sampleNodeServer.SampleBeameServer(host, appExpress,
+    var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,
         function (data, app) {
             //your code
         });
-If you don't need express in your pplication, pass <null> instead of appExpress in SampleBeameServer call.
+Input parameters:
+    host - edge hostName (pass <null> if you use environment variable - see below)
+    PROJECT_NAME - name of environment variable that contains edgeClient hostname
+    (pass <null> if you provided full hostname in first parameter)
+    appExpress - express object. If you don't need express in your pplication, pass <null>
+    function(data,app){} - callback, returned app - created http object
+
+
 
 Arrange your front-end and run your new beame server with:
-    node your_server.js
+    node your_new_server.js
 
-The run will print your routable hostname into console
+This will print your routable hostname into console in case of successful run.
 

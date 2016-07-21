@@ -11,13 +11,25 @@ var beameDirServices = require('./BeameDirServices');
 var debug = require("debug")("SampleBeameServer");
 var beamestore = new BeameStore();
 
-var SampleBeameServer = function(instanceHostname, usrExpress, hostOnlineCallback)
+var SampleBeameServer = function(instanceHostname, projectName, usrExpress, hostOnlineCallback)
 {
-	var edgeCert = beamestore.search(instanceHostname);
+	var host;
+	if(instanceHostname == null){
+		var varName = projectName;
+		host = process.env[varName];
+		if (host == undefined) {
+			console.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
+			process.exit(1);
+		}
+	}
+	else{
+		host = instanceHostname;
+	}
+	var edgeCert = beamestore.search(host);
 	var serverInfo;
 	var app;
 	if(edgeCert.length != 1){
-		throw new Error("Could not find certificate for " + instanceHostname);
+		throw new Error("Could not find certificate for " + host);
 	}
 	edgeCert = edgeCert[0];
 	var options = {
@@ -44,9 +56,9 @@ var SampleBeameServer = function(instanceHostname, usrExpress, hostOnlineCallbac
 		};
 
 		var proxy = new ProxyClient("HTTPS", edgeCert.hostname,
-									edgeCert.edgeHostname, 'localhost',
-									app.address().port, {onLocalServerCreated: onLocalServerCreated},
-									undefined, options);
+			edgeCert.edgeHostname, 'localhost',
+			app.address().port, {onLocalServerCreated: onLocalServerCreated},
+			undefined, options);
 	});
 };
 

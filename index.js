@@ -1,5 +1,5 @@
 module.exports = {
-	sampleNodeServer: require("./src/services/BaseHttpsServer.js"),
-	crypto: require('./src/cli/crypto'),
-	proxyClient: require("./src/services/ProxyClient")
+    BaseHttpsServer: require("./src/services/BaseHttpsServer.js"),
+    atomServices: require('./src/core/AtomServices'),
+    edgeClientServices: require('./src/core/EdgeClientServices'),
 };
