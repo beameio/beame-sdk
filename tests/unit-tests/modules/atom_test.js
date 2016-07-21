@@ -177,10 +177,6 @@ function run() {
 					assert.isNull(error, error && error.message);
 					assert.isNotNull(payload, error && error.message);
 
-					//validate certificate structure
-					var certsCreated = beameUtils.validateHostCertsSync(atomHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
-					assert.isTrue(certsCreated, 'Certificates mismatch');
-
 					done()
 
 				});
