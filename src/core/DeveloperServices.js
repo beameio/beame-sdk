@@ -2,6 +2,9 @@
  * Created by zenit1 on 03/07/2016.
  */
 'use strict';
+
+var fs = require('fs');
+
 require('../utils/Globals');
 var debug = require("debug")("./src/services/DeveloperServices.js");
 var _ = require('underscore');
@@ -223,6 +226,12 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
 		}
 	});
 };
+
+DeveloperServices.prototype.canCreateDeveloper = function (developerName, developerEmail, callback) {
+
+	var t = beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH);
+	return fs.existsSync(t.x509) && fs.existsSync(t.pk);
+}
 
 /**
  *

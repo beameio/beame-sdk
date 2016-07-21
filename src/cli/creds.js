@@ -14,6 +14,21 @@ var path = require('path');
 var fs = require('fs');
 var mkdirp = require("mkdirp");
 
+module.exports = {
+	show,
+	list,
+	renew,
+	revoke,
+	shred,
+	createAtom,
+	createEdgeClient,
+	createDeveloper,
+	exportCredentials,
+	importCredentials,
+	importNonBeameCredentials,
+	stats
+};
+
 function listCreds(type, fqdn) {
 	var returnValues = [];
 	if (type && !fqdn) {
@@ -86,11 +101,14 @@ function _stdCallback(callback) {
 	};
 }
 
-function createTestDeveloper(developerName, developerEmail, callback) {
-	debug("Creating test developer developerName=%j developerEmail=%j", developerName, developerEmail);
-	developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
+if (developerServices.canCreateDeveloper()) {
+	function createTestDeveloper(developerName, developerEmail, callback) {
+		debug("Creating test developer developerName=%j developerEmail=%j", developerName, developerEmail);
+		developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
+	}
+	createTestDeveloper.toText = lineToText;
+	module.exports['createTestDeveloper'] = createDeveloper;
 }
-createTestDeveloper.toText = lineToText;
 
 function createAtom(developerFqdn, atomName, count, callback) {
 	for (var i = 0; i < count; i++) {
@@ -326,18 +344,3 @@ function stats(fqdn){
 }
 stats.toText = lineToText;
 
-module.exports = {
-	show,
-	list,
-	renew,
-	revoke,
-	shred,
-	createAtom,
-	createEdgeClient,
-	createDeveloper,
-	createTestDeveloper,
-	exportCredentials,
-	importCredentials,
-	importNonBeameCredentials,
-	stats
-};
