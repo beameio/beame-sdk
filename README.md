@@ -29,7 +29,7 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 	
 ## Beame.io network diagram
 
-Please note, that this is a diagram, designed to help understand how the service works. What's critical to understand that beame SSL proxies are transparent, data passes thru them without being touched. 
+Please note, that this diagram, was designed to show how the service works. Important to understand, that beame SSL proxies are transparent, data passes thru them without being touched. 
 
 ![Network diagram](readme-net-diag-small.png)
 
@@ -99,7 +99,7 @@ At any moment, using beame-sdk, you can see all credentials you currently own, b
 The following commands are used for acquiring and manipulating certificates.
 
 * `beame creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - list certificates
-* `beame creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificates' details
+* `beame creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificate details
 * `beame creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under current *developer*
 * `beame creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]` - create *edge client* entity under the given *atom*
 * `beame creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
@@ -107,14 +107,14 @@ The following commands are used for acquiring and manipulating certificates.
 
 ### Beame.io CLI - running test server
 
-* `beame servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run an HTTPS server for the specified hostname
+* `beame servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run a HTTPS server for the specified hostname
 
 ### Beame.io CLI - encryption
 
-* `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity could decrypt it
-* `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be owner of the given entity
+* `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity can decrypt it
+* `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be the owner of the given entity
 * `beame crypto sign [--data data] [--fqdn fqdn]` - signes the given data as the specified entity
-* `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - checks the correctness of the signature
+* `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - verifies the correctness of the signature
 
 ##############################################################################
 #                            Beame.io NodeJS API                           
