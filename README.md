@@ -173,9 +173,9 @@ Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-clie
 
 ### Create your server with following command:
 ```
-    	var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,`
-        function (data, app) {`
-            //your code`
+    	var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,
+        function (data, app) {
+            //your code
         });
 ```
 ### Input parameters:
@@ -186,7 +186,7 @@ Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-clie
     `function(data,app){} - callback, returned app - created http object`
 
 
-Arrange your front-end and run your new beame server with:
+### Arrange your front-end and run your new beame server with:
     `node your_new_server.js`
 
 This will print your routable hostname into console in case of successful run.
