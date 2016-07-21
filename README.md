@@ -92,7 +92,7 @@ The structure of the Beame data folder is an implementation detail. You should n
 
 If you have completed the "Getting Started The Easy Way" above, you can feel free to use all what's described below
 At any moment, using beame-sdk, you can see all credentials you currently own, by running:
-	beame creds show
+	`beame creds show`
 
 ### Beame.io CLI - credentials
 
