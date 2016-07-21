@@ -122,7 +122,7 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - checks the correctness of the signature
 
 ##############################################################################
-##                            Beame.io NodeJS API                           ##
+#                            Beame.io NodeJS API                           
 
 The idea behind the node.js sdk APIs is, that you can employ Beame.io CLI functionality in your own
 node js project. Receive publicly trusted cert with pseudo-random routable hostname and run your new SSL server
@@ -141,7 +141,7 @@ To use any API from beame-sdk include
 
     var beameSDK = require ("beame-sdk");
 
-### atom level commands
+#   atom level commands
 ##  require developer credentials (developer fqdn/hostname) + appName (your application name)
 ##  to create new atom under current developer:
 
@@ -149,7 +149,7 @@ To use any API from beame-sdk include
         //atom level hostname returned in: <data.hostname>
     });
 
-### edgeClient level commands
+#   edgeClient level commands
 ##  require atom credentials (atom fqdn/hostname). appHostName - atom level hostname created in previous step
 ##  To create new edgeClient under current atom:
 
@@ -165,16 +165,20 @@ run in your server folder:
 
 Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-client-hostname (edgeClientFqdn)
 
-In your server main.js include following:
-    `var beameSDK = require ("beame-sdk")`;
-    `var appExpress = require('express')`;
+### In your server main.js include following:
+```
+    var beameSDK = require ("beame-sdk");
+    var appExpress = require('express');
+```
 
-Create your server with following command:
-    `var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,`
-        `function (data, app) {`
-           ` //your code`
-      `  });`
-Input parameters:
+### Create your server with following command:
+```
+    	var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,
+        function (data, app) {
+            //your code
+        });
+```
+### Input parameters:
     `host - edge hostName (pass <null> if you use environment variable - see below)`
     `PROJECT_NAME - name of environment variable that contains edgeClient hostname`
     `(pass <null> if you provided full hostname in first parameter)`
@@ -182,8 +186,7 @@ Input parameters:
     `function(data,app){} - callback, returned app - created http object`
 
 
-
-Arrange your front-end and run your new beame server with:
+### Arrange your front-end and run your new beame server with:
     `node your_new_server.js`
 
 This will print your routable hostname into console in case of successful run.
