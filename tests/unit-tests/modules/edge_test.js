@@ -50,16 +50,16 @@ function run() {
 
 				//validate hostname
 				edgeClientHostname = payload["hostname"];
-				assert.isNotNull(edgeClientHostname, 'Atom hostname mismatch');
+				assert.isNotNull(edgeClientHostname, 'Edge hostname mismatch');
 
 
 				//validate path
 				edgeClientDirPath = beameUtils.findHostPathSync(edgeClientHostname);
-				assert.isNotNull(edgeClientDirPath, "Atom directory not found");
+				assert.isNotNull(edgeClientDirPath, `Edge ${edgeClientHostname} directory not found`);
 
 				//validate certificate structure
 				var certsCreated = beameUtils.validateHostCertsSync(edgeClientHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
-				assert.isTrue(certsCreated, 'Certificates mismatch');
+				assert.isTrue(certsCreated, `Certificates mismatch for edge ${edgeClientHostname}`);
 
 
 				//validate metadata json
@@ -131,7 +131,9 @@ function run() {
 		});
 
 		it('Should bring edge stats', function (done) {
+
 			if (options.run_stats === "true") {
+
 				console.log('############ bringing stats for edge  %j ############', edgeClientHostname);
 
 				//validate pre-requisites
@@ -150,10 +152,6 @@ function run() {
 					//validate payload & error
 					assert.isNull(error, error && error.message);
 					assert.isNotNull(payload, error && error.message);
-
-					//validate certificate structure
-					var certsCreated = beameUtils.validateHostCertsSync(edgeClientHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
-					assert.isTrue(certsCreated, 'Certificates mismatch');
 
 					done()
 

@@ -186,7 +186,9 @@ function run() {
 		});
 
 		it('Should bring developer stats', function (done) {
+
 			if (options.run_stats === "true") {
+
 				console.log('############ bringing stats for developer  %j ############', developerHostName);
 
 				//validate pre-requisites
@@ -205,10 +207,6 @@ function run() {
 					//validate payload & error
 					assert.isNull(error, error && error.message);
 					assert.isNotNull(payload, error && error.message);
-
-					//validate certificate structure
-					var certsCreated = beameUtils.validateHostCertsSync(developerHostName, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
-					assert.isTrue(certsCreated, 'Certificates mismatch');
 
 					done()
 
