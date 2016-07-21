@@ -27,11 +27,6 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 3. In the confirmation email, you should see a command that looks like this, run it, 
  	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`  
 	
-	`
-	
-
-
-
 ## Beame.io network diagram
 
 Please note that this is a diagram designed to help understand how the service works. What's critical to understand that beame proxies SSL transperently without opening of the traffic. 
@@ -79,7 +74,9 @@ Add following instructions to your .bashrc file:
     fi
 
     source /usr/local/lib/node_modules/beame-sdk/src/cli/completion.sh
-
+    sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
+    # Change to the new shell
+    chsh -s /usr/local/bin/bash 
 ## Beame.io SDK environment variables
 
 * `BEAME_DIR` (defaults to `~/.beame`) - Beame.io SDK data directory
