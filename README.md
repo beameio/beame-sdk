@@ -170,10 +170,10 @@ In your server main.js include following:
     `var appExpress = require('express')`;
 
 Create your server with following command:
-    `var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,
-        function (data, app) {
-            //your code
-        });`
+    `var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,`
+        `function (data, app) {`
+           ` //your code`
+      `  });`
 Input parameters:
     `host - edge hostName (pass <null> if you use environment variable - see below)`
     `PROJECT_NAME - name of environment variable that contains edgeClient hostname`
