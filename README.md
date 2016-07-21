@@ -48,7 +48,7 @@ At this point you can proceed with any of the following actions:
 * Run a server (aka *edge client*) with a publicly trusted x509 certificate
 * Sign arbitrary data with any of your certificates
 * Check signatures of arbitrary data
-* Encrypt arbitrary data so that only a specified entity (someone that has a specific x509 certificate) can decrypt it
+* Encrypt arbitrary data so that only a specified entity can decrypt it
 * Decrypt arbitrary data, that was sent to one of the entities you own (encrypted with one of your public keys)
 
 # Beame.io SDK
