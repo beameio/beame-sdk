@@ -14,6 +14,21 @@ var path = require('path');
 var fs = require('fs');
 var mkdirp = require("mkdirp");
 
+module.exports = {
+	show,
+	list,
+	renew,
+	revoke,
+	shred,
+	createAtom,
+	createEdgeClient,
+	createDeveloper,
+	exportCredentials,
+	importCredentials,
+	importNonBeameCredentials,
+	stats
+};
+
 function listCreds(type, fqdn) {
 	var returnValues = [];
 	if (type && !fqdn) {
@@ -86,17 +101,17 @@ function _stdCallback(callback) {
 	};
 }
 
-function createTestDeveloper(developerName, developerEmail, callback) {
-	debug("Creating test developer developerName=%j developerEmail=%j", developerName, developerEmail);
-	developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
-}
-createTestDeveloper.toText = lineToText;
-
-function createAtom(developerFqdn, atomName, howMany, callback) {
-	if (!howMany) {
-		howMany = 1;
+if (developerServices.canCreateDeveloper()) {
+	function createTestDeveloper(developerName, developerEmail, callback) {
+		debug("Creating test developer developerName=%j developerEmail=%j", developerName, developerEmail);
+		developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
 	}
-	for (var i = 0; i < howMany; i++) {
+	createTestDeveloper.toText = lineToText;
+	module.exports['createTestDeveloper'] = createDeveloper;
+}
+
+function createAtom(developerFqdn, atomName, count, callback) {
+	for (var i = 0; i < count; i++) {
 		console.warn("Creating atom developerFqdn=%j atomName=%j", developerFqdn, atomName);
 		atomServices.createAtom(developerFqdn, atomName + i, _stdCallback(callback));
 	}
@@ -109,11 +124,8 @@ function createDeveloper(developerFqdn, uid, callback) {
 }
 createDeveloper.toText = lineToText;
 
-function createEdgeClient(atomFqdn, howMany, callback) {
-	if (!howMany) {
-		howMany = 1;
-	}
-	for (var i = 0; i < howMany; i++) {
+function createEdgeClient(atomFqdn, count, callback) {
+	for (var i = 0; i < count; i++) {
 		console.warn("Creating edge client atomFqdn=%j", atomFqdn);
 		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
 	}
@@ -332,18 +344,3 @@ function stats(fqdn){
 }
 stats.toText = lineToText;
 
-module.exports = {
-	show,
-	list,
-	renew,
-	revoke,
-	shred,
-	createAtom,
-	createEdgeClient,
-	createDeveloper,
-	createTestDeveloper,
-	exportCredentials,
-	importCredentials,
-	importNonBeameCredentials,
-	stats
-};
