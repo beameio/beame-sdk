@@ -15,6 +15,7 @@ var SampleBeameServer = function(instanceHostname, usrExpress, hostOnlineCallbac
 {
 	var edgeCert = beamestore.search(instanceHostname);
 	var serverInfo;
+	var app;
 	if(edgeCert.length != 1){
 		throw new Error("Could not find certificate for " + instanceHostname);
 	}

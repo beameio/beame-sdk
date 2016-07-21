@@ -7,7 +7,7 @@ var store = new BeameStore();
 
 function HttpsServerTestStart(edgeClientFqdn) {
 	console.warn("Starting server %j", edgeClientFqdn);
-	new BeameServer(edgeClientFqdn, function(data, app) {
+	new BeameServer(edgeClientFqdn,  false, function(data, app) {
 		debug("BeameServer callback got %j", data);
 		// console.log('XXX', data);
 		app.on("request", function(req, resp){
