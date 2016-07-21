@@ -26,8 +26,8 @@ var parametersSchema = {
 	'type':           { required: false, options: ['developer', 'atom', 'edgeclient'] },
 	'uid':            { required: true  },
 	'targetFqdn':     { required: true  },
-	'file':     { required: false  },
-	'howMany':{ required: false }
+	'file':           { required: false  },
+	'count':          { required: false, default: 1 }
 
 };
 

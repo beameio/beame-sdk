@@ -92,11 +92,8 @@ function createTestDeveloper(developerName, developerEmail, callback) {
 }
 createTestDeveloper.toText = lineToText;
 
-function createAtom(developerFqdn, atomName, howMany, callback) {
-	if (!howMany) {
-		howMany = 1;
-	}
-	for (var i = 0; i < howMany; i++) {
+function createAtom(developerFqdn, atomName, count, callback) {
+	for (var i = 0; i < count; i++) {
 		console.warn("Creating atom developerFqdn=%j atomName=%j", developerFqdn, atomName);
 		atomServices.createAtom(developerFqdn, atomName + i, _stdCallback(callback));
 	}
@@ -109,11 +106,8 @@ function createDeveloper(developerFqdn, uid, callback) {
 }
 createDeveloper.toText = lineToText;
 
-function createEdgeClient(atomFqdn, howMany, callback) {
-	if (!howMany) {
-		howMany = 1;
-	}
-	for (var i = 0; i < howMany; i++) {
+function createEdgeClient(atomFqdn, count, callback) {
+	for (var i = 0; i < count; i++) {
 		console.warn("Creating edge client atomFqdn=%j", atomFqdn);
 		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
 	}
