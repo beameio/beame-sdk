@@ -164,23 +164,26 @@ run in your server folder:
     `npm install beame-sdk -save`
 
 Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-client-hostname (edgeClientFqdn)
-```
-// In your server main.js include following:
-    `var beameSDK = require ("beame-sdk")`;
-    `var appExpress = require('express')`;
 
-// Create your server with following command:
-    `var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,`
-        `function (data, app) {`
-           ` //your code`
-      `  });`
-// Input parameters:
+### In your server main.js include following:
+```
+    var beameSDK = require ("beame-sdk");
+    var appExpress = require('express');
+```
+
+### Create your server with following command:
+```
+    	var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,`
+        function (data, app) {`
+            //your code`
+        });
+```
+### Input parameters:
     `host - edge hostName (pass <null> if you use environment variable - see below)`
     `PROJECT_NAME - name of environment variable that contains edgeClient hostname`
     `(pass <null> if you provided full hostname in first parameter)`
     `appExpress - express object. If you don't need express in your pplication, pass <null>`
     `function(data,app){} - callback, returned app - created http object`
-```
 
 
 Arrange your front-end and run your new beame server with:
