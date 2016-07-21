@@ -122,7 +122,7 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - checks the correctness of the signature
 
 ##############################################################################
-##                            Beame.io NodeJS API                           ##
+#                            Beame.io NodeJS API                           
 
 The idea behind the node.js sdk APIs is, that you can employ Beame.io CLI functionality in your own
 node js project. Receive publicly trusted cert with pseudo-random routable hostname and run your new SSL server
@@ -141,7 +141,7 @@ To use any API from beame-sdk include
 
     var beameSDK = require ("beame-sdk");
 
-### atom level commands
+#   atom level commands
 ##  require developer credentials (developer fqdn/hostname) + appName (your application name)
 ##  to create new atom under current developer:
 
@@ -149,7 +149,7 @@ To use any API from beame-sdk include
         //atom level hostname returned in: <data.hostname>
     });
 
-### edgeClient level commands
+#   edgeClient level commands
 ##  require atom credentials (atom fqdn/hostname). appHostName - atom level hostname created in previous step
 ##  To create new edgeClient under current atom:
 
