@@ -187,7 +187,7 @@ Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-clie
 
 
 ### Arrange your front-end and run your new beame server with:
-    ```node your_new_server.js```
+    node your_new_server.js
 
 This will print your routable hostname into console in case of successful run.
 
