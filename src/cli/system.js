@@ -1,25 +1,59 @@
 "use strict";
+var request = require('sync-request');
 
 function test1(name, gender, huj){
 	console.log("In test1 function", arguments);
 }
 
 function start(){
-	var rl = require('readline');
-	
-	var i = rl.createInterface(process.sdtin, process.stdout);
+	var readline = require('readline');
+
+	const inter = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout
+	});
+
+
+	inter.question("Please enter hostname you got in the email:", function(developerFqdn) {
+		inter.question("Please enter UID you got in the email:", function(uid) {
+			inter.question("Please Enter Atom Name (For example):", function(atomName) {
+				var creds = require('./creds');
+				console.log("Creating developer level cert this will take about 30 seconds");
+				creds.createDeveloper(developerFqdn, uid, function(data){
+					console.warn("Developer credentials have been  created, ");
+					creds.createAtom(developerFqdn, atomName, function (data) {
+						console.warn("Atom credentials have been created and signed");
+						creds.createEdgeClient(data.fqdn, function(data){
+							console.warn("Launching a webserver without a publicip address");
+						});
+					})
+				})
+				inter.close();
+			});
+		});
+	});
+
 //	i.write("To initiate the beame-sdk, please go to https://register.beame.io");
 
-	/*i.question("What do you think of node.js?", function(answer) {
-	
-	}*/
-	console.log("start arguemtns", arguments);
-	var args = Array.prototype.slice.call(arguments);
-	test1.apply(null, args);
+	/**/
+
 }
 
+function checkVersion(){
+	var currentVersion = require("../../package.json");
+	var npmStatus = JSON.parse(request('GET','https://registry.npmjs.org/beame-sdk/').body);
+
+	if(npmStatus['dist-tags'].latest === currentVersion.version){
+		console.info("You are using the latest beame-sdk version", currentVersion.version)
+	}else{
+		console.info("You are using and older %j version of beame sdk %j the latest version is %j", currentVersion.version, npmStatus['dist-tags'].latest);
+	}
+}
+
+//checkVersion();
 module.exports = 
 {
 
-	start
+	start,
+	checkVersion
 };
