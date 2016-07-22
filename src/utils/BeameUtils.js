@@ -165,7 +165,7 @@ module.exports = {
 						}
 						else {
 
-							sleep = sleep * (Math.random() + 1.5);
+							sleep = parseInt(sleep * (Math.random() + 1.5));
 
 							consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Retry to get lb instance", {
 								"sleep": sleep,
