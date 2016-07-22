@@ -71,33 +71,60 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 			"status": response.statusCode,
 			"message": payload.Message || payload
 		});
-
+		console.error(errMsg);
 		callback && callback(errMsg, null);
 	}
 
 };
 
-var postToProvisionApi = function (url, options, type, callback) {
-	debug('postToProvision: ' + url);
-	request.post(
-		url,
-		options,
-		function (error, response, body) {
-			parseProvisionResponse(error, response, body, type, function (error, payload) {
-				if (payload) {
-					callback(null, payload);
-				}
-				else {
-					if (_.isEmpty(error.data)) {
-						error.data = {};
-					}
-					error.data.url = url;
-					error.data.postData = options.form;
-					callback(error, null);
-				}
-			});
+/**
+ *
+ * @param {String} url
+ * @param {Object} options
+ * @param {String} type
+ * @param {Number} retries
+ * @param {Function} callback
+ */
+var postToProvisionApi = function (url, options, type, retries, callback) {
+	retries--;
+
+	try {
+		if (retries == 0) {
+			var consoleMessage = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Post to provision failed", {"url": url});
+			console.error(consoleMessage);
+			callback && callback(consoleMessage, null);
 		}
-	);
+		else {
+			request.post(
+				url,
+				options,
+				function (error, response, body) {
+					parseProvisionResponse(error, response, body, type, function (error, payload) {
+						if (payload) {
+							callback(null, payload);
+						}
+						else {
+							if (_.isEmpty(error.data)) {
+								error.data = {};
+							}
+							error.data.url = url;
+							error.data.postData = options.form;
+							callback(error, null);
+						}
+					});
+				}
+			);
+		}
+	}
+	catch (error) {
+		var errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api post error", {
+			"url": url,
+			"error": error
+		});
+		console.error(errMsg);
+		postToProvisionApi(url, options, type, retries, callback);
+	}
+
 };
 
 var getFromProvisionApi = function (url, options, type, callback) {
@@ -155,7 +182,7 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method) {
 
 	switch (_method) {
 		case 'POST' :
-			postToProvisionApi(apiEndpoint, options, apiData.api, callback);
+			postToProvisionApi(apiEndpoint, options, apiData.api, 10, callback);
 			return;
 		case 'GET' :
 			getFromProvisionApi(apiEndpoint, options, apiData.api, callback);

@@ -9,6 +9,7 @@ var _ = require('underscore');
 var dataServices = new (require('../services/DataServices'))();
 var beameStore = new (require('../services/BeameStore'))();
 
+
 /**
  * @typedef {Object} AuthData
  * @property {String} pk => path to file
@@ -125,66 +126,61 @@ module.exports = {
 	 * @param {String} loadBalancerEndpoint
 	 * @param {Number} retries
 	 * @param {Number} sleep
-	 * @returns {Promise.<typeof EdgeShortData>}
+	 * @param {Function} callback
 	 */
-	selectBestProxy: function (loadBalancerEndpoint, retries, sleep) {
+	selectBestProxy: function (loadBalancerEndpoint, retries, sleep,callback) {
 		var self = this;
 		var getRegionName = self.getRegionName;
 		var get = self.httpGet;
 		var selectBest = self.selectBestProxy;
 		var consoleMessage;
-		return new Promise(function (resolve, reject) {
 
+		if (retries == 0) {
+			consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
+			console.error(consoleMessage);
+			callback && callback(consoleMessage,null);
+		}
+		else {
+			retries--;
 
-			if (retries == 0) {
-				consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
-				console.error(consoleMessage);
-				reject(consoleMessage);
-			}
-			else {
-				retries--;
+			get(loadBalancerEndpoint + "/instance",
+				/**
+				 *
+				 * @param error
+				 * @param {Object} data
+				 */
+				function (error, data) {
+					if (data) {
+						var region = getRegionName(data.instanceData.endpoint);
+						/** @type {EdgeShortData} edge **/
+						var edge = {
+							endpoint: data.instanceData.endpoint,
+							region: region,
+							zone: data.instanceData.avlZone,
+							publicIp: data.instanceData.publicipv4
+						};
 
-				get(loadBalancerEndpoint + "/instance",
-					/**
-					 *
-					 * @param error
-					 * @param {Object} data
-					 */
-					function (error, data) {
-						if (data) {
-							var region = getRegionName(data.instanceData.endpoint);
+						callback && callback(null,edge);
 
-							var edge = {
-								endpoint: data.instanceData.endpoint,
-								region: region,
-								zone: data.instanceData.avlZone,
-								publicIp: data.instanceData.publicipv4
-							};
+					}
+					else {
 
-							resolve(edge);
-						}
-						else {
+						sleep = parseInt(sleep * (Math.random() + 1.5));
 
-							sleep = parseInt(sleep * (Math.random() + 1.5));
+						consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Retry to get lb instance", {
+							"sleep": sleep,
+							"retries": retries
+						});
 
-							consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Retry to get lb instance", {
-								"sleep": sleep,
-								"retries": retries
-							});
+						console.warn(consoleMessage);
 
-							console.warn(consoleMessage);
+						setTimeout(function () {
+							selectBest.call(self, loadBalancerEndpoint, retries, sleep,callback);
+						}, sleep);
+					}
+				});
+		}
 
-							setTimeout(function () {
-								selectBest.call(self, loadBalancerEndpoint, retries, sleep);
-							}, sleep);
-
-
-						}
-					});
-			}
-
-
-		});
 	},
 
 	/**
