@@ -13,14 +13,14 @@ function start(){
 		output: process.stdout
 	});
 
-
-	inter.question("Please enter hostname you got in the email:", function(developerFqdn) {
-		inter.question("Please enter UID you got in the email:", function(uid) {
-			inter.question("Please Enter Atom Name (For example):", function(atomName) {
+	console.warn('Please go to https://registration.beameio.net  and complete registration');
+	inter.question("Please enter hostname you got in the email: ", function(developerFqdn) {
+		inter.question("Please enter UID you got in the email:" , function(uid) {
+			inter.question("Please Enter Atom Name (For example 'MyApp'):", function(atomName) {
 				var creds = require('./creds');
-				console.log("Creating developer level cert this will take about 30 seconds");
+				console.log("Creating developer level cert this will take about 30 seconds....");
 				creds.createDeveloper(developerFqdn, uid, function(data){
-					console.warn("Developer credentials have been  created, ");
+					console.warn("Developer credentials have been  created .... creatimg atom ");
 					creds.createAtom(developerFqdn, atomName, function (data) {
 						console.warn("Atom credentials have been created and signed");
 						creds.createEdgeClient(data.fqdn, function(data){

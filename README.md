@@ -1,23 +1,23 @@
-##### THIS IS UNDER CONSTRUCTION AND NOT READY FOR USAGE IF YOU ARE INTERESTED IN 
-##### BEING ONE OF THE FIRST ONES TO USE IT CONTACT LISA@BEAME.IO
-##### WE PLAN TO RELEASE A BETA IN MID JULY 
+##### THIS IS ABOUT TO BE RELEASED. OR IT ALREADY IS. IF YOU ARE INTERESTED IN 
+##### BEING ONE OF THE FIRST ONES TO USE THE SDK: CONTACT LISA@BEAME.IO
 
-# What does Beame.io do for you?
+# What does Beame.io SDK do for you?
 
-##  Beame.io provides you with x509 (aka SSL/TLS) certificates
+##  Beame.io SDK provides you with easy-to-use tools to receive and use x509 (aka SSL/TLS) certificates
 
 The certificates are signed by a publicly trusted CA, similar to any other site that uses HTTPS.
 You get:
 
 1. A hostname (*Common Name* in the certificate) that is under Beame's domain.
-1. A matching certificate.
+2. A matching certificate.
+3. A pair of keys of course
 
 Beame.io *provisioning* handles ... the provisioning of certificates.
-These certificates can be used for HTTPS on a server or any other cryptography such as authentication and encryption.
+These certificates can be used for HTTPS on your server or any other relevant purpose, such as authentication and encryption.
 
 ## Beame.io provides you with a tunnelling service
 
-Our tunnel servers (the *edge servers*) allow routing of traffic to your servers even when your server does not have a routable IP address.
+Our tunnel servers (the *edge servers*) allow routing of traffic to your servers even when your servers don't have a routable IPs.
 
 ## Getting Started The Easy Way 
 
@@ -29,15 +29,15 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 	
 ## Beame.io network diagram
 
-Please note that this is a diagram designed to help understand how the service works. What's critical to understand that beame proxies SSL transperently without opening of the traffic. 
+Please note, that this diagram, was designed to show how the service works. Important to understand, that beame SSL proxies are transparent, data passes thru them without being touched. 
 
 ![Network diagram](readme-net-diag-small.png)
 
 [See larger network diagram](readme-net-diag-large.png)
 
-## Steps to use Beame.io
+## Steps to use Beame.io SDK
 
-At each of the following steps you are provided with a hostname under Beame's domain and a matching publicly trusted x509 certificate. The keys for the certificates are generated locally on your computer. The keys do not leave your computer (unless you specifically export them).
+At the end of each of the following steps you will be provided with a hostname under Beame's domain and a matching publicly trusted x509 certificate. The keys for the certificates are generated and stored locally on your computer. The keys do not leave your computer (unless you intentionally export them).
 
 1. Register as a *developer*
 1. Create an *atom* (an application) under the *developer*
@@ -45,11 +45,11 @@ At each of the following steps you are provided with a hostname under Beame's do
 
 At this point you can proceed with any of the following actions:
 
-* Run a server (aka *edge client*) with a publicly trusted x509 certificate.
+* Run a server (aka *edge client*) with a publicly trusted x509 certificate
 * Sign arbitrary data with any of your certificates
 * Check signatures of arbitrary data
-* Encrypt arbitrary data so that only a specified entity (someone that has a specific x509 certificate) can decrypt it.
-* Decrypt arbitrary data that was encrypted to one of the entities you own (encrypted to one of your certificates).
+* Encrypt arbitrary data so that only a specified entity can decrypt it
+* Decrypt arbitrary data, that was sent to one of the entities you own (encrypted with one of your public keys)
 
 # Beame.io SDK
 
@@ -59,7 +59,7 @@ At this point you can proceed with any of the following actions:
 
 Bash completion is available, run `beame` to see instructions.
 
-## If current shell version does not support auto completion, please follow instructions below:
+## If current shell version does not support auto completion, please follow instructions below (mostly relevant for MacOS):
 First ensure, that your bash version is 4.3 or higher. If not - upgrade it.
 
     sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
@@ -86,40 +86,35 @@ Add following instructions to your .bashrc file:
 
 ## Beame.io SDK data directory
 
-The structure of the Beame data folder is an implementation detail. You should not work with it directly. Use API or CLI to store and retrieve the data.
+The structure of the Beame data folder is an implementation detail. You should not work with it directly. Use provided APIs or CLI to store and retrieve the data.
 
 ## Beame.io CLI
 
-### Beame.io CLI - setting up [not ready]
-
-	beame init
-
-`beame init` will establish your credentials in our system.
-
-After 'beame init' is ran, you can run:
-	beame credentials show
+If you have completed the "Getting Started The Easy Way" above, you can feel free to use all what's described below
+At any moment, using beame-sdk, you can see all credentials you currently own, by running:
+	`beame creds show`
 
 ### Beame.io CLI - credentials
 
 The following commands are used for acquiring and manipulating certificates.
 
 * `beame creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - list certificates
-* `beame creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificates' details
-* `beame creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under the given *developer*
+* `beame creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificate details
+* `beame creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under current *developer*
 * `beame creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]` - create *edge client* entity under the given *atom*
 * `beame creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 * `beame creds purge [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 
 ### Beame.io CLI - running test server
 
-* `beame servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run an HTTPS server for the specified hostname
+* `beame servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run a HTTPS server for the specified hostname
 
 ### Beame.io CLI - encryption
 
-* `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity could decrypt it
-* `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be owner of the given entity
+* `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity can decrypt it
+* `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be the owner of the given entity
 * `beame crypto sign [--data data] [--fqdn fqdn]` - signes the given data as the specified entity
-* `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - checks the correctness of the signature
+* `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - verifies the correctness of the signature
 
 ##############################################################################
 #                            Beame.io NodeJS API                           
