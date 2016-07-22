@@ -1,6 +1,6 @@
 {
   "name": "beame-sdk",
-  "version": "1.0.37",
+  "version": "1.0.38",
   "dependencies": {
     "async": {
       "version": "2.0.0",
