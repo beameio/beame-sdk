@@ -7,9 +7,9 @@ node_modules
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 test/output/*
-build
+build/
 npm-debug.log
-system
+system/
 runEmpty.json
 unit_test
 tests/utils_tests

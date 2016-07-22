@@ -73,118 +73,118 @@ function run() {
 
 		});
 
-		it('Should update atom', function (done) {
-
-			if (options.run_update === "true") {
-				var rnd = beameUtils.randomString(4);
-				name += ('-' + rnd);
-
-				console.log('############ updating atom profile %j ############', name);
-
-				//validate pre-requisites
-				assert.isNotNull(atomHostname);
-
-				atomServices.updateAtom(atomHostname, name, function (error, payload) {
-
-					console.log('############ update atom profile response received with payload %j and error %j ############', payload, error);
-
-					//validate payload & error
-					assert.isNull(error, error && error.message);
-					assert.isNotNull(payload, error && error.message);
-
-					done()
-
-				});
-			}
-			else {
-				done()
-			}
-		});
-
-		it('Should revoke atom certs', function (done) {
-			if (options.run_cert === "true") {
-				console.log('############ revoking atom certs %j ############', atomHostname);
-
-				//validate pre-requisites
-				assert.isNotNull(atomHostname);
-				assert.isNotNull(atomDirPath);
-
-				atomServices.revokeCert(atomHostname, function (error, payload) {
-
-					console.log('############ revoke atom certs response received with payload %j and error %j ############', payload, error);
-
-					//validate payload & error
-					assert.isNull(error, error && error.message);
-					assert.isNotNull(payload, error && error.message);
-
-					done()
-
-				});
-			}
-			else {
-				done()
-			}
-		});
-
-		it('Should renew atom certs', function (done) {
-			if (options.run_cert === "true") {
-				console.log('############ renewing atom certs %j ############', atomHostname);
-
-				//validate pre-requisites
-				assert.isNotNull(atomHostname);
-				assert.isNotNull(atomDirPath);
-
-				atomServices.renewCert(atomHostname, function (error, payload) {
-
-					console.log('############ renew atom certs response received with payload %j and error %j ############', payload, error);
-
-					//validate payload & error
-					assert.isNull(error, error && error.message);
-					assert.isNotNull(payload, error && error.message);
-
-					//validate certificate structure
-					var certsCreated = beameUtils.validateHostCertsSync(atomHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
-					assert.isTrue(certsCreated, 'Certificates mismatch');
-
-					done()
-
-				});
-			}
-			else {
-				done()
-			}
-
-		});
-
-		it('Should bring atom stats', function (done) {
-			if (options.run_stats === "true") {
-				console.log('############ bringing stats for atom  %j ############', atomHostname);
-
-				//validate pre-requisites
-				assert.isNotNull(atomHostname);
-
-				atomServices.getStats(atomHostname, function (error, payload) {
-
-					if (!error) {
-						console.log('############ bring stats atom stats ############');
-						console.log(payload);
-					}
-					else {
-						console.log('############ bring stats atom stats error %j ############', error);
-					}
-
-					//validate payload & error
-					assert.isNull(error, error && error.message);
-					assert.isNotNull(payload, error && error.message);
-
-					done()
-
-				});
-			}
-			else {
-				done()
-			}
-		});
+		// it('Should update atom', function (done) {
+		//
+		// 	if (options.run_update === "true") {
+		// 		var rnd = beameUtils.randomString(4);
+		// 		name += ('-' + rnd);
+		//
+		// 		console.log('############ updating atom profile %j ############', name);
+		//
+		// 		//validate pre-requisites
+		// 		assert.isNotNull(atomHostname);
+		//
+		// 		atomServices.updateAtom(atomHostname, name, function (error, payload) {
+		//
+		// 			console.log('############ update atom profile response received with payload %j and error %j ############', payload, error);
+		//
+		// 			//validate payload & error
+		// 			assert.isNull(error, error && error.message);
+		// 			assert.isNotNull(payload, error && error.message);
+		//
+		// 			done()
+		//
+		// 		});
+		// 	}
+		// 	else {
+		// 		done()
+		// 	}
+		// });
+		//
+		// it('Should revoke atom certs', function (done) {
+		// 	if (options.run_cert === "true") {
+		// 		console.log('############ revoking atom certs %j ############', atomHostname);
+		//
+		// 		//validate pre-requisites
+		// 		assert.isNotNull(atomHostname);
+		// 		assert.isNotNull(atomDirPath);
+		//
+		// 		atomServices.revokeCert(atomHostname, function (error, payload) {
+		//
+		// 			console.log('############ revoke atom certs response received with payload %j and error %j ############', payload, error);
+		//
+		// 			//validate payload & error
+		// 			assert.isNull(error, error && error.message);
+		// 			assert.isNotNull(payload, error && error.message);
+		//
+		// 			done()
+		//
+		// 		});
+		// 	}
+		// 	else {
+		// 		done()
+		// 	}
+		// });
+		//
+		// it('Should renew atom certs', function (done) {
+		// 	if (options.run_cert === "true") {
+		// 		console.log('############ renewing atom certs %j ############', atomHostname);
+		//
+		// 		//validate pre-requisites
+		// 		assert.isNotNull(atomHostname);
+		// 		assert.isNotNull(atomDirPath);
+		//
+		// 		atomServices.renewCert(atomHostname, function (error, payload) {
+		//
+		// 			console.log('############ renew atom certs response received with payload %j and error %j ############', payload, error);
+		//
+		// 			//validate payload & error
+		// 			assert.isNull(error, error && error.message);
+		// 			assert.isNotNull(payload, error && error.message);
+		//
+		// 			//validate certificate structure
+		// 			var certsCreated = beameUtils.validateHostCertsSync(atomHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+		// 			assert.isTrue(certsCreated, 'Certificates mismatch');
+		//
+		// 			done()
+		//
+		// 		});
+		// 	}
+		// 	else {
+		// 		done()
+		// 	}
+		//
+		// });
+		//
+		// it('Should bring atom stats', function (done) {
+		// 	if (options.run_stats === "true") {
+		// 		console.log('############ bringing stats for atom  %j ############', atomHostname);
+		//
+		// 		//validate pre-requisites
+		// 		assert.isNotNull(atomHostname);
+		//
+		// 		atomServices.getStats(atomHostname, function (error, payload) {
+		//
+		// 			if (!error) {
+		// 				console.log('############ bring stats atom stats ############');
+		// 				console.log(payload);
+		// 			}
+		// 			else {
+		// 				console.log('############ bring stats atom stats error %j ############', error);
+		// 			}
+		//
+		// 			//validate payload & error
+		// 			assert.isNull(error, error && error.message);
+		// 			assert.isNotNull(payload, error && error.message);
+		//
+		// 			done()
+		//
+		// 		});
+		// 	}
+		// 	else {
+		// 		done()
+		// 	}
+		// });
 
 	});
 

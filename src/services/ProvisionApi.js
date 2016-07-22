@@ -86,7 +86,18 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
  * @param {Function} callback
  */
 var postToProvisionApi = function (url, options, type, retries, callback) {
+	var errMsg;
+
 	retries--;
+
+	var onPostError = function (error) {
+		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api post error", {
+			"error": error,
+			"url": url
+		});
+		console.error(errMsg);
+		postToProvisionApi(url, options, type, retries, callback);
+	};
 
 	try {
 		if (retries == 0) {
@@ -99,30 +110,31 @@ var postToProvisionApi = function (url, options, type, retries, callback) {
 				url,
 				options,
 				function (error, response, body) {
-					parseProvisionResponse(error, response, body, type, function (error, payload) {
-						if (payload) {
-							callback(null, payload);
-						}
-						else {
-							if (_.isEmpty(error.data)) {
-								error.data = {};
+					if (error) {
+						onPostError(error);
+					}
+					else {
+						parseProvisionResponse(error, response, body, type, function (error, payload) {
+							if (payload) {
+								callback(null, payload);
 							}
-							error.data.url = url;
-							error.data.postData = options.form;
-							callback(error, null);
-						}
-					});
+							else {
+								if (_.isEmpty(error.data)) {
+									error.data = {};
+								}
+								error.data.url = url;
+								error.data.postData = options.form;
+								callback(error, null);
+							}
+						});
+					}
+
 				}
 			);
 		}
 	}
 	catch (error) {
-		var errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api post error", {
-			"url": url,
-			"error": error
-		});
-		console.error(errMsg);
-		postToProvisionApi(url, options, type, retries, callback);
+		onPostError(error);
 	}
 
 };

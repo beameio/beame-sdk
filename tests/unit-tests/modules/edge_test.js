@@ -73,94 +73,94 @@ function run() {
 			});
 
 		});
-
-		it('Should revoke edge certs', function (done) {
-
-			if (options.run_cert === "true") {
-				console.log('############ revoking edge certs %j ############', edgeClientHostname);
-
-				//validate pre-requisites
-				assert.isNotNull(edgeClientHostname);
-				assert.isNotNull(edgeClientDirPath);
-
-				edgeServices.revokeCert(edgeClientHostname, function (error, payload) {
-
-					console.log('############ revoke edge certs response received with payload %j and error %j ############', payload, error);
-
-					//validate payload & error
-					assert.isNull(error, error && error.message);
-					assert.isNotNull(payload, error && error.message);
-
-					done()
-
-				});
-			}
-			else {
-				done()
-			}
-		});
-
-		it('Should renew edge certs', function (done) {
-
-			if (options.run_cert === "true") {
-				console.log('############ renewing edge certs %j ############', edgeClientHostname);
-
-				//validate pre-requisites
-				assert.isNotNull(edgeClientHostname);
-				assert.isNotNull(edgeClientDirPath);
-
-				edgeServices.renewCert(edgeClientHostname, function (error, payload) {
-
-					console.log('############ renew edge certs response received with payload %j and error %j ############', payload, error);
-
-					//validate payload & error
-					assert.isNull(error, error && error.message);
-					assert.isNotNull(payload, error && error.message);
-
-					//validate certificate structure
-					var certsCreated = beameUtils.validateHostCertsSync(edgeClientHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
-					assert.isTrue(certsCreated, 'Certificates mismatch');
-
-					done()
-
-				});
-			}
-			else {
-				done()
-			}
-		});
-
-		it('Should bring edge stats', function (done) {
-
-			if (options.run_stats === "true") {
-
-				console.log('############ bringing stats for edge  %j ############', edgeClientHostname);
-
-				//validate pre-requisites
-				assert.isNotNull(edgeClientHostname);
-
-				edgeServices.getStats(edgeClientHostname, function (error, payload) {
-
-					if (!error) {
-						console.log('############ bring stats edge stats ############');
-						console.log(payload);
-					}
-					else {
-						console.log('############ bring stats edge stats error %j ############', error);
-					}
-
-					//validate payload & error
-					assert.isNull(error, error && error.message);
-					assert.isNotNull(payload, error && error.message);
-
-					done()
-
-				});
-			}
-			else {
-				done()
-			}
-		});
+		//
+		// it('Should revoke edge certs', function (done) {
+		//
+		// 	if (options.run_cert === "true") {
+		// 		console.log('############ revoking edge certs %j ############', edgeClientHostname);
+		//
+		// 		//validate pre-requisites
+		// 		assert.isNotNull(edgeClientHostname);
+		// 		assert.isNotNull(edgeClientDirPath);
+		//
+		// 		edgeServices.revokeCert(edgeClientHostname, function (error, payload) {
+		//
+		// 			console.log('############ revoke edge certs response received with payload %j and error %j ############', payload, error);
+		//
+		// 			//validate payload & error
+		// 			assert.isNull(error, error && error.message);
+		// 			assert.isNotNull(payload, error && error.message);
+		//
+		// 			done()
+		//
+		// 		});
+		// 	}
+		// 	else {
+		// 		done()
+		// 	}
+		// });
+		//
+		// it('Should renew edge certs', function (done) {
+		//
+		// 	if (options.run_cert === "true") {
+		// 		console.log('############ renewing edge certs %j ############', edgeClientHostname);
+		//
+		// 		//validate pre-requisites
+		// 		assert.isNotNull(edgeClientHostname);
+		// 		assert.isNotNull(edgeClientDirPath);
+		//
+		// 		edgeServices.renewCert(edgeClientHostname, function (error, payload) {
+		//
+		// 			console.log('############ renew edge certs response received with payload %j and error %j ############', payload, error);
+		//
+		// 			//validate payload & error
+		// 			assert.isNull(error, error && error.message);
+		// 			assert.isNotNull(payload, error && error.message);
+		//
+		// 			//validate certificate structure
+		// 			var certsCreated = beameUtils.validateHostCertsSync(edgeClientHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+		// 			assert.isTrue(certsCreated, 'Certificates mismatch');
+		//
+		// 			done()
+		//
+		// 		});
+		// 	}
+		// 	else {
+		// 		done()
+		// 	}
+		// });
+		//
+		// it('Should bring edge stats', function (done) {
+		//
+		// 	if (options.run_stats === "true") {
+		//
+		// 		console.log('############ bringing stats for edge  %j ############', edgeClientHostname);
+		//
+		// 		//validate pre-requisites
+		// 		assert.isNotNull(edgeClientHostname);
+		//
+		// 		edgeServices.getStats(edgeClientHostname, function (error, payload) {
+		//
+		// 			if (!error) {
+		// 				console.log('############ bring stats edge stats ############');
+		// 				console.log(payload);
+		// 			}
+		// 			else {
+		// 				console.log('############ bring stats edge stats error %j ############', error);
+		// 			}
+		//
+		// 			//validate payload & error
+		// 			assert.isNull(error, error && error.message);
+		// 			assert.isNotNull(payload, error && error.message);
+		//
+		// 			done()
+		//
+		// 		});
+		// 	}
+		// 	else {
+		// 		done()
+		// 	}
+		// });
 
 	});
 }
