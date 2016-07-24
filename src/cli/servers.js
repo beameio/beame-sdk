@@ -17,7 +17,7 @@ function HttpsServerTestStart(edgeClientFqdn) {
 		});
 
 		var socketio = require('socket.io')(app);
-		socketio.set('transports', ['websocket']);
+		// socketio.set('transports', ['websocket']);
 
 		socketio.on('connection', function (socket) {
 			console.log("Socketio connection");
