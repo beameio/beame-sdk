@@ -116,7 +116,7 @@ function createAtom(developerFqdn, atomName, count, callback) {
 		throw new Error("Count of not one is not supported yet");
 	}
 	for (var i = 0; i < count; i++) {
-		let n = count > 1 ? i+1 : '';
+		let n = count > 1 ? i + 1 : '';
 		console.warn("Creating atom developerFqdn=%j atomName=%j index=%j", developerFqdn, atomName, n);
 		atomServices.createAtom(developerFqdn, atomName + n, _stdCallback(callback));
 	}
@@ -179,6 +179,7 @@ function exportCredentials(fqdn, targetFqdn, file) {
 	creds['relativePath'] = relativePath;
 	creds.path = creds.path.replace(global.devPath, "");
 
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var jsonString = JSON.stringify(creds);
 	if (!jsonString) {
 		console.error("Credentials for exporting are not found");
@@ -200,12 +201,14 @@ function exportCredentials(fqdn, targetFqdn, file) {
 			encryptedFor: targetFqdn
 		}
 	};
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	message.signature = JSON.stringify(crypto.sign(message.signedData, fqdn));
 	if (!file) {
 
 	}
 	else {
 		var p = path.resolve(file);
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		fs.writeFileSync(p, JSON.stringify(message));
 		return p;
 	}
@@ -230,6 +233,7 @@ function readStdinStream(callback) {
 
 function decryptCreds(data) {
 	var crypto = require('./crypto');
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var parsedData = JSON.parse(data);
 
 	var signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedby, parsedData.signature);
@@ -240,7 +244,7 @@ function decryptCreds(data) {
 			console.error("Private key for %j is not found", parsedData.signedData.encryptedFor);
 			return -1;
 		}
-
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		return crypto.decrypt(JSON.stringify(parsedData.signedData.data));
 	}
 }
@@ -264,6 +268,7 @@ function importCredentials(data, file) {
 			}
 			return store.importCredentials(decryptedCreds);
 		} else {
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			decryptedCreds = decryptCreds(JSON.parse(data));
 			return store.importCredentials(decryptedCreds);
 		}
@@ -317,7 +322,7 @@ function shred(fqdn, callback) {
 	store.shredCredentials(fqdn, callback);
 }
 
-function stats(fqdn,callback) {
+function stats(fqdn, callback) {
 	if (!fqdn) {
 		throw new Error("FQDN is required in shred");
 	}
@@ -364,12 +369,12 @@ function isObject(str) {
 function objectToText(line) {
 	return Object.keys(line).map(k => {
 		//console.log('element is %j, isJSON test is',line[k]);
-		if(!isObject(line[k])){
+		if (!isObject(line[k])) {
 			return k + '=' + line[k].toString();
 		}
 
 		var json = line[k];
-
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		return k + '=' + JSON.stringify(json);
 	}).join('\n');
 }
