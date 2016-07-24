@@ -68,7 +68,7 @@ function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetH
     if(edgeClientCerts){
         io_options.cert = edgeClientCerts.cert;
         io_options.key = edgeClientCerts.key;
-        io_options.key = edgeClientCerts.key;
+        io_options.ca = edgeClientCerts.ca;
 
     }
     this.options = options;
