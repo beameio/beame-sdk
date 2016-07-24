@@ -1,9 +1,9 @@
 "use strict";
+
 var request = require('sync-request');
 
-function test1(name, gender, huj){
-	console.log("In test1 function", arguments);
-}
+var creds = require('./creds');
+var servers = require('./servers');
 
 function start(){
 	var readline = require('readline');
@@ -13,18 +13,21 @@ function start(){
 		output: process.stdout
 	});
 
-	console.warn('Please go to https://registration.beameio.net  and complete registration');
+	console.warn('Please go to https://registration.beameio.net and fill in the form');
 	inter.question("Please enter hostname you got in the email: ", function(developerFqdn) {
-		inter.question("Please enter UID you got in the email:" , function(uid) {
-			inter.question("Please Enter Atom Name (For example 'MyApp'):", function(atomName) {
-				var creds = require('./creds');
-				console.log("Creating developer level cert this will take about 30 seconds....");
+		inter.question("Please enter UID you got in the email: " , function(uid) {
+			inter.question("Please Enter Atom Name (For example 'MyApp'): ", function(atomName) {
+				console.log("+ Creating developer level cert this will take about 30 seconds....");
 				creds.createDeveloper(developerFqdn, uid, function(data){
-					console.warn("Developer credentials have been  created .... creatimg atom ");
-					creds.createAtom(developerFqdn, atomName, function (data) {
-						console.warn("Atom credentials have been created and signed");
-						creds.createEdgeClient(data.fqdn, function(data){
-							console.warn("Launching a webserver without a publicip address");
+					console.warn("+ Developer credentials have been created:", developerFqdn);
+					console.warn("+ Creating atom");
+					creds.createAtom(developerFqdn, atomName, 1, function (data) {
+						console.warn("+ Atom credentials have been created and signed:", data.hostname);
+						console.warn("+ Creating edge client")
+						creds.createEdgeClient(data.hostname, 1, function(data){
+							console.warn("+ Edge client credentials have been created and signed:", data.hostname);
+							console.warn(`+ Launching a webserver at https://${data.hostname}/`);
+							servers.HttpsServerTestStart(data.hostname);
 						});
 					})
 				})
@@ -44,9 +47,9 @@ function checkVersion(){
 	var npmStatus = JSON.parse(request('GET','https://registry.npmjs.org/beame-sdk/').body);
 
 	if(npmStatus['dist-tags'].latest === currentVersion.version){
-		console.info("You are using the latest beame-sdk version", currentVersion.version)
+		console.info("You are using the latest beame-sdk version", currentVersion.version);
 	}else{
-		console.info("You are using and older %j version of beame sdk %j the latest version is %j", currentVersion.version, npmStatus['dist-tags'].latest);
+		console.info(`You are using and older ${currentVersion.version} version of beame sdk but the latest version is ${npmStatus['dist-tags'].latest}`);
 	}
 }
 
