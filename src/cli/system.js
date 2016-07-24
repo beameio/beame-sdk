@@ -36,27 +36,30 @@ function start(){
 		});
 	});
 
-//	i.write("To initiate the beame-sdk, please go to https://register.beame.io");
-
-	/**/
-
 }
 
 function checkVersion(){
 	var currentVersion = require("../../package.json");
 	var npmStatus = JSON.parse(request('GET','https://registry.npmjs.org/beame-sdk/').body);
 
-	if(npmStatus['dist-tags'].latest === currentVersion.version){
-		console.info("You are using the latest beame-sdk version", currentVersion.version);
+	return {
+		'installed': currentVersion.version,
+		'available': npmStatus['dist-tags'].latest,
+		'update-available': npmStatus['dist-tags'].latest !== currentVersion.version
+	}
+
+}
+
+checkVersion.toText = data => {
+	if(data['update-available']){
+		return `You are using and older ${data.installed} version of beame sdk but the latest version is ${data.available}`;
 	}else{
-		console.info(`You are using and older ${currentVersion.version} version of beame sdk but the latest version is ${npmStatus['dist-tags'].latest}`);
+		return `You are using the latest beame-sdk version ${data.installed}`;
 	}
 }
 
-//checkVersion();
 module.exports = 
 {
-
 	start,
 	checkVersion
 };
