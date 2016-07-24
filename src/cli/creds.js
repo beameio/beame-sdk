@@ -113,8 +113,9 @@ if (developerServices.canCreateDeveloper()) {
 
 function createAtom(developerFqdn, atomName, count, callback) {
 	for (var i = 0; i < count; i++) {
-		console.warn("Creating atom developerFqdn=%j atomName=%j", developerFqdn, atomName);
-		atomServices.createAtom(developerFqdn, atomName + i, _stdCallback(callback));
+		let n = count > 1 ? i+1 : '';
+		console.warn("Creating atom developerFqdn=%j atomName=%j index=%j", developerFqdn, atomName, n);
+		atomServices.createAtom(developerFqdn, atomName + n, _stdCallback(callback));
 	}
 }
 createAtom.toText = lineToText;
