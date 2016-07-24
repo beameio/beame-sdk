@@ -5,6 +5,7 @@
         "AuthServer": "https://registration.beameio.net",
         "CertEndpoint": "https://beameio-net-certs.s3.amazonaws.com"
     },
+    "RetryAttempts" : 10,
     "Actions": {
         "DeveloperApi": {
             "CompleteRegistration": {

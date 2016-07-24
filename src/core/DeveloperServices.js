@@ -227,11 +227,11 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
 	});
 };
 
-DeveloperServices.prototype.canCreateDeveloper = function (developerName, developerEmail, callback) {
+DeveloperServices.prototype.canCreateDeveloper = function () {
 
 	var t = beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH);
 	return fs.existsSync(t.x509) && fs.existsSync(t.pk);
-}
+};
 
 /**
  *

@@ -17,8 +17,8 @@ var mkdirp = require("mkdirp");
 module.exports = {
 	show,
 	list,
-	renew,
-	revoke,
+	//renew,
+	//revoke,
 	shred,
 	createAtom,
 	createEdgeClient,
@@ -101,12 +101,13 @@ function _stdCallback(callback) {
 	};
 }
 
+function createTestDeveloper(developerName, developerEmail, callback) {
+	debug("Creating test developer developerName=%j developerEmail=%j", developerName, developerEmail);
+	developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
+}
+createTestDeveloper.toText = lineToText;
+
 if (developerServices.canCreateDeveloper()) {
-	function createTestDeveloper(developerName, developerEmail, callback) {
-		debug("Creating test developer developerName=%j developerEmail=%j", developerName, developerEmail);
-		developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
-	}
-	createTestDeveloper.toText = lineToText;
 	module.exports['createTestDeveloper'] = createDeveloper;
 }
 
@@ -309,38 +310,62 @@ function shred(fqdn, callback) {
 	store.shredCredentials(fqdn, callback);
 }
 
-function stats(fqdn){
+function stats(fqdn,callback) {
 	if (!fqdn) {
 		throw new Error("FQDN is required in shred");
 	}
 
 	var creds = store.search(fqdn)[0];
 
-	if(!creds){
+	if (!creds) {
 		throw new Error("FQDN not found");
 	}
 
-	var cb = function(error,payload){
-		if(!error) return payload;
+	var cb = function (error, payload) {
+		if (!error) {
+			return callback(payload);
+		}
 
 		throw new Error(error.message);
 	};
 
 	switch (creds.level) {
 		case 'developer': {
-			developerServices.getStats(fqdn,cb);
+			developerServices.getStats(fqdn, cb);
 			break;
 		}
 		case 'atom': {
-			atomServices.getStats(fqdn,cb);
+			atomServices.getStats(fqdn, cb);
 			break;
 		}
 		case 'edgeclient': {
-			edgeClientServices.getStats(fqdn,cb);
+			edgeClientServices.getStats(fqdn, cb);
 			break;
 		}
 	}
 
 }
-stats.toText = lineToText;
+
+function isObject(str) {
+	try {
+		return typeof str === 'object';
+	} catch (e) {
+		return false;
+	}
+}
+
+function objectToText(line) {
+	return Object.keys(line).map(k => {
+		//console.log('element is %j, isJSON test is',line[k]);
+		if(!isObject(line[k])){
+			return k + '=' + line[k].toString();
+		}
+
+		var json = line[k];
+
+		return k + '=' + JSON.stringify(json);
+	}).join('\n');
+}
+
+stats.toText = objectToText;
 
