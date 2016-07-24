@@ -46,7 +46,7 @@ function checkVersion(){
 	if(npmStatus['dist-tags'].latest === currentVersion.version){
 		console.info("You are using the latest beame-sdk version", currentVersion.version)
 	}else{
-		console.info("You are using and older %j version of beame sdk %j the latest version is %j", currentVersion.version, npmStatus['dist-tags'].latest);
+		console.info(`You are using and older ${currentVersion.version} version of beame sdk but the latest version is ${npmStatus['dist-tags'].latest}`);
 	}
 }
 
