@@ -15,8 +15,8 @@ function start(){
 
 	console.warn('Please go to https://registration.beameio.net  and complete registration');
 	inter.question("Please enter hostname you got in the email: ", function(developerFqdn) {
-		inter.question("Please enter UID you got in the email:" , function(uid) {
-			inter.question("Please Enter Atom Name (For example 'MyApp'):", function(atomName) {
+		inter.question("Please enter UID you got in the email: " , function(uid) {
+			inter.question("Please Enter Atom Name (For example 'MyApp'): ", function(atomName) {
 				var creds = require('./creds');
 				console.log("Creating developer level cert this will take about 30 seconds....");
 				creds.createDeveloper(developerFqdn, uid, function(data){
@@ -44,7 +44,7 @@ function checkVersion(){
 	var npmStatus = JSON.parse(request('GET','https://registry.npmjs.org/beame-sdk/').body);
 
 	if(npmStatus['dist-tags'].latest === currentVersion.version){
-		console.info("You are using the latest beame-sdk version", currentVersion.version)
+		console.info("You are using the latest beame-sdk version", currentVersion.version);
 	}else{
 		console.info(`You are using and older ${currentVersion.version} version of beame sdk but the latest version is ${npmStatus['dist-tags'].latest}`);
 	}
