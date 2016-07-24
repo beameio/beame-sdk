@@ -3,11 +3,11 @@
  */
 'use strict';
 require('./Globals');
-var path = require('path');
-var request = require('request');
-var _ = require('underscore');
+var path         = require('path');
+var request      = require('request');
+var _            = require('underscore');
 var dataServices = new (require('../services/DataServices'))();
-var beameStore = new (require('../services/BeameStore'))();
+var beameStore   = new (require('../services/BeameStore'))();
 
 
 /**
@@ -51,7 +51,7 @@ module.exports = {
 	 */
 	getAuthToken: function (baseDir, path2Pk, path2X509) {
 		return {
-			pk: path.join(baseDir, path2Pk),
+			pk:   path.join(baseDir, path2Pk),
 			x509: path.join(baseDir, path2X509)
 		}
 	},
@@ -80,8 +80,8 @@ module.exports = {
 	 */
 	getApiData: function (endpoint, postData, answerExpected) {
 		return {
-			api: endpoint,
-			postData: postData,
+			api:            endpoint,
+			postData:       postData,
 			answerExpected: answerExpected
 		};
 	},
@@ -108,7 +108,7 @@ module.exports = {
 	 */
 	httpGet: function (url, callback) {
 		request({
-			url: url,
+			url:  url,
 			json: true
 		}, function (error, response, body) {
 
@@ -128,17 +128,17 @@ module.exports = {
 	 * @param {Number} sleep
 	 * @param {Function} callback
 	 */
-	selectBestProxy: function (loadBalancerEndpoint, retries, sleep,callback) {
-		var self = this;
+	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
+		var self          = this;
 		var getRegionName = self.getRegionName;
-		var get = self.httpGet;
-		var selectBest = self.selectBestProxy;
+		var get           = self.httpGet;
+		var selectBest    = self.selectBestProxy;
 		var consoleMessage;
 
 		if (retries == 0) {
 			consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
 			console.error(consoleMessage);
-			callback && callback(consoleMessage,null);
+			callback && callback(consoleMessage, null);
 		}
 		else {
 			retries--;
@@ -153,14 +153,14 @@ module.exports = {
 					if (data) {
 						var region = getRegionName(data.instanceData.endpoint);
 						/** @type {EdgeShortData} edge **/
-						var edge = {
+						var edge   = {
 							endpoint: data.instanceData.endpoint,
-							region: region,
-							zone: data.instanceData.avlZone,
+							region:   region,
+							zone:     data.instanceData.avlZone,
 							publicIp: data.instanceData.publicipv4
 						};
 
-						callback && callback(null,edge);
+						callback && callback(null, edge);
 
 					}
 					else {
@@ -168,14 +168,14 @@ module.exports = {
 						sleep = parseInt(sleep * (Math.random() + 1.5));
 
 						consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Retry to get lb instance", {
-							"sleep": sleep,
+							"sleep":   sleep,
 							"retries": retries
 						});
 
 						console.warn(consoleMessage);
 
 						setTimeout(function () {
-							selectBest.call(self, loadBalancerEndpoint, retries, sleep,callback);
+							selectBest.call(self, loadBalancerEndpoint, retries, sleep, callback);
 						}, sleep);
 					}
 				});
@@ -197,7 +197,7 @@ module.exports = {
 	 * @returns {String}
 	 */
 	randomString: function (length) {
-		var chars = "abcdefghijklmnopqrstufwxyzABCDEFGHIJKLMNOPQRSTUFWXYZ1234567890";
+		var chars  = "abcdefghijklmnopqrstufwxyzABCDEFGHIJKLMNOPQRSTUFWXYZ1234567890";
 		var result = '';
 		for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
 		return result;
@@ -222,7 +222,7 @@ module.exports = {
 		return new Promise(function (resolve, reject) {
 
 			var developerMetadataPath = self.makePath(devDir, global.metadataFileName);
-			var metadata = dataServices.readJSON(developerMetadataPath);
+			var metadata              = dataServices.readJSON(developerMetadataPath);
 
 			if (_.isEmpty(metadata)) {
 				var errorJson = global.formatDebugMessage(module, global.MessageCodes.MetadataEmpty, "metadata.json for is empty", {"hostname": hostname});
@@ -250,7 +250,7 @@ module.exports = {
 			if (!path) return false;
 
 			var metadataPath = self.makePath(path, global.metadataFileName);
-			var metadata = dataServices.readJSON(metadataPath);
+			var metadata     = dataServices.readJSON(metadataPath);
 
 			return _.isEmpty(metadata) ? null : metadata;
 
@@ -298,7 +298,7 @@ module.exports = {
 
 			if (!dataServices.isNodeFilesExists(path, nodeFiles, module)) {
 				var errMsg = global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, nodeLevel + " files not found", {
-					"level": nodeLevel,
+					"level":    nodeLevel,
 					"hostname": hostname
 				});
 				console.error(errMsg);
@@ -310,8 +310,9 @@ module.exports = {
 		});
 	},
 
-	deleteHostCerts : function(fqdn,callback){
-		beameStore.shredCredentials(fqdn,callback || function(){});
+	deleteHostCerts: function (fqdn, callback) {
+		beameStore.shredCredentials(fqdn, callback || function () {
+			});
 	},
 
 	/**

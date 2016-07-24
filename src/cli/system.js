@@ -2,14 +2,14 @@
 
 var request = require('sync-request');
 
-var creds = require('./creds');
+var creds   = require('./creds');
 var servers = require('./servers');
 
 function start() {
 	var readline = require('readline');
 
 	const inter = readline.createInterface({
-		input: process.stdin,
+		input:  process.stdin,
 		output: process.stdout
 	});
 
@@ -40,12 +40,12 @@ function start() {
 function checkVersion() {
 	var currentVersion = require("../../package.json");
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSUnresolvedVariable
-	var npmStatus = JSON.parse(request('GET', 'https://registry.npmjs.org/beame-sdk/').body);
+	var npmStatus      = JSON.parse(request('GET', 'https://registry.npmjs.org/beame-sdk/').body);
 
 	//noinspection JSUnresolvedVariable
 	return {
-		'installed': currentVersion.version,
-		'available': npmStatus['dist-tags'].latest,
+		'installed':        currentVersion.version,
+		'available':        npmStatus['dist-tags'].latest,
 		'update-available': npmStatus['dist-tags'].latest !== currentVersion.version
 	}
 

@@ -3,12 +3,12 @@
  */
 'use strict';
 require('../utils/Globals');
-var debug = require("debug")("./src/services/EdgeClientServices.js");
-var _ = require('underscore');
+var debug        = require("debug")("./src/services/EdgeClientServices.js");
+var _            = require('underscore');
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
-var beameUtils = require('../utils/BeameUtils');
-var apiActions = require('../../config/ApiConfig.json').Actions.EdgeClient;
+var beameUtils   = require('../utils/BeameUtils');
+var apiActions   = require('../../config/ApiConfig.json').Actions.EdgeClient;
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Edge folder not found';
 
@@ -73,7 +73,7 @@ var registerEdgeClient = function (atomHostname, callback) {
 	function onEdgeSelectionError(error) {
 		errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "select best proxy error", {
 			"error": error,
-			"lb": global.loadBalancerEdnpoint
+			"lb":    global.loadBalancerEdnpoint
 		});
 		console.error(errMsg);
 		callback && callback(error, null);
@@ -125,11 +125,11 @@ var registerEdgeClient = function (atomHostname, callback) {
 	function onRequestValidated() {
 
 		//TODO create permanent solution
-		beameUtils.selectBestProxy(global.loadBalancerEdnpoint, 100, 1000,function(error,payload){
-			if(!error){
+		beameUtils.selectBestProxy(global.loadBalancerEdnpoint, 100, 1000, function (error, payload) {
+			if (!error) {
 				onEdgeServerSelected(payload);
 			}
-			else{
+			else {
 				onEdgeSelectionError(error);
 			}
 		});
@@ -201,7 +201,7 @@ var getCert = function (atomHostname, edgeHostname, callback) {
 	function onEdgePathReceived(data) {
 
 		edgeClientDir = data['path'];
-		atomDir = data['parent_path'];
+		atomDir       = data['parent_path'];
 
 		isRequestValid(atomHostname, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -328,7 +328,7 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 
 				var postData = {
 					hostname: edgeHostname,
-					csr: csr
+					csr:      csr
 				};
 
 				var apiData = beameUtils.getApiData(apiActions.RenewCert.endpoint, postData, true);

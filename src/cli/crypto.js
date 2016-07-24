@@ -12,19 +12,19 @@
 var NodeRsa = require("node-rsa");
 
 var BeameStore = require("../services/BeameStore");
-var store = new BeameStore();
-var x509 = require("x509");
+var store      = new BeameStore();
+var x509       = require("x509");
 
 function aesEncrypt(data) {
-	var crypto = require('crypto');
-	var sharedSecret = crypto.randomBytes(32); // should be 128 (or 256) bits
+	var crypto               = require('crypto');
+	var sharedSecret         = crypto.randomBytes(32); // should be 128 (or 256) bits
 	var initializationVector = crypto.randomBytes(16); // IV is always 16-bytes
-	var cipher = crypto.Cipheriv('aes-256-cbc', sharedSecret, initializationVector);
-	var encrypted = cipher.update(data, 'utf8', 'base64');
+	var cipher               = crypto.Cipheriv('aes-256-cbc', sharedSecret, initializationVector);
+	var encrypted            = cipher.update(data, 'utf8', 'base64');
 	encrypted += cipher.final('base64');
 
 	return [{AES256CBC: encrypted}, {
-		IV: initializationVector.toString('base64'),
+		IV:           initializationVector.toString('base64'),
 		sharedCipher: sharedSecret.toString('base64')
 	}];
 
@@ -37,10 +37,10 @@ function aesDecrypt(data) {
 		return "";
 	}
 	var cipher = new Buffer(data[1].sharedCipher, "base64");
-	var IV = new Buffer(data[1].IV, "base64");
+	var IV     = new Buffer(data[1].IV, "base64");
 
 	var decipher = crypto.createDecipheriv("aes-256-cbc", cipher, IV);
-	var dec = decipher.update(data[0].AES256CBC, 'base64', 'utf8');
+	var dec      = decipher.update(data[0].AES256CBC, 'base64', 'utf8');
 	dec += decipher.final('utf8');
 	return dec;
 }
@@ -49,12 +49,12 @@ function getPublicKey(cert) {
 	var xcert = x509.parseCert(cert + "");
 	if (xcert) {
 		var publicKey = xcert.publicKey;
-		var modulus = new Buffer(publicKey.n, 'hex');
-		var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
+		var modulus   = new Buffer(publicKey.n, 'hex');
+		var header    = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
 		var midheader = new Buffer("0203", "hex");
-		var exponent = new Buffer("010001", "hex");
-		var buffer = Buffer.concat([header, modulus, midheader, exponent]);
-		var rsaKey = new NodeRsa(buffer, "public-der");
+		var exponent  = new Buffer("010001", "hex");
+		var buffer    = Buffer.concat([header, modulus, midheader, exponent]);
+		var rsaKey    = new NodeRsa(buffer, "public-der");
 		rsaKey.importKey(buffer, "public-der");
 		return rsaKey;
 	}
@@ -67,16 +67,16 @@ function encrypt(data, fqdn) {
 		var rsaKey = getPublicKey(element.X509);
 		if (rsaKey) {
 
-			var sharedCiphered = aesEncrypt(data);
+			var sharedCiphered         = aesEncrypt(data);
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			var symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
-			sharedCiphered[1] = "";
+			sharedCiphered[1]          = "";
 
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			return {
 				rsaCipheredKeys: rsaKey.encrypt(JSON.stringify(symmetricCipherElement), "base64", "utf8"),
-				data: sharedCiphered[0],
-				encryptedFor: fqdn
+				data:            sharedCiphered[0],
+				encryptedFor:    fqdn
 			};
 		}
 	}

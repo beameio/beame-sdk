@@ -6,9 +6,9 @@
 var fs = require('fs');
 
 require('../utils/Globals');
-var debug = require("debug")("./src/services/DeveloperServices.js");
-var _ = require('underscore');
-var path = require('path');
+var debug   = require("debug")("./src/services/DeveloperServices.js");
+var _       = require('underscore');
+var path    = require('path');
 var homedir = global.__homedir;
 var devPath = global.devPath;
 
@@ -16,8 +16,8 @@ new (require('../services/BeameStore'))();
 
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
-var beameUtils = require('../utils/BeameUtils');
-var apiActions = require('../../config/ApiConfig.json').Actions.DeveloperApi;
+var beameUtils   = require('../utils/BeameUtils');
+var apiActions   = require('../../config/ApiConfig.json').Actions.DeveloperApi;
 
 /**
  * @typedef {Object} CompleteRegistrationRequestToken
@@ -87,7 +87,7 @@ var saveDeveloper = function (email, developerName, callback) {
 	provisionApi.setAuthData(beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH));
 
 	var postData = {
-		name: developerName,
+		name:  developerName,
 		email: email
 	};
 
@@ -96,7 +96,7 @@ var saveDeveloper = function (email, developerName, callback) {
 	provisionApi.runRestfulAPI(apiData, function (error, payload) {
 		if (!error) {
 
-			payload.name = developerName;
+			payload.name  = developerName;
 			payload.email = email;
 
 			var devDir = makeDeveloperDir(payload.hostname);
@@ -201,7 +201,7 @@ var DeveloperServices = function () {
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
 
 	var debugMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.DebugInfo, "Call Create Developer", {
-		"name": developerName,
+		"name":  developerName,
 		"email": developerEmail
 	});
 	debug(debugMsg);
@@ -256,9 +256,9 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 	/** @type {typeof CompleteRegistrationRequestToken} **/
 	var payload = {
 		hostname: hostname,
-		uid: uid,
-		name: hostname,
-		email: hostname
+		uid:      uid,
+		name:     hostname,
+		email:    hostname
 	};
 
 	dataServices.savePayload(devDir, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
@@ -279,9 +279,9 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 			function onCsrCreated(csr) {
 
 				var postData = {
-					csr: csr,
+					csr:      csr,
 					hostname: metadata.hostname,
-					uid: metadata.uid
+					uid:      metadata.uid
 				};
 
 				var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
@@ -324,7 +324,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
 
 		var postData = {
 			email: email,
-			name: name ? name : metadata.name
+			name:  name ? name : metadata.name
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.UpdateProfile.endpoint, postData, false);
@@ -332,7 +332,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
 		provisionApi.runRestfulAPI(apiData, function (error) {
 			if (!error) {
 				/*---------- update metadata -------------*/
-				metadata.name = postData.name;
+				metadata.name  = postData.name;
 				metadata.email = email;
 
 				dataServices.saveFile(devDir, global.metadataFileName, beameUtils.stringify(metadata));
@@ -452,8 +452,8 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 
 			/** @type {typeof DeveloperRestoreCertRequestToken} **/
 			var postData = {
-				csr: csr,
-				hostname: hostname,
+				csr:           csr,
+				hostname:      hostname,
 				recovery_code: recoveryData.recovery_code
 			};
 

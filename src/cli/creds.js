@@ -2,16 +2,16 @@
 //var JSON = require('JSON');
 var debug = require("debug")("cred_api");
 var Table = require('cli-table2');
-var x509 = require('x509');
+var x509  = require('x509');
 
 var store = new (require("../services/BeameStore"))();
 require('./../utils/Globals');
-var developerServices = new (require('../core/DeveloperServices'))();
-var atomServices = new (require('../core/AtomServices'))();
+var developerServices  = new (require('../core/DeveloperServices'))();
+var atomServices       = new (require('../core/AtomServices'))();
 var edgeClientServices = new (require('../core/EdgeClientServices'))();
 
-var path = require('path');
-var fs = require('fs');
+var path   = require('path');
+var fs     = require('fs');
 var mkdirp = require("mkdirp");
 
 module.exports = {
@@ -56,7 +56,7 @@ function show(type, fqdn) {
 
 show.toText = function (certs) {
 	var table = new Table({
-		head: ['Name', "Print", "Serial", "SigAlg"],
+		head:      ['Name', "Print", "Serial", "SigAlg"],
 		colWidths: [25, 65, 30, 30]
 	});
 
@@ -75,7 +75,7 @@ function list(type, fqdn) {
 
 list.toText = function (creds) {
 	var table = new Table({
-		head: ['name', 'hostname', 'level'],
+		head:      ['name', 'hostname', 'level'],
 		colWidths: [15, 70, 15]
 	});
 	creds.forEach(item => {
@@ -142,7 +142,7 @@ function createEdgeClient(atomFqdn, count, callback) {
 createEdgeClient.toText = lineToText;
 
 function constructRelateivePathElements(item) {
-	var items = [];
+	var items  = [];
 	var upShot = item;
 	items.push(upShot.hostname);
 	while (upShot.parent_fqdn) {
@@ -153,13 +153,13 @@ function constructRelateivePathElements(item) {
 }
 
 function importNonBeameCredentials(fqdn) {
-	var tls = require('tls');
+	var tls  = require('tls');
 	var conn = tls.connect(443, fqdn, {host: fqdn}, function () {
 		//noinspection JSUnresolvedFunction
 		var cert = conn.getPeerCertificate(true);
 		conn.end();
-		var buffer = new Buffer(cert.raw, "hex");
-		var certBody = "-----BEGIN CERTIFICATE-----\r\n";
+		var buffer         = new Buffer(cert.raw, "hex");
+		var certBody       = "-----BEGIN CERTIFICATE-----\r\n";
 		certBody += buffer.toString("base64");
 		certBody += "-----END CERTIFICATE-----";
 		var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
@@ -171,13 +171,13 @@ function importNonBeameCredentials(fqdn) {
 }
 
 function exportCredentials(fqdn, targetFqdn, file) {
-	var creds = store.search(fqdn)[0];
+	var creds        = store.search(fqdn)[0];
 	var relativePath = constructRelateivePathElements(creds);
 
-	creds.edgeclient = {};
-	creds.atom = {};
+	creds.edgeclient      = {};
+	creds.atom            = {};
 	creds['relativePath'] = relativePath;
-	creds.path = creds.path.replace(global.devPath, "");
+	creds.path            = creds.path.replace(global.devPath, "");
 
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var jsonString = JSON.stringify(creds);
@@ -194,10 +194,10 @@ function exportCredentials(fqdn, targetFqdn, file) {
 		return {};
 	}
 
-	var message = {
+	var message       = {
 		signedData: {
-			data: encryptedString,
-			signedby: fqdn,
+			data:         encryptedString,
+			signedby:     fqdn,
 			encryptedFor: targetFqdn
 		}
 	};
@@ -215,9 +215,9 @@ function exportCredentials(fqdn, targetFqdn, file) {
 }
 
 function readStdinStream(callback) {
-	var stdin = process.stdin,
-		//stdout = process.stdout,
-		inputChunks = [];
+	var stdin       = process.stdin,
+	    //stdout = process.stdout,
+	    inputChunks = [];
 
 	stdin.resume();
 	stdin.setEncoding('utf8');
@@ -232,7 +232,7 @@ function readStdinStream(callback) {
 }
 
 function decryptCreds(data) {
-	var crypto = require('./crypto');
+	var crypto     = require('./crypto');
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var parsedData = JSON.parse(data);
 
@@ -260,7 +260,7 @@ function importCredentials(data, file) {
 		});
 	} else {
 		if (file) {
-			data = fs.readFileSync(path.resolve(file)) + "";
+			data           = fs.readFileSync(path.resolve(file)) + "";
 			decryptedCreds = decryptCreds(data);
 			if (!decryptedCreds || decryptedCreds == -1) {
 				console.error("No decrypted creds");

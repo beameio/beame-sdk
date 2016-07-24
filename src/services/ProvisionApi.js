@@ -1,8 +1,8 @@
 'use strict';
 require('../utils/Globals');
-var debug = require("debug")("./src/services/ProvisionApi.js");
+var debug             = require("debug")("./src/services/ProvisionApi.js");
 var provisionSettings = require('../../config/ApiConfig.json');
-var beameUtils = require('../utils/BeameUtils');
+var beameUtils        = require('../utils/BeameUtils');
 
 /**
  * @typedef {Object} CertSettings
@@ -25,9 +25,9 @@ var beameUtils = require('../utils/BeameUtils');
  */
 
 
-var _ = require('underscore');
+var _       = require('underscore');
 var request = require('request');
-var fs = require('fs');
+var fs      = require('fs');
 
 function isObject(str) {
 	try {
@@ -42,10 +42,10 @@ function clearJSON(json) {
 
 	var jsonCleaned = {};
 
-	Object.keys(json).map(function (k)  {
+	Object.keys(json).map(function (k) {
 		//console.log('element is %j,val is %j, key is %j',json[k],val,k);
-		if(k==='$id') return;
-		if(!isObject(json[k])){
+		if (k === '$id') return;
+		if (!isObject(json[k])) {
 			jsonCleaned[k] = json[k];
 		}
 
@@ -102,7 +102,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	else {
 		//noinspection JSUnresolvedVariable
 		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, payload.Message || "Provision Api response error", {
-			"status": response.statusCode,
+			"status":  response.statusCode,
 			"message": payload.Message || payload
 		});
 		console.error(errMsg);
@@ -128,7 +128,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 	var onApiError = function (error) {
 		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api post error", {
 			"error": error,
-			"url": url
+			"url":   url
 		});
 		console.error(errMsg);
 		sleep = parseInt(sleep * (Math.random() + 1.5));
@@ -163,7 +163,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 								if (_.isEmpty(error.data)) {
 									error.data = {};
 								}
-								error.data.url = url;
+								error.data.url      = url;
 								error.data.postData = options.form;
 								callback(error, null);
 							}
@@ -189,7 +189,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
  * @param {Number} sleep
  * @param {Function} callback
  */
-var getFromProvisionApi = function (url, options, type, retries, sleep,callback) {
+var getFromProvisionApi = function (url, options, type, retries, sleep, callback) {
 
 	var errMsg;
 
@@ -198,7 +198,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep,callback)
 	var onApiError = function (error) {
 		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api get error", {
 			"error": error,
-			"url": url
+			"url":   url
 		});
 		console.error(errMsg);
 		sleep = parseInt(sleep * (Math.random() + 1.5));
@@ -231,7 +231,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep,callback)
 								if (_.isEmpty(error.data)) {
 									error.data = {};
 								}
-								error.data.url = url;
+								error.data.url      = url;
 								error.data.postData = options.form;
 								callback(error, null);
 							}
@@ -266,7 +266,7 @@ var ProvApiService = function () {
  */
 ProvApiService.prototype.setAuthData = function (authData) {
 	this.options = {
-		key: fs.readFileSync(authData.pk),
+		key:  fs.readFileSync(authData.pk),
 		cert: fs.readFileSync(authData.x509)
 	};
 };
@@ -279,7 +279,7 @@ ProvApiService.prototype.setAuthData = function (authData) {
  */
 ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method) {
 
-	var options = _.extend(this.options || {}, {form: apiData.postData});
+	var options     = _.extend(this.options || {}, {form: apiData.postData});
 	var apiEndpoint = this.provApiEndpoint + apiData.api;
 	debug('Posting to: ' + apiEndpoint);
 	var _method = method || 'POST';

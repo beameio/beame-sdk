@@ -3,18 +3,18 @@
  */
 'use strict';
 require('../utils/Globals');
-var path = require('path');
-var debug = require("debug")("./src/services/DataServices.js");
-var fs = require('fs');
-var exec = require('child_process').exec;
-var async = require('async');
+var path   = require('path');
+var debug  = require("debug")("./src/services/DataServices.js");
+var fs     = require('fs');
+var exec   = require('child_process').exec;
+var async  = require('async');
 var rimraf = require('rimraf');
 
 /**------------------------ private methods ---------------------**/
 function randomPassword(length) {
-	var len = length || 16;
+	var len   = length || 16;
 	var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
-	var pass = "";
+	var pass  = "";
 	for (var x = 0; x < len; x++) {
 		var i = Math.floor(Math.random() * chars.length);
 		pass += chars.charAt(i);
@@ -56,7 +56,7 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 			if (error !== null) {
 				/* -------  put error handler to deal with possible openssl failure -----------*/
 				errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
-					"error": error,
+					"error":  error,
 					"stderr": stderr
 				});
 
@@ -84,7 +84,7 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 							function (error, stdout, stderr) {
 								if (error !== null) {
 									errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate CSR", {
-										"error": error,
+										"error":  error,
 										"stderr": stderr
 									});
 									console.error(errMsg);
@@ -104,7 +104,7 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 				}
 				else {
 					errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to save Private Key", {
-						"error": error,
+						"error":  error,
 						"stderr": stderr
 					});
 					console.error(errMsg);
@@ -140,7 +140,7 @@ DataServices.prototype.savePayload = function (dirPath, payload, keys, level, ca
 		else {
 			var errMsg = global.formatDebugMessage(level, global.MessageCodes.InvalidPayload, "payload key missing", {
 				"payload": payload,
-				"key": keys[i]
+				"key":     keys[i]
 			});
 			console.error(errMsg);
 			callback(errMsg, null);

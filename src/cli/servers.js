@@ -1,6 +1,6 @@
 "use strict";
-var debug = require("debug")("beame_servers");
-var BeameStore = require("../services/BeameStore");
+var debug       = require("debug")("beame_servers");
+var BeameStore  = require("../services/BeameStore");
 var BeameServer = require("../services/BaseHttpsServer").SampleBeameServer;
 
 function HttpsServerTestStart(edgeClientFqdn) {

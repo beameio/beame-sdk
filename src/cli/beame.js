@@ -3,7 +3,7 @@
 "use strict";
 
 var argv = require('minimist')(process.argv.slice(2));
-var _ = require('underscore');
+var _    = require('underscore');
 
 var BeameStore = require("../services/BeameStore");
 
@@ -13,40 +13,40 @@ _.each(['creds', 'servers', 'crypto', 'system'], function (cmdName) {
 });
 
 var parametersSchema = {
-	'atomFqdn': {required: true},
-	'atomName': {required: true},
-	'data': {required: false},
+	'atomFqdn':       {required: true},
+	'atomName':       {required: true},
+	'data':           {required: false},
 	'developerEmail': {required: true},
-	'developerFqdn': {required: true},
-	'developerName': {required: true},
+	'developerFqdn':  {required: true},
+	'developerName':  {required: true},
 	'edgeClientFqdn': {required: true},
-	'format': {required: false, options: ['text', 'json'], default: 'text'},
-	'fqdn': {required: false},
-	'signature': {required: true},
-	'type': {required: false, options: ['developer', 'atom', 'edgeclient']},
-	'uid': {required: true},
-	'targetFqdn': {required: true},
-	'file': {required: false},
-	'count': {required: false, default: 1}
+	'format':         {required: false, options: ['text', 'json'], default: 'text'},
+	'fqdn':           {required: false},
+	'signature':      {required: true},
+	'type':           {required: false, options: ['developer', 'atom', 'edgeclient']},
+	'uid':            {required: true},
+	'targetFqdn':     {required: true},
+	'file':           {required: false},
+	'count':          {required: false, default: 1}
 
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
 function InvalidArgv(message) {
-	this.name = 'InvalidArgv';
+	this.name    = 'InvalidArgv';
 	this.message = message;
 }
 
 InvalidArgv.prototype = Error.prototype;
 
 function getParamsNames(fun) {
-	var names = fun.toString().match(/^[\s(]*function[^(]*\(([^)]*)\)/)[1]
+	var names       = fun.toString().match(/^[\s(]*function[^(]*\(([^)]*)\)/)[1]
 		.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
 		.replace(/\s+/g, '').split(',');
-	var ret = (names.length == 1 && !names[0] ? [] : names);
+	var ret         = (names.length == 1 && !names[0] ? [] : names);
 	var useCallback = false;
 	// console.log('PARAMS', ret);
-	ret = _.filter(ret, function (x) {
+	ret             = _.filter(ret, function (x) {
 		// console.log('X', x);
 		if (x == 'callback') {
 			useCallback = true;
@@ -55,13 +55,13 @@ function getParamsNames(fun) {
 			return true;
 		}
 	});
-	ret.hasFormat = !!fun.toText;
+	ret.hasFormat   = !!fun.toText;
 	ret.useCallback = useCallback;
 	return ret;
 }
 
 function main() {
-	var cmdName = argv._[0];
+	var cmdName    = argv._[0];
 	var subCmdName = argv._[1];
 
 	var cmd = commands[cmdName];
@@ -77,7 +77,7 @@ function main() {
 	// TODO: handle boolean such as in "--fqdn --some-other-switch" or "--no-fqdn"
 	// Validate argv and build arguments for the function
 	var paramsNames = getParamsNames(commands[cmdName][subCmdName]);
-	var args = _.map(paramsNames, function (paramName) {
+	var args        = _.map(paramsNames, function (paramName) {
 
 		// Required parameter missing
 		if (parametersSchema[paramName].required && !_.has(argv, paramName)) {
@@ -127,7 +127,7 @@ function main() {
 }
 
 function usage() {
-	var path = require('path');
+	var path   = require('path');
 	var myname = 'beame.js';
 	console.log("Usage:");
 	_.each(commands, function (subCommands, cmdName) {
@@ -179,7 +179,7 @@ if (argv._[0] == 'complete') {
 		process.exit(0);
 	}
 	if (argv._[1] == 'switches') {
-		var f = commands[argv._[2]][argv._[3]];
+		var f           = commands[argv._[2]][argv._[3]];
 		var paramsNames = getParamsNames(f);
 		if (paramsNames.hasFormat) {
 			paramsNames.push('format');
@@ -194,7 +194,7 @@ if (argv._[0] == 'complete') {
 		var sw = argv._[2];
 		if (sw == 'fqdn') {
 			var fqdnType = argv._[3];
-			var store = new BeameStore();
+			var store    = new BeameStore();
 			var results;
 			if (fqdnType) {
 				results = store.list(fqdnType);

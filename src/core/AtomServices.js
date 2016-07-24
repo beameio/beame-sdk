@@ -4,12 +4,12 @@
 'use strict';
 require('../utils/Globals');
 var debug = require("debug")("./src/services/AtomServices.js");
-var _ = require('underscore');
+var _     = require('underscore');
 
 var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
-var beameUtils = require('../utils/BeameUtils');
-var apiActions = require('../../config/ApiConfig.json').Actions.AtomApi;
+var beameUtils   = require('../utils/BeameUtils');
+var apiActions   = require('../../config/ApiConfig.json').Actions.AtomApi;
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Atom folder not found';
 
@@ -76,7 +76,7 @@ var registerAtom = function (developerHostname, atomName, callback) {
 
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
-				payload.name = atomName;
+				payload.name        = atomName;
 				payload.parent_fqdn = developerHostname;
 
 				var atomDir = beameUtils.makePath(devDir, payload.hostname + '/');
@@ -176,7 +176,7 @@ var getCert = function (developerHostname, atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir = data['parent_path'];
+		devDir  = data['parent_path'];
 
 		isRequestValid(developerHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -200,7 +200,7 @@ var AtomServices = function () {
 AtomServices.prototype.createAtom = function (developerHostname, atomName, callback) {
 	var debugMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.DebugInfo, "Call Create Atom", {
 		"developer": developerHostname,
-		"name": atomName
+		"name":      atomName
 	});
 	debug(debugMsg);
 
@@ -246,7 +246,7 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
 
 		var postData = {
 			hostname: atomHostname,
-			name: atomName
+			name:     atomName
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.UpdateAtom.endpoint, postData, false);
@@ -272,7 +272,7 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir = data['parent_path'];
+		devDir  = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -327,7 +327,7 @@ AtomServices.prototype.deleteAtom = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir = data['parent_path'];
+		devDir  = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -355,7 +355,7 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 
 				var postData = {
 					hostname: atomHostname,
-					csr: csr
+					csr:      csr
 				};
 
 				var apiData = beameUtils.getApiData(apiActions.RenewCert.endpoint, postData, true);
@@ -396,7 +396,7 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir = data['parent_path'];
+		devDir  = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -447,7 +447,7 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir = data['parent_path'];
+		devDir  = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -486,7 +486,7 @@ AtomServices.prototype.getStats = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir = data['parent_path'];
+		devDir  = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}

@@ -1,13 +1,12 @@
 'use strict';
 var fs = require('fs');
 
-var https = require("https");
+var https       = require("https");
 var ProxyClient = require("./ProxyClient");
-var BeameStore = require("./BeameStore");
+var BeameStore  = require("./BeameStore");
 
 
-
-var debug = require("debug")("SampleBeameServer");
+var debug      = require("debug")("SampleBeameServer");
 var beamestore = new BeameStore();
 
 /**
@@ -18,49 +17,48 @@ var beamestore = new BeameStore();
  * @param {Function} hostOnlineCallback
  * @constructor
  */
-var SampleBeameServer = function(instanceHostname, projectName, usrExpress, hostOnlineCallback)
-{
-	if(!instanceHostname && !projectName){
+var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hostOnlineCallback) {
+	if (!instanceHostname && !projectName) {
 		throw new Error('instance hostname or project name required');
 	}
 
 
 	var host;
-	if(instanceHostname == null){
+	if (instanceHostname == null) {
 		var varName = projectName;
-		host = process.env[varName];
+		host        = process.env[varName];
 		if (host == undefined) {
 			console.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
 			process.exit(1);
 		}
 	}
-	else{
+	else {
 		host = instanceHostname;
 	}
 	var edgeCert = beamestore.search(host);
 	var serverInfo;
 	var app;
-	if(edgeCert.length != 1){
+	if (edgeCert.length != 1) {
 		throw new Error("Could not find certificate for " + host);
 	}
-	edgeCert = edgeCert[0];
+	edgeCert    = edgeCert[0];
 	var options = {
-		key: edgeCert.PRIVATE_KEY,
+		key:  edgeCert.PRIVATE_KEY,
 		cert: edgeCert.P7B,
-		ca: edgeCert.CA
+		ca:   edgeCert.CA
 	};
 
-	if(usrExpress){
+	if (usrExpress) {
 		var xprsApp = https.createServer(options, usrExpress);
-		app = xprsApp.listen.apply(xprsApp);
+		app         = xprsApp.listen.apply(xprsApp);
 	}
 	else {
 		app = https.createServer(options);
 	}
 
-	app.listen(0, function(options) {
-		function onLocalServerCreated(data){
-			if(hostOnlineCallback){
+	app.listen(0, function (options) {
+		function onLocalServerCreated(data) {
+			if (hostOnlineCallback) {
 				serverInfo = data;
 				hostOnlineCallback(data, app);
 				console.error(data);
@@ -71,7 +69,7 @@ var SampleBeameServer = function(instanceHostname, projectName, usrExpress, host
 			edgeCert.edgeHostname, 'localhost',
 			app.address().port, {onLocalServerCreated: onLocalServerCreated},
 			undefined, options);
-	}.bind(null,options));
+	}.bind(null, options));
 };
 
 module.exports = {SampleBeameServer: SampleBeameServer};
