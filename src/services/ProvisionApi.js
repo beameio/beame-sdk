@@ -79,6 +79,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 
 	if (body) {
 		try {
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			payload = JSON.parse(body);
 
 			payload = clearJSON(payload);
@@ -116,9 +117,10 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
  * @param {Object} options
  * @param {String} type
  * @param {Number} retries
+ * @param {Number} sleep
  * @param {Function} callback
  */
-var postToProvisionApi = function (url, options, type, retries, callback) {
+var postToProvisionApi = function (url, options, type, retries, sleep, callback) {
 	var errMsg;
 
 	retries--;
@@ -129,7 +131,13 @@ var postToProvisionApi = function (url, options, type, retries, callback) {
 			"url": url
 		});
 		console.error(errMsg);
-		postToProvisionApi(url, options, type, retries, callback);
+		sleep = parseInt(sleep * (Math.random() + 1.5));
+
+		setTimeout(function () {
+			postToProvisionApi(url, options, type, retries, sleep, callback);
+		}, sleep);
+
+
 	};
 
 	try {
@@ -178,9 +186,10 @@ var postToProvisionApi = function (url, options, type, retries, callback) {
  * @param {Object} options
  * @param {String} type
  * @param {Number} retries
+ * @param {Number} sleep
  * @param {Function} callback
  */
-var getFromProvisionApi = function (url, options, type, retries, callback) {
+var getFromProvisionApi = function (url, options, type, retries, sleep,callback) {
 
 	var errMsg;
 
@@ -192,7 +201,11 @@ var getFromProvisionApi = function (url, options, type, retries, callback) {
 			"url": url
 		});
 		console.error(errMsg);
-		getFromProvisionApi(url, options, type, retries, callback);
+		sleep = parseInt(sleep * (Math.random() + 1.5));
+
+		setTimeout(function () {
+			getFromProvisionApi(url, options, type, retries, sleep, callback);
+		}, sleep);
 	};
 
 	try {
@@ -273,10 +286,10 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method) {
 
 	switch (_method) {
 		case 'POST' :
-			postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, callback);
+			postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
 			return;
 		case 'GET' :
-			getFromProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, callback);
+			getFromProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
 			return;
 		default:
 			callback('Invalid method', null);
