@@ -112,6 +112,9 @@ if (developerServices.canCreateDeveloper()) {
 }
 
 function createAtom(developerFqdn, atomName, count, callback) {
+	if (count != 1) {
+		throw new Error("Count of not one is not supported yet");
+	}
 	for (var i = 0; i < count; i++) {
 		let n = count > 1 ? i+1 : '';
 		console.warn("Creating atom developerFqdn=%j atomName=%j index=%j", developerFqdn, atomName, n);
@@ -127,6 +130,9 @@ function createDeveloper(developerFqdn, uid, callback) {
 createDeveloper.toText = lineToText;
 
 function createEdgeClient(atomFqdn, count, callback) {
+	if (count != 1) {
+		throw new Error("Count of not one is not supported yet");
+	}
 	for (var i = 0; i < count; i++) {
 		console.warn("Creating edge client atomFqdn=%j", atomFqdn);
 		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
