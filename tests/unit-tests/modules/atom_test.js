@@ -17,7 +17,7 @@ function run() {
 
 		var developerHostname, atomHostname, name, atomDirPath;
 
-		it('Developer fqdn should be passed', function (done) {
+		before(function (done) {
 
 			console.log('####### receive developer_fqdn');
 
@@ -41,7 +41,7 @@ function run() {
 
 			atomServices.createAtom(developerHostname, name, function (error, payload) {
 
-				console.log(`############ create atom response received with payload ${payload} and error ${error} ############`);
+				console.log('############ create atom response received with payload %j and error %j ############',payload,error);
 
 				//validate payload & error
 				assert.isNull(error, error && error.message);

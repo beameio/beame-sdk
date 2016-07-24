@@ -18,7 +18,7 @@ function run() {
 
 		var atomHostname, edgeClientHostname, name, edgeClientDirPath;
 
-		it('Atom fqdn should be passed', function (done) {
+		before(function (done) {
 
 			console.log('####### receive edge_fqdn');
 
