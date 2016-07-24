@@ -108,7 +108,7 @@ function createTestDeveloper(developerName, developerEmail, callback) {
 createTestDeveloper.toText = lineToText;
 
 if (developerServices.canCreateDeveloper()) {
-	module.exports['createTestDeveloper'] = createDeveloper;
+	module.exports.createTestDeveloper = createTestDeveloper;
 }
 
 function createAtom(developerFqdn, atomName, count, callback) {
