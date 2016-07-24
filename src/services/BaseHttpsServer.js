@@ -1,18 +1,30 @@
 'use strict';
+var fs = require('fs');
 
 var https = require("https");
 var ProxyClient = require("./ProxyClient");
 var BeameStore = require("./BeameStore");
 
-var _ = require('underscore');
-var fs = require('fs');
 
-var beameDirServices = require('./BeameDirServices');
+
 var debug = require("debug")("SampleBeameServer");
 var beamestore = new BeameStore();
 
+/**
+ *
+ * @param {String|null|undefined} [instanceHostname]
+ * @param {String|null|undefined} [projectName]
+ * @param {Boolean} usrExpress
+ * @param {Function} hostOnlineCallback
+ * @constructor
+ */
 var SampleBeameServer = function(instanceHostname, projectName, usrExpress, hostOnlineCallback)
 {
+	if(!instanceHostname && !projectName){
+		throw new Error('instance hostname or project name required');
+	}
+
+
 	var host;
 	if(instanceHostname == null){
 		var varName = projectName;
@@ -46,20 +58,20 @@ var SampleBeameServer = function(instanceHostname, projectName, usrExpress, host
 		app = https.createServer(options);
 	}
 
-	app.listen(0, function() {
+	app.listen(0, function(options) {
 		function onLocalServerCreated(data){
 			if(hostOnlineCallback){
 				serverInfo = data;
 				hostOnlineCallback(data, app);
 				console.error(data);
 			}
-		};
+		}
 
-		var proxy = new ProxyClient("HTTPS", edgeCert.hostname,
+		new ProxyClient("HTTPS", edgeCert.hostname,
 			edgeCert.edgeHostname, 'localhost',
 			app.address().port, {onLocalServerCreated: onLocalServerCreated},
 			undefined, options);
-	});
+	}.bind(null,options));
 };
 
 module.exports = {SampleBeameServer: SampleBeameServer};
