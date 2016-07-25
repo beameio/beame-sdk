@@ -237,7 +237,7 @@ In order to see credentials that you have created, use `beame creds list` in ter
 var beameSDK = require ("beame-sdk");
 var express = require('express');
 var appExpress = express();
-var *hostname* = "h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net";
+var hostname = "h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net";
 appExpress.use(express.static(__dirname + '/public'));
 
 var runTestBeameServer = function(){
