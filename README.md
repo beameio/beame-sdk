@@ -63,12 +63,12 @@ At this point you can proceed with any of the following actions:
 Bash completion is available, run `beame` to see instructions.
 
 ## If current shell version does not support auto completion, please follow instructions below (mostly relevant for MacOS):
-First ensure, that your bash version is 4.3 or higher. If not - upgrade it. Care to replace *4.3.46* from snippets below by your new bash version.  
+First ensure, that your bash version is 4.3 or higher (`echo $BASH_VERSION`). If not - upgrade it. Care to replace *4.3.46* from snippets below by your new bash version.  
 	`brew update && brew install bash`  
 Add new shell to available shells  
-    `sudo bash -c 'echo /usr/local/Cellar/bash/4.3.46/bin/ >> /etc/shells'`  
+    `sudo bash -c 'echo /usr/local/Cellar/bash/4.3.46/bin/bash >> /etc/shells'`  
 Change to the new shell  
-    `sudo chsh -s /usr/local/Cellar/bash/4.3.46/bin/bash`  
+    `chsh -s /usr/local/Cellar/bash/4.3.46/bin/bash`  
 
 Open new terminal and run:
 ```
