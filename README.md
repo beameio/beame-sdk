@@ -60,25 +60,28 @@ At this point you can proceed with any of the following actions:
 Bash completion is available, run `beame` to see instructions.
 
 ## If current shell version does not support auto completion, please follow instructions below (mostly relevant for MacOS):
-First ensure, that your bash version is 4.3 or higher. If not - upgrade it.
-
-    sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
+First ensure, that your bash version is 4.3 or higher. If not - upgrade it. Care to replace *4.3.46* from snippets below by your new bash version.
+	brew update && brew install bash
+Add new shell to available shells
+    sudo bash -c 'echo /usr/local/Cellar/bash/4.3.46/bin/ >> /etc/shells'
 Change to the new shell
-    chsh -s /usr/local/bin/bash 
+    sudo chsh -s /usr/local/Cellar/bash/4.3.46/bin/bash 
 
-Next run in terminal:
-
-    brew tap homebrew/versions
-    brew rm bash-completion
-    brew install bash-completion2
-
-Add following instructions to your .bashrc file:
+Open new terminal and run:
+```
+brew tap homebrew/versions
+brew rm bash-completion
+brew install bash-completion2
+```
+Add following instructions to your .bashrc file (if you don't have .bash_profile in your *Home* directory, create one :)
 
     if [ -f $(brew --prefix)/share/bash-completion/bash_completion ]; then
         . $(brew --prefix)/share/bash-completion/bash_completion
     fi
 
     source /usr/local/lib/node_modules/beame-sdk/src/cli/completion.sh
+
+Open new terminal and begin using beame-sdk cli with auto-completion.
 
 ## Beame.io SDK environment variables
 
@@ -167,15 +170,19 @@ In your server main.js create your server with following command:
 *`appExpress` - express object. If you don't need express in your pplication, pass <null>  
 *`function(data,app){}` - callback, returned app - created http object
 
-# Copy-paste example of https server with express support 
+# Copy-paste example of creation of full-stack of credntials and running of https server with express support 
 ## Steps to take before you run below code:
+
 Install Beame SDK by running in terminal:`npm install beame-sdk -g`  
+
 Register as developer in: `https://registration.beameio.net/`  
 Upon receiving confirmation e-mail, copy-paste-run a command provided in e-mail body, should look like:  
 `beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671` 
 Create web page with you preferred software (like Keynote -> export HTML on Mac).  
 Store your new web page in `public` folder in directory of your future web server.  
-In same location install `npm install beame-sdk`  
+Run `npm init` in project directory (*enter* to all options that *npm* asks)  
+In same location install `npm install beame-sdk -save`  
+Install *express* package by `npm install express -save`   
 Create index.js and copy-paste into it code below.  
 Run it with `node index.js`  
 In console output you will see something like:  
@@ -216,3 +223,25 @@ beameSDK.creds.createAtom(devHostname,appName, 1, function(data){
     }
 });
 ```
+#Copy-paste example of https server with express support
+
+Below code snippet is actually a part of larger code above. So it requires all needed installations to be performed prior to run.  
+In order to see credentials that you have created, use `beame creds list` in terminal.  
+*Hostname* listed in row named *edgeclient* is the one, that you'll need to provide to *SampleBeameServer* as *hostname*.
+
+```
+"use strict";
+var beameSDK = require ("beame-sdk");
+var express = require('express');
+var appExpress = express();
+var *hostname* = "h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net";
+appExpress.use(express.static(__dirname + '/public'));
+
+var runTestBeameServer = function(){
+    beameSDK.BaseHttpsServer.SampleBeameServer(hostname, null, appExpress, function (data, app) {
+        console.log('Server started on: https://'+hostname);
+    });
+};
+runTestBeameServer();
+```
+
