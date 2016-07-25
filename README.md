@@ -175,7 +175,7 @@ In your server main.js create your server with following command:
 
 Install Beame SDK by running in terminal:`npm install beame-sdk -g`  
 
-Register as developer in: `https://registration.beameio.net/`  
+Register as developer in: https://registration.beameio.net/  
 Upon receiving confirmation e-mail, copy-paste-run a command provided in e-mail body, should look like:  
 `beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671` 
 Create web page with you preferred software (like Keynote -> export HTML on Mac).  
@@ -226,7 +226,7 @@ beameSDK.creds.createAtom(devHostname,appName, 1, function(data){
 ```
 #Copy-paste example of https server with express support
 
-Below code snippet is actually a part of larger code above. So it requires all needed installations (npm/express/beame-sdk) to be performed prior to run.  
+Below code snippet is actually a part of larger code above. So it requires all needed installations (npm/express/beame-sdk/placing-html-files-in-*public*-folder) to be performed prior to run.  
 In order to see credentials that you have created, use `beame creds list` in terminal. *Hostname*, that is listed in row named *edgeclient* ,is the one, that you'll need to provide to *SampleBeameServer* as *hostname*.
 
 ```
