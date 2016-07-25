@@ -199,9 +199,6 @@ appExpress.use(express.static(__dirname + '/public'));
 var runTestBeameServer = function(){
     beameSDK.BaseHttpsServer.SampleBeameServer(edgeHostname, null, appExpress, function (data, app) {
         console.log('Server started on: https://'+edgeHostname);
-        appExpress.get('/', function(req, res) {
-            res.sendFile(path.join(__dirname + '/index.html'));
-        });
             // process http events here with <app> if needed
     });
 };
