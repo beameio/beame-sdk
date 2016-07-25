@@ -24,8 +24,11 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 1. run npm install -g beame-sdk
 2. Go to https://registration.beameio.net/ with a regular web browser.
 2. Put in your name and email, and wait for a confirmation email. 
-3. In the confirmation email, you should see a command that looks like this, run it, 
+3. In the confirmation email, you should see a command that looks like this, run it:
+
  	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`  
+ 	
+ 	
 	
 ## Beame.io network diagram
 
