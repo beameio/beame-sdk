@@ -212,16 +212,12 @@ var runTestBeameServer = function(){
 };
 
 beameSDK.creds.createAtom(devHostname,appName, 1, function(data){
-    {
-		console.log('Just created atom with host:'+data.hostname);
-        beameSDK.creds.createEdgeClient(data.hostname, 1, function(edgeData){
-            {
-                edgeHostname = edgeData.hostname;
-				console.log('Congrats! My new hostname is: '+ edgeHostname);
-                setTimeout(runTestBeameServer, 2000);//JIC - wait dns to update
-            }
-        });
-    }
+	console.log('Just created atom with host:'+data.hostname);
+	beameSDK.creds.createEdgeClient(data.hostname, 1, function(edgeData){
+		edgeHostname = edgeData.hostname;
+		console.log('Congrats! My new hostname is: '+ edgeHostname);
+		setTimeout(runTestBeameServer, 2000);//JIC - wait dns to update
+	});
 });
 ```
 #Copy-paste example of https server with express support
