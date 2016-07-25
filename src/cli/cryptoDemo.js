@@ -1,0 +1,7 @@
+function aesEncrypt(data) 
+function aesDecrypt(data) 
+function getPublicKey(cert) 
+function encrypt(data, fqdn) 
+function decrypt(data) 
+function sign(data, fqdn) 
+function checkSignature(data, fqdn, signature) 
