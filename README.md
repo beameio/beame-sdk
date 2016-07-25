@@ -12,7 +12,7 @@ You get:
 3. A pair of keys of course
 
 
-Credentials, that you create while using Beame SDK, can be used for TLS on your server, or any other relevant purpose, such as authentication and encryption.
+Credentials, that you create while using Beame SDK, can be used for TLS on your server, or any other relevant purpose, such as authentication and encryption.  
 Beame.io *provisioning* handles ... the provisioning of certificates.
 
 
