@@ -190,8 +190,6 @@ In console output you will see something like:
 `{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`  
 
 Go to web brower and direct it to your new secure web server by copying https://*hostname* from console output  
-
-Go to web brower and direct it to your new secure web server by adding `https://` to the Hostname from console output.  
 That's that. You have your own https server running on your local machine, available from allover the world :)
 ```
 "use strict";
@@ -228,9 +226,8 @@ beameSDK.creds.createAtom(devHostname,appName, 1, function(data){
 ```
 #Copy-paste example of https server with express support
 
-Below code snippet is actually a part of larger code above. So it requires all needed installations to be performed prior to run.  
-In order to see credentials that you have created, use `beame creds list` in terminal.  
-*Hostname* listed in row named *edgeclient* is the one, that you'll need to provide to *SampleBeameServer* as *hostname*.
+Below code snippet is actually a part of larger code above. So it requires all needed installations (npm/express/beame-sdk) to be performed prior to run.  
+In order to see credentials that you have created, use `beame creds list` in terminal. *Hostname*, that is listed in row named *edgeclient* ,is the one, that you'll need to provide to *SampleBeameServer* as *hostname*.
 
 ```
 "use strict";
