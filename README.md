@@ -6,14 +6,17 @@
 ##  Beame.io SDK provides you with easy-to-use tools to receive and use x509 (aka SSL/TLS) certificates
 
 The certificates are signed by a publicly trusted CA, similar to any other site that uses HTTPS.
+
 You get:
 
 1. A hostname (*Common Name* in the certificate) that is under Beame's domain.
 2. A matching certificate.
 3. A pair of keys of course
 
+
+Credentials, that you create while using Beame SDK, can be used for TLS on your server, or any other relevant purpose, such as authentication and encryption.
 Beame.io *provisioning* handles ... the provisioning of certificates.
-These certificates can be used for HTTPS on your server or any other relevant purpose, such as authentication and encryption.
+
 
 ## Beame.io provides you with a tunnelling service
 
