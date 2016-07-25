@@ -21,15 +21,13 @@ Our tunnel servers (the *edge servers*) allow routing of traffic to your servers
 
 ## Getting Started The Easy Way 
 
-1. run npm install -g beame-sdk
+1. run `npm install -g beame-sdk`
 2. Go to https://registration.beameio.net/ with a regular web browser.
 2. Put in your name and email, and wait for a confirmation email. 
 3. In the confirmation email, you should see a command that looks like this, run it:
 
  	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`  
- 	
- 	
-	
+
 ## Beame.io network diagram
 
 Please note, that this diagram, was designed to show how the service works. Important to understand, that beame SSL proxies are transparent, data passes thru them without being touched. 
@@ -76,7 +74,7 @@ brew tap homebrew/versions
 brew rm bash-completion
 brew install bash-completion2
 ```
-Add following instructions to your .bashrc file (if you don't have .bash_profile in your *Home* directory, create one :)
+Add following instructions to your `.bashrc` file (if you don't have `.bash_profile` in your *Home* directory, create one :)
 
     if [ -f $(brew --prefix)/share/bash-completion/bash_completion ]; then
         . $(brew --prefix)/share/bash-completion/bash_completion
