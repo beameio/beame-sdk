@@ -119,7 +119,7 @@ The following commands are used for acquiring and manipulating certificates.
 ##############################################################################
 #                            Beame.io NodeJS API                           
 
-The idea behind the node.js sdk APIs is, that you can employ Beame.io CLI functionality in your own
+##The idea behind the node.js sdk APIs is, that you can employ Beame.io CLI functionality in your own
 node js project. Receive publicly trusted cert with pseudo-random routable hostname and run your new SSL server
 in the same flow (or later, whenever you see it fit).
 
@@ -137,15 +137,15 @@ To use any API from beame-sdk include
     var beameSDK = require ("beame-sdk");
 
 #   atom level commands
-##  require developer credentials (developer fqdn/hostname) + appName (your application name)
-##  to create new atom under current developer:
+##  requires developer credentials (developer fqdn/hostname) + appName (your application name)
+##  To create new atom under current developer:
 
     beameSDK.atomServices.createAtom(devHostname,appName, cb(err, data){
         //atom level hostname returned in: <data.hostname>
     });
 
 #   edgeClient level commands
-##  require atom credentials (atom fqdn/hostname). appHostName - atom level hostname created in previous step
+##  requires atom credentials (atom fqdn/hostname). appHostName - atom level hostname created in previous step
 ##  To create new edgeClient under current atom:
 
     beameSDK.edgeClientServices.createEdgeClient(appHostName, cb(err, data){
@@ -153,7 +153,7 @@ To use any API from beame-sdk include
     });
 
 ## beame-sdk provides example https server, that allows beame client to build and run fully functional https server
-## with express support and with credentials created in steps described above
+with express support and with credentials created in steps described above
 
 run in your server folder:
     `npm install beame-sdk -save`
@@ -182,24 +182,23 @@ Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-clie
 
 
 ### Arrange your front-end and run your new beame server with:
-    node your_new_server.js
-
-This will print your routable hostname into console in case of successful run.
+    `node your_new_server.js`
+###This will print your routable hostname into console in case of successful run.
 
 # Copy-paste example of https server with express support:
 ## steps to take before you run below code:
-## register as developeri in: `https://registration.beameio.net/`
-## on receiving confirmation e-mail, copy-paste-run a command provided in e-mail body
-## should look like: `beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671` 
+register as developeri in: `https://registration.beameio.net/`
+on receiving confirmation e-mail, copy-paste-run a command provided in e-mail body
+should look like: `beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671` 
 ## create web page with you preferred software (like Keynote -> export HTML on Mac)
-## store your new web application in `public` folder in directory of your future web server.
-## in same location install `npm install beame-sdk`
-## create index.js and copy-paste into it code below
-## run it with `node index.js`
-## in console output you will see something like:
-## `{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`
-## go to web brower and direct it to your new secure web server by adding `https://` to the Hostname from console output
-## that's that. You have your own https server running on your local machine, available from allover the world :)
+store your new web application in `public` folder in directory of your future web server.
+in same location install `npm install beame-sdk`
+create index.js and copy-paste into it code below
+run it with `node index.js`
+in console output you will see something like:
+###`{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`
+##go to web brower and direct it to your new secure web server by adding `https://` to the Hostname from console output
+that's that. You have your own https server running on your local machine, available from allover the world :)
 ```
 "use strict";
 var beameSDK = require ("beame-sdk");
