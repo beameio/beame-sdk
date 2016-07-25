@@ -1,5 +1,5 @@
 module.exports = {
-    BaseHttpsServer: require("./src/services/BaseHttpsServer.js"),
-    atomServices: require('./src/core/AtomServices'),
-    edgeClientServices: require('./src/core/EdgeClientServices'),
+    creds: require('./src/cli/creds'),
+    crypto: require('./src/cli/crypto'),
+    BaseHttpsServer: require("./src/services/BaseHttpsServer.js")
 };
