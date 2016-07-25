@@ -132,9 +132,9 @@ Exported nodeJS APIs allow creation of 2 levels of credentials:
 Current SDK release indends extensive CLI usage (see description above). So nodeJS APIs provide high level of access.  
 Be aware, that API on each level require credentials created on previous/higher level:  
 To use any API from beame-sdk include
-
-    ```var beameSDK = require ("beame-sdk");```
-
+```
+var beameSDK = require ("beame-sdk");
+```
 ##   atom level commands
 ###  Requires developer credentials (developer fqdn/hostname) + appName (your application name)
 ###  To create new atom under current developer:
