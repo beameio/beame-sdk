@@ -133,7 +133,7 @@ Current SDK release indends extensive CLI usage (see description above). So node
 Be aware, that API on each level require credentials created on previous/higher level:  
 To use any API from beame-sdk include
 
-    `var beameSDK = require ("beame-sdk");`
+    ```var beameSDK = require ("beame-sdk");```
 
 ##   atom level commands
 ###  Requires developer credentials (developer fqdn/hostname) + appName (your application name)
@@ -162,9 +162,9 @@ In your server main.js create your server with following command:
         });
 ```
 ### Input parameters:
-*`host` - edge hostName (pass <null> if you use environment variable - see below)
-*`PROJECT_NAME` - name of environment variable that contains edgeClient hostname (pass <null> if you provided full hostname in first parameter)
-*`appExpress` - express object. If you don't need express in your pplication, pass <null>
+*`host` - edge hostName (pass <null> if you use environment variable - see below)  
+*`PROJECT_NAME` - name of environment variable that contains edgeClient hostname (pass <null> if you provided full hostname in first parameter)  
+*`appExpress` - express object. If you don't need express in your pplication, pass <null>  
 *`function(data,app){}` - callback, returned app - created http object
 
 # Copy-paste example of https server with express support 
