@@ -179,8 +179,9 @@ In same location install `npm install beame-sdk`
 Create index.js and copy-paste into it code below  
 Run it with `node index.js`  
 In console output you will see something like:  
+`Server started on: https://h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net`
 `{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`  
-Go to web brower and direct it to your new secure web server by adding `https://` to the Hostname from console output  
+Go to web brower and direct it to your new secure web server by copying https://*hostname* from console output  
 That's that. You have your own https server running on your local machine, available from allover the world :)
 ```
 "use strict";
@@ -194,7 +195,7 @@ appExpress.use(express.static(__dirname + '/public'));
 
 var runTestBeameServer = function(){
     beameSDK.BaseHttpsServer.SampleBeameServer(edgeHostname, null, appExpress, function (data, app) {
-        console.log('Server started on: '+edgeHostname);
+        console.log('Server started on: https://'+edgeHostname);
         appExpress.get('/', function(req, res) {
             res.sendFile(path.join(__dirname + '/index.html'));
         });
