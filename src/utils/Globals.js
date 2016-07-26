@@ -24,12 +24,11 @@ global.__homedir  = home;
  * @returns {typeof DebugMessage}
  */
 global.formatDebugMessage = function (module, code, message, data) {
-
 	return {
-		module:  module,
-		code:    code,
-		message: message,
-		data:    data
+		module,
+		code,
+		message,
+		data
 	};
 };
 
