@@ -6,6 +6,7 @@ var x509  = require('x509');
 
 var store = new (require("../services/BeameStore"))();
 require('./../utils/Globals');
+var config = require('../../config/Config');
 var developerServices  = new (require('../core/DeveloperServices'))();
 var atomServices       = new (require('../core/AtomServices'))();
 var edgeClientServices = new (require('../core/EdgeClientServices'))();
@@ -162,8 +163,7 @@ function importNonBeameCredentials(fqdn) {
 		var certBody       = "-----BEGIN CERTIFICATE-----\r\n";
 		certBody += buffer.toString("base64");
 		certBody += "-----END CERTIFICATE-----";
-		var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
-		//var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+		var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
 
 		mkdirp(path.parse(remoteCertPath).dir);
 		fs.writeFileSync(remoteCertPath, certBody);
@@ -177,7 +177,7 @@ function exportCredentials(fqdn, targetFqdn, file) {
 	creds.edgeclient      = {};
 	creds.atom            = {};
 	creds['relativePath'] = relativePath;
-	creds.path            = creds.path.replace(global.devPath, "");
+	creds.path            = creds.path.replace(config.localCertsDir, "");
 
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var jsonString = JSON.stringify(creds);

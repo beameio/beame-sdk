@@ -6,11 +6,12 @@
 var fs = require('fs');
 
 require('../utils/Globals');
+var config = require('../../config/Config');
 var debug   = require("debug")("./src/services/DeveloperServices.js");
 var _       = require('underscore');
 var path    = require('path');
 var homedir = global.__homedir;
-var devPath = global.devPath;
+var devPath = config.localCertsDir;
 
 new (require('../services/BeameStore'))();
 
@@ -45,7 +46,7 @@ var PATH_MISMATCH_DEFAULT_MSG = 'Developer folder not found';
  * @returns {String}
  */
 var makeDeveloperDir = function (hostname) {
-	return beameUtils.makePath(devPath, hostname + '/');
+	return beameUtils.makePath(config.localCertsDir, hostname + '/');
 };
 
 var isRequestValid = function (hostname, devDir) {

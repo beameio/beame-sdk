@@ -39,9 +39,7 @@ var beameStore   = new (require('../services/BeameStore'))();
 
 module.exports = {
 
-	makePath: function (baseDir, folder) {
-		return path.join(baseDir, folder);
-	},
+	makePath: path.join,
 
 	/**
 	 * @param {String} baseDir

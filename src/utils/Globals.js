@@ -5,8 +5,6 @@
 var path          = require('path');
 var os            = require('os');
 var home          = os.homedir();
-global.globalPath = path.join(home, ".beame");
-global.devPath    = path.join(home, ".beame/v1/local");              //path to store dev data: uid, hostname, key, certs, appData
 global.__homedir  = home;
 
 /**

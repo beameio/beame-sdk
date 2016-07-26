@@ -6,6 +6,7 @@ var _     = require('underscore');
 var os    = require('os');
 var debug = require("debug")("beamestore");
 require('./../utils/Globals');
+var config = require('../../config/Config');
 var jmespath    = require('jmespath');
 var beameDirApi = require('./BeameDirServices');
 var sprintf     = require('sprintf');
@@ -30,17 +31,14 @@ var url         = require('url');
 
 var beameStoreInstance = null;
 
-function BeameStore(beamedir) {
+function BeameStore() {
 
 	if (beameStoreInstance) {
 		return beameStoreInstance;
 	}
 
-	this.beamedir = beamedir || process.env.BEAME_DIR || global.globalPath;
-
-	mkdirp.sync(path.join(this.beamedir, "v1", 'local'));
-	mkdirp.sync(path.join(this.beamedir, "v1", 'remote'));
-	this.beamedir = path.join(this.beamedir, "v1", 'local');
+	mkdirp.sync(config.localCertsDir);
+	mkdirp.sync(config.remoteCertsDir);
 	this.ensureFreshBeameStore();
 
 	this.listFunctions = [
@@ -164,10 +162,10 @@ BeameStore.prototype.listCurrentEdges = function () {
 };
 
 BeameStore.prototype.ensureFreshBeameStore = function () {
-	var newHash = beameDirApi.generateDigest(this.beamedir);
+	var newHash = beameDirApi.generateDigest(config.localCertsDir);
 	if (this.digest !== newHash) {
-		debug("reading beamedir %j", this.beamedir);
-		this.beameStore = beameDirApi.readBeameDir(this.beamedir);
+		debug("reading beamedir %j", config.localCertsDir);
+		this.beameStore = beameDirApi.readBeameDir(config.localCertsDir);
 		this.digest     = newHash;
 	}
 };
@@ -217,7 +215,7 @@ BeameStore.prototype.list = function (type, name) {
 };
 
 BeameStore.prototype.getRemoteCertificate = function (fqdn) {
-	var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
+	var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
 	var certBody       = "";
 	if (fs.existsSync(remoteCertPath)) {
 		certBody = fs.readFileSync(remoteCertPath);
@@ -239,9 +237,7 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 BeameStore.prototype.importCredentials = function (data) {
 	var credToImport = JSON.parse(data);
 	var host         = credToImport.hostname;
-	var targetPath   = global.devPath;
-
-	targetPath = path.join(global.devPath, credToImport.path);
+	var targetPath   = path.join(config.localCertsDir, credToImport.path);
 	mkdirp(targetPath);
 
 	var metadata = {};

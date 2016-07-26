@@ -3,6 +3,7 @@
  */
 'use strict';
 require('../utils/Globals');
+var config = require('../../config/Config');
 var debug        = require("debug")("./src/services/EdgeClientServices.js");
 var _            = require('underscore');
 var provisionApi = new (require('../services/ProvisionApi'))();
@@ -73,7 +74,7 @@ var registerEdgeClient = function (atomHostname, callback) {
 	function onEdgeSelectionError(error) {
 		errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "select best proxy error", {
 			"error": error,
-			"lb":    global.loadBalancerEdnpoint
+			"lb":    config.loadBalancerURL
 		});
 		console.error(errMsg);
 		callback && callback(error, null);
@@ -125,7 +126,7 @@ var registerEdgeClient = function (atomHostname, callback) {
 	function onRequestValidated() {
 
 		//TODO create permanent solution
-		beameUtils.selectBestProxy(global.loadBalancerEdnpoint, 100, 1000, function (error, payload) {
+		beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, function (error, payload) {
 			if (!error) {
 				onEdgeServerSelected(payload);
 			}

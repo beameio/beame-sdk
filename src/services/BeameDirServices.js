@@ -4,6 +4,7 @@ var path  = require('path');
 var _     = require('underscore');
 var debug = require("debug")("beamedirservices");
 require('./../utils/Globals');
+var config = require('../../config/Config');
 var jmespath = require('jmespath');
 
 
@@ -91,8 +92,8 @@ function readBeameDir(startdir) {
 	debug("starting with " + startdir);
 	var developers = [];
 	if (!startdir) {
-		startdir = global.globalPath;
-	}
+		startdir = config.rootDir;
+	};
 	var subfolders = getDirectories(startdir);
 	_.each(subfolders, function (dir) {
 		var developer = readSubDevDir(makepath(startdir, dir));
