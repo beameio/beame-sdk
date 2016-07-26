@@ -42,9 +42,6 @@ global.metadataFileName = "metadata.json";
 /** @const {String} **/
 global.apiUIDTemplatePattern = "{{UID}}";
 
-/** @const {String} **/
-global.loadBalancerEdnpoint = "http://lb-dev.beameio.net/";
-
 /**
  * Certificate file names
  *  @enum {string}

@@ -75,7 +75,7 @@ if developer {
 
 each_idx_val(atoms, F(atom_idx, atom) {
 	for(i;EDGE_CLIENTS_PER_ATOM) {
-		do_test("Create edge #$i for atom ${atom.hostname}", F() {
+		do_test("Create edge client #$i for atom ${atom.hostname}", F() {
 			edge_client = ``$BEAME_BIN creds createEdgeClient --atomFqdn ${atom.hostname} --format json``
 			# TODO: checks
 			edge_clients.push(edge_client)
