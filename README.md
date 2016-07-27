@@ -16,34 +16,34 @@ Credentials, that you create while using Beame SDK, can be used for TLS on your 
 Beame.io *provisioning* handles ... the provisioning of certificates.
 
 
-## Beame.io provides you with a tunnelling service
+## Beame.io provides you with a tunneling service
 
 Our tunnel servers (the *edge servers*) allow routing of traffic to your servers even when your servers don't have a routable IPs.
 
-## Getting Started The Easy Way 
-
-1. run `npm install -g beame-sdk`
-2. Go to https://registration.beameio.net/ with a regular web browser.
-2. Put in your name and email, and wait for a confirmation email. 
-3. In the confirmation email, you should see a command that looks like this, run it:
-
- 	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`  
-
 ## Beame.io network diagram
 
-Please note, that this diagram, was designed to show how the service works. Important to understand, that beame SSL proxies are transparent, data passes thru them without being touched. 
+Please note, that this diagram, was designed to show how the service works. Important to understand, that beame SSL proxies are transparent, data passes thru them without being touched.
 
 ![Network diagram](readme-net-diag-small.png)
 
 [See larger network diagram](readme-net-diag-large.png)
 
+## Getting Started The Easy Way
+
+1. Install Beame.io SDK by running `npm install -g beame-sdk`
+2. Register as a [developer](https://registration.beameio.net/).
+2. Put in your name and email, and wait for a confirmation email.
+3. In the confirmation email, you should see a command that looks like this, run it:
+
+ 	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`
+
 ## Steps to use Beame.io SDK
 
 At the end of each of the following steps you will be provided with a hostname under Beame's domain and a matching publicly trusted x509 certificate. The keys for the certificates are generated and stored locally on your computer. The keys do not leave your computer (unless you intentionally export them).
 
-1. Register as a *developer*
-1. Create an *atom* (an application) under the *developer*
-1. Create an *edge client* (a user server) under the *atom*
+1. [Create an *atom* (an application) under the *developer*](#to-create-new-atom-under-current-developer)
+1. [Create an *edge client* (a user server) under the *atom*](#edgeclient-level-commands)
+2. [See full copy-paste example](#copy-paste-example-of-creation-of-full-stack-of-credntials-and-running-of-https-server-with-express-support)  or see example in example folder
 
 At this point you can proceed with any of the following actions:
 
@@ -53,11 +53,7 @@ At this point you can proceed with any of the following actions:
 * Encrypt arbitrary data so that only a specified entity can decrypt it
 * Decrypt arbitrary data, that was sent to one of the entities you own (encrypted with one of your public keys)
 
-# Beame.io SDK
-
-# Installing Beame.io SDK
-
-	npm install -g beame-sdk
+## Beame.io SDK Bash shell
 
 Bash completion is available, run `beame` to see instructions.
 
@@ -124,15 +120,8 @@ The following commands are used for acquiring and manipulating certificates.
 ##############################################################################
 #                            Beame.io NodeJS API                           
 
-###The idea behind the node.js sdk APIs is that you can employ Beame.io CLI functionality in your own node js project. 
+###The idea behind the node.js sdk APIs is that you can employ Beame.io CLI functionality in your own node js project.
 ###Receive publicly trusted cert with pseudo-random routable hostname and run your new SSL server in the same flow (or later, whenever you see it fit).
-
-Provided APIs should be used after you have performed first two steps described above:
-global npm install beame-sdk and email based developer creation.
-
-Exported nodeJS APIs allow creation of 2 levels of credentials:
-- atom - application under developer
-- edgeClient - host under atom, intended to be exposed to the outer world
 
 Current SDK release indends extensive CLI usage (see description above). So nodeJS APIs provide high level of access.  
 Be aware, that API on each level require credentials created on previous/higher level:  
@@ -169,35 +158,23 @@ In your server main.js create your server with following command:
 ### Input parameters:
 *`host` - edge hostName (pass <null> if you use environment variable - see below)  
 *`PROJECT_NAME` - name of environment variable that contains edgeClient hostname (pass <null> if you provided full hostname in first parameter)  
-*`appExpress` - express object. If you don't need express in your pplication, pass <null>  
+*`appExpress` - express object. If you don't need express in your application, pass <null>  
 *`function(data,app){}` - callback, returned app - created http object
 
-# Copy-paste example of creation of full-stack of credntials and running of https server with express support 
+# Copy-paste example of creation of full-stack of credentials and running of https server with express support
 ## Steps to take before you run below code:
 
-Install Beame SDK by running in terminal:`npm install beame-sdk -g`  
-
-Register as developer in: https://registration.beameio.net/  
-Upon receiving confirmation e-mail, copy-paste-run a command provided in e-mail body, should look like:  
-`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671` 
-Create web page with you preferred software (like Keynote -> export HTML on Mac).  
-Store your new web page in `public` folder in directory of your future web server.  
-Run `npm init` in project directory (*enter* to all options that *npm* asks)  
-In same location install `npm install beame-sdk -save`  
-Install *express* package by `npm install express -save`   
-Create index.js and copy-paste into it code below.  
-Run it with `node index.js`  
-In console output you will see something like:  
-`Server started on: https://h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net`
-`{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`  
-
-Go to web brower and direct it to your new secure web server by copying https://*hostname* from console output  
-That's that. You have your own https server running on your local machine, available from allover the world :)
+1. Create web page with you preferred software (like Keynote -> export HTML on Mac).  
+2. Store your new web page in `public` folder in directory of your future web server.  
+3. Run `npm init` in project directory (*enter* to all options that *npm* asks)  
+4. In same location install `npm install beame-sdk --save`  
+5. Install *express* package by `npm install express --save`   
+6. Create index.js and copy-paste into it code below.
 ```
 "use strict";
 var beameSDK = require ("beame-sdk");
 var express = require('express');
-var devHostname = "put-here-developer-name-you-got-from-creating-developer";
+var devHostname = "put-here-Hostname-you-got-when-creating-developer";
 var appName = "MyBeameTestServer";
 var appExpress = express();
 var edgeHostname;
@@ -222,6 +199,14 @@ beameSDK.creds.createAtom(devHostname,appName, 1, function(data){
 	});
 });
 ```
+7. Run it with `node index.js`  
+8. In console output you will see something like:  
+`Server started on: https://h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net`
+`{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`  
+
+9. Go to web brower and direct it to your new secure web server by copying https://*hostname* from console output  
+That's that. You have your own https server running on your local machine, available from allover the world :)
+
 #Copy-paste example of https server with express support
 
 Below code snippet is actually a part of larger code above. So it requires all needed installations (npm/express/beame-sdk/placing-html-files-in-*public*-folder) to be performed prior to run.  
@@ -242,4 +227,3 @@ var runTestBeameServer = function(){
 };
 runTestBeameServer();
 ```
-

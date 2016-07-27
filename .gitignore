@@ -16,3 +16,4 @@ tests/utils_tests
 tests/core_tests
 tests/unit-tests/async_test.js
 tests/unit-tests/cli/
+example/node_modules
