@@ -1,6 +1,6 @@
 {
     "Endpoints": {
-        "Local": "https://zenit.office.beameio.net",
+        "Local": "https://prov-staging.beameio.net",
         "Online": "https://prov-staging.beameio.net",
         "AuthServer": "https://registration-staging.beameio.net",
         "CertEndpoint": "https://beameio-net-certs-staging.s3.amazonaws.com"
