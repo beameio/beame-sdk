@@ -94,6 +94,7 @@ function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetH
 	}, this));
 
 	this.socketio.on('create_connection', _.bind(function (data) {
+		//noinspection JSUnresolvedVariable
 		this.createLocalServerConnection.call(this, data, this.options && this.options.onConnection);
 	}, this));
 
@@ -182,6 +183,7 @@ ProxyClient.prototype.createLocalServerConnection = function (data, callback) {
 		}, this));
 
 	} catch (e) {
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		console.error(JSON.stringify(e))
 	}
 

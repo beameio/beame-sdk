@@ -6,7 +6,9 @@ var options = config.options;
 var assert = config.assert;
 var beameUtils = config.beameUtils;
 var atomServices = config.atomServices;
+var dataServices = config.dataServices;
 
+var globalConfig = require('../../../config/Config');
 /**
  * CMD to run from console
  *  env developer_fqdn=[developer_fqdn] npm run test_atom
@@ -57,12 +59,12 @@ function run() {
 				assert.isNotNull(atomDirPath, "Developer directory not found");
 
 				//validate certificate structure
-				var certsCreated = beameUtils.validateHostCertsSync(atomHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+				var certsCreated = dataServices.validateHostCertsSync(atomHostname, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
 				assert.isTrue(certsCreated, `Certificates mismatch for atom ${atomHostname}`);
 
 
 				//validate metadata json
-				var metadata = beameUtils.getHostMetadataSync(atomHostname);
+				var metadata = dataServices.getHostMetadataSync(atomHostname);
 				assert.isNotNull(metadata, `Metadata mismatch for atom ${atomHostname}`);
 
 				assert.equal(metadata["hostname"], atomHostname, 'Metadata hostname is incorrect');
@@ -143,7 +145,7 @@ function run() {
 		// 			assert.isNotNull(payload, error && error.message);
 		//
 		// 			//validate certificate structure
-		// 			var certsCreated = beameUtils.validateHostCertsSync(atomHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+		// 			var certsCreated = beameUtils.validateHostCertsSync(atomHostname, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
 		// 			assert.isTrue(certsCreated, 'Certificates mismatch');
 		//
 		// 			done()

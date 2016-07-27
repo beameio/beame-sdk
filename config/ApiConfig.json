@@ -1,6 +1,6 @@
 {
     "Endpoints": {
-        "Local": "https://prov-staging.beameio.net",
+        "Local": "https://zenit.office.beameio.net",
         "Online": "https://prov-staging.beameio.net",
         "AuthServer": "https://registration-staging.beameio.net",
         "CertEndpoint": "https://beameio-net-certs-staging.s3.amazonaws.com"
@@ -31,6 +31,14 @@
             },
             "GetStats": {
                 "endpoint": "/api/v1/dev/stats"
+            },
+            "RegisterDeveloper": {
+                "name" : "register developer",
+                "endpoint" : "/api/v1/auth/dev/register"
+            },
+            "DeleteTestDevelopers": {
+                "name" : "delete test developer",
+                "endpoint" : "/api/v1/dev/delete"
             }
         },
         "AtomApi": {

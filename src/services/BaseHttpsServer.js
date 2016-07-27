@@ -65,6 +65,7 @@ var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hos
 			}
 		}
 
+		//noinspection JSUnresolvedVariable
 		new ProxyClient("HTTPS", edgeCert.hostname,
 			edgeCert.edgeHostname, 'localhost',
 			app.address().port, {onLocalServerCreated: onLocalServerCreated},

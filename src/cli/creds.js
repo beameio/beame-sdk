@@ -4,9 +4,8 @@ var debug = require("debug")("cred_api");
 var Table = require('cli-table2');
 var x509  = require('x509');
 
-var store = new (require("../services/BeameStore"))();
-require('./../utils/Globals');
-var config = require('../../config/Config');
+var store              = new (require("../services/BeameStore"))();
+var config             = require('../../config/Config');
 var developerServices  = new (require('../core/DeveloperServices'))();
 var atomServices       = new (require('../core/AtomServices'))();
 var edgeClientServices = new (require('../core/EdgeClientServices'))();

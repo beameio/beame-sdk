@@ -2,8 +2,8 @@
  * Created by zenit1 on 04/07/2016.
  */
 'use strict';
-require('../utils/Globals');
-var config = require('../../config/Config');
+
+var config       = require('../../config/Config');
 var debug        = require("debug")("./src/services/EdgeClientServices.js");
 var _            = require('underscore');
 var provisionApi = new (require('../services/ProvisionApi'))();
@@ -33,11 +33,11 @@ var isRequestValid = function (hostname, atomDir, edgeClientDir, validateEdgeHos
 		}
 
 		function getMetadata() {
-			beameUtils.getNodeMetadataAsync(edgeClientDir || atomDir, hostname, global.AppModules.Atom).then(onMetadataReceived).catch(onValidationError);
+			dataServices.getNodeMetadataAsync(edgeClientDir || atomDir, hostname, config.AppModules.Atom).then(onMetadataReceived).catch(onValidationError);
 		}
 
 		function validateAtomCerts() {
-			beameUtils.isNodeCertsExistsAsync(atomDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, hostname, global.AppModules.Developer).then(getMetadata).catch(onValidationError);
+			dataServices.isNodeCertsExistsAsync(atomDir, config.ResponseKeys.NodeFiles, config.AppModules.Atom, hostname, config.AppModules.Developer).then(getMetadata).catch(onValidationError);
 		}
 
 		function validateEdgeClientHost() {
@@ -72,7 +72,7 @@ var registerEdgeClient = function (atomHostname, callback) {
 
 	/*---------- private callbacks -------------------*/
 	function onEdgeSelectionError(error) {
-		errMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "select best proxy error", {
+		errMsg = beameUtils.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.EdgeLbError, "select best proxy error", {
 			"error": error,
 			"lb":    config.loadBalancerURL
 		});
@@ -83,7 +83,7 @@ var registerEdgeClient = function (atomHostname, callback) {
 	/** @param {EdgeShortData} edge  **/
 	function onEdgeServerSelected(edge) {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			host: edge.endpoint
@@ -99,12 +99,12 @@ var registerEdgeClient = function (atomHostname, callback) {
 
 				dataServices.createDir(edgeClientDir);
 
-				dataServices.savePayload(edgeClientDir, payload, global.ResponseKeys.EdgeClientResponseKeys, global.AppModules.EdgeClient, function (error) {
+				dataServices.savePayload(edgeClientDir, payload, config.ResponseKeys.EdgeClientResponseKeys, config.AppModules.EdgeClient, function (error) {
 					if (!callback) return;
 
 					if (!error) {
 
-						beameUtils.getNodeMetadataAsync(edgeClientDir, payload.hostname, global.AppModules.EdgeClient).then(function (metadata) {
+						dataServices.getNodeMetadataAsync(edgeClientDir, payload.hostname, config.AppModules.EdgeClient).then(function (metadata) {
 							callback(null, metadata);
 						}, callback);
 					}
@@ -168,7 +168,7 @@ var getCert = function (atomHostname, edgeHostname, callback) {
 		dataServices.createCSR(edgeClientDir, edgeHostname).then(
 			function onCsrCreated(csr) {
 
-				provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+				provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 				var postData = {
 					csr: csr,
@@ -223,7 +223,7 @@ var EdgeClientServices = function () {
  */
 EdgeClientServices.prototype.createEdgeClient = function (atomHostname, callback) {
 
-	var debugMsg = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.DebugInfo, "Call Create Edge Client", {
+	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.DebugInfo, "Call Create Edge Client", {
 		"atom": atomHostname
 	});
 	debug(debugMsg);
@@ -271,7 +271,7 @@ EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname, callback
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			hostname: edgeHostname
@@ -322,9 +322,9 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
-		dataServices.createCSR(edgeClientDir, edgeHostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
+		dataServices.createCSR(edgeClientDir, edgeHostname, config.CertFileNames.TEMP_PRIVATE_KEY).then(
 			function onCsrCreated(csr) {
 
 				var postData = {
@@ -337,7 +337,7 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
 
-						dataServices.renameFile(edgeClientDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
+						dataServices.renameFile(edgeClientDir, config.CertFileNames.TEMP_PRIVATE_KEY, config.CertFileNames.PRIVATE_KEY, function (error) {
 							if (!error) {
 								dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, callback);
 							}
@@ -349,7 +349,7 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 					}
 					else {
 
-						dataServices.deleteFile(edgeClientDir, global.CertFileNames.TEMP_PRIVATE_KEY);
+						dataServices.deleteFile(edgeClientDir, config.CertFileNames.TEMP_PRIVATE_KEY);
 
 						console.error(error);
 						callback(error, null);
@@ -390,7 +390,7 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			hostname: edgeHostname
@@ -432,7 +432,7 @@ EdgeClientServices.prototype.getStats = function (edgeHostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			hostname: edgeHostname

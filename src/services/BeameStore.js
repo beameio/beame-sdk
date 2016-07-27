@@ -1,12 +1,11 @@
 'use strict';
-var async = require('async');
-var exec  = require('child_process').exec;
-var fs    = require('fs');
-var _     = require('underscore');
-var os    = require('os');
-var debug = require("debug")("beamestore");
-require('./../utils/Globals');
-var config = require('../../config/Config');
+var async       = require('async');
+//var exec        = require('child_process').exec;
+var fs          = require('fs');
+var _           = require('underscore');
+var os          = require('os');
+var debug       = require("debug")("beamestore");
+var config      = require('../../config/Config');
 var jmespath    = require('jmespath');
 var beameDirApi = require('./BeameDirServices');
 var sprintf     = require('sprintf');
@@ -223,8 +222,10 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 		var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
 		console.warn(`Getting certificate from ${requestPath}`);
 		var response = request('GET', requestPath);
+		//noinspection JSUnresolvedFunction
 		certBody     = response.getBody() + "";
 
+		//noinspection JSUnresolvedVariable
 		if (response.statusCode == 200) {
 			mkdirp(path.parse(remoteCertPath).dir);
 			console.warn("Saving file to %j", remoteCertPath);
@@ -235,21 +236,23 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 };
 
 BeameStore.prototype.importCredentials = function (data) {
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var credToImport = JSON.parse(data);
-	var host         = credToImport.hostname;
+	//var host         = credToImport.hostname;
 	var targetPath   = path.join(config.localCertsDir, credToImport.path);
 	mkdirp(targetPath);
 
 	var metadata = {};
 	_.map(credToImport, function (value, key) {
-		if (global.CertFileNames[key]) {
-			var filepath = path.join(targetPath, global.CertFileNames[key]);
+		if (config.CertFileNames[key]) {
+			var filepath = path.join(targetPath, config.CertFileNames[key]);
 			fs.writeFileSync(filepath, new Buffer(value.data));
 
 		} else {
 			metadata[key] = value;
 		}
 	});
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	fs.writeFileSync(path.join(targetPath, "metadata.json"), JSON.stringify(metadata));
 	return true;
 };

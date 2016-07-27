@@ -14,8 +14,10 @@ function HttpsServerTestStart(edgeClientFqdn) {
 		});
 
 		var socketio = require('socket.io')(app);
+		//noinspection JSUnresolvedFunction
 		socketio.set('transports', ['websocket']);
 
+		//noinspection JSUnresolvedFunction
 		socketio.on('connection', function (socket) {
 			console.log("Socketio connection");
 			socket.emit('iping', {hello: 'world'});

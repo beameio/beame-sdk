@@ -1,10 +1,9 @@
 'use strict';
-var fs    = require('fs');
-var path  = require('path');
-var _     = require('underscore');
-var debug = require("debug")("beamedirservices");
-require('./../utils/Globals');
-var config = require('../../config/Config');
+var fs       = require('fs');
+var path     = require('path');
+var _        = require('underscore');
+var debug    = require("debug")("beamedirservices");
+var config   = require('../../config/Config');
 var jmespath = require('jmespath');
 
 
@@ -16,7 +15,7 @@ function makepath() {
 function readCertData(basedir) {
 	var credentials = {};
 
-	_.map(global.CertFileNames, function (key, value) {
+	_.map(config.CertFileNames, function (key, value) {
 		try {
 			credentials[value] = fs.readFileSync(makepath(basedir, key));
 		}
@@ -27,7 +26,8 @@ function readCertData(basedir) {
 	});
 	credentials['path'] = basedir;
 	try {
-		var fileContent = fs.readFileSync(makepath(basedir, "metadata.json"));
+		var fileContent = fs.readFileSync(makepath(basedir, config.metadataFileName));
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		_.map(JSON.parse(fileContent), function (key, value) {
 			credentials[value] = key;
 		});
@@ -51,7 +51,7 @@ function getFiles(srcpath) {
 }
 
 function getCertsFiles(srcpath) {
-	return getFiles(srcpath).filter(f => f != global.metadataFileName);
+	return getFiles(srcpath).filter(f => f != config.metadataFileName);
 }
 
 function scanDigestDir(startPath) {
@@ -84,6 +84,7 @@ function readSubDevDir(devDir) {
 }
 
 function generateDigest(startPath) {
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var data = JSON.stringify(scanDigestDir(startPath));
 	return require('crypto').createHash('sha224').update(data).digest("hex");
 }
@@ -93,7 +94,8 @@ function readBeameDir(startdir) {
 	var developers = [];
 	if (!startdir) {
 		startdir = config.rootDir;
-	};
+	}
+
 	var subfolders = getDirectories(startdir);
 	_.each(subfolders, function (dir) {
 		var developer = readSubDevDir(makepath(startdir, dir));

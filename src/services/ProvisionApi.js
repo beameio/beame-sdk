@@ -1,8 +1,9 @@
 'use strict';
-require('../utils/Globals');
+
 var debug             = require("debug")("./src/services/ProvisionApi.js");
 var provisionSettings = require('../../config/ApiConfig.json');
 var beameUtils        = require('../utils/BeameUtils');
+var config            = require('../../config/Config');
 
 /**
  * @typedef {Object} CertSettings
@@ -69,7 +70,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 
 	if (error) {
-		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api response error", {"error": error});
+		errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Provision Api response error", {"error": error});
 		callback(errMsg, null);
 		return;
 	}
@@ -101,7 +102,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, payload.Message || "Provision Api response error", {
+		errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, payload.Message || "Provision Api response error", {
 			"status":  response.statusCode,
 			"message": payload.Message || payload
 		});
@@ -126,7 +127,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 	retries--;
 
 	var onApiError = function (error) {
-		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api post error", {
+		errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Provision Api post error", {
 			"error": error,
 			"url":   url
 		});
@@ -142,7 +143,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 
 	try {
 		if (retries == 0) {
-			var consoleMessage = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Post to provision failed", {"url": url});
+			var consoleMessage = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Post to provision failed", {"url": url});
 			console.error(consoleMessage);
 			callback && callback(consoleMessage, null);
 		}
@@ -196,7 +197,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 	retries--;
 
 	var onApiError = function (error) {
-		errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Provision Api get error", {
+		errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Provision Api get error", {
 			"error": error,
 			"url":   url
 		});
@@ -210,7 +211,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 
 	try {
 		if (retries == 0) {
-			var consoleMessage = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.ApiRestError, "Get from provision failed", {"url": url});
+			var consoleMessage = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Get from provision failed", {"url": url});
 			console.error(consoleMessage);
 			callback && callback(consoleMessage, null);
 		}
@@ -256,7 +257,7 @@ var ProvApiService = function () {
 
 	/** @member {String} **/
 	this.provApiEndpoint = beameUtils.isAmazon() ? provisionSettings.Endpoints.Online : provisionSettings.Endpoints.Local;
-	debug(global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.DebugInfo, "Provision Api Constructor", {"endpoint": this.provApiEndpoint}));
+	debug(beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.DebugInfo, "Provision Api Constructor", {"endpoint": this.provApiEndpoint}));
 
 };
 

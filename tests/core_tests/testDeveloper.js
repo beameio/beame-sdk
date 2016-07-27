@@ -6,7 +6,7 @@ var _ = require('underscore');
 var argv = require('minimist')(process.argv.slice(2));
 var developerServices = new(require('../../src/core/DeveloperServices'))();
 var beameUtils = require('../../src/utils/BeameUtils');
-
+var config = require('../../config/Config');
 
 var revoke = function(host){
     developerServices.revokeCert(host,function(error, payload){
@@ -33,6 +33,17 @@ var create =  function (){
 
 var restore = function(host){
     developerServices.restoreCert(host,function(error, payload){
+        if(!error){
+            console.log(payload);
+        }
+        else{
+            console.error(error);
+        }
+    });
+};
+
+var deleteTestDevelopers = function(){
+    developerServices.deleteTestDevelopers(config.TimeUnits.Minute,2 ,function(error, payload){
         if(!error){
             console.log(payload);
         }
@@ -99,6 +110,9 @@ var test = function(){
     var host = argv['host'] || 'lmsuwxez6rff9t5k.v1.beameio.net';
 
     switch (test){
+        case 'delete':
+            deleteTestDevelopers();
+            return;
         case 'create':
             create();
             return;

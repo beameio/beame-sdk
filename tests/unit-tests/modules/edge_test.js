@@ -6,6 +6,8 @@ var options = config.options;
 var assert = config.assert;
 var beameUtils = config.beameUtils;
 var edgeServices = config.edgeServices;
+var dataServices = config.dataServices;
+var globalConfig = require('../../../config/Config');
 
 /**
  * CMD to run from console
@@ -58,12 +60,12 @@ function run() {
 				assert.isNotNull(edgeClientDirPath, `Edge ${edgeClientHostname} directory not found`);
 
 				//validate certificate structure
-				var certsCreated = beameUtils.validateHostCertsSync(edgeClientHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+				var certsCreated = dataServices.validateHostCertsSync(edgeClientHostname, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
 				assert.isTrue(certsCreated, `Certificates mismatch for edge ${edgeClientHostname}`);
 
 
 				//validate metadata json
-				var metadata = beameUtils.getHostMetadataSync(edgeClientHostname);
+				var metadata = dataServices.getHostMetadataSync(edgeClientHostname);
 				assert.isNotNull(metadata, 'Metadata mismatch');
 
 				assert.equal(metadata["hostname"], edgeClientHostname, 'Metadata hostname is incorrect');
@@ -118,7 +120,7 @@ function run() {
 		// 			assert.isNotNull(payload, error && error.message);
 		//
 		// 			//validate certificate structure
-		// 			var certsCreated = beameUtils.validateHostCertsSync(edgeClientHostname, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+		// 			var certsCreated = beameUtils.validateHostCertsSync(edgeClientHostname, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
 		// 			assert.isTrue(certsCreated, 'Certificates mismatch');
 		//
 		// 			done()
