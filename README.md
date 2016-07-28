@@ -1,48 +1,59 @@
-##### THIS IS ABOUT TO BE RELEASED. OR IT ALREADY IS. IF YOU ARE INTERESTED IN 
-##### BEING ONE OF THE FIRST ONES TO USE THE SDK: CONTACT LISA@BEAME.IO
 
 # What does Beame.io SDK do for you?
 
-##  Beame.io SDK provides you with easy-to-use tools to receive and use x509 (aka SSL/TLS) certificates
+##  Beame.io SDK provides you with easy-to-use tools to access a device without a public IP address, with SSL certificates issued specifically for the device.  We also make it easy and fast to programatically obtain publicly trusted certs and use them as needed for any purpose. 
+
+You can expose your local machine, deploy a service literally without any network configation, and now you can host a public server without a DMZ
 
 The certificates are signed by a publicly trusted CA, similar to any other site that uses HTTPS.
+
 You get:
 
 1. A hostname (*Common Name* in the certificate) that is under Beame's domain.
 2. A matching certificate.
-3. A pair of keys of course
 
+Of course the cert fits the private key that was generated locally on your device J.
+
+Credentials that you create using Beame SDK can be used for TLS on your server, or any other relevant purpose, such as authentication and encryption.  
 Beame.io *provisioning* handles ... the provisioning of certificates.
-These certificates can be used for HTTPS on your server or any other relevant purpose, such as authentication and encryption.
 
-## Beame.io provides you with a tunnelling service
 
-Our tunnel servers (the *edge servers*) allow routing of traffic to your servers even when your servers don't have a routable IPs.
+## Getting Started The Easy Way
 
-## Getting Started The Easy Way 
+1. Install Beame.io SDK by running `npm install -g beame-sdk`
+2. Register as a [developer](https://registration.beameio.net/).
+3. Copy a command from the email. It should look like this `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f` 
+4. Run `beame servers startFirstBeameNode` it will print out to you something that looks like this: 
+		`Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
 
-1. run `npm install -g beame-sdk`
-2. Go to https://registration.beameio.net/ with a regular web browser.
-2. Put in your name and email, and wait for a confirmation email. 
-3. In the confirmation email, you should see a command that looks like this, run it:
+5. Our demo has two features, chat, or file server:
+	a. To access the chat just copy the URL to your browser. (Btw you can freely send it to other people on other networks, server is global TLS is real);
+	b. To access the file share function open the url /shared ie. https://fdff......beameio.net/shared 
+Enjoy!
 
- 	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`  
+
+## Beame.io provides you with a tunneling service
+
+Our tunnel servers (the *edge servers*) allow routing of traffic to your servers even when your servers don't have routable IPs.
 
 ## Beame.io network diagram
 
-Please note, that this diagram, was designed to show how the service works. Important to understand, that beame SSL proxies are transparent, data passes thru them without being touched. 
+Please note that this diagram was designed to show how the service works. It's important to understand that Beame SSL proxies are transparent; data passes through them without being touched.
 
 ![Network diagram](readme-net-diag-small.png)
 
 [See larger network diagram](readme-net-diag-large.png)
 
+
+ 	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`
+
 ## Steps to use Beame.io SDK
 
 At the end of each of the following steps you will be provided with a hostname under Beame's domain and a matching publicly trusted x509 certificate. The keys for the certificates are generated and stored locally on your computer. The keys do not leave your computer (unless you intentionally export them).
 
-1. Register as a *developer*
-1. Create an *atom* (an application) under the *developer*
-1. Create an *edge client* (a user server) under the *atom*
+1. [Create an *atom* (an application) under the *developer*](#to-create-new-atom-under-current-developer)
+1. [Create an *edge client* (a user server) under the *atom*](#edgeclient-level-commands)
+2. [See full copy-paste example](#copy-paste-example-of-creation-of-full-stack-of-credntials-and-running-of-https-server-with-express-support)  or see example in example folder
 
 At this point you can proceed with any of the following actions:
 
@@ -50,22 +61,18 @@ At this point you can proceed with any of the following actions:
 * Sign arbitrary data with any of your certificates
 * Check signatures of arbitrary data
 * Encrypt arbitrary data so that only a specified entity can decrypt it
-* Decrypt arbitrary data, that was sent to one of the entities you own (encrypted with one of your public keys)
+* Decrypt arbitrary data that was sent to one of the entities you own (encrypted with one of your public keys)
 
-# Beame.io SDK
-
-# Installing Beame.io SDK
-
-	npm install -g beame-sdk
+## Beame.io SDK Bash shell
 
 Bash completion is available, run `beame` to see instructions.
 
 ## If current shell version does not support auto completion, please follow instructions below (mostly relevant for MacOS):
-First ensure, that your bash version is 4.3 or higher (`echo $BASH_VERSION`). If not - upgrade it. Care to replace *4.3.46* from snippets below by your new bash version.  
+First ensure that your bash version is 4.3 or higher (`echo $BASH_VERSION`). If not - upgrade it. Take care to replace *4.3.46* from snippets below by your new bash version:  
 	`brew update && brew install bash`  
-Add new shell to available shells  
+Add new shell to available shells:  
     `sudo bash -c 'echo /usr/local/Cellar/bash/4.3.46/bin/bash >> /etc/shells'`  
-Change to the new shell  
+Change to the new shell:  
     `chsh -s /usr/local/Cellar/bash/4.3.46/bin/bash`  
 
 Open new terminal and run:
@@ -94,8 +101,8 @@ The structure of the Beame data folder is an implementation detail. You should n
 
 ## Beame.io CLI
 
-If you have completed the "Getting Started The Easy Way" above, you can feel free to use all what's described below
-At any moment, using beame-sdk, you can see all credentials you currently own, by running:
+If you have completed the "Getting Started The Easy Way" above, you can feel free to use all of what's described below.
+At any moment, using beame-sdk, you can see all credentials you currently own by running:
 	`beame creds show`
 
 ### Beame.io CLI - credentials
@@ -117,45 +124,38 @@ The following commands are used for acquiring and manipulating certificates.
 
 * `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity can decrypt it
 * `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be the owner of the given entity
-* `beame crypto sign [--data data] [--fqdn fqdn]` - signes the given data as the specified entity
+* `beame crypto sign [--data data] [--fqdn fqdn]` - signs the given data as the specified entity
 * `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - verifies the correctness of the signature
 
 ##############################################################################
 #                            Beame.io NodeJS API                           
 
-###The idea behind the node.js sdk APIs is that you can employ Beame.io CLI functionality in your own node js project. 
-###Receive publicly trusted cert with pseudo-random routable hostname and run your new SSL server in the same flow (or later, whenever you see it fit).
+###The idea behind the Node.js SDK APIs is that you can employ Beame.io CLI functionality in your own Node.js project.
+###Receive publicly trusted cert with a pseudo-random routable hostname and run your new SSL server in the same flow (or later, whenever you see it fit).
 
-Provided APIs should be used after you have performed first two steps described above:
-global npm install beame-sdk and email based developer creation.
-
-Exported nodeJS APIs allow creation of 2 levels of credentials:
-- atom - application under developer
-- edgeClient - host under atom, intended to be exposed to the outer world
-
-Current SDK release indends extensive CLI usage (see description above). So nodeJS APIs provide high level of access.  
-Be aware, that API on each level require credentials created on previous/higher level:  
+Current SDK release intends extensive CLI usage (see description above). So Node.js APIs provide a high level of access.  
+Be aware that API on each level requires credentials created on previous/higher level:  
 To use any API from beame-sdk include
 ```
 var beameSDK = require ("beame-sdk");
 ```
 ##   atom level commands
-###  Requires developer credentials (developer fqdn/hostname) + appName (your application name)
+###  Requires developer credentials (developer fqdn/hostname) + atomName (your application name)
 ###  To create new atom under current developer:
 ```
-    beameSDK.creds.createAtom(devHostname,appName, amount, function(data){//amount - number of atoms to create
+    beameSDK.creds.createAtom(devHostname, atomName, amount, function(data){//amount - number of atoms to create
         //atom level hostname returned in: <data.hostname>
     });
 ```
 ##   edgeClient level commands
-###  Requires atom credentials (atom fqdn/hostname). appHostName - atom level hostname created in previous step
+###  Requires atom credentials (atom fqdn/hostname). atomHostName - app level hostname created in previous step
 ###  To create new edgeClient under current atom:
 ```
     beameSDK.creds.createEdgeClient(atomHostname, amount, function(data){//amount - number of edgeClient to create
         //edge level hostname returned in: <data.hostname>
     });
 ```
-###Beame-sdk provides example https server, that allows beame client to build and run fully functional https server with express support and with credentials created in steps described above
+###Beame-sdk provides an example https server that allows Beame client to build and run fully a functional https server with express support and with credentials created in steps described above
 
 Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-client-hostname (edgeClientFqdn)
 In your server main.js create your server with following command:
@@ -168,35 +168,23 @@ In your server main.js create your server with following command:
 ### Input parameters:
 *`host` - edge hostName (pass <null> if you use environment variable - see below)  
 *`PROJECT_NAME` - name of environment variable that contains edgeClient hostname (pass <null> if you provided full hostname in first parameter)  
-*`appExpress` - express object. If you don't need express in your pplication, pass <null>  
+*`appExpress` - express object. If you don't need express in your application, pass <null>  
 *`function(data,app){}` - callback, returned app - created http object
 
-# Copy-paste example of creation of full-stack of credntials and running of https server with express support 
+# Copy-paste example of creation of full-stack of credentials and running of https server with express support
 ## Steps to take before you run below code:
 
-Install Beame SDK by running in terminal:`npm install beame-sdk -g`  
-
-Register as developer in: https://registration.beameio.net/  
-Upon receiving confirmation e-mail, copy-paste-run a command provided in e-mail body, should look like:  
-`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671` 
-Create web page with you preferred software (like Keynote -> export HTML on Mac).  
-Store your new web page in `public` folder in directory of your future web server.  
-Run `npm init` in project directory (*enter* to all options that *npm* asks)  
-In same location install `npm install beame-sdk -save`  
-Install *express* package by `npm install express -save`   
-Create index.js and copy-paste into it code below.  
-Run it with `node index.js`  
-In console output you will see something like:  
-`Server started on: https://h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net`
-`{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`  
-
-Go to web brower and direct it to your new secure web server by copying https://*hostname* from console output  
-That's that. You have your own https server running on your local machine, available from allover the world :)
+1. Create web page with your preferred software (like Keynote -> export HTML on Mac).  
+2. Store your new web page in `public` folder in directory of your future web server.  
+3. Run `npm init` in project directory (*enter* to all options that *npm* asks)  
+4. In same location install `npm install beame-sdk --save`  
+5. Install *express* package by `npm install express --save`   
+6. Create index.js and copy-paste into it code below.
 ```
 "use strict";
 var beameSDK = require ("beame-sdk");
 var express = require('express');
-var devHostname = "put-here-developer-name-you-got-from-creating-developer";
+var devHostname = "put-here-Hostname-you-got-when-creating-developer";
 var appName = "MyBeameTestServer";
 var appExpress = express();
 var edgeHostname;
@@ -205,26 +193,33 @@ appExpress.use(express.static(__dirname + '/public'));
 var runTestBeameServer = function(){
     beameSDK.BaseHttpsServer.SampleBeameServer(edgeHostname, null, appExpress, function (data, app) {
         console.log('Server started on: https://'+edgeHostname);
+        appExpress.get('/', function(req, res) {
+            res.sendFile(path.join(__dirname + '/index.html'));
+        });
             // process http events here with <app> if needed
     });
 };
 
 beameSDK.creds.createAtom(devHostname,appName, 1, function(data){
-    {
-		console.log('Just created atom with host:'+data.hostname);
-        beameSDK.creds.createEdgeClient(data.hostname, 1, function(edgeData){
-            {
-                edgeHostname = edgeData.hostname;
-				console.log('Congrats! My new hostname is: '+ edgeHostname);
-                setTimeout(runTestBeameServer, 2000);//JIC - wait dns to update
-            }
-        });
-    }
+	console.log('Just created atom with host:'+data.hostname);
+	beameSDK.creds.createEdgeClient(data.hostname, 1, function(edgeData){
+		edgeHostname = edgeData.hostname;
+		console.log('Congrats! My new hostname is: '+ edgeHostname);
+		setTimeout(runTestBeameServer, 2000);//JIC - wait dns to update
+	});
 });
 ```
+7. Run it with `node index.js`  
+8. In console output you will see something like:  
+`Server started on: https://h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net`
+`{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`  
+
+9. Go to web brower and direct it to your new secure web server by copying https://*hostname* from console output  
+That's it. You have your own https server running on your local machine, accessible from anywhere in the world :)
+
 #Copy-paste example of https server with express support
 
-Below code snippet is actually a part of larger code above. So it requires all needed installations (npm/express/beame-sdk/placing-html-files-in-*public*-folder) to be performed prior to run.  
+Below code snippet is actually a part of the larger code above. So it requires all needed installations (npm/express/beame-sdk/placing-html-files-in-*public*-folder) to be performed prior to run.  
 In order to see credentials that you have created, use `beame creds list` in terminal. *Hostname*, that is listed in row named *edgeclient* ,is the one, that you'll need to provide to *SampleBeameServer* as *hostname*.
 
 ```
@@ -242,4 +237,3 @@ var runTestBeameServer = function(){
 };
 runTestBeameServer();
 ```
-

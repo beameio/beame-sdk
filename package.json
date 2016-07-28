@@ -8,7 +8,9 @@
     "test_developer": "mocha ./tests/unit-tests/single_tests/developer_test.js",
     "test_atom": "mocha ./tests/unit-tests/single_tests/atom_test.js",
     "test_edge": "mocha ./tests/unit-tests/single_tests/edge_test.js",
-    "test_full_flow": "mocha ./tests/unit-tests/full_flow_test.js"
+    "test_full_flow": "mocha ./tests/unit-tests/full_flow_test.js", 
+    "startChat": "node ./examples/example1.js"
+
   },
   "bin": {
     "beame": "src/cli/beame.js"
@@ -18,7 +20,17 @@
     "url": "git@github.com:beameio/beame-sdk.git"
   },
   "keywords": [
-    "beame"
+    "beame",
+    "SSL cert",
+    "x509",
+    "localhost",
+    "proxy tunnel",
+    "ssl tunnel",
+    "self signed ",
+    "CA",
+    "signing",
+    "crypto"
+
   ],
   "author": "beame.io",
   "license": "MIT",
@@ -30,6 +42,7 @@
     "async": "^2.0.0-rc.6",
     "cli-table2": "0.2.0",
     "debug": "^2.2.0",
+    "express": "^4.14.0",
     "jmespath": "^0.15.0",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
@@ -38,6 +51,7 @@
     "pem": "^1.8.3",
     "request": "^2.72.0",
     "rimraf": "^2.5.3",
+    "serve-index": "^1.8.0",
     "socket.io": "^1.4.8",
     "socket.io-client": "^1.4.6",
     "sprintf": "^0.1.5",
