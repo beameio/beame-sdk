@@ -17,7 +17,7 @@ var argv = require('minimist')(process.argv.slice(2));
 
 var path = require('path');
 var defaultSharedFolder = path.resolve(__dirname, "../../examples/public/shared");
-
+var defaultPublicDir =    path.resolve(__dirname, "../../examples/public");
 function HttpsServerTestStart(edgeClientFqdn) {
 	console.warn("Starting server %j", edgeClientFqdn);
 	new BeameServer(edgeClientFqdn, null, false, function (data, app) {
@@ -43,9 +43,7 @@ function HttpsServerTestStart(edgeClientFqdn) {
 
 function runTestBeameServer(hostname){
 	beameSDK.BaseHttpsServer.SampleBeameServer(hostname, null, appExpress, function (data, app) {
-		var p = path.resolve("./examples" + '/public');
-		console.log(p);
-		appExpress.use(express.static(p));
+		appExpress.use(express.static(defaultPublicDir));
 
 		var serveIndex = require('serve-index');
 
