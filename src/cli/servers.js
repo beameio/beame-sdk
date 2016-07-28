@@ -93,12 +93,13 @@ var startFirstBeameNode = function(sharedFolder){
 		console.warn("You have developer credentials now we will set up an Atom SSL cert, and  edgeClient cert ");
 		console.warn("It will take about 30 seconds, please wait patiently, yes we understand..., it will be much faster soon (:- ");
 		var devHostname = developers[0].hostname;
-		beameSDK.creds.createAtom(devHostname ,"BeameNode", 1, function(data){
+		beameSDK.creds.createAtom(devHostname ,"BeameNodeXXX", 1, function(data){
 			console.warn('Just created atom with host:'+data.hostname);
 			beameSDK.creds.createEdgeClient(data.hostname, 1, function(edgeData){
 				var edgeHostname = edgeData.hostname;
 				console.warn('Congrats! My new hostname is: https://'+ edgeHostname);
-				setTimeout(runTestBeameServer(edgeHostname), 2000);//JIC - wait dns to update
+				//setTimeout(runTestBeameServer(edgeHostname), 2000);//JIC - wait dns to update
+				runTestBeameServer(edgeHostname);
 				edgeClientCreated = true;
 				return;
 			});
@@ -112,7 +113,8 @@ var startFirstBeameNode = function(sharedFolder){
 		beameSDK.creds.createEdgeClient(atoms[0].hostname, 1, function(edgeData){
 			var edgeHostname = edgeData.hostname;
 			console.warn('Congrats! My new hostname is: https://'+ edgeHostname);
-			setTimeout(runTestBeameServer(edgeHostname), 2000);//JIC - wait dns to update
+			//setTimeout(runTestBeameServer(edgeHostname), 2000);//JIC - wait dns to update
+						 runTestBeameServer(edgeHostname);
 			edgeClientCreated = true;
 			return;
 		});
