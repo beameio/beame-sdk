@@ -1,3 +1,5 @@
+##### THIS IS ABOUT TO BE RELEASED. OR IT ALREADY IS. IF YOU ARE INTERESTED IN 
+##### BEING ONE OF THE FIRST ONES TO USE THE SDK: CONTACT LISA@BEAME.IO
 
 # What does Beame.io SDK do for you?
 
@@ -208,12 +210,16 @@ var runTestBeameServer = function(){
 };
 
 beameSDK.creds.createAtom(devHostname,appName, 1, function(data){
-	console.log('Just created atom with host:'+data.hostname);
-	beameSDK.creds.createEdgeClient(data.hostname, 1, function(edgeData){
-		edgeHostname = edgeData.hostname;
-		console.log('Congrats! My new hostname is: '+ edgeHostname);
-		setTimeout(runTestBeameServer, 2000);//JIC - wait dns to update
-	});
+    {
+		console.log('Just created atom with host:'+data.hostname);
+        beameSDK.creds.createEdgeClient(data.hostname, 1, function(edgeData){
+            {
+                edgeHostname = edgeData.hostname;
+				console.log('Congrats! My new hostname is: '+ edgeHostname);
+                setTimeout(runTestBeameServer, 2000);//JIC - wait dns to update
+            }
+        });
+    }
 });
 ```
 #Copy-paste example of https server with express support
