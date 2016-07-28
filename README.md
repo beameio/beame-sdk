@@ -3,7 +3,7 @@
 
 ##  Beame.io SDK provides you with easy-to-use tools to access a device without a public IP address, with SSL certificates issued specifically for the device.  We also make it easy and fast to programatically obtain publicly trusted certs and use them as needed for any purpose. 
 
-You can expose your local machine, deploy a service literally without network configation, and possibly remove public access to a DMZ. 
+You can expose your local machine, deploy a service literally without any network configation, and now you can host a public server without a DMZ
 
 The certificates are signed by a publicly trusted CA, similar to any other site that uses HTTPS.
 
@@ -11,11 +11,25 @@ You get:
 
 1. A hostname (*Common Name* in the certificate) that is under Beame's domain.
 2. A matching certificate.
-3. A pair of keys, of course!
 
+Of course the cert fits the private key that was generated locally on your device J.
 
-Credentials, that you create while using Beame SDK, can be used for TLS on your server, or any other relevant purpose, such as authentication and encryption.  
+Credentials that you create using Beame SDK can be used for TLS on your server, or any other relevant purpose, such as authentication and encryption.  
 Beame.io *provisioning* handles ... the provisioning of certificates.
+
+
+## Getting Started The Easy Way
+
+1. Install Beame.io SDK by running `npm install -g beame-sdk`
+2. Register as a [developer](https://registration.beameio.net/).
+3. Copy a command from the email. It should look like this `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f` 
+4. Run `beame servers startFirstBeameNode` it will print out to you something that looks like this: 
+		`Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
+
+5. Our demo has two features, chat, or file server:
+	a. To access the chat just copy the URL to your browser. (Btw you can freely send it to other people on other networks, server is global TLS is real);
+	b. To access the file share function open the url /shared ie. https://fdff......beameio.net/shared 
+Enjoy!
 
 
 ## Beame.io provides you with a tunneling service
@@ -30,14 +44,6 @@ Please note that this diagram was designed to show how the service works. It's i
 
 [See larger network diagram](readme-net-diag-large.png)
 
-## Getting Started The Easy Way
-
-1. Install Beame.io SDK by running `npm install -g beame-sdk`
-2. Register as a [developer](https://registration.beameio.net/).
-2. Put in your name and email, and wait for a confirmation email.
-3. In the confirmation email, you should see a command that looks like this, run it:
-
- 	`beame creds createDeveloper --developerFqdn nc6qd6e6w0vd8hw5.v1.beameio.net --uid XXXXX-5a45-4165-a3cb-fb4060e46671`
 
 ## Steps to use Beame.io SDK
 
@@ -135,7 +141,7 @@ var beameSDK = require ("beame-sdk");
 ###  Requires developer credentials (developer fqdn/hostname) + atomName (your application name)
 ###  To create new atom under current developer:
 ```
-    beameSDK.creds.createAtom(devHostname,appName, amount, function(data){//amount - number of atoms to create
+    beameSDK.creds.createAtom(devHostname, atomName, amount, function(data){//amount - number of atoms to create
         //atom level hostname returned in: <data.hostname>
     });
 ```

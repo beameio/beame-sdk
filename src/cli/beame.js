@@ -27,8 +27,8 @@ var parametersSchema = {
 	'uid':            {required: true},
 	'targetFqdn':     {required: true},
 	'file':           {required: false},
-	'count':          {required: false, default: 1}
-
+	'count':          {required: false, default: 1},
+	'sharedFolder':   {required: false}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

@@ -61,7 +61,7 @@ var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hos
 			if (hostOnlineCallback) {
 				serverInfo = data;
 				hostOnlineCallback(data, app);
-				console.error(data);
+//				console.error(data); //user undfriendly printout
 			}
 		}
 
