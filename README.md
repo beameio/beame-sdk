@@ -1,7 +1,7 @@
 
 # What does Beame.io SDK do for you?
 
-##  Beame.io SDK provides you with easy-to-use tools to receive and use x509 (aka SSL/TLS) certificates
+##  Beame.io SDK provides you with easy-to-use tools access a device without a public ipaddress, with SSL that is issued specifically for the device.  We also make it easy and fast to programatically obtain publically trusted certs and use them as needed for any purpose. You can expose your local machine, deploy a service literally without network configation, and possible remove public access to a DMZ. 
 
 The certificates are signed by a publicly trusted CA, similar to any other site that uses HTTPS.
 
