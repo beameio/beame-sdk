@@ -111,6 +111,15 @@ if (developerServices.canCreateDeveloper()) {
 	module.exports.createTestDeveloper = createTestDeveloper;
 }
 
+function registerDeveloper(developerName, developerEmail, callback) {
+	developerServices.registerDeveloper(developerName, developerEmail, _stdCallback(callback));
+}
+registerDeveloper.toText = lineToText;
+
+if (developerServices.canRegisterDeveloper()) {
+	module.exports.registerDeveloper = registerDeveloper;
+}
+
 function createAtom(developerFqdn, atomName, count, callback) {
 	if (count != 1) {
 		throw new Error("Count of not one is not supported yet");

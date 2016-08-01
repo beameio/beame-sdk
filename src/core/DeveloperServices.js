@@ -246,6 +246,12 @@ DeveloperServices.prototype.canCreateDeveloper = function () {
 
 /**
  *
+ * @returns {boolean}
+ */
+DeveloperServices.prototype.canRegisterDeveloper = DeveloperServices.prototype.canCreateDeveloper;
+
+/**
+ *
  * @param {String} hostname
  * @param {String} uid
  * @param {Function} callback
