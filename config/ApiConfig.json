@@ -5,7 +5,7 @@
         "AuthServer": "https://registration-staging.beameio.net",
         "CertEndpoint": "https://beameio-net-certs-staging.s3.amazonaws.com"
     },
-    "RetryAttempts" : 10,
+    "RetryAttempts": 10,
     "Actions": {
         "DeveloperApi": {
             "CompleteRegistration": {
@@ -33,12 +33,12 @@
                 "endpoint": "/api/v1/dev/stats"
             },
             "RegisterDeveloper": {
-                "name" : "register developer",
-                "endpoint" : "/api/v1/auth/dev/register"
+                "name": "register developer",
+                "endpoint": "/api/v1/auth/dev/register"
             },
             "DeleteTestDevelopers": {
-                "name" : "delete test developer",
-                "endpoint" : "/api/v1/dev/delete"
+                "name": "delete test developer",
+                "endpoint": "/api/v1/dev/delete"
             }
         },
         "AtomApi": {
@@ -64,15 +64,15 @@
                 "endpoint": "/api/v1/atom/stats"
             }
         },
-        "EdgeClient":{
+        "EdgeClient": {
             "CreateEdgeClient": {
-                "endpoint" : "/api/v1/client/register"
+                "endpoint": "/api/v1/client/register"
             },
             "DeleteEdgeClient": {
-                "endpoint" : "/api/v1/client/delete"
+                "endpoint": "/api/v1/client/delete"
             },
             "GetCert": {
-                "endpoint" : "/api/v1/client/cert/get"
+                "endpoint": "/api/v1/client/cert/get"
             },
             "RenewCert": {
                 "endpoint": "/api/v1/client/cert/renew"
@@ -82,6 +82,23 @@
             },
             "GetStats": {
                 "endpoint": "/api/v1/client/stats"
+            }
+        },
+        "LocalClients": {
+            "CreateLocalClient": {
+                "endpoint": "/api/v1/local/register"
+            },
+            "DeleteLocalClient": {
+                "endpoint": "/api/v1/local/delete"
+            },
+            "GetCert": {
+                "endpoint": "/api/v1/local/cert/get"
+            },
+            "RenewCert": {
+                "endpoint": "/api/v1/local/cert/renew"
+            },
+            "RevokeCert": {
+                "endpoint": "/api/v1/local/cert/revoke"
             }
         }
     }
