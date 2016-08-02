@@ -84,7 +84,7 @@
                 "endpoint": "/api/v1/client/stats"
             }
         },
-        "LocalClients": {
+        "LocalClient": {
             "CreateLocalClient": {
                 "endpoint": "/api/v1/local/register"
             },
