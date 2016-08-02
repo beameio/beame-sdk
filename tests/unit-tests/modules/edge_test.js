@@ -72,7 +72,7 @@ function run() {
 
 
 				done()
-			});
+			}, true);
 
 		});
 		//

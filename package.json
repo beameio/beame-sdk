@@ -44,6 +44,7 @@
     "jmespath": "^0.15.0",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
+    "network": "^0.2.1",
     "node-rsa": "^0.4.0",
     "node-uuid": "^1.4.7",
     "pem": "^1.8.3",

@@ -5,6 +5,7 @@
 var path       = require('path');
 var request    = require('request');
 var _          = require('underscore');
+var network    = require('network');
 var beameStore = new (require('../services/BeameStore'))();
 var config     = require('../../config/Config');
 
@@ -344,5 +345,17 @@ module.exports = {
 	 */
 	onSearchFailed: function (callback, message) {
 		callback && callback(message, null);
+	},
+
+	/** local network**/
+	getLocalActiveInterface: function (callback) {
+		network.get_active_interface(function (error, obj) {
+			if (!error && obj && obj.ip_address) {
+				callback(null, obj.ip_address);
+			}
+			else {
+				callback(error, null);
+			}
+		});
 	}
 };
