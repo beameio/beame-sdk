@@ -55,8 +55,7 @@ var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hos
 	else {
 		app = https.createServer(options);
 	}
-
-	app.listen(0, function (options) {
+	app.listen(0, "127.0.0.1", function (options) {
 		function onLocalServerCreated(data) {
 			if (hostOnlineCallback) {
 				serverInfo = data;
