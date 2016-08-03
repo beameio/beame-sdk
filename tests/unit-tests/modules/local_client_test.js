@@ -1,25 +1,20 @@
 /**
- * Created by zenit1 on 17/07/2016.
+ * Created by zenit1 on 03/08/2016.
  */
-var config       = require('../test_config');
-var options      = config.options;
-var assert       = config.assert;
-var beameUtils   = config.beameUtils;
-var edgeServices = config.edgeServices;
+
+var config = require('../test_config');
+var options = config.options;
+var assert = config.assert;
+var beameUtils = config.beameUtils;
+var localClientServices = config.localClientServices;
 var dataServices = config.dataServices;
 var globalConfig = require('../../../config/Config');
-var localClientTest = require('./local_client_test');
-
-/**
- * CMD to run from console
- *  env edge_fqdn=[edge_fqdn] npm run test_edge
- **/
 
 function run() {
-	describe('Test Edge Client flow', function () {
+	describe('Test Local Client flow', function () {
 		this.timeout(1000000);
 
-		var atomHostname, edgeClientHostname, name, edgeClientDirPath;
+		var atomHostname, edgeClientHostname, localClientHostname, name, localClientDirPath;
 
 		before(function (done) {
 
@@ -32,48 +27,68 @@ function run() {
 
 			console.log(atomHostname);
 
+			edgeClientHostname = process.env.edge_client_fqdn;
+
+			assert.isDefined(edgeClientHostname, 'Atom hostname required');
+			assert.isNotNull(edgeClientHostname, 'Atom hostname required');
+
+			console.log('##### edge client fqdn',edgeClientHostname);
+
+
 			done()
 		});
 
-		it('Should create edge', function (done) {
+		it('Should create local client', function (done) {
 
-			var rnd = beameUtils.randomString(8);
-			name    = 'test-edge-' + rnd;
+			console.log('############ creating local client: edg client is %j for atom %j ############', edgeClientHostname, atomHostname);
 
-			console.log('############ creating edge %j for atom %j ############', name, atomHostname);
+			beameUtils.getLocalActiveInterface(function(error,localIp){
+				"use strict";
 
-
-			edgeServices.createEdgeClient(atomHostname, function (error, payload) {
-
-				console.log('############ create edge response received with payload %j and error %j ############', payload, error);
-
-				//validate payload & error
 				assert.isNull(error, error && error.message);
-				assert.isNotNull(payload, error && error.message);
+				assert.isNotNull(localIp, error && error.message);
 
-				//validate hostname
-				edgeClientHostname = payload["hostname"];
-				assert.isNotNull(edgeClientHostname, 'Edge hostname mismatch');
-				process.env.edge_client_fqdn = edgeClientHostname;
+				if(localIp){
+					localClientServices.createLocalClient(atomHostname, localIp, edgeClientHostname , function (error, payload) {
 
-				//validate path
-				edgeClientDirPath = beameUtils.findHostPathSync(edgeClientHostname);
-				assert.isNotNull(edgeClientDirPath, `Edge ${edgeClientHostname} directory not found`);
+						console.log('############ create local client response received with payload %j and error %j ############', payload, error);
 
-				//validate certificate structure
-				var certsCreated = dataServices.validateHostCertsSync(edgeClientHostname, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
-				assert.isTrue(certsCreated, `Certificates mismatch for edge ${edgeClientHostname}`);
+						//validate payload & error
+						assert.isNull(error, error && error.message);
+						assert.isNotNull(payload, error && error.message);
 
-
-				//validate metadata json
-				var metadata = dataServices.getHostMetadataSync(edgeClientHostname);
-				assert.isNotNull(metadata, 'Metadata mismatch');
-
-				assert.equal(metadata["hostname"], edgeClientHostname, 'Metadata hostname is incorrect');
+						//validate hostname
+						localClientHostname = payload["hostname"];
+						assert.isNotNull(localClientHostname, 'Edge hostname mismatch');
 
 
-				done()
-			}, true);
+						//validate path
+						localClientDirPath = beameUtils.findHostPathSync(localClientHostname);
+						assert.isNotNull(localClientDirPath, `Edge ${localClientHostname} directory not found`);
+
+						//validate certificate structure
+						var certsCreated = dataServices.validateHostCertsSync(localClientHostname, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
+						assert.isTrue(certsCreated, `Certificates mismatch for edge ${localClientHostname}`);
+
+
+						//validate metadata json
+						var metadata = dataServices.getHostMetadataSync(localClientHostname);
+						assert.isNotNull(metadata, 'Metadata mismatch');
+
+						assert.equal(metadata["hostname"], localClientHostname, 'Metadata hostname is incorrect');
+
+
+						done()
+					}, true);
+				}
+				else{
+					done()
+				}
+
+			});
+
+
+
 
 		});
 		//
@@ -166,8 +181,6 @@ function run() {
 		// });
 
 	});
-
-	describe('Testing local client',localClientTest.run);
 }
 
 module.exports = {run};

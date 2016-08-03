@@ -18,7 +18,8 @@ var run = function(){
 			describe('Testing Atom process', function () {
 				atomTest.run();
 				for (var j = 0; j < options.atom_edges; j++) {
-					describe('Testing Edge process', edgeTest.run)
+					describe('Testing Edge process', edgeTest.run);
+
 				}
 			});
 		}

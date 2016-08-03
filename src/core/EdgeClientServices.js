@@ -229,7 +229,7 @@ EdgeClientServices.prototype.createEdgeClient = function (atomHostname, callback
 	debug(debugMsg);
 
 	if (_.isEmpty(atomHostname)) {
-		callback('Developer host required', null);
+		callback('Atom host required', null);
 		return;
 	}
 
