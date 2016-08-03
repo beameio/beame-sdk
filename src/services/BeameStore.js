@@ -31,6 +31,9 @@ var url         = require('url');
 
 var beameStoreInstance = null;
 
+var DEVELOPER_DATA_STRUCT = '{name:name, hostname:hostname, level:level, parent:""}';
+var CHILD_ENTITY_DATA_STRUCT = '{name:name, hostname:hostname, level:level, parent:parent_fqdn}';
+
 function BeameStore() {
 
 	if (beameStoreInstance) {
@@ -68,21 +71,21 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 
 	switch (level) {
 		case "developer": {
-			queryString = sprintf("[?(hostname=='%s' )|| (name =='%s' )].{name:name, hostname:hostname, level:level} ", searchItem, searchItem);
+			queryString = sprintf("[?(hostname=='%s' )|| (name =='%s' )]." + DEVELOPER_DATA_STRUCT, searchItem, searchItem);
 			break;
 		}
 
 		case "atom": {
-			queryString = sprintf("[].atom[?(hostname=='%s') || (name=='%s')].{name:name, hostname:hostname, level:level}| []", searchItem, searchItem);
+			queryString = sprintf("[].atom[?(hostname=='%s') || (name=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 
 		case "edgeclient": {
-			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s')].{name:name, hostname:hostname, level:level} | []", searchItem, searchItem);
+			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 		case "localclient": {
-			queryString = sprintf("[].atom[].localclient[?(hostname=='%s')].{name:name, hostname:hostname, level:level} | []", searchItem, searchItem);
+			queryString = sprintf("[].atom[].localclient[?(hostname=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 		default: {
@@ -113,6 +116,7 @@ BeameStore.prototype.searchAtoms = function (name) {
 		var qString = sprintf("[].atom[?hostname == '%s'] | []", item.hostname);
 		returnDict  = returnDict.concat(jmespath.search(this.beameStore, qString));
 	}, this));
+
 	return returnDict;
 };
 
@@ -167,19 +171,19 @@ BeameStore.prototype.searchItemAndParentFolderPath = function (fqdn) {
 };
 
 BeameStore.prototype.listCurrentDevelopers = function () {
-	return jmespath.search(this.beameStore, "[*].{name:name, hostname:hostname, level:level} | []");
+	return jmespath.search(this.beameStore, "[*]." + DEVELOPER_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.listCurrentAtoms = function () {
-	return jmespath.search(this.beameStore, "[*].atom[*].{name:name, hostname:hostname, level:level} | []");
+	return jmespath.search(this.beameStore, "[*].atom[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.listCurrentEdges = function () {
-	return jmespath.search(this.beameStore, "[].atom[].edgeclient[*].{name:name, hostname:hostname, level:level} | []");
+	return jmespath.search(this.beameStore, "[].atom[].edgeclient[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.listCurrentLocalClients = function () {
-	return jmespath.search(this.beameStore, "[].atom[].localclient[*].{name:name, hostname:hostname, level:level} | []");
+	return jmespath.search(this.beameStore, "[].atom[].localclient[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.ensureFreshBeameStore = function () {

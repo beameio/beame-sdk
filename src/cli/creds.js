@@ -77,11 +77,11 @@ function list(type, fqdn) {
 
 list.toText = function (creds) {
 	var table = new Table({
-		head:      ['name', 'hostname', 'level'],
-		colWidths: [15, 70, 15]
+		head:      ['name', 'hostname', 'level', 'parent'],
+		colWidths: [25, 55, 15, 55]
 	});
 	creds.forEach(item => {
-		table.push([item.name, item.hostname, item.level]);
+		table.push([item.name, item.hostname, item.level, item.parent]);
 	});
 	return table;
 };
