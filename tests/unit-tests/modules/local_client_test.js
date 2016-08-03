@@ -14,7 +14,7 @@ function run() {
 	describe('Test Local Client flow', function () {
 		this.timeout(1000000);
 
-		var atomHostname, edgeClientHostname, localClientHostname, name, localClientDirPath;
+		var atomHostname, edgeClientHostname, localClientHostname, localClientDirPath;
 
 		before(function (done) {
 
