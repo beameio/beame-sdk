@@ -8,7 +8,7 @@ var _    = require('underscore');
 var BeameStore = require("../services/BeameStore");
 
 var commands = {};
-_.each(['creds', 'servers', 'crypto', 'system'], function (cmdName) {
+_.each(['creds', 'servers', 'serversLocalIp', 'crypto', 'system'], function (cmdName) {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 
@@ -23,12 +23,13 @@ var parametersSchema = {
 	'format':         {required: false, options: ['text', 'json'], default: 'text'},
 	'fqdn':           {required: false},
 	'signature':      {required: true},
-	'type':           {required: false, options: ['developer', 'atom', 'edgeclient']},
+	'type':           {required: false, options: ['developer', 'atom', 'edgeclient','localclient']},
 	'uid':            {required: true},
 	'targetFqdn':     {required: true},
 	'file':           {required: false},
 	'count':          {required: false, default: 1},
-	'sharedFolder':   {required: false}
+	'sharedFolder':   {required: false},
+	'localIp':		  {required: true}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

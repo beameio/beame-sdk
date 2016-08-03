@@ -152,13 +152,14 @@ function createEdgeClient(atomFqdn, count, callback) {
 
 createEdgeClient.toText = lineToText;
 
-function createLocalClient(atomFqdn, count, localIp, edgeClientFqdn, callback) {
+function createLocalClient(atomFqdn, count, edgeClientFqdn, callback) {
 	if (count != 1) {
 		throw new Error("Count of not one is not supported yet");
 	}
+
 	for (var i = 0; i < count; i++) {
-		console.warn("Creating local client atomFqdn=%j, localIP=%j", atomFqdn,localIp);
-		localClientServices.createLocalClient(atomFqdn, localIp, edgeClientFqdn, _stdCallback(callback));
+		console.warn("Creating local client atomFqdn=%j", atomFqdn);
+		localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, _stdCallback(callback));
 	}
 }
 
