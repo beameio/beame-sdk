@@ -13,7 +13,7 @@ var localCertsDir = path.join(rootDir, 'v1', 'local');
 var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
 
 /** @const {String} **/
-var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
+var loadBalancerURL = process.env.BEAME_LB || "http://lb.beameio.net/";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";
