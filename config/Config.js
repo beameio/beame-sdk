@@ -7,10 +7,10 @@ var home = os.homedir();
 var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
 /** @const {String} **/
-var localCertsDir = path.join(rootDir, 'v1', 'local');
+var localCertsDir = path.join(rootDir, 'v2', 'local');
 
 /** @const {String} **/
-var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
+var remoteCertsDir = path.join(rootDir, 'v2', 'remote');
 
 /** @const {String} **/
 var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
