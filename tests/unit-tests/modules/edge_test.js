@@ -168,9 +168,9 @@ function run() {
 
 	});
 
-	describe('Testing local client',localClientsTest.run);
+	//describe('Testing local client',localClientsTest.run);
 
-	//describe('Testing local client',localClientTest.run);
+	describe('Testing local client',localClientTest.run);
 }
 
 module.exports = {run};

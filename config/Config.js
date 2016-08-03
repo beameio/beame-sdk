@@ -82,7 +82,7 @@ var ResponseKeys = {
 	"DeveloperCreateResponseKeys": ["hostname", "uid", "name", "email"],
 	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn"],
 	"EdgeClientResponseKeys":      ["uid", "hostname", "edgeHostname", "parent_fqdn"],
-	"LocalClientResponseKeys":     ["uid", "hostname", "parent_fqdn", "edge_client_fqdn"],
+	"LocalClientResponseKeys":     ["uid", "hostname", "parent_fqdn", "edge_client_fqdn", "local_ip"],
 	"CertificateResponseKeys":     ["x509", "pkcs7", "ca"],
 	"RevokeDevCertResponseKeys":   ["recovery_code"]
 };

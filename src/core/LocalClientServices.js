@@ -69,7 +69,6 @@ var isRequestValid = function (hostname, atomDir, localClientDir, validateEdgeHo
  */
 var registerLocalClient = function (atomHostname, localIp, edgeClientFqdn, callback) {
 	var atomDir;
-	var errMsg;
 
 	function onRequestValidated() {
 
@@ -89,6 +88,8 @@ var registerLocalClient = function (atomHostname, localIp, edgeClientFqdn, callb
 			if (!error) {
 				payload.parent_fqdn      = atomHostname;
 				payload.edge_client_fqdn = edgeClientFqdn ? edgeClientFqdn : "";
+				payload.local_ip         = localIp;
+
 
 				var localClientDir = beameUtils.makePath(atomDir, payload.hostname + '/');
 
@@ -217,17 +218,17 @@ LocalClientServices.prototype.createLocalClients = function (atomHostname, edgeC
 	}
 
 	beameUtils.getLocalActiveInterfaces().then(function (addresses) {
-		var errorMessage =null,isSuccess = true;
+		var errorMessage = null, isSuccess = true;
 		for (var i = 0; i < addresses.length; i++) {
-			self.createLocalClient(atomHostname,addresses[i],edgeClientFqdn,function(error){
-				if(error){
+			self.createLocalClient(atomHostname, addresses[i], edgeClientFqdn, function (error) {
+				if (error) {
 					errorMessage += (error + ';');
 					isSuccess = false;
 				}
 			})
 		}
 
-		isSuccess ? callback(null, addresses.length +  ' local clients created') : callback(errorMessage,null);
+		isSuccess ? callback(null, addresses.length + ' local clients created') : callback(errorMessage, null);
 	}, function (error) {
 		callbacks(error, null);
 	})

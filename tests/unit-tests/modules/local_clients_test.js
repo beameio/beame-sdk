@@ -3,18 +3,15 @@
  */
 
 var config = require('../test_config');
-var options = config.options;
 var assert = config.assert;
-var beameUtils = config.beameUtils;
 var localClientServices = config.localClientServices;
-var dataServices = config.dataServices;
-var globalConfig = require('../../../config/Config');
+
 
 function run() {
 	describe('Test Local Client flow', function () {
 		this.timeout(1000000);
 
-		var atomHostname, edgeClientHostname, localClientHostname, name, localClientDirPath;
+		var atomHostname, edgeClientHostname;
 
 		before(function (done) {
 
