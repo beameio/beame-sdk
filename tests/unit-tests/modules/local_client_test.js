@@ -40,7 +40,7 @@ function run() {
 
 		it('Should create local client', function (done) {
 
-			console.log('############ creating local client: edg client is %j for atom %j ############', edgeClientHostname, atomHostname);
+			console.log('############ creating local client: edge client is %j for atom %j ############', edgeClientHostname, atomHostname);
 
 			beameUtils.getLocalActiveInterface(function(error,localIp){
 				"use strict";
