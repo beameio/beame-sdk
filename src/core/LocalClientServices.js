@@ -11,7 +11,7 @@ var dataServices = new (require('../services/DataServices'))();
 var beameUtils   = require('../utils/BeameUtils');
 var apiActions   = require('../../config/ApiConfig.json').Actions.LocalClient;
 
-var PATH_MISMATCH_DEFAULT_MSG = 'Local Client— folder not found';
+var PATH_MISMATCH_DEFAULT_MSG = 'Local Client folder not found';
 
 /**
  * @param {String} hostname
@@ -94,12 +94,12 @@ var registerLocalClient = function (atomHostname, localIp, edgeClientFqdn, callb
 
 				dataServices.createDir(localClientDir);
 
-				dataServices.savePayload(localClientDir, payload, config.ResponseKeys.LocalClientResponseKeys, config.AppModules.EdgeClient, function (error) {
+				dataServices.savePayload(localClientDir, payload, config.ResponseKeys.LocalClientResponseKeys, config.AppModules.LocalClient, function (error) {
 					if (!callback) return;
 
 					if (!error) {
 
-						dataServices.getNodeMetadataAsync(localClientDir, payload.hostname, config.AppModules.EdgeClient).then(function (metadata) {
+						dataServices.getNodeMetadataAsync(localClientDir, payload.hostname, config.AppModules.LocalClient).then(function (metadata) {
 							callback(null, metadata);
 						}, callback);
 					}
@@ -206,7 +206,7 @@ var LocalClientServices = function () {
  */
 LocalClientServices.prototype.createLocalClient = function (atomHostname, localIp, edgeClientFqdn, callback) {
 
-	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.DebugInfo, "Call Create Local Client", {
+	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.LocalClient, config.MessageCodes.DebugInfo, "Call Create Local Client", {
 		"atom": atomHostname
 	});
 	debug(debugMsg);

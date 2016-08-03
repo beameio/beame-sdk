@@ -21,6 +21,7 @@ var url         = require('url');
 // BeameStore.prototype.listCurrentDevelopers
 // BeameStore.prototype.listCurrentAtoms
 // BeameStore.prototype.listCurrentEdges
+// BeameStore.prototype.listCurrentLocalClients
 // There functions right now return all developers, atoms edges. Then with the search function you can query indivulal levels.
 //
 //
@@ -43,13 +44,15 @@ function BeameStore() {
 	this.listFunctions = [
 		{type: "developer", 'func': this.listCurrentDevelopers},
 		{type: "atom", 'func': this.listCurrentAtoms},
-		{type: "edgeclient", 'func': this.listCurrentEdges}
+		{type: "edgeclient", 'func': this.listCurrentEdges},
+		{type: "localclient", 'func': this.listCurrentLocalClients}
 	];
 
 	this.searchFunctions = [
 		{type: "developer", 'func': this.searchDevelopers},
 		{type: "atom", 'func': this.searchAtoms},
-		{type: "edgeclient", 'func': this.searchEdge}
+		{type: "edgeclient", 'func': this.searchEdge},
+		{type: "localclient", 'func':this.searchLocal}
 	];
 
 	beameStoreInstance = this;
@@ -76,6 +79,10 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 
 		case "edgeclient": {
 			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s')].{name:name, hostname:hostname, level:level} | []", searchItem, searchItem);
+			break;
+		}
+		case "localclient": {
+			queryString = sprintf("[].atom[].localclient[?(hostname=='%s')].{name:name, hostname:hostname, level:level} | []", searchItem, searchItem);
 			break;
 		}
 		default: {
@@ -120,6 +127,17 @@ BeameStore.prototype.searchEdge = function (name) {
 	return returnDict;
 };
 
+BeameStore.prototype.searchLocal = function (name) {
+	var names      = this.jsearch(name, "localclient");
+	var returnDict = [];
+
+	_.each(names, _.bind(function (item) {
+		var qString = sprintf("[].atom[].localclient[?hostname == '%s'] | []", item.hostname);
+		returnDict  = returnDict.concat(jmespath.search(this.beameStore, qString));
+	}, this));
+	return returnDict;
+};
+
 /**
  * @typedef {Object} ItemAndParentFolderPath
  * @param {String} path
@@ -158,6 +176,10 @@ BeameStore.prototype.listCurrentAtoms = function () {
 
 BeameStore.prototype.listCurrentEdges = function () {
 	return jmespath.search(this.beameStore, "[].atom[].edgeclient[*].{name:name, hostname:hostname, level:level} | []");
+};
+
+BeameStore.prototype.listCurrentLocalClients = function () {
+	return jmespath.search(this.beameStore, "[].atom[].localclient[*].{name:name, hostname:hostname, level:level} | []");
 };
 
 BeameStore.prototype.ensureFreshBeameStore = function () {

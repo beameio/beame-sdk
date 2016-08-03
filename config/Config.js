@@ -53,6 +53,7 @@ var AppModules = {
 	"Developer":    "Developer",
 	"Atom":         "Atom",
 	"EdgeClient":   "EdgeClient",
+	"LocalClient":  "LocalClient",
 	"ProvisionApi": "ProvisionApi",
 	"DataServices": "DataServices",
 	"UnitTest":     "UnitTest"
