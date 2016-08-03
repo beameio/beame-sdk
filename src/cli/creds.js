@@ -9,6 +9,7 @@ var config             = require('../../config/Config');
 var developerServices  = new (require('../core/DeveloperServices'))();
 var atomServices       = new (require('../core/AtomServices'))();
 var edgeClientServices = new (require('../core/EdgeClientServices'))();
+var localClientServices = new (require('../core/LocalClientServices'))();
 
 var path   = require('path');
 var fs     = require('fs');
@@ -22,6 +23,7 @@ module.exports = {
 	shred,
 	createAtom,
 	createEdgeClient,
+	createLocalClient,
 	createDeveloper,
 	exportCredentials,
 	importCredentials,
@@ -149,6 +151,19 @@ function createEdgeClient(atomFqdn, count, callback) {
 }
 
 createEdgeClient.toText = lineToText;
+
+function createLocalClient(atomFqdn, count, localIp, edgeClientFqdn, callback) {
+	if (count != 1) {
+		throw new Error("Count of not one is not supported yet");
+	}
+	for (var i = 0; i < count; i++) {
+		console.warn("Creating local client atomFqdn=%j, localIP=%j", atomFqdn,localIp);
+		localClientServices.createLocalClient(atomFqdn, localIp, edgeClientFqdn, _stdCallback(callback));
+	}
+}
+
+createLocalClient.toText = lineToText;
+
 
 function constructRelateivePathElements(item) {
 	var items  = [];
