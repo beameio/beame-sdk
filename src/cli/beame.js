@@ -23,12 +23,13 @@ var parametersSchema = {
 	'format':         {required: false, options: ['text', 'json'], default: 'text'},
 	'fqdn':           {required: false},
 	'signature':      {required: true},
-	'type':           {required: false, options: ['developer', 'atom', 'edgeclient']},
+	'type':           {required: false, options: ['developer', 'atom', 'edgeclient','localclient']},
 	'uid':            {required: true},
 	'targetFqdn':     {required: true},
 	'file':           {required: false},
-	'count':          {required: false, default: 1}
-
+	'count':          {required: false, default: 1},
+	'sharedFolder':   {required: false},
+	'localIp':		  {required: true}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

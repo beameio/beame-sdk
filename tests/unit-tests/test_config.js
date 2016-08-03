@@ -21,3 +21,4 @@ exports.dataServices = new (require('../../src/services/DataServices'))();
 exports.developerServices = new (require('../../src/core/DeveloperServices'))();
 exports.atomServices = new (require('../../src/core/AtomServices'))();
 exports.edgeServices = new (require('../../src/core/EdgeClientServices'))();
+exports.localClientServices = new (require('../../src/core/LocalClientServices'))();

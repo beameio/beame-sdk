@@ -2,7 +2,6 @@
  * Created by zenit1 on 04/07/2016.
  */
 'use strict';
-require('../utils/Globals');
 var debug = require("debug")("./src/services/AtomServices.js");
 var _     = require('underscore');
 
@@ -10,6 +9,8 @@ var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
 var beameUtils   = require('../utils/BeameUtils');
 var apiActions   = require('../../config/ApiConfig.json').Actions.AtomApi;
+var config       = require('../../config/Config');
+
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Atom folder not found';
 
@@ -27,12 +28,12 @@ var isRequestValid = function (hostname, devDir, atomDir, validateAppCerts) {
 		}
 
 		function getMetadata() {
-			beameUtils.getNodeMetadataAsync(atomDir || devDir, hostname, global.AppModules.Atom).then(onMetadataReceived, onValidationError);
+			dataServices.getNodeMetadataAsync(atomDir || devDir, hostname, config.AppModules.Atom).then(onMetadataReceived, onValidationError);
 		}
 
 		function validateAtomCerts() {
 			if (validateAppCerts) {
-				beameUtils.isNodeCertsExistsAsync(atomDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, hostname, global.AppModules.Developer).then(getMetadata, onValidationError);
+				dataServices.isNodeCertsExistsAsync(atomDir, config.ResponseKeys.NodeFiles, config.AppModules.Atom, hostname, config.AppModules.Developer).then(getMetadata, onValidationError);
 			}
 			else {
 				getMetadata();
@@ -40,7 +41,7 @@ var isRequestValid = function (hostname, devDir, atomDir, validateAppCerts) {
 		}
 
 		function validateDevCerts() {
-			beameUtils.isNodeCertsExistsAsync(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Atom, hostname, global.AppModules.Developer).then(validateAtomCerts).catch(onValidationError);
+			dataServices.isNodeCertsExistsAsync(devDir, config.ResponseKeys.NodeFiles, config.AppModules.Atom, hostname, config.AppModules.Developer).then(validateAtomCerts).catch(onValidationError);
 		}
 
 		if (_.isEmpty(hostname)) {
@@ -66,7 +67,7 @@ var registerAtom = function (developerHostname, atomName, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			name: atomName
@@ -83,11 +84,11 @@ var registerAtom = function (developerHostname, atomName, callback) {
 
 				dataServices.createDir(atomDir);
 
-				dataServices.savePayload(atomDir, payload, global.ResponseKeys.AtomCreateResponseKeys, global.AppModules.Atom, function (error) {
+				dataServices.savePayload(atomDir, payload, config.ResponseKeys.AtomCreateResponseKeys, config.AppModules.Atom, function (error) {
 					if (!callback) return;
 
 					if (!error) {
-						beameUtils.getNodeMetadataAsync(atomDir, payload.hostname, global.AppModules.Atom).then(function (metadata) {
+						dataServices.getNodeMetadataAsync(atomDir, payload.hostname, config.AppModules.Atom).then(function (metadata) {
 							callback(null, metadata);
 						}, callback);
 					}
@@ -135,7 +136,7 @@ var getCert = function (developerHostname, atomHostname, callback) {
 		dataServices.createCSR(atomDir, atomHostname).then(
 			function onCsrCreated(csr) {
 
-				provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+				provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 				var postData = {
 					csr: csr,
@@ -198,7 +199,7 @@ var AtomServices = function () {
  * @param {Function} callback
  */
 AtomServices.prototype.createAtom = function (developerHostname, atomName, callback) {
-	var debugMsg = global.formatDebugMessage(global.AppModules.Atom, global.MessageCodes.DebugInfo, "Call Create Atom", {
+	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.Atom, config.MessageCodes.DebugInfo, "Call Create Atom", {
 		"developer": developerHostname,
 		"name":      atomName
 	});
@@ -242,7 +243,7 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated(metadata) {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			hostname: atomHostname,
@@ -254,7 +255,7 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
 		provisionApi.runRestfulAPI(apiData, function (error) {
 			if (!error) {
 				metadata.name = atomName;
-				dataServices.saveFile(atomDir, global.metadataFileName, beameUtils.stringify(metadata));
+				dataServices.saveFile(atomDir, config.metadataFileName, beameUtils.stringify(metadata));
 				callback && callback(null, metadata);
 			}
 			else {
@@ -292,7 +293,7 @@ AtomServices.prototype.deleteAtom = function (atomHostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			hostname: atomHostname
@@ -348,9 +349,9 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
-		dataServices.createCSR(atomDir, atomHostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
+		dataServices.createCSR(atomDir, atomHostname, config.CertFileNames.TEMP_PRIVATE_KEY).then(
 			function onCsrCreated(csr) {
 
 				var postData = {
@@ -363,7 +364,7 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
 
-						dataServices.renameFile(atomDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
+						dataServices.renameFile(atomDir, config.CertFileNames.TEMP_PRIVATE_KEY, config.CertFileNames.PRIVATE_KEY, function (error) {
 							if (!error) {
 								dataServices.saveCerts(beameUtils.makePath(atomDir, '/'), payload, callback);
 							}
@@ -375,7 +376,7 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 					}
 					else {
 
-						dataServices.deleteFile(atomDir, global.CertFileNames.TEMP_PRIVATE_KEY);
+						dataServices.deleteFile(atomDir, config.CertFileNames.TEMP_PRIVATE_KEY);
 
 						console.error(error);
 						callback(error, null);
@@ -417,7 +418,7 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			hostname: atomHostname
@@ -467,7 +468,7 @@ AtomServices.prototype.getStats = function (atomHostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			hostname: atomHostname

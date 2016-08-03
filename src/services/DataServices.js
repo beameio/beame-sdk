@@ -2,13 +2,22 @@
  * Created by zenit1 on 03/07/2016.
  */
 'use strict';
-require('../utils/Globals');
+
 var path   = require('path');
 var debug  = require("debug")("./src/services/DataServices.js");
 var fs     = require('fs');
 var exec   = require('child_process').exec;
 var async  = require('async');
 var rimraf = require('rimraf');
+var _      = require('underscore');
+var config = require('../../config/Config');
+
+var beameStore = new (require('../services/BeameStore'))();
+var beameUtils = require('../utils/BeameUtils');
+
+/** @const {String} */
+var csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
+
 
 /**------------------------ private methods ---------------------**/
 function randomPassword(length) {
@@ -48,14 +57,14 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 		/* --------- generate RSA key: ------------------------------------------------*/
 		var cmd = "openssl genrsa 2048";
 
-		debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
+		debug(beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
 
 		exec(cmd, function (error, stdout, stderr) {
 			var devPK = stdout;
 
 			if (error !== null) {
 				/* -------  put error handler to deal with possible openssl failure -----------*/
-				errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
+				errMsg = beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
 					"error":  error,
 					"stderr": stderr
 				});
@@ -64,14 +73,14 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 				return;
 			}
 
-			var pkFileName = pkName || global.CertFileNames.PRIVATE_KEY;
+			var pkFileName = pkName || config.CertFileNames.PRIVATE_KEY;
 
 			var pkFile = path.join(dirPath, pkFileName);
 
 			self.saveFile(dirPath, pkFileName, devPK, function (error) {
 				if (!error) {
-					cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (global.csrSubj + hostname) + "\"";
-					debug(global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.DebugInfo, "generating CSR with", {"cmd": cmd}));
+					cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (csrSubj + hostname) + "\"";
+					debug(beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.DebugInfo, "generating CSR with", {"cmd": cmd}));
 
 					try {
 						exec(cmd,
@@ -83,7 +92,7 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 							 */
 							function (error, stdout, stderr) {
 								if (error !== null) {
-									errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Failed to generate CSR", {
+									errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.OpenSSLError, "Failed to generate CSR", {
 										"error":  error,
 										"stderr": stderr
 									});
@@ -97,13 +106,13 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 							});
 					}
 					catch (error) {
-						errMsg = global.formatDebugMessage(global.AppModules.ProvisionApi, global.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
+						errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
 						console.error(errMsg);
 						reject(errMsg);
 					}
 				}
 				else {
-					errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.OpenSSLError, "Failed to save Private Key", {
+					errMsg = beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.OpenSSLError, "Failed to save Private Key", {
 						"error":  error,
 						"stderr": stderr
 					});
@@ -138,7 +147,7 @@ DataServices.prototype.savePayload = function (dirPath, payload, keys, level, ca
 			data[keys[i]] = payload[keys[i]];
 		}
 		else {
-			var errMsg = global.formatDebugMessage(level, global.MessageCodes.InvalidPayload, "payload key missing", {
+			var errMsg = beameUtils.formatDebugMessage(level, config.MessageCodes.InvalidPayload, "payload key missing", {
 				"payload": payload,
 				"key":     keys[i]
 			});
@@ -148,7 +157,8 @@ DataServices.prototype.savePayload = function (dirPath, payload, keys, level, ca
 		}
 	}
 
-	self.saveFile(dirPath, global.metadataFileName, JSON.stringify(data, null, 2), callback);
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
+	self.saveFile(dirPath, config.metadataFileName, JSON.stringify(data, null, 2), callback);
 };
 
 /**
@@ -163,14 +173,14 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 
 	var saveCert = function (responseField, targetName, callback) {
 		if (!payload[responseField]) {
-			errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, responseField + " missing in API response", {"path": dirPath});
+			errMsg = beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.ApiRestError, responseField + " missing in API response", {"path": dirPath});
 			callback(errMsg, null);
 		}
 
 		//save cert
 		self.saveFileAsync(path.join(dirPath, targetName), payload[responseField], function (error) {
 			if (error) {
-				errMsg = global.formatDebugMessage(global.AppModules.DataServices, global.MessageCodes.ApiRestError, "Saving " + responseField + " failed", {"path": dirPath});
+				errMsg = beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.ApiRestError, "Saving " + responseField + " failed", {"path": dirPath});
 				console.error(errMsg);
 				callback(errMsg, null);
 				return;
@@ -183,13 +193,13 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 	async.parallel(
 		[
 			function (callback) {
-				saveCert(global.CertRespponseFields.x509, global.CertFileNames.X509, callback);
+				saveCert(config.CertResponseFields.x509, config.CertFileNames.X509, callback);
 			},
 			function (callback) {
-				saveCert(global.CertRespponseFields.ca, global.CertFileNames.CA, callback);
+				saveCert(config.CertResponseFields.ca, config.CertFileNames.CA, callback);
 			},
 			function (callback) {
-				saveCert(global.CertRespponseFields.pkcs7, global.CertFileNames.PKCS7, callback);
+				saveCert(config.CertResponseFields.pkcs7, config.CertFileNames.PKCS7, callback);
 			}
 
 		],
@@ -203,12 +213,12 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 			async.parallel(
 				[
 					function (callback) {
-						exec('openssl pkcs7 -print_certs -in ' + dirPath + global.CertFileNames.PKCS7, function (error, stdout) {
+						exec("openssl pkcs7 -print_certs -in " + dirPath + config.CertFileNames.PKCS7, function (error, stdout) {
 							if (error) {
 								callback(error, null);
 								return;
 							}
-							self.saveFileAsync(path.join(dirPath, global.CertFileNames.P7B), stdout, function (error) {
+							self.saveFileAsync(path.join(dirPath, config.CertFileNames.P7B), stdout, function (error) {
 								error ? callback(error, null) : callback(null, true);
 							});
 						});
@@ -216,7 +226,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 					function (callback) {
 						var pwd = randomPassword();
 
-						var cmd = "openssl pkcs12 -export -in " + path.join(dirPath, global.CertFileNames.X509) + " -certfile " + path.join(dirPath, global.CertFileNames.CA) + " -inkey " + path.join(dirPath, global.CertFileNames.PRIVATE_KEY) + " -password pass:'" + pwd + "' -out " + path.join(dirPath + global.CertFileNames.PKCS12);
+						var cmd = "openssl pkcs12 -export -in " + path.join(dirPath, config.CertFileNames.X509) + " -certfile " + path.join(dirPath, config.CertFileNames.CA) + " -inkey " + path.join(dirPath, config.CertFileNames.PRIVATE_KEY) + " -password pass:\"" + pwd + "\" -out " + path.join(dirPath + config.CertFileNames.PKCS12);
 
 						try {
 							exec(cmd, function (error) {
@@ -224,7 +234,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 									callback(error, null);
 									return;
 								}
-								self.saveFileAsync(path.join(dirPath, global.CertFileNames.PWD), pwd, function (error) {
+								self.saveFileAsync(path.join(dirPath, config.CertFileNames.PWD), pwd, function (error) {
 									error ? callback(error, null) : callback(null, true);
 								});
 							});
@@ -277,7 +287,7 @@ DataServices.prototype.isNodeFilesExists = function (dirPath, nodeFiles, module)
 	var self = this;
 	for (var i = 0; i < nodeFiles.length; i++) {
 		if (!self.isPathExists(path.join(dirPath, nodeFiles[i]))) {
-			console.error(global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, "cert missing", {
+			console.error(beameUtils.formatDebugMessage(module, config.MessageCodes.NodeFilesMissing, "cert missing", {
 				"path": dirPath,
 				"file": nodeFiles[i]
 			}));
@@ -362,7 +372,6 @@ DataServices.prototype.renameFile = function (dirPath, oldName, newName, cb) {
 
 };
 
-
 /**
  *
  * @param {String} dirPath
@@ -381,6 +390,132 @@ DataServices.prototype.saveFileAsync = function (dirPath, data, cb) {
 };
 
 /**
+ * try read metadata file for node
+ * @param {String} devDir
+ * @param {String} hostname
+ * @param {String} module
+ * @returns {Promise.<Object>}
+ */
+DataServices.prototype.getNodeMetadataAsync = function (devDir, hostname, module) {
+	var self = this;
+
+	return new Promise(function (resolve, reject) {
+
+		var developerMetadataPath = beameUtils.makePath(devDir, config.metadataFileName);
+		var metadata              = self.readJSON(developerMetadataPath);
+
+		if (_.isEmpty(metadata)) {
+			var errorJson = beameUtils.formatDebugMessage(module, config.MessageCodes.MetadataEmpty, "metadata.json for is empty", {"hostname": hostname});
+			console.error(errorJson);
+			reject(errorJson);
+		}
+		else {
+			resolve(metadata);
+		}
+
+	});
+};
+
+/**
+ *
+ * @param {String} path
+ * @param {String} module
+ * @param {String} hostname
+ * @returns {Promise}
+ */
+DataServices.prototype.isHostnamePathValidAsync = function (path, module, hostname) {
+	var self = this;
+
+	return new Promise(function (resolve, reject) {
+
+		if (!self.isPathExists(path)) {//provided invalid hostname
+			var errMsg = self.formatDebugMessage(module, config.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
+			console.error(errMsg);
+			reject(errMsg);
+		}
+		else {
+			resolve(true);
+		}
+	});
+};
+
+/**
+ *
+ * @param {String} hostname
+ * @param {Array} nodeFiles
+ * @param {String} module
+ * @returns {boolean}
+ */
+DataServices.prototype.validateHostCertsSync = function (hostname, nodeFiles, module) {
+	var self = this;
+
+	var data = beameStore.searchItemAndParentFolderPath(hostname);
+	if (!_.isEmpty(data)) {
+		var path = data['path'];
+
+		if (!path) return false;
+
+		return self.isNodeFilesExists(path, nodeFiles, module);
+	}
+	else {
+		return false;
+	}
+};
+
+/**
+ *
+ * @param {String} path
+ * @param {Array} nodeFiles
+ * @param {String} module
+ * @param {String} hostname
+ * @param {String} nodeLevel => Developer | Atom | EdgeClient
+ * @returns {Promise}
+ */
+DataServices.prototype.isNodeCertsExistsAsync = function (path, nodeFiles, module, hostname, nodeLevel) {
+	var self = this;
+
+	return new Promise(function (resolve, reject) {
+
+		if (!self.isNodeFilesExists(path, nodeFiles, module)) {
+			var errMsg = beameUtils.formatDebugMessage(module, config.MessageCodes.NodeFilesMissing, nodeLevel + " files not found", {
+				"level":    nodeLevel,
+				"hostname": hostname
+			});
+			console.error(errMsg);
+			reject(errMsg);
+		}
+		else {
+			resolve(true);
+		}
+	});
+};
+
+/**
+ *
+ * @param {String} hostname
+ * @returns {Object}
+ */
+DataServices.prototype.getHostMetadataSync = function (hostname) {
+	var self = this;
+	var data = beameStore.searchItemAndParentFolderPath(hostname);
+	if (!_.isEmpty(data)) {
+		var path = data['path'];
+
+		if (!path) return false;
+
+		var metadataPath = beameUtils.makePath(path, config.metadataFileName);
+		var metadata     = self.readJSON(metadataPath);
+
+		return _.isEmpty(metadata) ? null : metadata;
+
+	}
+	else {
+		return null;
+	}
+
+};
+
+/**
  * read JSON file
  * @param {String} dirPath
  */
@@ -388,6 +523,7 @@ DataServices.prototype.readJSON = function (dirPath) {
 	if (this.isPathExists(dirPath)) {
 		try {
 			var file = fs.readFileSync(dirPath);
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			return JSON.parse(file);
 		}
 		catch (error) {

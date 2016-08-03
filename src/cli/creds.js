@@ -4,11 +4,12 @@ var debug = require("debug")("cred_api");
 var Table = require('cli-table2');
 var x509  = require('x509');
 
-var store = new (require("../services/BeameStore"))();
-require('./../utils/Globals');
+var store              = new (require("../services/BeameStore"))();
+var config             = require('../../config/Config');
 var developerServices  = new (require('../core/DeveloperServices'))();
 var atomServices       = new (require('../core/AtomServices'))();
 var edgeClientServices = new (require('../core/EdgeClientServices'))();
+var localClientServices = new (require('../core/LocalClientServices'))();
 
 var path   = require('path');
 var fs     = require('fs');
@@ -22,6 +23,7 @@ module.exports = {
 	shred,
 	createAtom,
 	createEdgeClient,
+	createLocalClient,
 	createDeveloper,
 	exportCredentials,
 	importCredentials,
@@ -75,11 +77,11 @@ function list(type, fqdn) {
 
 list.toText = function (creds) {
 	var table = new Table({
-		head:      ['name', 'hostname', 'level'],
-		colWidths: [15, 70, 15]
+		head:      ['name', 'hostname', 'level', 'parent'],
+		colWidths: [25, 55, 15, 55]
 	});
 	creds.forEach(item => {
-		table.push([item.name, item.hostname, item.level]);
+		table.push([item.name, item.hostname, item.level, item.parent]);
 	});
 	return table;
 };
@@ -109,6 +111,15 @@ createTestDeveloper.toText = lineToText;
 
 if (developerServices.canCreateDeveloper()) {
 	module.exports.createTestDeveloper = createTestDeveloper;
+}
+
+function registerDeveloper(developerName, developerEmail, callback) {
+	developerServices.registerDeveloper(developerName, developerEmail, _stdCallback(callback));
+}
+registerDeveloper.toText = lineToText;
+
+if (developerServices.canRegisterDeveloper()) {
+	module.exports.registerDeveloper = registerDeveloper;
 }
 
 function createAtom(developerFqdn, atomName, count, callback) {
@@ -141,6 +152,20 @@ function createEdgeClient(atomFqdn, count, callback) {
 
 createEdgeClient.toText = lineToText;
 
+function createLocalClient(atomFqdn, count, edgeClientFqdn, callback) {
+	if (count != 1) {
+		throw new Error("Count of not one is not supported yet");
+	}
+
+	for (var i = 0; i < count; i++) {
+		console.warn("Creating local client atomFqdn=%j", atomFqdn);
+		localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, _stdCallback(callback));
+	}
+}
+
+createLocalClient.toText = lineToText;
+
+
 function constructRelateivePathElements(item) {
 	var items  = [];
 	var upShot = item;
@@ -162,8 +187,7 @@ function importNonBeameCredentials(fqdn) {
 		var certBody       = "-----BEGIN CERTIFICATE-----\r\n";
 		certBody += buffer.toString("base64");
 		certBody += "-----END CERTIFICATE-----";
-		var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
-		//var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+		var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
 
 		mkdirp(path.parse(remoteCertPath).dir);
 		fs.writeFileSync(remoteCertPath, certBody);
@@ -177,7 +201,7 @@ function exportCredentials(fqdn, targetFqdn, file) {
 	creds.edgeclient      = {};
 	creds.atom            = {};
 	creds['relativePath'] = relativePath;
-	creds.path            = creds.path.replace(global.devPath, "");
+	creds.path            = creds.path.replace(config.localCertsDir, "");
 
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var jsonString = JSON.stringify(creds);

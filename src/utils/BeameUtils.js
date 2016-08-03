@@ -2,13 +2,66 @@
  * Created by zenit1 on 03/07/2016.
  */
 'use strict';
-require('./Globals');
-var path         = require('path');
-var request      = require('request');
-var _            = require('underscore');
-var dataServices = new (require('../services/DataServices'))();
-var beameStore   = new (require('../services/BeameStore'))();
+var path       = require('path');
+var request    = require('request');
+var _          = require('underscore');
+var network    = require('network');
+var os = require('os');
+var beameStore = new (require('../services/BeameStore'))();
+var config     = require('../../config/Config');
 
+
+/**
+ * @typedef {Object} AwsRegion
+ * @property {String} Name
+ * @property {String} Code
+ */
+
+/**
+ * @type {AwsRegion[]}
+ */
+var AwsRegions = [
+	{
+		"Name": "EU (Ireland)",
+		"Code": "eu-west-1"
+	},
+	{
+		"Name": "Asia Pacific (Singapore)",
+		"Code": "ap-southeast-1"
+	},
+	{
+		"Name": "Asia Pacific (Sydney)",
+		"Code": "ap-southeast-2"
+	},
+	{
+		"Name": "EU (Frankfurt)",
+		"Code": "eu-central-1"
+	},
+	{
+		"Name": "Asia Pacific (Seoul)",
+		"Code": "ap-northeast-2"
+	},
+	{
+		"Name": "Asia Pacific (Tokyo)",
+		"Code": "ap-northeast-1"
+	},
+	{
+		"Name": "US East (N. Virginia)",
+		"Code": "us-east-1"
+	},
+	{
+		"Name": "South America (S?o Paulo)",
+		"Code": "sa-east-1"
+	},
+	{
+		"Name": "US West (N. California)",
+		"Code": "us-west-1"
+	},
+	{
+		"Name": "US West (Oregon)",
+		"Code": "us-west-2"
+	}
+];
 
 /**
  * @typedef {Object} AuthData
@@ -32,6 +85,14 @@ var beameStore   = new (require('../services/BeameStore'))();
  */
 
 /**
+ * @typedef {Object} DebugMessage
+ * @param {String} module
+ * @param {String} code
+ * @param {String} message
+ * @param {Object} data
+ */
+
+/**
  * @typedef {Object} ValidationResult
  * @param {boolean} isValid
  * @param {DebugMessage} message
@@ -39,8 +100,23 @@ var beameStore   = new (require('../services/BeameStore'))();
 
 module.exports = {
 
-	makePath: function (baseDir, folder) {
-		return path.join(baseDir, folder);
+	makePath: path.join,
+
+	/**
+	 *
+	 * @param {String} module
+	 * @param {String} code
+	 * @param {String} message
+	 * @param {Object} data
+	 * @returns {typeof DebugMessage}
+	 */
+	formatDebugMessage: function (module, code, message, data) {
+		return {
+			module,
+			code,
+			message,
+			data
+		};
 	},
 
 	/**
@@ -136,7 +212,7 @@ module.exports = {
 		var consoleMessage;
 
 		if (retries == 0) {
-			consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
+			consoleMessage = self.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
 			console.error(consoleMessage);
 			callback && callback(consoleMessage, null);
 		}
@@ -151,7 +227,9 @@ module.exports = {
 				 */
 				function (error, data) {
 					if (data) {
+						//noinspection JSUnresolvedVariable
 						var region = getRegionName(data.instanceData.endpoint);
+						//noinspection JSUnresolvedVariable
 						/** @type {EdgeShortData} edge **/
 						var edge   = {
 							endpoint: data.instanceData.endpoint,
@@ -167,7 +245,7 @@ module.exports = {
 
 						sleep = parseInt(sleep * (Math.random() + 1.5));
 
-						consoleMessage = global.formatDebugMessage(global.AppModules.EdgeClient, global.MessageCodes.EdgeLbError, "Retry to get lb instance", {
+						consoleMessage = self.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.EdgeLbError, "Retry to get lb instance", {
 							"sleep":   sleep,
 							"retries": retries
 						});
@@ -188,6 +266,7 @@ module.exports = {
 	 * @param {Object} obj
 	 */
 	stringify: function (obj) {
+		//noinspection NodeModulesDependencies,ES6ModulesDependencies
 		return JSON.stringify(obj, null, 2);
 	},
 
@@ -209,131 +288,9 @@ module.exports = {
 
 	//validation services
 
-	/**
-	 * try read metadata file for node
-	 * @param {String} devDir
-	 * @param {String} hostname
-	 * @param {String} module
-	 * @returns {Promise.<Object>}
-	 */
-	getNodeMetadataAsync: function (devDir, hostname, module) {
-		var self = this;
-
-		return new Promise(function (resolve, reject) {
-
-			var developerMetadataPath = self.makePath(devDir, global.metadataFileName);
-			var metadata              = dataServices.readJSON(developerMetadataPath);
-
-			if (_.isEmpty(metadata)) {
-				var errorJson = global.formatDebugMessage(module, global.MessageCodes.MetadataEmpty, "metadata.json for is empty", {"hostname": hostname});
-				console.error(errorJson);
-				reject(errorJson);
-			}
-			else {
-				resolve(metadata);
-			}
-
-		});
-	},
-
-	/**
-	 *
-	 * @param {String} hostname
-	 * @returns {Object}
-	 */
-	getHostMetadataSync: function (hostname) {
-		var self = this;
-		var data = beameStore.searchItemAndParentFolderPath(hostname);
-		if (!_.isEmpty(data)) {
-			var path = data['path'];
-
-			if (!path) return false;
-
-			var metadataPath = self.makePath(path, global.metadataFileName);
-			var metadata     = dataServices.readJSON(metadataPath);
-
-			return _.isEmpty(metadata) ? null : metadata;
-
-		}
-		else {
-			return null;
-		}
-
-	},
-
-	/**
-	 *
-	 * @param {String} path
-	 * @param {String} module
-	 * @param {String} hostname
-	 * @returns {Promise}
-	 */
-	isHostnamePathValidAsync: function (path, module, hostname) {
-
-		return new Promise(function (resolve, reject) {
-
-			if (!dataServices.isPathExists(path)) {//provided invalid hostname
-				var errMsg = global.formatDebugMessage(module, global.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
-				console.error(errMsg);
-				reject(errMsg);
-			}
-			else {
-				resolve(true);
-			}
-		});
-	},
-
-	/**
-	 *
-	 * @param {String} path
-	 * @param {Array} nodeFiles
-	 * @param {String} module
-	 * @param {String} hostname
-	 * @param {String} nodeLevel => Developer | Atom | EdgeClient
-	 * @returns {Promise}
-	 */
-	isNodeCertsExistsAsync: function (path, nodeFiles, module, hostname, nodeLevel) {
-
-		return new Promise(function (resolve, reject) {
-
-			if (!dataServices.isNodeFilesExists(path, nodeFiles, module)) {
-				var errMsg = global.formatDebugMessage(module, global.MessageCodes.NodeFilesMissing, nodeLevel + " files not found", {
-					"level":    nodeLevel,
-					"hostname": hostname
-				});
-				console.error(errMsg);
-				reject(errMsg);
-			}
-			else {
-				resolve(true);
-			}
-		});
-	},
-
 	deleteHostCerts: function (fqdn, callback) {
 		beameStore.shredCredentials(fqdn, callback || function () {
 			});
-	},
-
-	/**
-	 *
-	 * @param {String} hostname
-	 * @param {Array} nodeFiles
-	 * @param {String} module
-	 * @returns {boolean}
-	 */
-	validateHostCertsSync: function (hostname, nodeFiles, module) {
-		var data = beameStore.searchItemAndParentFolderPath(hostname);
-		if (!_.isEmpty(data)) {
-			var path = data['path'];
-
-			if (!path) return false;
-
-			return dataServices.isNodeFilesExists(path, nodeFiles, module);
-		}
-		else {
-			return false;
-		}
 	},
 
 	/**
@@ -372,7 +329,6 @@ module.exports = {
 
 	},
 
-
 	/** ---------- Validation  shared services **/
 	/**
 	 *
@@ -390,5 +346,39 @@ module.exports = {
 	 */
 	onSearchFailed: function (callback, message) {
 		callback && callback(message, null);
+	},
+
+	/** local network**/
+	getLocalActiveInterface: function (callback) {
+		network.get_active_interface(function (error, obj) {
+			if (!error && obj && obj.ip_address) {
+				callback(null, obj.ip_address);
+			}
+			else {
+				callback(error, null);
+			}
+		});
+	},
+
+
+	getLocalActiveInterfaces : function(){
+		return new Promise(function (resolve, reject) {
+
+			var addresses = [];
+
+			var ifaces = os.networkInterfaces();
+
+			Object.keys(ifaces).forEach(function (ifname) {
+
+				ifaces[ifname].forEach(function (iface) {
+					if(iface.family === 'IPv4' && iface.internal === false){
+						addresses.push(iface.address);
+					}
+
+				});
+			});
+
+			addresses.length > 0 ? resolve(addresses) : reject('Local interfaces not found');
+		});
 	}
 };

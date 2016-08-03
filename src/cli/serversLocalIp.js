@@ -20,7 +20,7 @@ var defaultSharedFolder = path.resolve(__dirname, "../../examples/public/shared"
 var defaultPublicDir    = path.resolve(__dirname, "../../examples/public");
 function HttpsServerTestStart(edgeClientFqdn) {
 	console.warn("Starting server %j", edgeClientFqdn);
-	new BeameServer(edgeClientFqdn, null, null, function (data, app) {
+	new BeameServer(edgeClientFqdn, null, false, function (data, app) {
 		debug("BeameServer callback got %j", data);
 		app.on("request", function (req, resp) {
 			resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});

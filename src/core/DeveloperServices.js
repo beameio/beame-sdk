@@ -5,12 +5,14 @@
 
 var fs = require('fs');
 
-require('../utils/Globals');
+var config  = require('../../config/Config');
 var debug   = require("debug")("./src/services/DeveloperServices.js");
 var _       = require('underscore');
 var path    = require('path');
-var homedir = global.__homedir;
-var devPath = global.devPath;
+var os      = require('os');
+var home    = os.homedir();
+var homedir = home;
+var devPath = config.localCertsDir;
 
 new (require('../services/BeameStore'))();
 
@@ -18,6 +20,11 @@ var provisionApi = new (require('../services/ProvisionApi'))();
 var dataServices = new (require('../services/DataServices'))();
 var beameUtils   = require('../utils/BeameUtils');
 var apiActions   = require('../../config/ApiConfig.json').Actions.DeveloperApi;
+
+var authData = {
+	"PK_PATH":   "/authData/pk.pem",
+	"CERT_PATH": "/authData/x509.pem"
+};
 
 /**
  * @typedef {Object} CompleteRegistrationRequestToken
@@ -45,7 +52,7 @@ var PATH_MISMATCH_DEFAULT_MSG = 'Developer folder not found';
  * @returns {String}
  */
 var makeDeveloperDir = function (hostname) {
-	return beameUtils.makePath(devPath, hostname + '/');
+	return beameUtils.makePath(config.localCertsDir, hostname + '/');
 };
 
 var isRequestValid = function (hostname, devDir) {
@@ -60,11 +67,11 @@ var isRequestValid = function (hostname, devDir) {
 		}
 
 		function getMetadata() {
-			beameUtils.getNodeMetadataAsync(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived, onValidationError);
+			dataServices.getNodeMetadataAsync(devDir, hostname, config.AppModules.Developer).then(onMetadataReceived, onValidationError);
 		}
 
 		function validateDevCerts() {
-			beameUtils.isNodeCertsExistsAsync(devDir, global.ResponseKeys.NodeFiles, global.AppModules.Developer, hostname, global.AppModules.Developer).then(getMetadata).catch(onValidationError);
+			dataServices.isNodeCertsExistsAsync(devDir, config.ResponseKeys.NodeFiles, config.AppModules.Developer, hostname, config.AppModules.Developer).then(getMetadata).catch(onValidationError);
 		}
 
 		if (_.isEmpty(hostname)) {
@@ -84,7 +91,7 @@ var isRequestValid = function (hostname, devDir) {
  */
 var saveDeveloper = function (email, developerName, callback) {
 
-	provisionApi.setAuthData(beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH));
+	provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
 
 	var postData = {
 		name:  developerName,
@@ -103,11 +110,11 @@ var saveDeveloper = function (email, developerName, callback) {
 
 			dataServices.createDir(devDir);
 
-			dataServices.savePayload(devDir, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
+			dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, config.AppModules.Developer, function (error) {
 				if (!callback) return;
 
 				if (!error) {
-					beameUtils.getNodeMetadataAsync(devDir, payload.hostname, global.AppModules.Developer).then(function (metadata) {
+					dataServices.getNodeMetadataAsync(devDir, payload.hostname, config.AppModules.Developer).then(function (metadata) {
 						callback(null, metadata);
 					}, callback);
 				}
@@ -136,7 +143,7 @@ var getCert = function (hostname, callback) {
 	var devDir = beameUtils.makePath(devPath, hostname + "/");
 
 	if (_.isEmpty(hostname)) {
-		errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
+		errMsg = beameUtils.formatDebugMessage(config.AppModules.Developer, config.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
 		//console.error(errMsg);
 		callback && callback(errMsg, null);
 		return;
@@ -148,7 +155,7 @@ var getCert = function (hostname, callback) {
 		dataServices.createCSR(devDir, hostname).then(
 			function onCsrCreated(csr) {
 
-				provisionApi.setAuthData(beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH));
+				provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
 
 				var postData = {
 					csr: csr,
@@ -178,10 +185,10 @@ var getCert = function (hostname, callback) {
 
 	function getDeveloperMetadata() {
 		/*---------- read developer data and proceed -------------*/
-		beameUtils.getNodeMetadataAsync(devDir, hostname, global.AppModules.Developer).then(onMetadataReceived).catch(beameUtils.onValidationError.bind(null, callback));
+		dataServices.getNodeMetadataAsync(devDir, hostname, config.AppModules.Developer).then(onMetadataReceived).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.isHostnamePathValidAsync(devDir, global.AppModules.Developer, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
+	dataServices.isHostnamePathValidAsync(devDir, config.AppModules.Developer, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
 };
 
 /**
@@ -193,14 +200,14 @@ var DeveloperServices = function () {
 };
 
 /**
- * Register developer => Receive developer Certs => Update developer profile
+ * Create developer => Receive developer Certs => Update developer profile
  * @param {String} developerName
  * @param {String} developerEmail
  * @param {Function} callback
  */
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
 
-	var debugMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.DebugInfo, "Call Create Developer", {
+	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.Developer, config.MessageCodes.DebugInfo, "Call Create Developer", {
 		"name":  developerName,
 		"email": developerEmail
 	});
@@ -227,11 +234,21 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
 	});
 };
 
+/**
+ *
+ * @returns {boolean}
+ */
 DeveloperServices.prototype.canCreateDeveloper = function () {
 
-	var t = beameUtils.getAuthToken(homedir, global.authData.PK_PATH, global.authData.CERT_PATH);
+	var t = beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH);
 	return fs.existsSync(t.x509) && fs.existsSync(t.pk);
 };
+
+/**
+ *
+ * @returns {boolean}
+ */
+DeveloperServices.prototype.canRegisterDeveloper = DeveloperServices.prototype.canCreateDeveloper;
 
 /**
  *
@@ -243,7 +260,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 	var errMsg;
 
 	if (_.isEmpty(hostname)) {
-		errMsg = global.formatDebugMessage(global.AppModules.Developer, global.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
+		errMsg = beameUtils.formatDebugMessage(config.AppModules.Developer, config.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
 		//console.error(errMsg);
 		callback && callback(errMsg, null);
 		return;
@@ -261,11 +278,11 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 		email:    hostname
 	};
 
-	dataServices.savePayload(devDir, payload, global.ResponseKeys.DeveloperCreateResponseKeys, global.AppModules.Developer, function (error) {
+	dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, config.AppModules.Developer, function (error) {
 		if (!callback) return;
 
 		if (!error) {
-			beameUtils.getNodeMetadataAsync(devDir, payload.hostname, global.AppModules.Developer).then(onMetadataReceived, callback);
+			dataServices.getNodeMetadataAsync(devDir, payload.hostname, config.AppModules.Developer).then(onMetadataReceived, callback);
 		}
 		else {
 			callback(error, null);
@@ -320,7 +337,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated(metadata) {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			email: email,
@@ -335,7 +352,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
 				metadata.name  = postData.name;
 				metadata.email = email;
 
-				dataServices.saveFile(devDir, global.metadataFileName, beameUtils.stringify(metadata));
+				dataServices.saveFile(devDir, config.metadataFileName, beameUtils.stringify(metadata));
 
 				callback(null, metadata);
 			}
@@ -375,9 +392,9 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
-		dataServices.createCSR(devDir, hostname, global.CertFileNames.TEMP_PRIVATE_KEY).then(
+		dataServices.createCSR(devDir, hostname, config.CertFileNames.TEMP_PRIVATE_KEY).then(
 			function onCsrCreated(csr) {
 
 				var postData = {
@@ -389,7 +406,7 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
 
-						dataServices.renameFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY, global.CertFileNames.PRIVATE_KEY, function (error) {
+						dataServices.renameFile(devDir, config.CertFileNames.TEMP_PRIVATE_KEY, config.CertFileNames.PRIVATE_KEY, function (error) {
 							if (!error) {
 								dataServices.saveCerts(beameUtils.makePath(devDir, '/'), payload, callback);
 							}
@@ -401,7 +418,7 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 					}
 					else {
 
-						dataServices.deleteFile(devDir, global.CertFileNames.TEMP_PRIVATE_KEY);
+						dataServices.deleteFile(devDir, config.CertFileNames.TEMP_PRIVATE_KEY);
 
 						error.data.hostname = hostname;
 						//console.error(error);
@@ -440,7 +457,7 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 	var devDir;
 
 	function onRequestValidated() {
-		var recoveryData = dataServices.readJSON(beameUtils.makePath(devDir, global.CertFileNames.RECOVERY));
+		var recoveryData = dataServices.readJSON(beameUtils.makePath(devDir, config.CertFileNames.RECOVERY));
 
 		if (_.isEmpty(recoveryData)) {
 			callback('Recovery code not found', null);
@@ -462,7 +479,7 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 			provisionApi.runRestfulAPI(apiData, function (error, payload) {
 				if (!error) {
 
-					dataServices.deleteFile(devDir, global.CertFileNames.RECOVERY);
+					dataServices.deleteFile(devDir, config.CertFileNames.RECOVERY);
 
 					dataServices.saveCerts(beameUtils.makePath(devDir, '/'), payload, callback);
 				}
@@ -502,7 +519,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
 
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			hostname: hostname
@@ -515,7 +532,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 
 				beameUtils.deleteHostCerts(hostname);
 
-				dataServices.saveFile(devDir, global.CertFileNames.RECOVERY, beameUtils.stringify(payload), function (error) {
+				dataServices.saveFile(devDir, config.CertFileNames.RECOVERY, beameUtils.stringify(payload), function (error) {
 					if (!callback) return;
 
 					if (!error) {
@@ -561,7 +578,7 @@ DeveloperServices.prototype.getStats = function (hostname, callback) {
 
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
-		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, global.CertFileNames.PRIVATE_KEY, global.CertFileNames.X509));
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var apiData = beameUtils.getApiData(apiActions.GetStats.endpoint, {}, false);
 
@@ -581,6 +598,70 @@ DeveloperServices.prototype.getStats = function (hostname, callback) {
 
 	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
+};
+
+/**
+ * Register developer  process
+ * @param {String} developerName
+ * @param {String} developerEmail
+ * @param {Function} callback
+ */
+DeveloperServices.prototype.registerDeveloper = function (developerName, developerEmail, callback) {
+
+	provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
+
+	var postData = {
+		name:  developerName,
+		email: developerEmail
+	};
+
+	var apiData = beameUtils.getApiData(apiActions.RegisterDeveloper.endpoint, postData, true);
+
+	provisionApi.runRestfulAPI(apiData, function (error, payload) {
+		if (!error) {
+
+			payload.name  = developerName;
+			payload.email = developerEmail;
+
+			callback && callback(null, payload);
+
+		}
+		else {
+			//console.error(error);
+			callback && callback(error, null);
+		}
+
+	});
+};
+
+/**
+ *
+ * @param {TimeUnits} timeUnit
+ * @param {number} qty
+ * @param {Function} callback
+ */
+DeveloperServices.prototype.deleteTestDevelopers = function (timeUnit, qty, callback) {
+
+	provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
+
+	var postData = {
+		unit: timeUnit,
+		qty:  qty
+	};
+
+	var apiData = beameUtils.getApiData(apiActions.DeleteTestDevelopers.endpoint, postData, true);
+
+	provisionApi.runRestfulAPI(apiData, function (error) {
+		if (!error) {
+
+			callback && callback(null, 'done');
+
+		}
+		else {
+			callback && callback(error, null);
+		}
+
+	});
 };
 
 module.exports = DeveloperServices;

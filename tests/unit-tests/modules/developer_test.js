@@ -7,6 +7,7 @@ var assert = config.assert;
 var beameUtils = config.beameUtils;
 var dataServices = config.dataServices;
 var developerServices = config.developerServices;
+var globalConfig = require('../../../config/Config');
 
 function run() {
 	describe('Test Developer flow', function () {
@@ -42,12 +43,12 @@ function run() {
 				assert.isNotNull(developerDirPath, "Developer directory not found");
 
 				//validate certificate structure
-				var certsCreated = beameUtils.validateHostCertsSync(developerHostName, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+				var certsCreated = dataServices.validateHostCertsSync(developerHostName, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
 				assert.isTrue(certsCreated, 'Certificates mismatch');
 
 
 				//validate metadata json
-				var metadata = beameUtils.getHostMetadataSync(developerHostName);
+				var metadata = dataServices.getHostMetadataSync(developerHostName);
 				assert.isNotNull(metadata, 'Metadata mismatch');
 
 				assert.equal(metadata["hostname"], developerHostName, 'Metadata hostname is incorrect');
@@ -106,7 +107,7 @@ function run() {
 		// 			assert.isNotNull(payload, error && error.message);
 		//
 		// 			//validate recovery file
-		// 			var isRecoveryCodeExists = dataServices.isPathExists(beameUtils.makePath(developerDirPath, global.CertFileNames.RECOVERY));
+		// 			var isRecoveryCodeExists = dataServices.isPathExists(beameUtils.makePath(developerDirPath, globalConfig.CertFileNames.RECOVERY));
 		// 			assert.isTrue(isRecoveryCodeExists, 'Recovery code not found');
 		//
 		// 			done()
@@ -139,7 +140,7 @@ function run() {
 		// 			assert.isNotNull(payload, error && error.message);
 		//
 		// 			//validate certificate structure
-		// 			var certsCreated = beameUtils.validateHostCertsSync(developerHostName, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+		// 			var certsCreated = beameUtils.validateHostCertsSync(developerHostName, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
 		// 			assert.isTrue(certsCreated, 'Certificates mismatch');
 		//
 		// 			done()
@@ -172,7 +173,7 @@ function run() {
 		// 			assert.isNotNull(payload, error && error.message);
 		//
 		// 			//validate certificate structure
-		// 			var certsCreated = beameUtils.validateHostCertsSync(developerHostName, global.ResponseKeys.NodeFiles, global.AppModules.UnitTest);
+		// 			var certsCreated = beameUtils.validateHostCertsSync(developerHostName, globalConfig.ResponseKeys.NodeFiles, globalConfig.AppModules.UnitTest);
 		// 			assert.isTrue(certsCreated, 'Certificates mismatch');
 		//
 		// 			done()

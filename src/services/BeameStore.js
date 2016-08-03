@@ -1,11 +1,11 @@
 'use strict';
-var async = require('async');
-var exec  = require('child_process').exec;
-var fs    = require('fs');
-var _     = require('underscore');
-var os    = require('os');
-var debug = require("debug")("beamestore");
-require('./../utils/Globals');
+var async       = require('async');
+//var exec        = require('child_process').exec;
+var fs          = require('fs');
+var _           = require('underscore');
+var os          = require('os');
+var debug       = require("debug")("beamestore");
+var config      = require('../../config/Config');
 var jmespath    = require('jmespath');
 var beameDirApi = require('./BeameDirServices');
 var sprintf     = require('sprintf');
@@ -21,6 +21,7 @@ var url         = require('url');
 // BeameStore.prototype.listCurrentDevelopers
 // BeameStore.prototype.listCurrentAtoms
 // BeameStore.prototype.listCurrentEdges
+// BeameStore.prototype.listCurrentLocalClients
 // There functions right now return all developers, atoms edges. Then with the search function you can query indivulal levels.
 //
 //
@@ -30,29 +31,31 @@ var url         = require('url');
 
 var beameStoreInstance = null;
 
-function BeameStore(beamedir) {
+var DEVELOPER_DATA_STRUCT = '{name:name, hostname:hostname, level:level, parent:""}';
+var CHILD_ENTITY_DATA_STRUCT = '{name:name, hostname:hostname, level:level, parent:parent_fqdn}';
+
+function BeameStore() {
 
 	if (beameStoreInstance) {
 		return beameStoreInstance;
 	}
 
-	this.beamedir = beamedir || process.env.BEAME_DIR || global.globalPath;
-
-	mkdirp.sync(path.join(this.beamedir, "v1", 'local'));
-	mkdirp.sync(path.join(this.beamedir, "v1", 'remote'));
-	this.beamedir = path.join(this.beamedir, "v1", 'local');
+	mkdirp.sync(config.localCertsDir);
+	mkdirp.sync(config.remoteCertsDir);
 	this.ensureFreshBeameStore();
 
 	this.listFunctions = [
 		{type: "developer", 'func': this.listCurrentDevelopers},
 		{type: "atom", 'func': this.listCurrentAtoms},
-		{type: "edgeclient", 'func': this.listCurrentEdges}
+		{type: "edgeclient", 'func': this.listCurrentEdges},
+		{type: "localclient", 'func': this.listCurrentLocalClients}
 	];
 
 	this.searchFunctions = [
 		{type: "developer", 'func': this.searchDevelopers},
 		{type: "atom", 'func': this.searchAtoms},
-		{type: "edgeclient", 'func': this.searchEdge}
+		{type: "edgeclient", 'func': this.searchEdge},
+		{type: "localclient", 'func':this.searchLocal}
 	];
 
 	beameStoreInstance = this;
@@ -68,17 +71,21 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 
 	switch (level) {
 		case "developer": {
-			queryString = sprintf("[?(hostname=='%s' )|| (name =='%s' )].{name:name, hostname:hostname, level:level} ", searchItem, searchItem);
+			queryString = sprintf("[?(hostname=='%s' )|| (name =='%s' )]." + DEVELOPER_DATA_STRUCT, searchItem, searchItem);
 			break;
 		}
 
 		case "atom": {
-			queryString = sprintf("[].atom[?(hostname=='%s') || (name=='%s')].{name:name, hostname:hostname, level:level}| []", searchItem, searchItem);
+			queryString = sprintf("[].atom[?(hostname=='%s') || (name=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 
 		case "edgeclient": {
-			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s')].{name:name, hostname:hostname, level:level} | []", searchItem, searchItem);
+			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
+			break;
+		}
+		case "localclient": {
+			queryString = sprintf("[].atom[].localclient[?(hostname=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 		default: {
@@ -109,6 +116,7 @@ BeameStore.prototype.searchAtoms = function (name) {
 		var qString = sprintf("[].atom[?hostname == '%s'] | []", item.hostname);
 		returnDict  = returnDict.concat(jmespath.search(this.beameStore, qString));
 	}, this));
+
 	return returnDict;
 };
 
@@ -121,6 +129,26 @@ BeameStore.prototype.searchEdge = function (name) {
 		returnDict  = returnDict.concat(jmespath.search(this.beameStore, qString));
 	}, this));
 	return returnDict;
+};
+
+BeameStore.prototype.searchLocal = function (name) {
+	var names      = this.jsearch(name, "localclient");
+	var returnDict = [];
+
+	_.each(names, _.bind(function (item) {
+		var qString = sprintf("[].atom[].localclient[?hostname == '%s'] | []", item.hostname);
+		returnDict  = returnDict.concat(jmespath.search(this.beameStore, qString));
+	}, this));
+	return returnDict;
+};
+
+BeameStore.prototype.searchEdgeLocals = function (edgeClientFqdn) {
+
+	var queryString = sprintf("[].atom[].localclient[?(edge_client_fqdn=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", edgeClientFqdn);
+	var r = jmespath.search(this.beameStore, queryString);
+
+	return r;
+
 };
 
 /**
@@ -152,22 +180,26 @@ BeameStore.prototype.searchItemAndParentFolderPath = function (fqdn) {
 };
 
 BeameStore.prototype.listCurrentDevelopers = function () {
-	return jmespath.search(this.beameStore, "[*].{name:name, hostname:hostname, level:level} | []");
+	return jmespath.search(this.beameStore, "[*]." + DEVELOPER_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.listCurrentAtoms = function () {
-	return jmespath.search(this.beameStore, "[*].atom[*].{name:name, hostname:hostname, level:level} | []");
+	return jmespath.search(this.beameStore, "[*].atom[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.listCurrentEdges = function () {
-	return jmespath.search(this.beameStore, "[].atom[].edgeclient[*].{name:name, hostname:hostname, level:level} | []");
+	return jmespath.search(this.beameStore, "[].atom[].edgeclient[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
+};
+
+BeameStore.prototype.listCurrentLocalClients = function () {
+	return jmespath.search(this.beameStore, "[].atom[].localclient[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.ensureFreshBeameStore = function () {
-	var newHash = beameDirApi.generateDigest(this.beamedir);
+	var newHash = beameDirApi.generateDigest(config.localCertsDir);
 	if (this.digest !== newHash) {
-		debug("reading beamedir %j", this.beamedir);
-		this.beameStore = beameDirApi.readBeameDir(this.beamedir);
+		debug("reading beamedir %j", config.localCertsDir);
+		this.beameStore = beameDirApi.readBeameDir(config.localCertsDir);
 		this.digest     = newHash;
 	}
 };
@@ -217,7 +249,7 @@ BeameStore.prototype.list = function (type, name) {
 };
 
 BeameStore.prototype.getRemoteCertificate = function (fqdn) {
-	var remoteCertPath = path.join(global.globalPath, 'v1', 'remote', fqdn, 'x509.pem');
+	var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
 	var certBody       = "";
 	if (fs.existsSync(remoteCertPath)) {
 		certBody = fs.readFileSync(remoteCertPath);
@@ -225,8 +257,10 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 		var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
 		console.warn(`Getting certificate from ${requestPath}`);
 		var response = request('GET', requestPath);
+		//noinspection JSUnresolvedFunction
 		certBody     = response.getBody() + "";
 
+		//noinspection JSUnresolvedVariable
 		if (response.statusCode == 200) {
 			mkdirp(path.parse(remoteCertPath).dir);
 			console.warn("Saving file to %j", remoteCertPath);
@@ -237,23 +271,23 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 };
 
 BeameStore.prototype.importCredentials = function (data) {
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var credToImport = JSON.parse(data);
-	var host         = credToImport.hostname;
-	var targetPath   = global.devPath;
-
-	targetPath = path.join(global.devPath, credToImport.path);
+	//var host         = credToImport.hostname;
+	var targetPath   = path.join(config.localCertsDir, credToImport.path);
 	mkdirp(targetPath);
 
 	var metadata = {};
 	_.map(credToImport, function (value, key) {
-		if (global.CertFileNames[key]) {
-			var filepath = path.join(targetPath, global.CertFileNames[key]);
+		if (config.CertFileNames[key]) {
+			var filepath = path.join(targetPath, config.CertFileNames[key]);
 			fs.writeFileSync(filepath, new Buffer(value.data));
 
 		} else {
 			metadata[key] = value;
 		}
 	});
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	fs.writeFileSync(path.join(targetPath, "metadata.json"), JSON.stringify(metadata));
 	return true;
 };
