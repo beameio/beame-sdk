@@ -41,7 +41,8 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 	if (edgeCert.length != 1) {
 		throw new Error("Could not find certificate for " + host);
 	}
-	edgeCert    = edgeCert[0];
+	edgeCert            = edgeCert[0];
+	/** @type {typeof ServerCertificates} **/
 	var edgeClientCerts = {
 		key:  edgeCert.PRIVATE_KEY,
 		cert: edgeCert.P7B,
@@ -50,6 +51,7 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 
 	var srv = SNIServer.getSNIServer(config.SNIServerPort, requestListener);
 	srv.addFqdn(host, edgeClientCerts);
+
 	var edgeLocals = beamestore.searchEdgeLocals(host);
 	edgeLocals.forEach(edgeLocal => {
 		var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
