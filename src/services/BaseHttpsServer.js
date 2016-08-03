@@ -5,6 +5,8 @@ var https       = require("https");
 var ProxyClient = require("./ProxyClient");
 var BeameStore  = require("./BeameStore");
 
+var SNIServer  = require("./SNIServer");
+
 
 var debug      = require("debug")("SampleBeameServer");
 var beamestore = new BeameStore();
@@ -40,27 +42,28 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		throw new Error("Could not find certificate for " + host);
 	}
 	edgeCert    = edgeCert[0];
-	var options = {
+	var edgeClientCerts = {
 		key:  edgeCert.PRIVATE_KEY,
 		cert: edgeCert.P7B,
 		ca:   edgeCert.CA
 	};
 
-	var app = https.createServer(options, requestListener);
+	var srv = new SNIServer.getSNIServer(process.env.PORT || 8443, requestListener);
+	srv.addFqdn(host, edgeClientCerts);
 
-	app.listen(0, function (options) {
+	srv.start(function () {
 		function onLocalServerCreated(data) {
 			if (hostOnlineCallback) {
-				hostOnlineCallback(data, app);
+				hostOnlineCallback(data, srv.getServer());
 			}
 		}
 
 		//noinspection JSUnresolvedVariable
 		new ProxyClient("HTTPS", edgeCert.hostname,
 			edgeCert.edgeHostname, 'localhost',
-			app.address().port, {onLocalServerCreated: onLocalServerCreated},
-			undefined, options);
-	}.bind(null, options));
+			srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
+			null, edgeClientCerts);
+	});
 };
 
 module.exports = {SampleBeameServer: SampleBeameServer};
