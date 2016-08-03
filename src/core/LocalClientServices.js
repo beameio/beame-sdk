@@ -183,7 +183,7 @@ var getCert = function (atomHostname, localClientHostname, callback) {
 	function onEdgePathReceived(data) {
 
 		localClientDir = data['path'];
-		atomDir       = data['parent_path'];
+		atomDir        = data['parent_path'];
 
 		isRequestValid(atomHostname, atomDir, localClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -195,6 +195,42 @@ var getCert = function (atomHostname, localClientHostname, callback) {
 
 
 var LocalClientServices = function () {
+};
+
+/**
+ *
+ * @param {String} atomHostname
+ * @param {String|null|undefined} [edgeClientFqdn]
+ * @param {Function} callback
+ */
+LocalClientServices.prototype.createLocalClients = function (atomHostname, edgeClientFqdn, callback) {
+	var self = this;
+
+	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.LocalClient, config.MessageCodes.DebugInfo, "Call Create Local Clients", {
+		"atom": atomHostname
+	});
+	debug(debugMsg);
+
+	if (_.isEmpty(atomHostname)) {
+		callback('Atom host required', null);
+		return;
+	}
+
+	beameUtils.getLocalActiveInterfaces().then(function (addresses) {
+		var errorMessage =null,isSuccess = true;
+		for (var i = 0; i < addresses.length; i++) {
+			self.createLocalClient(atomHostname,addresses[i],edgeClientFqdn,function(error){
+				if(error){
+					errorMessage += (error + ';');
+					isSuccess = false;
+				}
+			})
+		}
+
+		isSuccess ? callback(null, addresses.length +  ' local clients created') : callback(errorMessage,null);
+	}, function (error) {
+		callbacks(error, null);
+	})
 };
 
 /**

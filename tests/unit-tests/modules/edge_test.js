@@ -9,6 +9,7 @@ var edgeServices = config.edgeServices;
 var dataServices = config.dataServices;
 var globalConfig = require('../../../config/Config');
 var localClientTest = require('./local_client_test');
+var localClientsTest = require('./local_clients_test');
 
 /**
  * CMD to run from console
@@ -167,7 +168,9 @@ function run() {
 
 	});
 
-	describe('Testing local client',localClientTest.run);
+	describe('Testing local client',localClientsTest.run);
+
+	//describe('Testing local client',localClientTest.run);
 }
 
 module.exports = {run};

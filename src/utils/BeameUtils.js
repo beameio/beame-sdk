@@ -6,6 +6,7 @@ var path       = require('path');
 var request    = require('request');
 var _          = require('underscore');
 var network    = require('network');
+var os = require('os');
 var beameStore = new (require('../services/BeameStore'))();
 var config     = require('../../config/Config');
 
@@ -356,6 +357,28 @@ module.exports = {
 			else {
 				callback(error, null);
 			}
+		});
+	},
+
+
+	getLocalActiveInterfaces : function(){
+		return new Promise(function (resolve, reject) {
+
+			var addresses = [];
+
+			var ifaces = os.networkInterfaces();
+
+			Object.keys(ifaces).forEach(function (ifname) {
+
+				ifaces[ifname].forEach(function (iface) {
+					if(iface.family === 'IPv4' && iface.internal === false){
+						addresses.push(iface.address);
+					}
+
+				});
+			});
+
+			addresses.length > 0 ? resolve(addresses) : reject('Local interfaces not found');
 		});
 	}
 };
