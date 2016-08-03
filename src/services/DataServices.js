@@ -213,7 +213,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 			async.parallel(
 				[
 					function (callback) {
-						exec('openssl pkcs7 -print_certs -in ' + dirPath + config.CertFileNames.PKCS7, function (error, stdout) {
+						exec("openssl pkcs7 -print_certs -in " + dirPath + config.CertFileNames.PKCS7, function (error, stdout) {
 							if (error) {
 								callback(error, null);
 								return;
@@ -226,7 +226,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 					function (callback) {
 						var pwd = randomPassword();
 
-						var cmd = "openssl pkcs12 -export -in " + path.join(dirPath, config.CertFileNames.X509) + " -certfile " + path.join(dirPath, config.CertFileNames.CA) + " -inkey " + path.join(dirPath, config.CertFileNames.PRIVATE_KEY) + " -password pass:'" + pwd + "' -out " + path.join(dirPath + config.CertFileNames.PKCS12);
+						var cmd = "openssl pkcs12 -export -in " + path.join(dirPath, config.CertFileNames.X509) + " -certfile " + path.join(dirPath, config.CertFileNames.CA) + " -inkey " + path.join(dirPath, config.CertFileNames.PRIVATE_KEY) + " -password pass:\"" + pwd + "\" -out " + path.join(dirPath + config.CertFileNames.PKCS12);
 
 						try {
 							exec(cmd, function (error) {
