@@ -3,9 +3,11 @@
 
 ##  Beame.io SDK provides you with easy-to-use tools to access a device without a public IP address, with SSL certificates issued specifically for the device.  We also make it easy and fast to programatically obtain publicly trusted certs and use them as needed for any purpose. 
 
-You can expose your local machine, deploy a service literally without any network configation, and now you can host a public server without a DMZ
+You can expose your local machine, deploy a service literally without any network configation, and now you can host a public server without a DMZ;
 
-The certificates are signed by a publicly trusted CA, similar to any other site that uses HTTPS.
+The certificates are signed by a publicly trusted CA, similar to any other site that uses HTTPS;
+
+The SDK supports both global and local computer network interfaces.
 
 You get:
 
@@ -111,6 +113,7 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificate details
 * `beame creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under current *developer*
 * `beame creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]` - create *edge client* entity under the given *atom*
+* `beame creds createLocalClient --atomFqdn atomFqdn [--count count] --edgeClientFqdn edgeClientFqdn [--format {text|json}]` - create *local client* entity under the given atom paired to existing *edge client*
 * `beame creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 * `beame creds purge [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
 
