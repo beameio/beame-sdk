@@ -17,6 +17,7 @@ class SNIServer {
 		this.started = false;
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	start(callback) {
 		if(this.started) {
 			return;
@@ -56,14 +57,14 @@ class SNIServer {
 		}
 		cb(null, this.getSecureContext(servername));
 	}
-};
+}
 
 function getSNIServer(port, requestListener) {
 	if(!servers[port]) {
 		servers[port] = new SNIServer(port, requestListener);
 	}
 	return servers[port];
-};
+}
 
 module.exports = {
 	getSNIServer

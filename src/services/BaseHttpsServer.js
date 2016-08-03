@@ -48,7 +48,7 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		ca:   edgeCert.CA
 	};
 
-	var srv = new SNIServer.getSNIServer(process.env.PORT || 8443, requestListener);
+	var srv = SNIServer.getSNIServer(process.env.PORT || 8443, requestListener);
 	srv.addFqdn(host, edgeClientCerts);
 
 	srv.start(function () {
