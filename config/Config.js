@@ -98,6 +98,8 @@ var TimeUnits = {
 	"Day":    "d"
 };
 
+var SNIServerPort = process.env.SNI_SERVER_PORT || 8443;
+
 module.exports = {
 	rootDir,
 	localCertsDir,
@@ -109,5 +111,6 @@ module.exports = {
 	AppModules,
 	MessageCodes,
 	ResponseKeys,
-	TimeUnits
+	TimeUnits,
+	SNIServerPort
 };

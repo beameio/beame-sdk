@@ -142,6 +142,15 @@ BeameStore.prototype.searchLocal = function (name) {
 	return returnDict;
 };
 
+BeameStore.prototype.searchEdgeLocals = function (edgeClientFqdn) {
+
+	var queryString = sprintf("[].atom[].localclient[?(edge_client_fqdn=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", edgeClientFqdn);
+	var r = jmespath.search(this.beameStore, queryString);
+
+	return r;
+
+};
+
 /**
  * @typedef {Object} ItemAndParentFolderPath
  * @param {String} path

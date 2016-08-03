@@ -4,8 +4,8 @@ var fs = require('fs');
 var https       = require("https");
 var ProxyClient = require("./ProxyClient");
 var BeameStore  = require("./BeameStore");
-
-var SNIServer  = require("./SNIServer");
+var SNIServer   = require("./SNIServer");
+var config      = require('../../config/Config');
 
 
 var debug      = require("debug")("SampleBeameServer");
@@ -48,8 +48,17 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		ca:   edgeCert.CA
 	};
 
-	var srv = SNIServer.getSNIServer(process.env.PORT || 8443, requestListener);
+	var srv = SNIServer.getSNIServer(config.SNIServerPort, requestListener);
 	srv.addFqdn(host, edgeClientCerts);
+	var edgeLocals = beamestore.searchEdgeLocals(host);
+	edgeLocals.forEach(edgeLocal => {
+		var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
+		srv.addFqdn(edgeLocalData.hostname, {
+			key:  edgeLocalData.PRIVATE_KEY,
+			cert: edgeLocalData.P7B,
+			ca:   edgeLocalData.CA
+		});
+	});
 
 	srv.start(function () {
 		function onLocalServerCreated(data) {

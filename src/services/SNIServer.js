@@ -30,9 +30,10 @@ class SNIServer {
 
 	getServer() { return this.server; };
 
-	getPort() { return this.port; };
+	getPort() { return this.server.address().port; };
 
 	addFqdn(fqdn, certs) {
+		// console.log('fqdn=%j certs=%j', fqdn, Object.keys(certs));
 		if(this.hosts[fqdn]) {
 			// console.warn(`SNIServer: fqdn ${fqdn} is already registered`);
 			return;
