@@ -36,8 +36,6 @@ var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hos
 		host = instanceHostname;
 	}
 	var edgeCert = beamestore.search(host);
-	var serverInfo;
-	var app;
 	if (edgeCert.length != 1) {
 		throw new Error("Could not find certificate for " + host);
 	}
@@ -48,20 +46,12 @@ var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hos
 		ca:   edgeCert.CA
 	};
 
-	if (usrExpress) {
-		var xprsApp = https.createServer(options, usrExpress);
-		app         = xprsApp.listen.apply(xprsApp);
-	}
-	else {
-		app = https.createServer(options);
-	}
+	var app = https.createServer(options, usrExpress ? usrExpress : null);
 
 	app.listen(0, function (options) {
 		function onLocalServerCreated(data) {
 			if (hostOnlineCallback) {
-				serverInfo = data;
 				hostOnlineCallback(data, app);
-//				console.error(data); //user undfriendly printout
 			}
 		}
 
