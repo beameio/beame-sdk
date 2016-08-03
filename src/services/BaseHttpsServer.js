@@ -13,11 +13,11 @@ var beamestore = new BeameStore();
  *
  * @param {String|null|undefined} [instanceHostname]
  * @param {String|null|undefined} [projectName]
- * @param {Boolean} usrExpress
+ * @param {Function} requestListener
  * @param {Function} hostOnlineCallback
  * @constructor
  */
-var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hostOnlineCallback) {
+var SampleBeameServer = function (instanceHostname, projectName, requestListener, hostOnlineCallback) {
 	if (!instanceHostname && !projectName) {
 		throw new Error('instance hostname or project name required');
 	}
@@ -46,7 +46,7 @@ var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hos
 		ca:   edgeCert.CA
 	};
 
-	var app = https.createServer(options, usrExpress ? usrExpress : null);
+	var app = https.createServer(options, requestListener);
 
 	app.listen(0, function (options) {
 		function onLocalServerCreated(data) {
