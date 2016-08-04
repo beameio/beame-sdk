@@ -49,7 +49,7 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		ca:   edgeCert.CA
 	};
 
-	var srv = SNIServer.getSNIServer(config.SNIServerPort, requestListener);
+	var srv = SNIServer.get(config.SNIServerPort, requestListener);
 	srv.addFqdn(host, edgeClientCerts);
 
 	var edgeLocals = beamestore.searchEdgeLocals(host);

@@ -65,15 +65,13 @@ class SNIServer {
 		}
 		cb(null, this.getSecureContext(servername));
 	}
-}
 
-function getSNIServer(port, requestListener) {
-	if(!servers[port]) {
-		servers[port] = new SNIServer(port, requestListener);
+	static get(port, requestListener) {
+		if(!servers[port]) {
+			servers[port] = new SNIServer(port, requestListener);
+		}
+		return servers[port];
 	}
-	return servers[port];
 }
 
-module.exports = {
-	getSNIServer
-};
+module.exports = SNIServer;
