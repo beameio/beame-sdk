@@ -120,7 +120,8 @@ The following commands are used for acquiring and manipulating certificates.
 ### Beame.io CLI - running test server
 
 * `beame servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run a HTTPS server for the specified hostname
-
+* `beame.js servers startFirstBeameNode [--sharedFolder sharedFolder]` - run chat example for first hostname in creds list
+* `beame.js servers startBeameNode [--sharedFolder sharedFolder] --edgeClientFqdn edgeClientFqdn` - run chat example for the specified hostname
 ### Beame.io CLI - encryption
 
 * `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity can decrypt it
