@@ -25,7 +25,14 @@ class SNIServer {
 		this.server = https.createServer({
 			SNICallback: this.SNICallback.bind(this),
 		}, this.requestListener);
+
 		this.server.listen(this.port, callback);
+
+		Object.keys(this.hosts).forEach(function (host) {
+			console.warn(`server started on ${host}`)
+		});
+
+		this.started = true;
 	}
 
 	getServer() { return this.server; };
