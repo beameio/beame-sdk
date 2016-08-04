@@ -73,6 +73,15 @@ function runTestBeameServer(hostname) {
 	});
 }
 
+var startBeameNode = function (sharedFolder, edgeClientFqdn) {
+	if (sharedFolder) {
+		console.warn("Custom folder specified");
+		defaultSharedFolder = path.resolve(sharedFolder);
+	}
+	runTestBeameServer(edgeClientFqdn);
+	edgeClientCreated = true;
+};
+
 var startFirstBeameNode = function (sharedFolder) {
 
 	if (sharedFolder) {
@@ -126,6 +135,7 @@ var startFirstBeameNode = function (sharedFolder) {
 
 module.exports = {
 	HttpsServerTestStart: HttpsServerTestStart,
-	                      startFirstBeameNode
+	                      startFirstBeameNode,
+							startBeameNode
 
 };

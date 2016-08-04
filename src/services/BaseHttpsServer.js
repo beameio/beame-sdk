@@ -70,10 +70,15 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		}
 
 		//noinspection JSUnresolvedVariable
-		new ProxyClient("HTTPS", edgeCert.hostname,
-			edgeCert.edgeHostname, 'localhost',
-			srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
-			null, edgeClientCerts);
+		if(edgeCert.hostname.indexOf(".r.")>0){
+			new ProxyClient("HTTPS", edgeCert.hostname,
+				edgeCert.edgeHostname, 'localhost',
+				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
+				null, edgeClientCerts);
+		}
+		else{
+			onLocalServerCreated(null);
+		}
 	});
 };
 
