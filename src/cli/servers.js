@@ -49,9 +49,12 @@ function runTestBeameServer(hostname) {
 		appExpress.use(express.static(defaultPublicDir));
 
 		var serveIndex = require('serve-index');
-
-		console.warn('Server started on https://' + hostname + " this is a publicly accessible address");
-		appExpress.use('/shared', serveIndex(defaultSharedFolder, {'icons': true}));
+		if(hostname.indexOf(".r.")>0)
+			console.warn('Server started on https://' + hostname + " this is a publicly accessible address");
+		else
+			console.warn('Server started on https://' + hostname + ":8443 this is an address on local network");
+		appExpress.use('/shared',express.static(defaultSharedFolder));
+		appExpress.use('/shared',serveIndex(defaultSharedFolder, {'icons': true}));
 		console.warn("****************************************************************************************************");
 		console.warn("*****************************SERVER **********************STARTED***********************************");
 		console.warn("Server Local Directory " + defaultSharedFolder);
@@ -76,7 +79,7 @@ function runTestBeameServer(hostname) {
 var startBeameNode = function (sharedFolder, edgeClientFqdn) {
 	if (sharedFolder) {
 		console.warn("Custom folder specified");
-		defaultSharedFolder = path.resolve(sharedFolder);
+		defaultSharedFolder = path.normalize(sharedFolder+"/");
 	}
 	runTestBeameServer(edgeClientFqdn);
 	edgeClientCreated = true;
@@ -86,7 +89,7 @@ var startFirstBeameNode = function (sharedFolder) {
 
 	if (sharedFolder) {
 		console.warn("Custom folder specified");
-		defaultSharedFolder = path.resolve(sharedFolder);
+		defaultSharedFolder = path.normalize(sharedFolder+"/");
 	}
 
 	if (developers.length == 0) {

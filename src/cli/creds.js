@@ -163,8 +163,6 @@ function createLocalClient(atomFqdn, count, edgeClientFqdn, callback) {
 	}
 }
 
-createLocalClient.toText = lineToText;
-
 
 function constructRelateivePathElements(item) {
 	var items  = [];

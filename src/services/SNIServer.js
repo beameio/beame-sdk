@@ -28,9 +28,9 @@ class SNIServer {
 
 		this.server.listen(this.port, callback);
 
-		Object.keys(this.hosts).forEach(function (host) {
+		for(let host in this.hosts) {
 			console.warn(`starting server on ${host}`)
-		});
+		};
 
 		this.started = true;
 	}
@@ -65,15 +65,13 @@ class SNIServer {
 		}
 		cb(null, this.getSecureContext(servername));
 	}
-}
 
-function getSNIServer(port, requestListener) {
-	if(!servers[port]) {
-		servers[port] = new SNIServer(port, requestListener);
+	static get(port, requestListener) {
+		if(!servers[port]) {
+			servers[port] = new SNIServer(port, requestListener);
+		}
+		return servers[port];
 	}
-	return servers[port];
 }
 
-module.exports = {
-	getSNIServer
-};
+module.exports = SNIServer;
