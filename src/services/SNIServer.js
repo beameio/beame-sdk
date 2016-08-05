@@ -28,9 +28,9 @@ class SNIServer {
 
 		this.server.listen(this.port, callback);
 
-		Object.keys(this.hosts).forEach(function (host) {
+		for(let host in this.hosts) {
 			console.warn(`starting server on ${host}`)
-		});
+		};
 
 		this.started = true;
 	}
