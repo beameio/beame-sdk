@@ -7,7 +7,7 @@ var _    = require('underscore');
 
 var BeameStore = require("../services/BeameStore");
 var config  = require('../../config/Config');
-var module_name = config.AppModules.BeameSDKCli;
+const module_name = config.AppModules.BeameSDKCli;
 var logger  = new (require('../utils/Logger'))(module_name);
 var commands = {};
 _.each(['creds', 'servers', 'crypto', 'system'], function (cmdName) {

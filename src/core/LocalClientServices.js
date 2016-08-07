@@ -3,13 +3,14 @@
  */
 'use strict';
 
-var config       = require('../../config/Config');
-var debug        = require("debug")("./src/services/LocalClientServices.js");
-var _            = require('underscore');
-var provisionApi = new (require('../services/ProvisionApi'))();
-var dataServices = new (require('../services/DataServices'))();
-var beameUtils   = require('../utils/BeameUtils');
-var apiActions   = require('../../config/ApiConfig.json').Actions.LocalClient;
+var config        = require('../../config/Config');
+const module_name = config.AppModules.LocalClient;
+var logger        = new (require('../utils/Logger'))(module_name);
+var _             = require('underscore');
+var provisionApi  = new (require('../services/ProvisionApi'))();
+var dataServices  = new (require('../services/DataServices'))();
+var beameUtils    = require('../utils/BeameUtils');
+var apiActions    = require('../../config/ApiConfig.json').Actions.LocalClient;
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Local Client folder not found';
 
@@ -33,16 +34,16 @@ var isRequestValid = function (hostname, atomDir, localClientDir, validateEdgeHo
 		}
 
 		function getMetadata() {
-			dataServices.getNodeMetadataAsync(localClientDir || atomDir, hostname, config.AppModules.Atom).then(onMetadataReceived).catch(onValidationError);
+			dataServices.getNodeMetadataAsync(localClientDir || atomDir, hostname, module_name).then(onMetadataReceived).catch(onValidationError);
 		}
 
 		function validateAtomCerts() {
-			dataServices.isNodeCertsExistsAsync(atomDir, config.ResponseKeys.NodeFiles, config.AppModules.Atom, hostname, config.AppModules.Developer).then(getMetadata).catch(onValidationError);
+			dataServices.isNodeCertsExistsAsync(atomDir, config.ResponseKeys.NodeFiles, module_name, hostname, config.AppModules.Atom).then(getMetadata).catch(onValidationError);
 		}
 
 		function validateLocalClientHost() {
 			if (validateEdgeHostname && _.isEmpty(hostname)) {
-				reject('Hostname required');
+				reject(logger.formatErrorMessage("FQDN required", module_name));
 			}
 			else {
 				validateAtomCerts();
@@ -50,7 +51,7 @@ var isRequestValid = function (hostname, atomDir, localClientDir, validateEdgeHo
 		}
 
 		if (_.isEmpty(hostname)) {
-			reject('Hostname required');
+			reject(logger.formatErrorMessage("FQDN required", module_name));
 		}
 		else {
 			validateLocalClientHost();
@@ -95,12 +96,12 @@ var registerLocalClient = function (atomHostname, localIp, edgeClientFqdn, callb
 
 				dataServices.createDir(localClientDir);
 
-				dataServices.savePayload(localClientDir, payload, config.ResponseKeys.LocalClientResponseKeys, config.AppModules.LocalClient, function (error) {
+				dataServices.savePayload(localClientDir, payload, config.ResponseKeys.LocalClientResponseKeys, module_name, function (error) {
 					if (!callback) return;
 
 					if (!error) {
 
-						dataServices.getNodeMetadataAsync(localClientDir, payload.hostname, config.AppModules.LocalClient).then(function (metadata) {
+						dataServices.getNodeMetadataAsync(localClientDir, payload.hostname, module_name).then(function (metadata) {
 							callback(null, metadata);
 						}, callback);
 					}
@@ -112,7 +113,6 @@ var registerLocalClient = function (atomHostname, localIp, edgeClientFqdn, callb
 			}
 			else {
 				error.data.hostname = atomHostname;
-				// console.error(error);
 				callback && callback(error, null);
 			}
 		});
@@ -141,7 +141,6 @@ var registerLocalClient = function (atomHostname, localIp, edgeClientFqdn, callb
  * @this {LocalClientServices}
  */
 var getCert = function (atomHostname, localClientHostname, callback) {
-	var errMsg;
 	var localClientDir, atomDir;
 
 
@@ -165,14 +164,12 @@ var getCert = function (atomHostname, localClientHostname, callback) {
 					}
 					else {
 						error.data.hostname = localClientHostname;
-						console.error(error);
-						callback(errMsg, null);
+						callback(error, null);
 					}
 				});
 
 			},
 			function onCsrCreationFailed(error) {
-				console.error(error);
 				callback && callback(error, null);
 			});
 	}
@@ -207,13 +204,12 @@ var LocalClientServices = function () {
 LocalClientServices.prototype.createLocalClients = function (atomHostname, edgeClientFqdn, callback) {
 	var self = this;
 
-	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.LocalClient, config.MessageCodes.DebugInfo, "Call Create Local Clients", {
+	logger.debug("Call Create Local Clients", {
 		"atom": atomHostname
 	});
-	debug(debugMsg);
 
 	if (_.isEmpty(atomHostname)) {
-		callback('Atom host required', null);
+		callback(logger.formatErrorMessage("Create Local Client => Atom fqdn required", module_name), null);
 		return;
 	}
 
@@ -243,17 +239,18 @@ LocalClientServices.prototype.createLocalClients = function (atomHostname, edgeC
  */
 LocalClientServices.prototype.createLocalClient = function (atomHostname, localIp, edgeClientFqdn, callback) {
 
-	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.LocalClient, config.MessageCodes.DebugInfo, "Call Create Local Client", {
+	logger.debug("Call Create Local Client", {
 		"atom": atomHostname
 	});
-	debug(debugMsg);
+
 
 	if (_.isEmpty(atomHostname)) {
-		callback('Atom host required', null);
+		callback(logger.formatErrorMessage("Create Local Client => Atom fqdn required", module_name), null);
 		return;
 	}
 	if (_.isEmpty(localIp)) {
-		callback('LocalIp required', null);
+
+		callback(logger.formatErrorMessage("Create Local Client => localIP required", module_name), null);
 		return;
 	}
 
@@ -270,7 +267,7 @@ LocalClientServices.prototype.createLocalClient = function (atomHostname, localI
 				});
 			}
 			else {
-				console.error("unexpected error", payload);
+				logger.error("unexpected error", payload);
 			}
 
 		}
@@ -323,15 +320,12 @@ LocalClientServices.prototype.renewCert = function (localClientHostname, callbac
 					else {
 
 						dataServices.deleteFile(localClientDir, config.CertFileNames.TEMP_PRIVATE_KEY);
-
-						console.error(error);
 						callback(error, null);
 					}
 				});
 
 			},
 			function onCsrCreationFailed(error) {
-				console.error(error);
 				callback && callback(error, null);
 			});
 	}
@@ -379,7 +373,6 @@ LocalClientServices.prototype.revokeCert = function (localClientHostname, callba
 				callback && callback(null, 'done');
 			}
 			else {
-				console.error(error);
 				callback && callback(error, null);
 			}
 		});

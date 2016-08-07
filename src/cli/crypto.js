@@ -11,7 +11,7 @@
 
 var NodeRsa = require("node-rsa");
 var config              = require('../../config/Config');
-var module_name         = config.AppModules.BeameCrypto;
+const module_name         = config.AppModules.BeameCrypto;
 var logger              = new (require('../utils/Logger'))(module_name);
 
 var BeameStore = require("../services/BeameStore");

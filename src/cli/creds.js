@@ -7,7 +7,7 @@ var x509 = require('x509');
 
 var store               = new (require("../services/BeameStore"))();
 var config              = require('../../config/Config');
-var module_name         = config.AppModules.BeameCreds;
+const module_name         = config.AppModules.BeameCreds;
 var logger              = new (require('../utils/Logger'))(module_name);
 var developerServices   = new (require('../core/DeveloperServices'))();
 var atomServices        = new (require('../core/AtomServices'))();

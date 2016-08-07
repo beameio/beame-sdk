@@ -14,7 +14,7 @@ var edgeclients = beameSDK.creds.list("edgeclient", "", "JSON");
 //var developerHostname;
 var edgeClientCreated;
 var config      = require('../../config/Config');
-var module_name = config.AppModules.BeameServer;
+const module_name = config.AppModules.BeameServer;
 var logger      = new (require('../utils/Logger'))(module_name);
 
 var path                = require('path');

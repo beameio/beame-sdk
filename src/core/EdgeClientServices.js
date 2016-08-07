@@ -3,13 +3,14 @@
  */
 'use strict';
 
-var config       = require('../../config/Config');
-var debug        = require("debug")("./src/services/EdgeClientServices.js");
-var _            = require('underscore');
-var provisionApi = new (require('../services/ProvisionApi'))();
-var dataServices = new (require('../services/DataServices'))();
-var beameUtils   = require('../utils/BeameUtils');
-var apiActions   = require('../../config/ApiConfig.json').Actions.EdgeClient;
+var config        = require('../../config/Config');
+const module_name = config.AppModules.EdgeClient;
+var logger        = new (require('../utils/Logger'))(module_name);
+var _             = require('underscore');
+var provisionApi  = new (require('../services/ProvisionApi'))();
+var dataServices  = new (require('../services/DataServices'))();
+var beameUtils    = require('../utils/BeameUtils');
+var apiActions    = require('../../config/ApiConfig.json').Actions.EdgeClient;
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Edge folder not found';
 
@@ -33,16 +34,16 @@ var isRequestValid = function (hostname, atomDir, edgeClientDir, validateEdgeHos
 		}
 
 		function getMetadata() {
-			dataServices.getNodeMetadataAsync(edgeClientDir || atomDir, hostname, config.AppModules.Atom).then(onMetadataReceived).catch(onValidationError);
+			dataServices.getNodeMetadataAsync(edgeClientDir || atomDir, hostname, module_name).then(onMetadataReceived).catch(onValidationError);
 		}
 
 		function validateAtomCerts() {
-			dataServices.isNodeCertsExistsAsync(atomDir, config.ResponseKeys.NodeFiles, config.AppModules.Atom, hostname, config.AppModules.Developer).then(getMetadata).catch(onValidationError);
+			dataServices.isNodeCertsExistsAsync(atomDir, config.ResponseKeys.NodeFiles, module_name, hostname, config.AppModules.Atom).then(getMetadata).catch(onValidationError);
 		}
 
 		function validateEdgeClientHost() {
 			if (validateEdgeHostname && _.isEmpty(hostname)) {
-				reject('Hostname required');
+				reject(logger.formatErrorMessage("FQDN required", module_name));
 			}
 			else {
 				validateAtomCerts();
@@ -50,7 +51,7 @@ var isRequestValid = function (hostname, atomDir, edgeClientDir, validateEdgeHos
 		}
 
 		if (_.isEmpty(hostname)) {
-			reject('Hostname required');
+			reject(logger.formatErrorMessage("FQDN required", module_name));
 		}
 		else {
 			validateEdgeClientHost();
@@ -68,16 +69,10 @@ var isRequestValid = function (hostname, atomDir, edgeClientDir, validateEdgeHos
  */
 var registerEdgeClient = function (atomHostname, callback) {
 	var atomDir;
-	var errMsg;
 
 	/*---------- private callbacks -------------------*/
 	function onEdgeSelectionError(error) {
-		errMsg = beameUtils.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.EdgeLbError, "select best proxy error", {
-			"error": error,
-			"lb":    config.loadBalancerURL
-		});
-		console.error(errMsg);
-		callback && callback(error, null);
+		callback && callback(logger.formatErrorMessage("select best proxy error", module_name, error), null);
 	}
 
 	/** @param {EdgeShortData} edge  **/
@@ -99,12 +94,12 @@ var registerEdgeClient = function (atomHostname, callback) {
 
 				dataServices.createDir(edgeClientDir);
 
-				dataServices.savePayload(edgeClientDir, payload, config.ResponseKeys.EdgeClientResponseKeys, config.AppModules.EdgeClient, function (error) {
+				dataServices.savePayload(edgeClientDir, payload, config.ResponseKeys.EdgeClientResponseKeys, module_name, function (error) {
 					if (!callback) return;
 
 					if (!error) {
 
-						dataServices.getNodeMetadataAsync(edgeClientDir, payload.hostname, config.AppModules.EdgeClient).then(function (metadata) {
+						dataServices.getNodeMetadataAsync(edgeClientDir, payload.hostname, module_name).then(function (metadata) {
 							callback(null, metadata);
 						}, callback);
 					}
@@ -116,7 +111,6 @@ var registerEdgeClient = function (atomHostname, callback) {
 			}
 			else {
 				error.data.hostname = atomHostname;
-				// console.error(error);
 				callback && callback(error, null);
 			}
 		});
@@ -159,7 +153,6 @@ var registerEdgeClient = function (atomHostname, callback) {
  * @this {EdgeClientServices}
  */
 var getCert = function (atomHostname, edgeHostname, callback) {
-	var errMsg;
 	var edgeClientDir, atomDir;
 
 
@@ -183,14 +176,12 @@ var getCert = function (atomHostname, edgeHostname, callback) {
 					}
 					else {
 						error.data.hostname = edgeHostname;
-						console.error(error);
-						callback(errMsg, null);
+						callback(error, null);
 					}
 				});
 
 			},
 			function onCsrCreationFailed(error) {
-				console.error(error);
 				callback && callback(error, null);
 			});
 	}
@@ -223,13 +214,10 @@ var EdgeClientServices = function () {
  */
 EdgeClientServices.prototype.createEdgeClient = function (atomHostname, callback) {
 
-	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.DebugInfo, "Call Create Edge Client", {
-		"atom": atomHostname
-	});
-	debug(debugMsg);
+	logger.debug("Call Create Edge Client", {"atom": atomHostname});
 
 	if (_.isEmpty(atomHostname)) {
-		callback('Atom host required', null);
+		callback(logger.formatErrorMessage("Create Edge Client => Atom fqdn required", module_name), null);
 		return;
 	}
 
@@ -246,7 +234,7 @@ EdgeClientServices.prototype.createEdgeClient = function (atomHostname, callback
 				});
 			}
 			else {
-				console.error("unexpected error", payload);
+				logger.error("unexpected error", payload);
 			}
 
 		}
@@ -291,7 +279,6 @@ EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname, callback
 				});
 			}
 			else {
-				console.error(error);
 				callback && callback(error, null);
 			}
 		});
@@ -350,15 +337,12 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 					else {
 
 						dataServices.deleteFile(edgeClientDir, config.CertFileNames.TEMP_PRIVATE_KEY);
-
-						console.error(error);
 						callback(error, null);
 					}
 				});
 
 			},
 			function onCsrCreationFailed(error) {
-				console.error(error);
 				callback && callback(error, null);
 			});
 	}
@@ -406,7 +390,6 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
 				callback && callback(null, 'done');
 			}
 			else {
-				console.error(error);
 				callback && callback(error, null);
 			}
 		});
