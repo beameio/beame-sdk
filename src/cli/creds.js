@@ -2,6 +2,8 @@
 //var JSON = require('JSON');
 var debug = require("debug")("cred_api");
 var Table = require('cli-table2');
+
+require('../../initWin');
 var x509  = require('x509');
 
 var store              = new (require("../services/BeameStore"))();

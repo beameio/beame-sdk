@@ -13,6 +13,8 @@ var NodeRsa = require("node-rsa");
 
 var BeameStore = require("../services/BeameStore");
 var store      = new BeameStore();
+
+require('../../initWin');
 var x509       = require("x509");
 
 function aesEncrypt(data) {
