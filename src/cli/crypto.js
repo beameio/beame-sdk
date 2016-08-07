@@ -10,6 +10,9 @@
  openssl x509 -pubkey -noout -in ../../.beame/oxxmrzj0qlvsrt1h.v1.beameio.net/x509.pem > pubkey.pem*/
 
 var NodeRsa = require("node-rsa");
+var config              = require('../../config/Config');
+var module_name         = config.AppModules.BeameCrypto;
+var logger              = new (require('../utils/Logger'))(module_name);
 
 var BeameStore = require("../services/BeameStore");
 var store      = new BeameStore();
@@ -89,15 +92,13 @@ function decrypt(data) {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		var encryptedMessage = JSON.parse(data);
 		if (!encryptedMessage.encryptedFor) {
-			console.error("Decrypting a wrongly formated message %j", data);
-			return -1;
+			logger.fatal("Decrypting a wrongly formatted message", data);
 		}
-		var elemenet = store.search(encryptedMessage.encryptedFor)[0];
-		if (!elemenet && !(elemenet.PRIVATE_KEY)) {
-			console.error("private key for ", encryptedMessage.encryptedFor);
-			return -1;
+		var element = store.search(encryptedMessage.encryptedFor)[0];
+		if (!element && !(element.PRIVATE_KEY)) {
+			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
 		}
-		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
+		var rsaKey = new NodeRsa(element.PRIVATE_KEY, "private");
 
 		var message = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -108,23 +109,22 @@ function decrypt(data) {
 			payload,
 		]);
 		if (!message) {
-			console.error("No message");
-			return -1;
+			logger.fatal("Decrypting, No message");
 		}
 	} catch (e) {
-		console.error("decrypt error ", e.toString());
+		logger.fatal("decrypt error ", e);
 	}
 	return dechipheredPayload;
 }
 
 function sign(data, fqdn) {
-	var elemenet = store.search(fqdn)[0];
-	if (elemenet) {
-		var rsaKey = new NodeRsa(elemenet.PRIVATE_KEY, "private");
-		console.warn("signing using %j", fqdn);
+	var element = store.search(fqdn)[0];
+	if (element) {
+		var rsaKey = new NodeRsa(element.PRIVATE_KEY, "private");
+		logger.info(`signing using ${fqdn}`);
 		return rsaKey.sign(data, "base64", "utf8");
 	}
-	console.error("public key not found ");
+	logger.error("public key not found ");
 	return {};
 }
 
@@ -141,7 +141,7 @@ function checkSignature(data, fqdn, signature) {
 
 	var rsaKey = getPublicKey(certBody);
 	var status = rsaKey.verify(data, signature, "utf8", "base64");
-	console.warn("signing status is %j %j", status, fqdn);
+	logger.info(`signing status is ${status} ${fqdn}`);
 	return status;
 }
 

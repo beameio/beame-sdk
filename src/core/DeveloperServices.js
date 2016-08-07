@@ -6,6 +6,8 @@
 var fs = require('fs');
 
 var config  = require('../../config/Config');
+var module_name = config.AppModules.Developer;
+var logger  = new (require('../utils/Logger'))(module_name);
 var debug   = require("debug")("./src/services/DeveloperServices.js");
 var _       = require('underscore');
 var path    = require('path');
@@ -207,11 +209,7 @@ var DeveloperServices = function () {
  */
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
 
-	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.Developer, config.MessageCodes.DebugInfo, "Call Create Developer", {
-		"name":  developerName,
-		"email": developerEmail
-	});
-	debug(debugMsg);
+	logger.info(`creating developer ${developerName} with email ${developerEmail}`);
 
 	saveDeveloper(developerEmail, developerName, function (error, payload) {
 		if (!error) {
@@ -260,8 +258,13 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 	var errMsg;
 
 	if (_.isEmpty(hostname)) {
-		errMsg = beameUtils.formatDebugMessage(config.AppModules.Developer, config.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-		//console.error(errMsg);
+		errMsg = logger.formatErrorMessage("Complete developer registration: hostname required",config.AppModules.Developer);
+		callback && callback(errMsg, null);
+		return;
+	}
+
+	if (_.isEmpty(uid)) {
+		errMsg = logger.formatErrorMessage("Complete developer registration: uid required",config.AppModules.Developer);
 		callback && callback(errMsg, null);
 		return;
 	}

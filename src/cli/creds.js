@@ -1,16 +1,17 @@
 "use strict";
 //var JSON = require('JSON');
-var debug = require("debug")("cred_api");
 var Table = require('cli-table2');
 
 require('../../initWin');
-var x509  = require('x509');
+var x509 = require('x509');
 
-var store              = new (require("../services/BeameStore"))();
-var config             = require('../../config/Config');
-var developerServices  = new (require('../core/DeveloperServices'))();
-var atomServices       = new (require('../core/AtomServices'))();
-var edgeClientServices = new (require('../core/EdgeClientServices'))();
+var store               = new (require("../services/BeameStore"))();
+var config              = require('../../config/Config');
+var module_name         = config.AppModules.BeameCreds;
+var logger              = new (require('../utils/Logger'))(module_name);
+var developerServices   = new (require('../core/DeveloperServices'))();
+var atomServices        = new (require('../core/AtomServices'))();
+var edgeClientServices  = new (require('../core/EdgeClientServices'))();
 var localClientServices = new (require('../core/LocalClientServices'))();
 
 var path   = require('path');
@@ -48,7 +49,7 @@ function listCreds(type, fqdn) {
 }
 
 function show(type, fqdn) {
-	debug("show %j %j", type, fqdn);
+	logger.debug(`show ${type} ${fqdn}`);
 
 	var creds = listCreds(type, fqdn);
 	return creds.map(cert => {
@@ -73,7 +74,7 @@ show.toText = function (certs) {
 
 
 function list(type, fqdn) {
-	debug("list %j %j", type, fqdn);
+	logger.debug(`list ${type} ${fqdn}`);
 	return listCreds(type, fqdn);
 }
 
@@ -97,8 +98,7 @@ function lineToText(line) {
 function _stdCallback(callback) {
 	return function (error, data) {
 		if (error) {
-			console.error(error);
-			process.exit(1);
+			logger.fatal(error.message, error.data, error.module);
 		} else {
 			callback(data);
 		}
@@ -106,7 +106,7 @@ function _stdCallback(callback) {
 }
 
 function createTestDeveloper(developerName, developerEmail, callback) {
-	debug("Creating test developer developerName=%j developerEmail=%j", developerName, developerEmail);
+	logger.debug(`Creating test developer ${developerName} ${developerEmail}`);
 	developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
 }
 createTestDeveloper.toText = lineToText;
@@ -126,28 +126,28 @@ if (developerServices.canRegisterDeveloper()) {
 
 function createAtom(developerFqdn, atomName, count, callback) {
 	if (count != 1) {
-		throw new Error("Count of not one is not supported yet");
+		logger.fatal("Count of not one is not supported yet", {developerFqdn, atomName, count});
 	}
 	for (var i = 0; i < count; i++) {
 		let n = count > 1 ? i + 1 : '';
-		console.warn("Creating atom developerFqdn=%j atomName=%j index=%j", developerFqdn, atomName, n);
+		logger.info(`Creating atom developerFqdn=${developerFqdn} atomName=${atomName} index=${n}`);
 		atomServices.createAtom(developerFqdn, atomName + n, _stdCallback(callback));
 	}
 }
 createAtom.toText = lineToText;
 
 function createDeveloper(developerFqdn, uid, callback) {
-	console.warn("Creating developer developerFqdn=%j uid=%j ", developerFqdn, uid);
+	logger.info(`Creating developer developerFqdn=${developerFqdn} uid=${uid}`);
 	developerServices.completeDeveloperRegistration(developerFqdn, uid, _stdCallback(callback));
 }
 createDeveloper.toText = lineToText;
 
 function createEdgeClient(atomFqdn, count, callback) {
 	if (count != 1) {
-		throw new Error("Count of not one is not supported yet");
+		logger.fatal("Count of not one is not supported yet", {atomFqdn, count});
 	}
 	for (var i = 0; i < count; i++) {
-		console.warn("Creating edge client atomFqdn=%j", atomFqdn);
+		logger.info(`Creating edge client atomFqdn=${atomFqdn}`);
 		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
 	}
 }
@@ -156,17 +156,17 @@ createEdgeClient.toText = lineToText;
 
 function createLocalClient(atomFqdn, count, edgeClientFqdn, callback) {
 	if (count != 1) {
-		throw new Error("Count of not one is not supported yet");
+		logger.fatal("Count of not one is not supported yet", {atomFqdn, count});
 	}
 
 	for (var i = 0; i < count; i++) {
-		console.warn("Creating local client atomFqdn=%j", atomFqdn);
+		logger.info(`Creating local client atomFqdn=${atomFqdn}`);
 		localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, _stdCallback(callback));
 	}
 }
 
 
-function constructRelateivePathElements(item) {
+function constructRelativePathElements(item) {
 	var items  = [];
 	var upShot = item;
 	items.push(upShot.hostname);
@@ -196,7 +196,7 @@ function importNonBeameCredentials(fqdn) {
 
 function exportCredentials(fqdn, targetFqdn, file) {
 	var creds        = store.search(fqdn)[0];
-	var relativePath = constructRelateivePathElements(creds);
+	var relativePath = constructRelativePathElements(creds);
 
 	creds.edgeclient      = {};
 	creds.atom            = {};
@@ -206,15 +206,14 @@ function exportCredentials(fqdn, targetFqdn, file) {
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var jsonString = JSON.stringify(creds);
 	if (!jsonString) {
-		console.error("Credentials for exporting are not found");
-		return -1;
+		logger.fatal(`Credentials for exporting ${fqdn} credentials are not found`);
 	}
 	var crypto = require('./crypto');
 	var encryptedString;
 	try {
 		encryptedString = crypto.encrypt(jsonString, targetFqdn);
 	} catch (e) {
-		console.error("Cound not encrypt", e);
+		logger.error(`Could not encrypt with error `, e);
 		return {};
 	}
 
@@ -265,8 +264,7 @@ function decryptCreds(data) {
 		var creds = store.search(parsedData.signedData.encryptedFor)[0];
 
 		if (!creds) {
-			console.error("Private key for %j is not found", parsedData.signedData.encryptedFor);
-			return -1;
+			logger.fatal(`Private key for ${parsedData.signedData.encryptedFor} is not found`);
 		}
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		return crypto.decrypt(JSON.stringify(parsedData.signedData.data));
@@ -287,7 +285,7 @@ function importCredentials(data, file) {
 			data           = fs.readFileSync(path.resolve(file)) + "";
 			decryptedCreds = decryptCreds(data);
 			if (!decryptedCreds || decryptedCreds == -1) {
-				console.error("No decrypted creds");
+				logger.error("No decrypted creds");
 				return false;
 			}
 			return store.importCredentials(decryptedCreds);
@@ -300,61 +298,71 @@ function importCredentials(data, file) {
 }
 
 function renew(type, fqdn) {
-	debug("renew %j %j", type, fqdn);
+	logger.debug(`renew ${type} ${fqdn}`);
 
 }
 
 function revoke(fqdn) {
 
 	var creds = store.search(fqdn)[0];
-	console.log("creds level %j", creds.level);
+	logger.debug(`revoke creds level ${creds.level}`);
 	switch (creds.level) {
 		case 'developer': {
-			console.error("Revoke for developer cert is not available");
-			return;
+			logger.fatal("Revoke for developer cert is not available");
+			break;
 		}
 		case 'atom': {
 			atomServices.revokeCert(fqdn, function (error, payload) {
 				if (error) {
-					console.error("Error, %j", error);
+					logger.fatal(error.message, error.data, error.module);
 				}
-				console.log("Payload %j", payload);
+				logger.debug(`Revoke atom certs payload`, payload);
 				return payload;
 			});
 			break;
 		}
 		case 'edgeclient': {
-			console.log("Calling revoke cert");
+			logger.debug("Calling edge client revoke cert");
 			edgeClientServices.revokeCert(fqdn, function (error, payload) {
 				if (error) {
-					console.error("Error, %j", error);
+					logger.fatal(error.message, error.data, error.module);
 				}
-				console.log("Payload %j", payload);
+				logger.debug(`Revoke edge client certs payload`, payload);
+				return payload;
+			});
+			break;
+		}
+		case 'localclient': {
+			logger.debug("Calling local client revoke cert");
+			edgeClientServices.revokeCert(fqdn, function (error, payload) {
+				if (error) {
+					logger.fatal(error.message, error.data, error.module);
+				}
+				logger.debug(`Revoke local client certs payload`, payload);
 				return payload;
 			});
 			break;
 		}
 	}
 
-	debug("revoke   %j", fqdn);
 }
 
 function shred(fqdn, callback) {
 	if (!fqdn) {
-		throw new Error("FQDN is required in shred");
+		logger.fatal("FQDN is required in shred");
 	}
 	store.shredCredentials(fqdn, callback);
 }
 
 function stats(fqdn, callback) {
 	if (!fqdn) {
-		throw new Error("FQDN is required in shred");
+		logger.fatal("FQDN is required in shred");
 	}
 
 	var creds = store.search(fqdn)[0];
 
 	if (!creds) {
-		throw new Error("FQDN not found");
+		logger.fatal("FQDN not found");
 	}
 
 	var cb = function (error, payload) {
@@ -362,7 +370,7 @@ function stats(fqdn, callback) {
 			return callback(payload);
 		}
 
-		throw new Error(error.message);
+		logger.fatal(error.message);
 	};
 
 	switch (creds.level) {
@@ -392,7 +400,6 @@ function isObject(str) {
 
 function objectToText(line) {
 	return Object.keys(line).map(k => {
-		//console.log('element is %j, isJSON test is',line[k]);
 		if (!isObject(line[k])) {
 			return k + '=' + line[k].toString();
 		}
