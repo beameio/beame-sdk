@@ -35,7 +35,7 @@ Enjoy!
 
 ### Getting Started The Easy Way - Windows
 
-Before running `npm install -g beame-sdk` please make sure you have OpenSSL installed in `C:\OpenSSL-Win64` . One of the possible ways of installing OpenSSL is described below:
+Before running `npm install -g beame-sdk` please make sure you have OpenSSL installed in `C:\OpenSSL-Win64` . One of the possible ways of installing OpenSSL is described below. The procedure was tested on `Microsoft Windows Server 2012 R2 Standard` .
 
 	# Install Visual C++ Build Tools and Python 2.7:
 	npm install --global --production windows-build-tools
