@@ -81,13 +81,15 @@ class BeameLogger {
 	 * @param {String} message
 	 * @param {String} module
 	 * @param {Object|null|undefined} [data]
+	 * @param {String|null|undefined} [error_code]
 	 * @returns {typeof LoggerMessage}
 	 */
-	formatErrorMessage(message, module, data) {
+	formatErrorMessage(message, module, data,error_code) {
 		return {
 			message,
 			module,
-			data
+			data,
+			code:error_code
 		}
 	}
 

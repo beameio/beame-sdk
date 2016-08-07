@@ -118,8 +118,6 @@ var registerEdgeClient = function (atomHostname, callback) {
 	}
 
 	function onRequestValidated() {
-
-		//TODO create permanent solution
 		beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, function (error, payload) {
 			if (!error) {
 				onEdgeServerSelected(payload);
@@ -128,7 +126,6 @@ var registerEdgeClient = function (atomHostname, callback) {
 				onEdgeSelectionError(error);
 			}
 		});
-
 	}
 
 	/**

@@ -4,6 +4,8 @@ var path     = require('path');
 var _        = require('underscore');
 var debug    = require("debug")("beamedirservices");
 var config   = require('../../config/Config');
+const module_name = config.AppModules.BeameDirServices;
+var logger        = new (require('../utils/Logger'))(module_name);
 var jmespath = require('jmespath');
 
 
@@ -20,8 +22,7 @@ function readCertData(basedir) {
 			credentials[value] = fs.readFileSync(makepath(basedir, key));
 		}
 		catch (e) {
-			debug("Error", e.toString());
-			//console.error("Directory reading failed ", e);
+			logger.fatal("readCertData Error", e);
 		}
 	});
 	credentials['path'] = basedir;
@@ -32,7 +33,7 @@ function readCertData(basedir) {
 			credentials[value] = key;
 		});
 	} catch (e) {
-//        console.warn(e);
+	    logger.fatal("readCertData Error", e);
 	}
 	return credentials;
 }

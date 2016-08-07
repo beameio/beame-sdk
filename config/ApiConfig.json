@@ -1,7 +1,6 @@
 {
     "Endpoints": {
-        "Local": "https://prov.beameio.net",
-        "Online": "https://prov.beameio.net",
+        "BaseUrl": "https://prov.beameio.net",
         "AuthServer": "https://registration.beameio.net",
         "CertEndpoint": "https://beameio-net-certs.s3.amazonaws.com"
     },

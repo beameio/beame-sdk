@@ -48,9 +48,8 @@ function getParamsNames(fun) {
 		.replace(/\s+/g, '').split(',');
 	var ret         = (names.length == 1 && !names[0] ? [] : names);
 	var useCallback = false;
-	// console.log('PARAMS', ret);
+
 	ret             = _.filter(ret, function (x) {
-		// console.log('X', x);
 		if (x == 'callback') {
 			useCallback = true;
 			return false;

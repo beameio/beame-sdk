@@ -50,19 +50,23 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
-	"BeameSDKCli":     "BeameSDKCli",
-	"BeameCreds":      "BeameCreds",
-	"BeameCrypto":     "BeameCrypto",
-	"BeameServer":     "BeameServer",
-	"Developer":       "Developer",
-	"Atom":            "Atom",
-	"EdgeClient":      "EdgeClient",
-	"LocalClient":     "LocalClient",
-	"ProvisionApi":    "ProvisionApi",
-	"DataServices":    "DataServices",
-	"UnitTest":        "UnitTest",
-	"BaseHttpsServer": "BaseHttpsServer",
-	"SNIServer":       "SNIServer"
+	"BeameSDKCli":      "BeameSDKCli",
+	"BeameCreds":       "BeameCreds",
+	"BeameCrypto":      "BeameCrypto",
+	"BeameServer":      "BeameServer",
+	"BeameUtils":       "BeameUtils",
+	"BeameStore":       "BeameStore",
+	"BeameDirServices": "BeameDirServices",
+	"Developer":        "Developer",
+	"Atom":             "Atom",
+	"EdgeClient":       "EdgeClient",
+	"LocalClient":      "LocalClient",
+	"ProvisionApi":     "ProvisionApi",
+	"DataServices":     "DataServices",
+	"UnitTest":         "UnitTest",
+	"BaseHttpsServer":  "BaseHttpsServer",
+	"SNIServer":        "SNIServer",
+	"ProxyClient":      "ProxyClient"
 };
 
 /**
