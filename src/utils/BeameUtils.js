@@ -10,8 +10,8 @@ var os            = require('os');
 var beameStore    = new (require('../services/BeameStore'))();
 var config        = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
-var logger        = new (require('../utils/Logger'))(module_name);
-
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
 /**
  * @typedef {Object} AwsRegion
  * @property {String} Name
@@ -249,10 +249,6 @@ module.exports = {
 		return result;
 	},
 
-	isAmazon: function () {
-		return process.env.NODE_ENV ? true : false;
-	},
-
 	//validation services
 
 	deleteHostCerts: function (fqdn, callback) {
@@ -338,6 +334,7 @@ module.exports = {
 			Object.keys(ifaces).forEach(function (ifname) {
 
 				ifaces[ifname].forEach(function (iface) {
+					//noinspection JSUnresolvedVariable
 					if (iface.family === 'IPv4' && iface.internal === false) {
 						addresses.push(iface.address);
 					}
