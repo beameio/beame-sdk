@@ -212,7 +212,7 @@ var DeveloperServices = function () {
  */
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
 
-	logger.info(`creating developer ${developerName} with email ${developerEmail}`);
+	logger.info(`Creating developer ${developerName} with email ${developerEmail}`);
 
 	registerDeveloper(developerEmail, developerName, function (error, payload) {
 		if (!error) {
