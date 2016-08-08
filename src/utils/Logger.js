@@ -155,7 +155,6 @@ class BeameLogger {
 	 */
 	printStandardEvent(entity, event, fqdn){
 
-		var prefix = formatPrefix(this.module, LogLevel.Info);
 		var message;
 		switch (event){
 			case StandardFlowEvent.Registering:
@@ -175,7 +174,7 @@ class BeameLogger {
 		}
 
 
-		console.warn(`${prefix} ${message}`);
+		console.warn(`${formatPrefix(this.module, LogLevel.Info)} ${message}`);
 	}
 
 	/**
