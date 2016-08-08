@@ -91,9 +91,14 @@ list.toText = function (creds) {
 };
 
 function lineToText(line) {
-	return Object.keys(line).map(k => {
-		return k + '=' + line[k].toString();
-	}).join('\n');
+	var table = new Table({
+		head:      ['property', 'value'],
+		colWidths: [30, 90]
+	});
+	for(let k in line) {
+		table.push([k, line[k].toString()]);
+	}
+	return table;
 }
 
 
