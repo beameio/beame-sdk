@@ -1,5 +1,4 @@
 "use strict";
-var debug       = require("debug")("beame_servers");
 var BeameStore  = require("../services/BeameStore");
 var BeameServer = require("../services/BaseHttpsServer").SampleBeameServer;
 
@@ -23,10 +22,9 @@ var defaultPublicDir    = path.resolve(__dirname, "../../examples/public");
 
 function HttpsServerTestStart(edgeClientFqdn) {
 
-	logger.info(`Starting server ${edgeClientFqdn}`);
-
 	new BeameServer(edgeClientFqdn, null, null, function (data, app) {
-		debug("BeameServer callback got %j", data);
+		logger.info(`Server started on ${edgeClientFqdn}`);
+		logger.debug("BeameServer callback got data", data);
 		app.on("request", function (req, resp) {
 			resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});
 			resp.end('hello world\n');
@@ -67,7 +65,7 @@ function runTestBeameServer(hostname) {
 		appExpress.use('/shared', express.static(defaultSharedFolder));
 		appExpress.use('/shared', serveIndex(defaultSharedFolder, {'icons': true}));
 
-		logger.info("Server Local Directory " + defaultSharedFolder);
+		logger.debug(`Server Local Directory ${defaultSharedFolder}`);
 
 
 		//noinspection JSUnusedLocalSymbols

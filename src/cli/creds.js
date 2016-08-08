@@ -130,7 +130,7 @@ function createAtom(developerFqdn, atomName, count, callback) {
 	}
 	for (var i = 0; i < count; i++) {
 		let n = count > 1 ? i + 1 : '';
-		logger.info(`Creating atom developerFqdn=${developerFqdn} atomName=${atomName} index=${n}`);
+		logger.info(`Creating atom developerFqdn=${developerFqdn} atomName=${atomName}`); //index=${n}
 		atomServices.createAtom(developerFqdn, atomName + n, _stdCallback(callback));
 	}
 }
@@ -151,7 +151,6 @@ function createEdgeClient(atomFqdn, count, callback) {
 		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
 	}
 }
-
 createEdgeClient.toText = lineToText;
 
 function createLocalClient(atomFqdn, count, edgeClientFqdn, callback) {
@@ -164,7 +163,6 @@ function createLocalClient(atomFqdn, count, edgeClientFqdn, callback) {
 		localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, _stdCallback(callback));
 	}
 }
-
 
 function constructRelativePathElements(item) {
 	var items  = [];

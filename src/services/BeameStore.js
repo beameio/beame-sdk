@@ -13,7 +13,6 @@ var sprintf       = require('sprintf');
 var mkdirp        = require('mkdirp');
 var path          = require('path');
 var request       = require('sync-request');
-var apiConfig     = require("../../config/ApiConfig.json");
 var url           = require('url');
 // The idea is this object framework above BeameDirServices.js
 // BeameStore will load the directory and manage it in memory as well be capabale proving high level
@@ -253,7 +252,7 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 	if (fs.existsSync(remoteCertPath)) {
 		certBody = fs.readFileSync(remoteCertPath);
 	} else {
-		var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+		var requestPath = config.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
 		logger.debug(`Getting certificate from ${requestPath}`);
 		var response = request('GET', requestPath);
 		//noinspection JSUnresolvedFunction

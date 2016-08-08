@@ -17,12 +17,12 @@ function makepath() {
 function readCertData(basedir) {
 	var credentials = {};
 
-	_.map(config.CertFileNames, function (key, value) {
+	_.map(config.CertificateFiles, function (key, value) {
 		try {
 			credentials[value] = fs.readFileSync(makepath(basedir, key));
 		}
 		catch (e) {
-			logger.fatal("readCertData Error", e);
+			logger.debug("readCertData Error " +  e.toString());
 		}
 	});
 	credentials['path'] = basedir;
@@ -33,7 +33,7 @@ function readCertData(basedir) {
 			credentials[value] = key;
 		});
 	} catch (e) {
-	    logger.fatal("readCertData Error", e);
+	    logger.debug("readCertData Error " + e.toString());
 	}
 	return credentials;
 }

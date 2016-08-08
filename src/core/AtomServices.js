@@ -122,16 +122,16 @@ var registerAtom = function (developerHostname, atomName, callback) {
 /**
  *
  * @param {String} developerHostname
- * @param {String}  atomHostname
+ * @param {String}  atom_fqdn
  * @param {Function} callback
  */
-var getCert = function (developerHostname, atomHostname, callback) {
+var getCert = function (developerHostname, atom_fqdn, callback) {
 	var devDir, atomDir;
 
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated(metadata) {
 
-		dataServices.createCSR(atomDir, atomHostname).then(
+		dataServices.createCSR(atomDir, atom_fqdn).then(
 			function onCsrCreated(csr) {
 
 				provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
@@ -143,6 +143,8 @@ var getCert = function (developerHostname, atomHostname, callback) {
 
 				var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
 
+				logger.info(`Requesting certificates for atom ${atom_fqdn}.....`);
+
 				provisionApi.runRestfulAPI(apiData,
 					/**
 					 * @param {DebugMessage} error
@@ -151,11 +153,13 @@ var getCert = function (developerHostname, atomHostname, callback) {
 					function (error, payload) {
 						if (!error) {
 
+							logger.info(`Atom ${atom_fqdn} certificates received, saving to disk.....`);
+
 							dataServices.saveCerts(beameUtils.makePath(atomDir, '/'), payload, callback);
 						}
 						else {
 							//noinspection JSUnresolvedVariable
-							error.data.hostname = atomHostname;
+							error.data.hostname = atom_fqdn;
 							callback(error, null);
 						}
 					});
@@ -178,7 +182,7 @@ var getCert = function (developerHostname, atomHostname, callback) {
 		isRequestValid(developerHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(atom_fqdn).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 /**
@@ -211,8 +215,12 @@ AtomServices.prototype.createAtom = function (developerHostname, atomName, callb
 		return;
 	}
 
+	logger.info(`Registering atom ${atomName}....`);
+
 	function onAtomRegistered(error, payload) {
 		if (!error) {
+
+			logger.info(`Atom ${atomName} registered successfully.....`);
 
 			var hostname = payload.hostname;
 

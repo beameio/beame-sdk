@@ -6,7 +6,7 @@ var ProxyClient = require("./ProxyClient");
 var BeameStore  = require("./BeameStore");
 var SNIServer   = require("./SNIServer");
 var config      = require('../../config/Config');
-var _logger     = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
+var logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
 var beamestore  = new BeameStore();
 
 /**
@@ -19,7 +19,7 @@ var beamestore  = new BeameStore();
  */
 var SampleBeameServer = function (instanceHostname, projectName, requestListener, hostOnlineCallback) {
 	if (!instanceHostname && !projectName) {
-		_logger.error('instance hostname or project name required');
+		logger.error('instance hostname or project name required');
 		return;
 	}
 
@@ -29,7 +29,7 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		var varName = projectName;
 		host        = process.env[varName];
 		if (host == undefined) {
-			_logger.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
+			logger.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
 			return;
 		}
 	}
@@ -40,7 +40,7 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 	var edgeCert = beamestore.search(host);
 
 	if (edgeCert.length != 1) {
-		_logger.error("Could not find certificate for " + host);
+		logger.error("Could not find certificate for " + host);
 		return;
 	}
 	edgeCert            = edgeCert[0];

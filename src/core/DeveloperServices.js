@@ -244,14 +244,14 @@ DeveloperServices.prototype.canRegisterDeveloper = DeveloperServices.prototype.c
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {String} uid
  * @param {Function} callback
  */
-DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, uid, callback) {
+DeveloperServices.prototype.completeDeveloperRegistration = function (developer_fqdn, uid, callback) {
 
 
-	if (_.isEmpty(hostname)) {
+	if (_.isEmpty(developer_fqdn)) {
 		callback && callback(logger.formatErrorMessage("Complete developer registration => Developer fqdn required", module_name), null);
 		return;
 	}
@@ -261,16 +261,18 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 		return;
 	}
 
-	var devDir = makeDeveloperDir(hostname);
+	logger.info(`Competing registration for ${developer_fqdn}.....`);
+
+	var devDir = makeDeveloperDir(developer_fqdn);
 
 	dataServices.createDir(devDir);
 
 	/** @type {typeof CompleteRegistrationRequestToken} **/
 	var payload = {
-		hostname: hostname,
+		hostname: developer_fqdn,
 		uid:      uid,
-		name:     hostname,
-		email:    hostname
+		name:     developer_fqdn,
+		email:    developer_fqdn
 	};
 
 	dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, module_name, function (error) {
@@ -287,7 +289,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 	/*---------- private callbacks -------------------*/
 	function onMetadataReceived(metadata) {
 
-		dataServices.createCSR(devDir, hostname).then(
+		dataServices.createCSR(devDir, developer_fqdn).then(
 			function onCsrCreated(csr) {
 
 				var postData = {
@@ -298,13 +300,17 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
 				var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
 
+				logger.info(`Requesting certificates for developer ${developer_fqdn}.....`);
+
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
+
+						logger.info(`Developer ${developer_fqdn} certificates received, saving to disk.....`);
 
 						dataServices.saveCerts(devDir, payload, callback);
 					}
 					else {
-						error.data.hostname = hostname;
+						error.data.hostname = developer_fqdn;
 						callback(error, null);
 					}
 				});

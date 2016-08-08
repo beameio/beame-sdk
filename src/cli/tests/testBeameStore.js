@@ -1,5 +1,4 @@
 var BeameStore = require("../../services/BeameStore");
-var BeameDirectApi = require("../../services/BeameDirServices");
 var jmespath = require('jmespath');
 var debug =require("debug")("TestBeameStore");
 var _ = require("underscore");
@@ -13,7 +12,7 @@ var currentInstances = store.listCurrentEdges();
 function testBeameStruct(beameStruct, keyword, func, useNameSearch){
 	console.log("****************Listing " + keyword + " started *************");
 	_.each(beameStruct, function(item){
-		var name = useNameSearch? item.name : item.hostname
+		var name = useNameSearch? item.name : item.hostname;
 		var beameRecord =  func.call(store, name);
 
 
@@ -27,7 +26,7 @@ function testBeameStruct(beameStruct, keyword, func, useNameSearch){
 
 testBeameStruct(currentDevelopers, "developers", _.bind(store.searchDevelopers,store), true);
 testBeameStruct(currentDevelopers, "developers", _.bind(store.searchDevelopers,store) , false);
-	
+
 testBeameStruct(currentAtoms, "currentAtoms",         _.bind(store.searchAtoms, store) , true);
 testBeameStruct(currentAtoms, "currentAtoms",         _.bind(store.searchAtoms, store), false);
 testBeameStruct(currentInstances, "currentInstances", _.bind(store.searchEdge, store), false);
