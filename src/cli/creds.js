@@ -95,7 +95,7 @@ function lineToText(line) {
 		head:      ['property', 'value'],
 		colWidths: [30, 90]
 	});
-	for(let k in line) {
+	for(let k of Object.keys(line).sort()) {
 		table.push([k, line[k].toString()]);
 	}
 	return table;
