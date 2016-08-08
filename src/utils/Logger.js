@@ -159,16 +159,16 @@ class BeameLogger {
 		var message;
 		switch (event){
 			case StandardFlowEvent.Registering:
-				message = `Registering ${entity.toLowerCase()} ${fqdn}.....`;
+				message = `Registering ${entity.toLowerCase()} ${fqdn} ...`;
 				break;
 			case StandardFlowEvent.Registered:
-				message = `${entity} ${fqdn} registered successfully.....`;
+				message = `${entity} ${fqdn} registered successfully ...`;
 				break;
 			case StandardFlowEvent.RequestingCerts:
-				message = `Requesting certificates for ${entity.toLowerCase()} ${fqdn}.....`;
+				message = `Requesting certificates for ${entity.toLowerCase()} ${fqdn} ...`;
 				break;
 			case StandardFlowEvent.ReceivedCerts:
-				message = `${entity} ${fqdn} certificates received, saving to disk.....`;
+				message = `${entity} ${fqdn} certificates received, saving to disk ...`;
 				break;
 
 			default: return;
