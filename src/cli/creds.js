@@ -95,19 +95,10 @@ function lineToText(line) {
 	}).join('\n');
 }
 
-function _stdCallback(callback) {
-	return function (error, data) {
-		if (error) {
-			logger.fatal(error.message, error.data, error.module);
-		} else {
-			callback(data);
-		}
-	};
-}
 
 function createTestDeveloper(developerName, developerEmail, callback) {
 	logger.debug(`Creating test developer ${developerName} ${developerEmail}`);
-	developerServices.createDeveloper(developerName, developerEmail, _stdCallback(callback));
+	developerServices.createDeveloper(developerName, developerEmail, callback);
 }
 createTestDeveloper.toText = lineToText;
 
@@ -116,7 +107,7 @@ if (developerServices.canCreateDeveloper()) {
 }
 
 function registerDeveloper(developerName, developerEmail, callback) {
-	developerServices.registerDeveloper(developerName, developerEmail, _stdCallback(callback));
+	developerServices.registerDeveloper(developerName, developerEmail, callback);
 }
 registerDeveloper.toText = lineToText;
 
@@ -131,14 +122,14 @@ function createAtom(developerFqdn, atomName, count, callback) {
 	for (var i = 0; i < count; i++) {
 		let n = count > 1 ? i + 1 : '';
 		logger.info(`Creating atom developerFqdn=${developerFqdn} atomName=${atomName}`); //index=${n}
-		atomServices.createAtom(developerFqdn, atomName + n, _stdCallback(callback));
+		atomServices.createAtom(developerFqdn, atomName + n, callback);
 	}
 }
 createAtom.toText = lineToText;
 
 function createDeveloper(developerFqdn, uid, callback) {
 	logger.info(`Creating developer developerFqdn=${developerFqdn} uid=${uid}`);
-	developerServices.completeDeveloperRegistration(developerFqdn, uid, _stdCallback(callback));
+	developerServices.completeDeveloperRegistration(developerFqdn, uid, callback);
 }
 createDeveloper.toText = lineToText;
 
@@ -148,7 +139,7 @@ function createEdgeClient(atomFqdn, count, callback) {
 	}
 	for (var i = 0; i < count; i++) {
 		logger.info(`Creating edge client atomFqdn=${atomFqdn}`);
-		edgeClientServices.createEdgeClient(atomFqdn, _stdCallback(callback));
+		edgeClientServices.createEdgeClient(atomFqdn, callback);
 	}
 }
 createEdgeClient.toText = lineToText;
@@ -160,7 +151,7 @@ function createLocalClient(atomFqdn, count, edgeClientFqdn, callback) {
 
 	for (var i = 0; i < count; i++) {
 		logger.info(`Creating local client atomFqdn=${atomFqdn}`);
-		localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, _stdCallback(callback));
+		localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, callback);
 	}
 }
 
