@@ -126,7 +126,7 @@ function main() {
 			output = commands[cmdName][subCmdName].toText(output).toString();
 		}
 
-		console.warn(output);
+		console.log(output);
 	}
 
 	// Run the command

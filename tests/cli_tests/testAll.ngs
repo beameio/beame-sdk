@@ -57,7 +57,7 @@ F do_test(name:Str, f:Fun) {
 
 do_test("Create test developer", F() {
 	global developer = ``$BEAME_BIN creds createTestDeveloper --developerName developerName $DEVELOPER_NAME --developerEmail $DEVELOPER_EMAIL --format json``
-	developer is not Hash throws TestFail("Developer must be hash, not $developer")
+	developer is not Hash throws TestFail("Developer must be hash, not '$developer'")
 	developer.email != DEVELOPER_EMAIL throws TestFail("Developer email mismatch")
 	developer
 })
