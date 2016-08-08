@@ -5,10 +5,12 @@
 var argv = require('minimist')(process.argv.slice(2));
 var _    = require('underscore');
 
-var BeameStore = require("../services/BeameStore");
-var config  = require('../../config/Config');
+var BeameStore    = require("../services/BeameStore");
+var config        = require('../../config/Config');
 const module_name = config.AppModules.BeameSDKCli;
-var logger  = new (require('../utils/Logger'))(module_name);
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
+
 var commands = {};
 _.each(['creds', 'servers', 'crypto', 'system'], function (cmdName) {
 	commands[cmdName] = require('./' + cmdName + '.js')
@@ -124,7 +126,7 @@ function main() {
 			output = commands[cmdName][subCmdName].toText(output).toString();
 		}
 
-		console.log(output);
+		console.warn(output);
 	}
 
 	// Run the command

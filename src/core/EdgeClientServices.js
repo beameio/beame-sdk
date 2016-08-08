@@ -5,7 +5,8 @@
 
 var config        = require('../../config/Config');
 const module_name = config.AppModules.EdgeClient;
-var logger        = new (require('../utils/Logger'))(module_name);
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
 var _             = require('underscore');
 var provisionApi  = new (require('../services/ProvisionApi'))();
 var dataServices  = new (require('../services/DataServices'))();
@@ -63,11 +64,11 @@ var isRequestValid = function (hostname, atomDir, edgeClientDir, validateEdgeHos
 
 /**
  *
- * @param {String} atomHostname
+ * @param {String} atom_fqdn
  * @param {Function} callback
  * @this {EdgeClientServices}
  */
-var registerEdgeClient = function (atomHostname, callback) {
+var registerEdgeClient = function (atom_fqdn, callback) {
 	var atomDir;
 
 	/*---------- private callbacks -------------------*/
@@ -86,9 +87,14 @@ var registerEdgeClient = function (atomHostname, callback) {
 
 		var apiData = beameUtils.getApiData(apiActions.CreateEdgeClient.endpoint, postData, true);
 
+		logger.printStandardEvent(BeameLogger.EntityLevel.EdgeClient, BeameLogger.StandardFlowEvent.Registering, ` for atom ${atom_fqdn}`);
+
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
-				payload.parent_fqdn = atomHostname;
+
+				logger.printStandardEvent(BeameLogger.EntityLevel.EdgeClient, BeameLogger.StandardFlowEvent.Registered, payload.hostname);
+
+				payload.parent_fqdn = atom_fqdn;
 
 				var edgeClientDir = beameUtils.makePath(atomDir, payload.hostname + '/');
 
@@ -110,7 +116,7 @@ var registerEdgeClient = function (atomHostname, callback) {
 
 			}
 			else {
-				error.data.hostname = atomHostname;
+				error.data.hostname = atom_fqdn;
 				callback && callback(error, null);
 			}
 		});
@@ -136,26 +142,26 @@ var registerEdgeClient = function (atomHostname, callback) {
 
 		atomDir = data['path'];
 
-		isRequestValid(atomHostname, atomDir, null, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(atom_fqdn, atomDir, null, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
+	beameUtils.findHostPathAndParentAsync(atom_fqdn).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
 };
 
 /**
  *
- * @param {String} atomHostname
- * @param {String} edgeHostname
+ * @param {String} atom_fqdn
+ * @param {String} edge_client_fqdn
  * @param {Function} callback
  * @this {EdgeClientServices}
  */
-var getCert = function (atomHostname, edgeHostname, callback) {
+var getCert = function (atom_fqdn, edge_client_fqdn, callback) {
 	var edgeClientDir, atomDir;
 
 
 	function onRequestValidated(metadata) {
 
-		dataServices.createCSR(edgeClientDir, edgeHostname).then(
+		dataServices.createCSR(edgeClientDir, edge_client_fqdn).then(
 			function onCsrCreated(csr) {
 
 				provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
@@ -167,12 +173,16 @@ var getCert = function (atomHostname, edgeHostname, callback) {
 
 				var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
 
+				logger.printStandardEvent(BeameLogger.EntityLevel.EdgeClient, BeameLogger.StandardFlowEvent.RequestingCerts, edge_client_fqdn);
+
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
+						logger.printStandardEvent(BeameLogger.EntityLevel.EdgeClient, BeameLogger.StandardFlowEvent.ReceivedCerts, edge_client_fqdn);
+
 						dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, callback);
 					}
 					else {
-						error.data.hostname = edgeHostname;
+						error.data.hostname = edge_client_fqdn;
 						callback(error, null);
 					}
 				});
@@ -192,11 +202,11 @@ var getCert = function (atomHostname, edgeHostname, callback) {
 		edgeClientDir = data['path'];
 		atomDir       = data['parent_path'];
 
-		isRequestValid(atomHostname, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(atom_fqdn, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
 
-	beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 

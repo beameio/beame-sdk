@@ -5,15 +5,16 @@
 
 var fs = require('fs');
 
-var config      = require('../../config/Config');
+var config        = require('../../config/Config');
 const module_name = config.AppModules.Developer;
-var logger      = new (require('../utils/Logger'))(module_name);
-var _           = require('underscore');
-var path        = require('path');
-var os          = require('os');
-var home        = os.homedir();
-var homedir     = home;
-var devPath     = config.localCertsDir;
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
+var _             = require('underscore');
+var path          = require('path');
+var os            = require('os');
+var home          = os.homedir();
+var homedir       = home;
+var devPath       = config.localCertsDir;
 
 new (require('../services/BeameStore'))();
 
@@ -90,7 +91,7 @@ var isRequestValid = function (hostname, devDir) {
  * @param {String} email
  * @param {Function} callback
  */
-var saveDeveloper = function (email, developerName, callback) {
+var registerDeveloper = function (email, developerName, callback) {
 
 	provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
 
@@ -101,8 +102,12 @@ var saveDeveloper = function (email, developerName, callback) {
 
 	var apiData = beameUtils.getApiData(apiActions.CreateDeveloper.endpoint, postData, true);
 
+	logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registering, email);
+
 	provisionApi.runRestfulAPI(apiData, function (error, payload) {
 		if (!error) {
+
+			logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registered, payload.hostname);
 
 			payload.name  = developerName;
 			payload.email = email;
@@ -162,8 +167,12 @@ var getCert = function (hostname, callback) {
 
 				var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
 
+				logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.RequestingCerts, hostname);
+
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
+
+						logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.ReceivedCerts, hostname);
 
 						dataServices.saveCerts(devDir, payload, callback);
 					}
@@ -205,7 +214,7 @@ DeveloperServices.prototype.createDeveloper = function (developerName, developer
 
 	logger.info(`creating developer ${developerName} with email ${developerEmail}`);
 
-	saveDeveloper(developerEmail, developerName, function (error, payload) {
+	registerDeveloper(developerEmail, developerName, function (error, payload) {
 		if (!error) {
 
 			var hostname = payload.hostname;
@@ -261,7 +270,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (developer_
 		return;
 	}
 
-	logger.info(`Competing registration for ${developer_fqdn}.....`);
+	logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registering, developer_fqdn);
 
 	var devDir = makeDeveloperDir(developer_fqdn);
 
@@ -300,12 +309,12 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (developer_
 
 				var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
 
-				logger.info(`Requesting certificates for developer ${developer_fqdn}.....`);
+				logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.RequestingCerts, developer_fqdn);
 
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
 
-						logger.info(`Developer ${developer_fqdn} certificates received, saving to disk.....`);
+						logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.ReceivedCerts, developer_fqdn);
 
 						dataServices.saveCerts(devDir, payload, callback);
 					}

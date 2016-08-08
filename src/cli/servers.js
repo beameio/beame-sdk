@@ -2,19 +2,20 @@
 var BeameStore  = require("../services/BeameStore");
 var BeameServer = require("../services/BaseHttpsServer").SampleBeameServer;
 
-var beameSDK    = require("../../index.js");
-var express     = require('express');
-var appExpress  = express();
+var beameSDK      = require("../../index.js");
+var express       = require('express');
+var appExpress    = express();
 // This require is only cause the example is inside the beame-sdk repository, you will be using require('beame-sdk');
-var creds       = beameSDK.creds;
-var developers  = beameSDK.creds.list("developer", "", "JSON");
-var atoms       = beameSDK.creds.list("atom", "", "JSON");
-var edgeclients = beameSDK.creds.list("edgeclient", "", "JSON");
+var creds         = beameSDK.creds;
+var developers    = beameSDK.creds.list("developer", "", "JSON");
+var atoms         = beameSDK.creds.list("atom", "", "JSON");
+var edgeclients   = beameSDK.creds.list("edgeclient", "", "JSON");
 //var developerHostname;
 var edgeClientCreated;
-var config      = require('../../config/Config');
+var config        = require('../../config/Config');
 const module_name = config.AppModules.BeameServer;
-var logger      = new (require('../utils/Logger'))(module_name);
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
 
 var path                = require('path');
 var defaultSharedFolder = path.resolve(__dirname, "../../examples/public/shared");

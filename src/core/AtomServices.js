@@ -9,7 +9,8 @@ var beameUtils    = require('../utils/BeameUtils');
 var apiActions    = require('../../config/ApiConfig.json').Actions.AtomApi;
 var config        = require('../../config/Config');
 const module_name = config.AppModules.Atom;
-var logger        = new (require('../utils/Logger'))(module_name);
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Atom folder not found';
 
@@ -143,17 +144,17 @@ var getCert = function (developerHostname, atom_fqdn, callback) {
 
 				var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
 
-				logger.info(`Requesting certificates for atom ${atom_fqdn}.....`);
+				logger.printStandardEvent(BeameLogger.EntityLevel.Atom, BeameLogger.StandardFlowEvent.RequestingCerts, atom_fqdn);
 
 				provisionApi.runRestfulAPI(apiData,
 					/**
-					 * @param {DebugMessage} error
+					 * @param {LoggerMessage} error
 					 * @param {Object} payload
 					 */
 					function (error, payload) {
 						if (!error) {
 
-							logger.info(`Atom ${atom_fqdn} certificates received, saving to disk.....`);
+							logger.printStandardEvent(BeameLogger.EntityLevel.Atom, BeameLogger.StandardFlowEvent.ReceivedCerts, atom_fqdn);
 
 							dataServices.saveCerts(beameUtils.makePath(atomDir, '/'), payload, callback);
 						}
@@ -215,14 +216,14 @@ AtomServices.prototype.createAtom = function (developerHostname, atomName, callb
 		return;
 	}
 
-	logger.info(`Registering atom ${atomName}....`);
+	logger.printStandardEvent(BeameLogger.EntityLevel.Atom, BeameLogger.StandardFlowEvent.Registering, atomName);
 
 	function onAtomRegistered(error, payload) {
 		if (!error) {
 
-			logger.info(`Atom ${atomName} registered successfully.....`);
-
 			var hostname = payload.hostname;
+
+			logger.printStandardEvent(BeameLogger.EntityLevel.Atom, BeameLogger.StandardFlowEvent.Registered, `${atomName} with host ${hostname}`);
 
 			getCert(developerHostname, hostname, function (error) {
 				if (callback) {

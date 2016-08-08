@@ -22,6 +22,19 @@ var LogLevelVerbosity = {
 	"FATAL": 1
 };
 
+var EntityLevel = {
+	"Developer":"Developer",
+	"Atom" : "Atom",
+	"EdgeClient":"EdgeClient",
+	"LocalClient" : "LocalClient"
+};
+
+var StandardFlowEvent = {
+	"Registering" : "Registering",
+	"Registered" : "Registered",
+	"RequestingCerts" : "RequestingCerts",
+	"ReceivedCerts" : "ReceivedCerts"
+};
 /**
  * @typedef {Object} LoggerMessage
  * @param {LogLevel} level
@@ -115,7 +128,7 @@ class BeameLogger {
 		switch (level) {
 			case LogLevel.Info:
 			case LogLevel.Debug:
-			case  LogLevel.Warn:
+			case LogLevel.Warn:
 				console.warn(`${prefix} ${message}`);
 
 				if (level === LogLevel.Debug && !_.isEmpty(data)) {
@@ -132,6 +145,37 @@ class BeameLogger {
 			default:
 				return;
 		}
+	}
+
+	/**
+	 *
+	 * @param {String} entity
+	 * @param {String} event
+	 * @param {String} fqdn
+	 */
+	printStandardEvent(entity, event, fqdn){
+
+		var prefix = formatPrefix(this.module, LogLevel.Info);
+		var message;
+		switch (event){
+			case StandardFlowEvent.Registering:
+				message = `Registering ${entity.toLowerCase()} ${fqdn}.....`;
+				break;
+			case StandardFlowEvent.Registered:
+				message = `${entity} ${fqdn} registered successfully.....`;
+				break;
+			case StandardFlowEvent.RequestingCerts:
+				message = `Requesting certificates for ${entity.toLowerCase()} ${fqdn}.....`;
+				break;
+			case StandardFlowEvent.ReceivedCerts:
+				message = `${entity} ${fqdn} certificates received, saving to disk.....`;
+				break;
+
+			default: return;
+		}
+
+
+		console.warn(`${prefix} ${message}`);
 	}
 
 	/**
@@ -209,8 +253,16 @@ class BeameLogger {
 	}
 
 
-	get LogLevel() {
+	static get LogLevel() {
 		return LogLevel
+	}
+
+	static get EntityLevel(){
+		return EntityLevel
+	}
+
+	static get StandardFlowEvent(){
+		return StandardFlowEvent
 	}
 }
 

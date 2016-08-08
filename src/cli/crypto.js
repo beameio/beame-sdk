@@ -9,16 +9,16 @@
  #extract public key from certificate
  openssl x509 -pubkey -noout -in ../../.beame/oxxmrzj0qlvsrt1h.v1.beameio.net/x509.pem > pubkey.pem*/
 
-var NodeRsa = require("node-rsa");
-var config              = require('../../config/Config');
-const module_name         = config.AppModules.BeameCrypto;
-var logger              = new (require('../utils/Logger'))(module_name);
-
-var BeameStore = require("../services/BeameStore");
-var store      = new BeameStore();
+var NodeRsa       = require("node-rsa");
+var config        = require('../../config/Config');
+const module_name = config.AppModules.BeameCrypto;
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
+var BeameStore    = require("../services/BeameStore");
+var store         = new BeameStore();
 
 require('../../initWin');
-var x509       = require("x509");
+var x509 = require("x509");
 
 function aesEncrypt(data) {
 	var crypto               = require('crypto');
