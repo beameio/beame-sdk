@@ -20,6 +20,19 @@ var store         = new BeameStore();
 require('../../initWin');
 var x509 = require("x509");
 
+/**
+ * @typedef {object} aesEncryptedData
+ * @property {string} AES256CBC - base64 encoded encrypted data
+ * @property {string} IV - base64 encoded initialization vector
+ * @property {string} sharedCipher - base64 encoded shared secret
+ */
+
+/**
+ * Encrypts given data
+ * @public
+ * @param {string} data - data to encrypt
+ * @returns {aesEncryptedData}
+ */
 function aesEncrypt(data) {
 	var crypto               = require('crypto');
 	var sharedSecret         = crypto.randomBytes(32); // should be 128 (or 256) bits
@@ -35,6 +48,12 @@ function aesEncrypt(data) {
 
 }
 
+/**
+ * Decrypts given data
+ * @public
+ * @param {aesEncryptedData} data - data to encrypt
+ * @returns {string} data - decrypted plaintext
+ */
 function aesDecrypt(data) {
 	//data = JSON.parse(data);
 	var crypto = require('crypto');
@@ -66,6 +85,12 @@ function getPublicKey(cert) {
 	return {};
 }
 
+/**
+ * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
+ * @public
+ * @param {string} data - data to encrypt
+ * @param {string} fqdn - entity to encrypt for
+ */
 function encrypt(data, fqdn) {
 	var element = store.search(fqdn)[0];
 	if (element) {
@@ -87,6 +112,11 @@ function encrypt(data, fqdn) {
 	}
 }
 
+/**
+ * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
+ * @public
+ * @param {string} data - data to encrypt
+ */
 function decrypt(data) {
 	try {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -117,6 +147,12 @@ function decrypt(data) {
 	return dechipheredPayload;
 }
 
+/**
+ * Signs given data. You must have private key of the fqdn.
+ * @public
+ * @param {string} data - data to sign
+ * @param {string} fqdn - sign as this entity
+ */
 function sign(data, fqdn) {
 	var element = store.search(fqdn)[0];
 	if (element) {
@@ -128,6 +164,13 @@ function sign(data, fqdn) {
 	return {};
 }
 
+/**
+ * Checks signature.
+ * @public
+ * @param {string} data - signed data
+ * @param {string} fqdn - check signature that was signed as this entity
+ * @param {string} signature
+ */
 function checkSignature(data, fqdn, signature) {
 	var elemenet = store.search(fqdn)[0];
 	var certBody;
