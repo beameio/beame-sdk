@@ -34,7 +34,7 @@ var x509 = require("x509");
 /**
  * Encrypts given data
  * @public
- * @name Crypto.aesEncrypt
+ * @method Crypto.aesEncrypt
  * @param {String} data - data to encrypt
  * @returns {Array.<AesEncryptedData>}
  */
@@ -56,6 +56,7 @@ function aesEncrypt(data) {
 /**
  * Decrypts given data
  * @public
+ * @method Crypto.aesDecrypt
  * @param {AesEncryptedData} data - data to encrypt
  * @returns {string} data - decrypted plaintext
  */
@@ -93,6 +94,7 @@ function getPublicKey(cert) {
 /**
  * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
  * @public
+ * @method Crypto.encrypt
  * @param {string} data - data to encrypt
  * @param {string} fqdn - entity to encrypt for
  */
@@ -120,6 +122,7 @@ function encrypt(data, fqdn) {
 /**
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
  * @public
+ * @method Crypto.decrypt
  * @param {string} data - data to encrypt
  */
 function decrypt(data) {
@@ -155,6 +158,7 @@ function decrypt(data) {
 /**
  * Signs given data. You must have private key of the fqdn.
  * @public
+ * @method Crypto.sign
  * @param {string} data - data to sign
  * @param {string} fqdn - sign as this entity
  */
@@ -172,6 +176,7 @@ function sign(data, fqdn) {
 /**
  * Checks signature.
  * @public
+ * @method Crypto.checkSignature
  * @param {string} data - signed data
  * @param {string} fqdn - check signature that was signed as this entity
  * @param {string} signature
