@@ -63,12 +63,32 @@ module.exports = {
  */
 function lineToText(line) {
 	var table = new Table();
-	for(let k in line) {
+	for (let k in line) {
 		//noinspection JSUnfilteredForInLoop
 		table.push({[k]: line[k].toString()});
 	}
 
 	return table;
+}
+
+/**
+ * @private
+ * @param line
+ * @returns {string}
+ */
+function objectToText(line) {
+	var line2 = {};
+	Object.keys(line).forEach(k => {
+		if (isObject(line[k])) {
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
+			line2[k] = JSON.stringify(line[k]);
+		}
+		else {
+			line2[k] = line[k].toString();
+		}
+	});
+
+	return lineToText(line2);
 }
 
 /**
@@ -144,23 +164,6 @@ function isObject(str) {
 	}
 }
 
-/**
- * @private
- * @param line
- * @returns {string}
- */
-function objectToText(line) {
-	return Object.keys(line).map(k => {
-		if (!isObject(line[k])) {
-			return k + '=' + line[k].toString();
-		}
-
-		var json = line[k];
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		return k + '=' + JSON.stringify(json);
-	}).join('\n');
-}
-
 /** public methods **/
 
 /**
@@ -197,7 +200,7 @@ function show(type, fqdn) {
 
 	var creds = listCreds(type, fqdn);
 	return creds.map(cert => store.search(cert.hostname)[0]).filter(item => item.X509).map(item => {
-		var data = x509.parseCert(item.X509 + "");
+		var data      = x509.parseCert(item.X509 + "");
 		data['level'] = item.level;
 		return data;
 	});
@@ -206,13 +209,13 @@ function show(type, fqdn) {
 
 show.toText = function (certs) {
 	var table = new Table({
-		head:      ["level","hostname", "print", "serial"],
+		head:      ["level", "hostname", "print", "serial"],
 		colWidths: [15, 80, 65, 30]
 	});
 
 	certs.forEach(xcert => {
 		//noinspection JSUnresolvedVariable
-		table.push([xcert.level,xcert.subject.commonName, xcert.fingerPrint, xcert.serial]);
+		table.push([xcert.level, xcert.subject.commonName, xcert.fingerPrint, xcert.serial]);
 	});
 	return table;
 };
@@ -303,7 +306,7 @@ createDeveloper.toText = lineToText;
  * @param {String} atomName
  * @param {Function} callback
  */
-function createAtom(developerFqdn, atomName,  callback) {
+function createAtom(developerFqdn, atomName, callback) {
 	logger.info(`Creating atom ${atomName} for developer ${developerFqdn} `);
 	atomServices.createAtom(developerFqdn, atomName, callback);
 
@@ -446,6 +449,13 @@ function importNonBeameCredentials(fqdn) {
 	});
 }
 
+/**
+ * Return stats by entity fqdn
+ * @public
+ * @method Creds.stats
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
 function stats(fqdn, callback) {
 	if (!fqdn) {
 		logger.fatal("FQDN is required in shred");
@@ -459,10 +469,10 @@ function stats(fqdn, callback) {
 
 	var cb = function (error, payload) {
 		if (!error) {
-			return callback(payload);
+			return callback(null,payload);
 		}
 
-		logger.fatal(error.message);
+		logger.fatal(error);
 	};
 
 	switch (creds.level) {
