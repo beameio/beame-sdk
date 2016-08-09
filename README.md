@@ -155,6 +155,8 @@ The following commands are used for acquiring and manipulating certificates.
 ##############################################################################
 #                            Beame.io NodeJS API                           
 
+[See also JsDoc generated documentation](https://beameio.github.io/beame-sdk/index.html)
+
 ###The idea behind the Node.js SDK APIs is that you can employ Beame.io CLI functionality in your own Node.js project.
 ###Receive publicly trusted cert with a pseudo-random routable hostname and run your new SSL server in the same flow (or later, whenever you see it fit).
 
