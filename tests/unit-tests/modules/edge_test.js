@@ -77,6 +77,28 @@ function run() {
 			}, true);
 
 		});
+
+		// it('Should delete edge', function (done) {
+		//
+		// 		console.log('############ deleting edge %j ############', edgeClientHostname);
+		//
+		// 		//validate pre-requisites
+		// 		assert.isNotNull(edgeClientHostname);
+		// 		assert.isNotNull(edgeClientDirPath);
+		//
+		// 		edgeServices.deleteEdgeClient(edgeClientHostname, function (error, payload) {
+		//
+		// 			console.log('############ revoke edge certs response received with payload %j and error %j ############', payload, error);
+		//
+		// 			//validate payload & error
+		// 			assert.isNull(error, error && error.message);
+		// 			assert.isNotNull(payload, error && error.message);
+		//
+		// 			done()
+		//
+		// 		});
+		// });
+
 		//
 		// it('Should revoke edge certs', function (done) {
 		//

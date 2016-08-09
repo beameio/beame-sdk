@@ -196,6 +196,14 @@ var getCert = function (hostname, callback) {
 	dataServices.isHostnamePathValidAsync(devDir, module_name, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
 };
 
+var getMetadata = function(developer_fqdn, devDir, callback){
+	provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+
+	var apiData = beameUtils.getApiData(apiActions.GetMetadata.endpoint, {}, false);
+
+	provisionApi.runRestfulAPI(apiData, callback, 'GET');
+};
+
 /**
  * Developer services
  * @constructor
@@ -316,7 +324,32 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (developer_
 
 						logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.ReceivedCerts, developer_fqdn);
 
-						dataServices.saveCerts(devDir, payload, callback);
+						dataServices.saveCerts(devDir, payload, function(error){
+							if (!error) {
+								getMetadata(developer_fqdn, devDir, function(error,payload){
+									if(!error){
+										dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, module_name, function (error) {
+											if (!callback) return;
+
+											if (!error) {
+												dataServices.getNodeMetadataAsync(devDir, developer_fqdn, module_name).then(function (metadata) {
+													callback(null, metadata);
+												}, callback);
+											}
+											else {
+												callback(error, null);
+											}
+										});
+									}
+									else{
+										callback(error,null);
+									}
+								});
+							}
+							else {
+								callback(error, null);
+							}
+						});
 					}
 					else {
 						error.data.hostname = developer_fqdn;
@@ -334,12 +367,12 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (developer_
 
 /**
  *
- * @param {String} hostname => developer hostname
+ * @param {String} developer_fqdn => developer hostname
  * @param {String} email
  * @param {String|null|undefined} [name]
  * @param {Function} callback
  */
-DeveloperServices.prototype.updateProfile = function (hostname, name, email, callback) {
+DeveloperServices.prototype.updateProfile = function (developer_fqdn, name, email, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
@@ -365,7 +398,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
 				callback(null, metadata);
 			}
 			else {
-				error.data.hostname = hostname;
+				error.data.hostname = developer_fqdn;
 				callback(error, null);
 			}
 		});
@@ -381,19 +414,19 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {Function} callback
  */
-DeveloperServices.prototype.renewCert = function (hostname, callback) {
+DeveloperServices.prototype.renewCert = function (developer_fqdn, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
@@ -401,7 +434,7 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 
 		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
-		dataServices.createCSR(devDir, hostname, config.CertFileNames.TEMP_PRIVATE_KEY).then(
+		dataServices.createCSR(devDir, developer_fqdn, config.CertFileNames.TEMP_PRIVATE_KEY).then(
 			function onCsrCreated(csr) {
 
 				var postData = {
@@ -427,7 +460,7 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 
 						dataServices.deleteFile(devDir, config.CertFileNames.TEMP_PRIVATE_KEY);
 
-						error.data.hostname = hostname;
+						error.data.hostname = developer_fqdn;
 						callback(error, null);
 					}
 				});
@@ -447,18 +480,18 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {Function} callback
  */
-DeveloperServices.prototype.restoreCert = function (hostname, callback) {
+DeveloperServices.prototype.restoreCert = function (developer_fqdn, callback) {
 	var devDir;
 
 	function onRequestValidated() {
@@ -469,13 +502,13 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 			return;
 		}
 
-		dataServices.createCSR(devDir, hostname).then(function onCsrCreated(csr) {
+		dataServices.createCSR(devDir, developer_fqdn).then(function onCsrCreated(csr) {
 
 
 			/** @type {typeof DeveloperRestoreCertRequestToken} **/
 			var postData = {
 				csr:           csr,
-				hostname:      hostname,
+				hostname:      developer_fqdn,
 				recovery_code: recoveryData.recovery_code
 			};
 
@@ -489,7 +522,7 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 					dataServices.saveCerts(beameUtils.makePath(devDir, '/'), payload, callback);
 				}
 				else {
-					error.data.hostname = hostname;
+					error.data.hostname = developer_fqdn;
 					callback(error, null);
 				}
 			});
@@ -505,19 +538,19 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {Function} callback
  */
-DeveloperServices.prototype.revokeCert = function (hostname, callback) {
+DeveloperServices.prototype.revokeCert = function (developer_fqdn, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
@@ -526,7 +559,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
-			hostname: hostname
+			hostname: developer_fqdn
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
@@ -534,7 +567,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
 
-				beameUtils.deleteHostCerts(hostname);
+				beameUtils.deleteHostCerts(developer_fqdn);
 
 				dataServices.saveFile(devDir, config.CertFileNames.RECOVERY, beameUtils.stringify(payload), function (error) {
 					if (!callback) return;
@@ -549,7 +582,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 
 			}
 			else {
-				error.data.hostname = hostname;
+				error.data.hostname = developer_fqdn;
 				callback(error, null);
 			}
 		});
@@ -564,19 +597,19 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {Function} callback
  */
-DeveloperServices.prototype.getStats = function (hostname, callback) {
+DeveloperServices.prototype.getStats = function (developer_fqdn, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
@@ -596,10 +629,10 @@ DeveloperServices.prototype.getStats = function (hostname, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 

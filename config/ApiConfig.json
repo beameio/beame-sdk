@@ -29,6 +29,9 @@
             "GetStats": {
                 "endpoint": "/api/v1/dev/stats"
             },
+            "GetMetadata": {
+                "endpoint": "/api/v1/dev/meta"
+            },
             "RegisterDeveloper": {
                 "name": "register developer",
                 "endpoint": "/api/v1/auth/dev/register"

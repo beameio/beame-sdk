@@ -93,6 +93,7 @@ list.toText = function (creds) {
 function lineToText(line) {
 	var table = new Table();
 	for(let k in line) {
+		//noinspection JSUnfilteredForInLoop
 		table.push({[k]: line[k].toString()});
 	}
 	return table;
