@@ -1,5 +1,7 @@
 'use strict';
 
+/** @namespace BaseHttpsServer */
+
 var fs = require('fs');
 
 var https       = require("https");
@@ -13,7 +15,7 @@ var beamestore  = new BeameStore();
 /**
  * Starts sample HTTPS server. Either instanceHostname or projectName must be specified.
  * @public
- * @method SampleBeameServer
+ * @method BaseHttpsServer.SampleBeameServer
  * @param {String|null} [instanceHostname] - fqdn of the HTTPS server. You must have private key of the entity.
  * @param {String|null} [projectName] - name of environment variable to get fqdn from.
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
