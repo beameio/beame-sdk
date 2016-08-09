@@ -92,7 +92,7 @@ list.toText = function (creds) {
 
 function lineToText(line) {
 	var table = new Table();
-	for(let k of Object.keys(line).sort()) {
+	for(let k in line) {
 		table.push({[k]: line[k].toString()});
 	}
 	return table;
