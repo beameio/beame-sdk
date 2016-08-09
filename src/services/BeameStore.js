@@ -309,9 +309,9 @@ BeameStore.prototype.shredCredentials = function (fqdn, callback) {
 	async.parallel(del_functions, error => {
 		this.ensureFreshBeameStore();
 		if (error) {
-			callback(logger.formatErrorMessage(`Shredding failed: fqdn ${fqdn} not found`, module_name, {"status": "error", "message": error}));
+			callback(logger.formatErrorMessage(`Shredding failed: fqdn ${fqdn} not found`, module_name, {"status": "error", "message": error}),null);
 		} else {
-			callback({"status": "ok", "message": `${files.length} files deleted`});
+			callback(null,{"status": "ok", "message": `${files.length} files deleted`});
 		}
 	})
 };
