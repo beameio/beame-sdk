@@ -58,7 +58,7 @@ function aesEncrypt(data) {
  * @public
  * @method Crypto.aesDecrypt
  * @param {AesEncryptedData} data - data to encrypt
- * @returns {string} data - decrypted plaintext
+ * @returns {String} data - decrypted plaintext
  */
 function aesDecrypt(data) {
 	//data = JSON.parse(data);
@@ -95,8 +95,8 @@ function getPublicKey(cert) {
  * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
  * @public
  * @method Crypto.encrypt
- * @param {string} data - data to encrypt
- * @param {string} fqdn - entity to encrypt for
+ * @param {String} data - data to encrypt
+ * @param {String} fqdn - entity to encrypt for
  */
 function encrypt(data, fqdn) {
 	var element = store.search(fqdn)[0];
@@ -123,7 +123,7 @@ function encrypt(data, fqdn) {
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
  * @public
  * @method Crypto.decrypt
- * @param {string} data - data to encrypt
+ * @param {String} data - data to encrypt
  */
 function decrypt(data) {
 	try {
@@ -159,8 +159,8 @@ function decrypt(data) {
  * Signs given data. You must have private key of the fqdn.
  * @public
  * @method Crypto.sign
- * @param {string} data - data to sign
- * @param {string} fqdn - sign as this entity
+ * @param {String} data - data to sign
+ * @param {String} fqdn - sign as this entity
  */
 function sign(data, fqdn) {
 	var element = store.search(fqdn)[0];
@@ -177,9 +177,9 @@ function sign(data, fqdn) {
  * Checks signature.
  * @public
  * @method Crypto.checkSignature
- * @param {string} data - signed data
- * @param {string} fqdn - check signature that was signed as this entity
- * @param {string} signature
+ * @param {String} data - signed data
+ * @param {String} fqdn - check signature that was signed as this entity
+ * @param {String} signature
  */
 function checkSignature(data, fqdn, signature) {
 	var elemenet = store.search(fqdn)[0];
