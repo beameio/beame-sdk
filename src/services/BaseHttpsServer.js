@@ -46,7 +46,7 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		return;
 	}
 	edgeCert            = edgeCert[0];
-	/** @type {typeof ServerCertificates} **/
+	/** @type {ServerCertificates} **/
 	var edgeClientCerts = {
 		key:  edgeCert.PRIVATE_KEY,
 		cert: edgeCert.P7B,
