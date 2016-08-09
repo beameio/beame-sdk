@@ -1,4 +1,5 @@
 'use strict';
+
 var fs = require('fs');
 
 var https       = require("https");
@@ -10,12 +11,13 @@ var logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsSe
 var beamestore  = new BeameStore();
 
 /**
- *
- * @param {String|null|undefined} [instanceHostname]
- * @param {String|null|undefined} [projectName]
- * @param {Function} requestListener
+ * Starts sample HTTPS server. Either instanceHostname or projectName must be specified.
+ * @public
+ * @method SampleBeameServer
+ * @param {String|null} [instanceHostname] - fqdn of the HTTPS server. You must have private key of the entity.
+ * @param {String|null} [projectName] - name of environment variable to get fqdn from.
+ * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
- * @constructor
  */
 var SampleBeameServer = function (instanceHostname, projectName, requestListener, hostOnlineCallback) {
 	if (!instanceHostname && !projectName) {
