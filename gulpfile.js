@@ -6,6 +6,6 @@ var jsdoc = require('gulp-jsdoc3');
 
 
 gulp.task('doc', function (cb) {
-	gulp.src(['README.md', './src/core/*.js'], {read: true})
+	gulp.src(['JSDOC_README.md', './src/cli/crypto.js','./src/cli/creds.js','./src/services/BaseHttpsServer.js'], {read: true})
 		.pipe(jsdoc(cb));
 });
