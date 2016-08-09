@@ -1,4 +1,13 @@
 "use strict";
+/** @namespace Crypto **/
+
+/**
+ * @typedef {Object} AesEncryptedData
+ * @property {String} AES256CBC - base64 encoded encrypted data
+ * @property {String} IV - base64 encoded initialization vector
+ * @property {String} sharedCipher - base64 encoded shared secret
+ */
+
 /*### sign the data in testFIle with a key
  openssl rsautl -sign -in ./test -inkey ../../.beame/oxxmrzj0qlvsrt1h.v1.beameio.net/private_key.pem -out sig
 
@@ -20,18 +29,14 @@ var store         = new BeameStore();
 require('../../initWin');
 var x509 = require("x509");
 
-/**
- * @typedef {object} aesEncryptedData
- * @property {string} AES256CBC - base64 encoded encrypted data
- * @property {string} IV - base64 encoded initialization vector
- * @property {string} sharedCipher - base64 encoded shared secret
- */
+
 
 /**
  * Encrypts given data
  * @public
- * @param {string} data - data to encrypt
- * @returns {aesEncryptedData}
+ * @name Crypto.aesEncrypt
+ * @param {String} data - data to encrypt
+ * @returns {Array.<AesEncryptedData>}
  */
 function aesEncrypt(data) {
 	var crypto               = require('crypto');
@@ -51,7 +56,7 @@ function aesEncrypt(data) {
 /**
  * Decrypts given data
  * @public
- * @param {aesEncryptedData} data - data to encrypt
+ * @param {AesEncryptedData} data - data to encrypt
  * @returns {string} data - decrypted plaintext
  */
 function aesDecrypt(data) {
