@@ -19,6 +19,19 @@ var path   = require('path');
 var fs     = require('fs');
 var mkdirp = require("mkdirp");
 
+/**
+ * @private
+ * Enum string values.
+ * @enum {string}
+ */
+const EntityType = {
+	developer: "developer",
+	atom: "atom",
+	edgeclient:"edgeclient",
+	localclient:"localclient"
+};
+
+
 module.exports = {
 	show,
 	list,
@@ -35,6 +48,12 @@ module.exports = {
 	stats
 };
 
+/**
+ * Return
+ * @param {EntityType|null|undefined} [type]
+ * @param {String|null|undefined} [fqdn] entity fqdn
+ * @returns {Array}
+ */
 function listCreds(type, fqdn) {
 	var returnValues = [];
 	if (type && !fqdn) {
@@ -53,22 +72,23 @@ function show(type, fqdn) {
 	logger.debug(`show ${type} ${fqdn}`);
 
 	var creds = listCreds(type, fqdn);
-	return creds.map(cert => {
-		var item = store.search(cert.hostname)[0];
-		return x509.parseCert(item.X509 + "");
+	return creds.map(cert => store.search(cert.hostname)[0]).filter(item => item.X509).map(item => {
+		var data = x509.parseCert(item.X509 + "");
+		data['level'] = item.level;
+		return data;
 	});
 
 }
 
 show.toText = function (certs) {
 	var table = new Table({
-		head:      ['Name', "Print", "Serial", "SigAlg"],
-		colWidths: [25, 65, 30, 30]
+		head:      ['level','name', "print", "serial"],
+		colWidths: [15, 80, 65, 30]
 	});
 
 	certs.forEach(xcert => {
 		//noinspection JSUnresolvedVariable
-		table.push([xcert.subject.commonName, xcert.fingerPrint, xcert.serial, xcert.signatureAlgorithm]);
+		table.push([xcert.level,xcert.subject.commonName, xcert.fingerPrint, xcert.serial]);
 	});
 	return table;
 };

@@ -216,14 +216,14 @@ var EdgeClientServices = function () {
 
 /**
  *
- * @param {String} atomHostname
+ * @param {String} atom_fqdn
  * @param {Function} callback
  */
-EdgeClientServices.prototype.createEdgeClient = function (atomHostname, callback) {
+EdgeClientServices.prototype.createEdgeClient = function (atom_fqdn, callback) {
 
-	logger.debug("Call Create Edge Client", {"atom": atomHostname});
+	logger.debug("Call Create Edge Client", {"atom": atom_fqdn});
 
-	if (_.isEmpty(atomHostname)) {
+	if (_.isEmpty(atom_fqdn)) {
 		callback(logger.formatErrorMessage("Create Edge Client => Atom fqdn required", module_name), null);
 		return;
 	}
@@ -234,7 +234,7 @@ EdgeClientServices.prototype.createEdgeClient = function (atomHostname, callback
 			if (payload && payload.hostname) {
 				var hostname = payload.hostname;
 
-				getCert(atomHostname, hostname, function (error) {
+				getCert(atom_fqdn, hostname, function (error) {
 					if (callback) {
 						error ? callback(error, null) : callback(null, payload);
 					}
@@ -250,16 +250,16 @@ EdgeClientServices.prototype.createEdgeClient = function (atomHostname, callback
 		}
 	}
 
-	registerEdgeClient(atomHostname, onEdgeRegistered);
+	registerEdgeClient(atom_fqdn, onEdgeRegistered);
 
 };
 
 //noinspection JSUnusedGlobalSymbols
 /**
- * @param {String} edgeHostname
+ * @param {String} edge_client_fqdn
  * @param {Function} callback
  */
-EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname, callback) {
+EdgeClientServices.prototype.deleteEdgeClient = function (edge_client_fqdn, callback) {
 
 	var edgeClientDir, atomDir;
 
@@ -269,7 +269,7 @@ EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname, callback
 		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
-			hostname: edgeHostname
+			hostname: edge_client_fqdn
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.DeleteEdgeClient.endpoint, postData, false);
@@ -297,19 +297,19 @@ EdgeClientServices.prototype.deleteEdgeClient = function (edgeHostname, callback
 
 		atomDir = data['parent_path'];
 
-		isRequestValid(edgeHostname, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(edge_client_fqdn, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 
 	}
 
-	beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 //noinspection JSUnusedGlobalSymbols
 /**
- * @param {String} edgeHostname
+ * @param {String} edge_client_fqdn
  * @param {Function} callback
  */
-EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
+EdgeClientServices.prototype.renewCert = function (edge_client_fqdn, callback) {
 
 	var edgeClientDir, atomDir;
 
@@ -318,11 +318,11 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 
 		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
-		dataServices.createCSR(edgeClientDir, edgeHostname, config.CertFileNames.TEMP_PRIVATE_KEY).then(
+		dataServices.createCSR(edgeClientDir, edge_client_fqdn, config.CertFileNames.TEMP_PRIVATE_KEY).then(
 			function onCsrCreated(csr) {
 
 				var postData = {
-					hostname: edgeHostname,
+					hostname: edge_client_fqdn,
 					csr:      csr
 				};
 
@@ -360,21 +360,21 @@ EdgeClientServices.prototype.renewCert = function (edgeHostname, callback) {
 
 		atomDir = data['parent_path'];
 
-		isRequestValid(edgeHostname, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(edge_client_fqdn, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 
 	}
 
-	beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 
 };
 
 //noinspection JSUnusedGlobalSymbols
 /**
- * @param {String} edgeHostname
+ * @param {String} edge_client_fqdn
  * @param {Function} callback
  */
-EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
+EdgeClientServices.prototype.revokeCert = function (edge_client_fqdn, callback) {
 
 	var edgeClientDir, atomDir;
 
@@ -384,7 +384,7 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
 		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
-			hostname: edgeHostname
+			hostname: edge_client_fqdn
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
@@ -392,7 +392,7 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
 		provisionApi.runRestfulAPI(apiData, function (error) {
 			if (!error) {
 
-				beameUtils.deleteHostCerts(edgeHostname);
+				beameUtils.deleteHostCerts(edge_client_fqdn);
 
 				callback && callback(null, 'done');
 			}
@@ -408,15 +408,15 @@ EdgeClientServices.prototype.revokeCert = function (edgeHostname, callback) {
 
 		atomDir = data['parent_path'];
 
-		isRequestValid(edgeHostname, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(edge_client_fqdn, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 
 	}
 
-	beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 
-EdgeClientServices.prototype.getStats = function (edgeHostname, callback) {
+EdgeClientServices.prototype.getStats = function (edge_client_fqdn, callback) {
 	var edgeClientDir, atomDir;
 
 	/*---------- private callbacks -------------------*/
@@ -425,7 +425,7 @@ EdgeClientServices.prototype.getStats = function (edgeHostname, callback) {
 		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
-			hostname: edgeHostname
+			hostname: edge_client_fqdn
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.GetStats.endpoint, postData, false);
@@ -444,11 +444,11 @@ EdgeClientServices.prototype.getStats = function (edgeHostname, callback) {
 
 		atomDir = data['parent_path'];
 
-		isRequestValid(edgeHostname, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(edge_client_fqdn, atomDir, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 
 	}
 
-	beameUtils.findHostPathAndParentAsync(edgeHostname).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 module.exports = EdgeClientServices;

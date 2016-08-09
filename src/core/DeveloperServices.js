@@ -196,7 +196,7 @@ var getCert = function (hostname, callback) {
 	dataServices.isHostnamePathValidAsync(devDir, module_name, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
 };
 
-var getMetadata = function(developer_fqdn, devDir, callback){
+var getMetadata = function (developer_fqdn, devDir, callback) {
 	provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 	var apiData = beameUtils.getApiData(apiActions.GetMetadata.endpoint, {}, false);
@@ -284,7 +284,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (developer_
 
 	dataServices.createDir(devDir);
 
-	/** @type {typeof CompleteRegistrationRequestToken} **/
+	/** @type {CompleteRegistrationRequestToken} **/
 	var payload = {
 		hostname: developer_fqdn,
 		uid:      uid,
@@ -324,10 +324,10 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (developer_
 
 						logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.ReceivedCerts, developer_fqdn);
 
-						dataServices.saveCerts(devDir, payload, function(error){
+						dataServices.saveCerts(devDir, payload, function (error) {
 							if (!error) {
-								getMetadata(developer_fqdn, devDir, function(error,payload){
-									if(!error){
+								getMetadata(developer_fqdn, devDir, function (error, payload) {
+									if (!error) {
 										dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, module_name, function (error) {
 											if (!callback) return;
 
@@ -341,8 +341,8 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (developer_
 											}
 										});
 									}
-									else{
-										callback(error,null);
+									else {
+										callback(error, null);
 									}
 								});
 							}
@@ -505,7 +505,7 @@ DeveloperServices.prototype.restoreCert = function (developer_fqdn, callback) {
 		dataServices.createCSR(devDir, developer_fqdn).then(function onCsrCreated(csr) {
 
 
-			/** @type {typeof DeveloperRestoreCertRequestToken} **/
+			/** @type {DeveloperRestoreCertRequestToken} **/
 			var postData = {
 				csr:           csr,
 				hostname:      developer_fqdn,
