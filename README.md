@@ -66,6 +66,31 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
 
 ***
 ## Getting Started - Mac 
+First ensure that your bash version is 4.3 or higher (`echo $BASH_VERSION`). If not - upgrade it. 
+Take care to replace 4.3.46 from snippets below by your new bash version: 
+```
+brew update && brew install bash
+Add new shell to available shells:
+sudo bash -c 'echo /usr/local/Cellar/bash/4.3.46/bin/bash >> /etc/shells'
+```
+Change to the new shell: 
+`chsh -s /usr/local/Cellar/bash/4.3.46/bin/bash`
+
+Open new terminal and run: 
+```
+brew tap homebrew/versions
+brew rm bash-completion
+brew install bash-completion2
+``` 
+Add following instructions to your .bashrc file (if you don't have .bash_profile in your Home directory, create one :) 
+```
+if [ -f $(brew --prefix)/share/bash-completion/bash_completion ]; then
+    . $(brew --prefix)/share/bash-completion/bash_completion
+fi
+
+source /usr/local/lib/node_modules/beame-sdk/src/cli/completion.sh
+``` 
+Open new terminal and begin using beame-sdk cli with auto-completion. 
 
  - Install the Beame SDK by running `npm install -g beame-sdk` 
  - Register as a developer. 
