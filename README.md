@@ -94,15 +94,16 @@ Perl is needed for building OpenSSL
 ### Install OpenSSL 
  Download and extract `https://www.openssl.org/source/openssl-1.0.1t.tar.gz` 
  Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under 
- `C:\Program Files (x86)\Microsoft Visual C++` 
- Build  `Tools\` in the OpenSSL directory 
-    `perl Configure VC-WIN64A no-asm --prefix=C:\OpenSSL-Win64` 
-    `.\ms\do_win64a.bat` 
-    `nmake -f ms\ntdll.mak clean` 
-    `nmake -f ms\ntdll.mak` 
-    `nmake -f ms\ntdll.mak install` 
+ `C:\Program Files (x86)\Microsoft Visual C++ Build Tools\` in the OpenSSL directory 
+``` 
+    perl Configure VC-WIN64A no-asm --prefix=C:\OpenSSL-Win64 
+    .\ms\do_win64a.bat
+    nmake -f ms\ntdll.mak clean
+    nmake -f ms\ntdll.mak
+    nmake -f ms\ntdll.mak install
 
-`npm install -g beame-sdk` 
+npm install -g beame-sdk
+```
 ***
 ***
 #Beame.io Networking Solution Overview
