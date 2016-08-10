@@ -62,8 +62,11 @@
     "test": "tests"
   },
   "devDependencies": {
-    "mocha": "^2.5.3",
+    "JSON": "latest",
     "chai": "^3.5.0",
-    "JSON": "latest"
+    "gulp": "^3.9.1",
+    "gulp-jsdoc3": "^0.3.0",
+    "jsdoc": "^3.4.0",
+    "mocha": "^2.5.3"
   }
 }

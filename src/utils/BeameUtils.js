@@ -2,15 +2,16 @@
  * Created by zenit1 on 03/07/2016.
  */
 'use strict';
-var path       = require('path');
-var request    = require('request');
-var _          = require('underscore');
-var network    = require('network');
-var os = require('os');
-var beameStore = new (require('../services/BeameStore'))();
-var config     = require('../../config/Config');
-
-
+var path          = require('path');
+var request       = require('request');
+var _             = require('underscore');
+var network       = require('network');
+var os            = require('os');
+var beameStore    = new (require('../services/BeameStore'))();
+var config        = require('../../config/Config');
+const module_name = config.AppModules.BeameUtils;
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
 /**
  * @typedef {Object} AwsRegion
  * @property {String} Name
@@ -84,40 +85,11 @@ var AwsRegions = [
  * @property {String} publicIp
  */
 
-/**
- * @typedef {Object} DebugMessage
- * @param {String} module
- * @param {String} code
- * @param {String} message
- * @param {Object} data
- */
-
-/**
- * @typedef {Object} ValidationResult
- * @param {boolean} isValid
- * @param {DebugMessage} message
- */
 
 module.exports = {
 
 	makePath: path.join,
 
-	/**
-	 *
-	 * @param {String} module
-	 * @param {String} code
-	 * @param {String} message
-	 * @param {Object} data
-	 * @returns {typeof DebugMessage}
-	 */
-	formatDebugMessage: function (module, code, message, data) {
-		return {
-			module,
-			code,
-			message,
-			data
-		};
-	},
 
 	/**
 	 * @param {String} baseDir
@@ -209,12 +181,9 @@ module.exports = {
 		var getRegionName = self.getRegionName;
 		var get           = self.httpGet;
 		var selectBest    = self.selectBestProxy;
-		var consoleMessage;
 
 		if (retries == 0) {
-			consoleMessage = self.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.EdgeLbError, "Edge not found", {"load balancer": loadBalancerEndpoint});
-			console.error(consoleMessage);
-			callback && callback(consoleMessage, null);
+			callback && callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
 		}
 		else {
 			retries--;
@@ -245,12 +214,10 @@ module.exports = {
 
 						sleep = parseInt(sleep * (Math.random() + 1.5));
 
-						consoleMessage = self.formatDebugMessage(config.AppModules.EdgeClient, config.MessageCodes.EdgeLbError, "Retry to get lb instance", {
+						logger.warn("Retry to get lb instance", {
 							"sleep":   sleep,
 							"retries": retries
 						});
-
-						console.warn(consoleMessage);
 
 						setTimeout(function () {
 							selectBest.call(self, loadBalancerEndpoint, retries, sleep, callback);
@@ -280,10 +247,6 @@ module.exports = {
 		var result = '';
 		for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
 		return result;
-	},
-
-	isAmazon: function () {
-		return process.env.NODE_ENV ? true : false;
 	},
 
 	//validation services
@@ -361,7 +324,7 @@ module.exports = {
 	},
 
 
-	getLocalActiveInterfaces : function(){
+	getLocalActiveInterfaces: function () {
 		return new Promise(function (resolve, reject) {
 
 			var addresses = [];
@@ -371,7 +334,8 @@ module.exports = {
 			Object.keys(ifaces).forEach(function (ifname) {
 
 				ifaces[ifname].forEach(function (iface) {
-					if(iface.family === 'IPv4' && iface.internal === false){
+					//noinspection JSUnresolvedVariable
+					if (iface.family === 'IPv4' && iface.internal === false) {
 						addresses.push(iface.address);
 					}
 

@@ -1,4 +1,7 @@
 'use strict';
+
+/** @namespace BaseHttpsServer */
+
 var fs = require('fs');
 
 var https       = require("https");
@@ -6,22 +9,22 @@ var ProxyClient = require("./ProxyClient");
 var BeameStore  = require("./BeameStore");
 var SNIServer   = require("./SNIServer");
 var config      = require('../../config/Config');
-
-
-var debug      = require("debug")("SampleBeameServer");
-var beamestore = new BeameStore();
+var logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
+var beamestore  = new BeameStore();
 
 /**
- *
- * @param {String|null|undefined} [instanceHostname]
- * @param {String|null|undefined} [projectName]
- * @param {Function} requestListener
+ * Starts sample HTTPS server. Either instanceHostname or projectName must be specified.
+ * @public
+ * @method BaseHttpsServer.SampleBeameServer
+ * @param {String|null} [instanceHostname] - fqdn of the HTTPS server. You must have private key of the entity.
+ * @param {String|null} [projectName] - name of environment variable to get fqdn from.
+ * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
- * @constructor
  */
 var SampleBeameServer = function (instanceHostname, projectName, requestListener, hostOnlineCallback) {
 	if (!instanceHostname && !projectName) {
-		throw new Error('instance hostname or project name required');
+		logger.error('instance hostname or project name required');
+		return;
 	}
 
 
@@ -30,19 +33,22 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		var varName = projectName;
 		host        = process.env[varName];
 		if (host == undefined) {
-			console.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
-			process.exit(1);
+			logger.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
+			return;
 		}
 	}
 	else {
 		host = instanceHostname;
 	}
+
 	var edgeCert = beamestore.search(host);
+
 	if (edgeCert.length != 1) {
-		throw new Error("Could not find certificate for " + host);
+		logger.error("Could not find certificate for " + host);
+		return;
 	}
 	edgeCert            = edgeCert[0];
-	/** @type {typeof ServerCertificates} **/
+	/** @type {ServerCertificates} **/
 	var edgeClientCerts = {
 		key:  edgeCert.PRIVATE_KEY,
 		cert: edgeCert.P7B,
@@ -70,13 +76,13 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		}
 
 		//noinspection JSUnresolvedVariable
-		if(edgeCert.hostname.indexOf(".r.")>0){
+		if (edgeCert.hostname.indexOf(".r.") > 0) {
 			new ProxyClient("HTTPS", edgeCert.hostname,
 				edgeCert.edgeHostname, 'localhost',
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
 				null, edgeClientCerts);
 		}
-		else{
+		else {
 			onLocalServerCreated(null);
 		}
 	});

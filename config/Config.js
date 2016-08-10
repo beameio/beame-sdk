@@ -3,6 +3,10 @@ var path = require('path');
 var os   = require('os');
 var home = os.homedir();
 
+const AuthServerEndPoint = "https://registration-staging.beameio.net";
+
+const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
+
 /** @const {String} **/
 var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
@@ -13,7 +17,7 @@ var localCertsDir = path.join(rootDir, 'v1', 'local');
 var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
 
 /** @const {String} **/
-var loadBalancerURL = process.env.BEAME_LB || "http://lb.beameio.net/";
+var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";
@@ -35,6 +39,20 @@ var CertFileNames = {
 };
 
 /**
+ * Certificate file names
+ *  @enum {string}
+ */
+var CertificateFiles = {
+	"PRIVATE_KEY":      "private_key.pem",
+	"X509":             "x509.pem",
+	"CA":               "ca.pem",
+	"PKCS7":            "pkcs7.pem",
+	"P7B":              "p7b.cer",
+	"PKCS12":           "cert.pfx",
+	"PWD":              "pwd.txt"
+};
+
+/**
  * Certificate response fields
  *  @enum {string}
  */
@@ -50,13 +68,24 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
-	"Developer":    "Developer",
-	"Atom":         "Atom",
-	"EdgeClient":   "EdgeClient",
-	"LocalClient":  "LocalClient",
-	"ProvisionApi": "ProvisionApi",
-	"DataServices": "DataServices",
-	"UnitTest":     "UnitTest"
+	"BeameSDKCli":      "BeameSDKCli",
+	"BeameCreds":       "BeameCreds",
+	"BeameCrypto":      "BeameCrypto",
+	"BeameServer":      "BeameServer",
+	"BeameUtils":       "BeameUtils",
+	"BeameStore":       "BeameStore",
+	"BeameSystem":       "BeameSystem",
+	"BeameDirServices": "BeameDirServices",
+	"Developer":        "Developer",
+	"Atom":             "Atom",
+	"EdgeClient":       "EdgeClient",
+	"LocalClient":      "LocalClient",
+	"ProvisionApi":     "ProvisionApi",
+	"DataServices":     "DataServices",
+	"UnitTest":         "UnitTest",
+	"BaseHttpsServer":  "BaseHttpsServer",
+	"SNIServer":        "SNIServer",
+	"ProxyClient":      "ProxyClient"
 };
 
 /**
@@ -107,10 +136,13 @@ module.exports = {
 	loadBalancerURL,
 	metadataFileName,
 	CertFileNames,
+	CertificateFiles,
 	CertResponseFields,
 	AppModules,
 	MessageCodes,
 	ResponseKeys,
 	TimeUnits,
-	SNIServerPort
+	SNIServerPort,
+	AuthServerEndPoint,
+	CertEndpoint
 };

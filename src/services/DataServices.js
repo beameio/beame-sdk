@@ -3,14 +3,16 @@
  */
 'use strict';
 
-var path   = require('path');
-var debug  = require("debug")("./src/services/DataServices.js");
-var fs     = require('fs');
-var exec   = require('child_process').exec;
-var async  = require('async');
-var rimraf = require('rimraf');
-var _      = require('underscore');
-var config = require('../../config/Config');
+var path          = require('path');
+var debug         = require("debug")("./src/services/DataServices.js");
+var fs            = require('fs');
+var exec          = require('child_process').exec;
+var async         = require('async');
+var rimraf        = require('rimraf');
+var _             = require('underscore');
+var config        = require('../../config/Config');
+const module_name = config.AppModules.DataServices;
+var logger        = new (require('../utils/Logger'))(module_name);
 
 var beameStore = new (require('../services/BeameStore'))();
 var beameUtils = require('../utils/BeameUtils');
@@ -57,17 +59,17 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 		/* --------- generate RSA key: ------------------------------------------------*/
 		var cmd = "openssl genrsa 2048";
 
-		debug(beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.DebugInfo, "generating private key with", {"cmd": cmd}));
+		logger.debug("generating private key with", {"cmd": cmd});
 
 		exec(cmd, function (error, stdout, stderr) {
 			var devPK = stdout;
 
 			if (error !== null) {
 				/* -------  put error handler to deal with possible openssl failure -----------*/
-				errMsg = beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.OpenSSLError, "Failed to generate Private Key", {
+				errMsg = logger.formatErrorMessage("Failed to generate Private Key", module_name, {
 					"error":  error,
 					"stderr": stderr
-				});
+				}, config.MessageCodes.OpenSSLError);
 
 				reject(errMsg);
 				return;
@@ -80,7 +82,7 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 			self.saveFile(dirPath, pkFileName, devPK, function (error) {
 				if (!error) {
 					cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (csrSubj + hostname) + "\"";
-					debug(beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.DebugInfo, "generating CSR with", {"cmd": cmd}));
+					logger.debug("generating CSR with", {"cmd": cmd});
 
 					try {
 						exec(cmd,
@@ -92,11 +94,10 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 							 */
 							function (error, stdout, stderr) {
 								if (error !== null) {
-									errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.OpenSSLError, "Failed to generate CSR", {
+									errMsg = logger.formatErrorMessage("Failed to generate CSR", module_name, {
 										"error":  error,
 										"stderr": stderr
-									});
-									console.error(errMsg);
+									}, config.MessageCodes.OpenSSLError);
 									reject(errMsg);
 								}
 								else {
@@ -106,17 +107,15 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 							});
 					}
 					catch (error) {
-						errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.OpenSSLError, "Create Developer CSR", {"error": error});
-						console.error(errMsg);
+						errMsg = logger.formatErrorMessage("Create Developer CSR", module_name, error, config.MessageCodes.OpenSSLError);
 						reject(errMsg);
 					}
 				}
 				else {
-					errMsg = beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.OpenSSLError, "Failed to save Private Key", {
+					errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {
 						"error":  error,
 						"stderr": stderr
-					});
-					console.error(errMsg);
+					}, config.MessageCodes.OpenSSLError);
 					reject(errMsg);
 				}
 			});
@@ -147,11 +146,10 @@ DataServices.prototype.savePayload = function (dirPath, payload, keys, level, ca
 			data[keys[i]] = payload[keys[i]];
 		}
 		else {
-			var errMsg = beameUtils.formatDebugMessage(level, config.MessageCodes.InvalidPayload, "payload key missing", {
+			var errMsg = logger.formatErrorMessage("payload key missing", module_name, {
 				"payload": payload,
 				"key":     keys[i]
-			});
-			console.error(errMsg);
+			}, config.MessageCodes.InvalidPayload);
 			callback(errMsg, null);
 			return;
 		}
@@ -173,15 +171,14 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 
 	var saveCert = function (responseField, targetName, callback) {
 		if (!payload[responseField]) {
-			errMsg = beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.ApiRestError, responseField + " missing in API response", {"path": dirPath});
+			errMsg = logger.formatErrorMessage(`${responseField} missing in API response on ${dirPath}`, module_name, null, config.MessageCodes.ApiRestError);
 			callback(errMsg, null);
 		}
 
 		//save cert
 		self.saveFileAsync(path.join(dirPath, targetName), payload[responseField], function (error) {
 			if (error) {
-				errMsg = beameUtils.formatDebugMessage(config.AppModules.DataServices, config.MessageCodes.ApiRestError, "Saving " + responseField + " failed", {"path": dirPath});
-				console.error(errMsg);
+				errMsg = logger.formatErrorMessage(`Saving ${responseField} failed on path ${dirPath}`, module_name);
 				callback(errMsg, null);
 				return;
 			}
@@ -287,10 +284,7 @@ DataServices.prototype.isNodeFilesExists = function (dirPath, nodeFiles, module)
 	var self = this;
 	for (var i = 0; i < nodeFiles.length; i++) {
 		if (!self.isPathExists(path.join(dirPath, nodeFiles[i]))) {
-			console.error(beameUtils.formatDebugMessage(module, config.MessageCodes.NodeFilesMissing, "cert missing", {
-				"path": dirPath,
-				"file": nodeFiles[i]
-			}));
+			logger.error(`cert missing on ${dirPath} for ${nodeFiles[i]}`, null, module);
 			return false;
 		}
 	}
@@ -405,9 +399,7 @@ DataServices.prototype.getNodeMetadataAsync = function (devDir, hostname, module
 		var metadata              = self.readJSON(developerMetadataPath);
 
 		if (_.isEmpty(metadata)) {
-			var errorJson = beameUtils.formatDebugMessage(module, config.MessageCodes.MetadataEmpty, "metadata.json for is empty", {"hostname": hostname});
-			console.error(errorJson);
-			reject(errorJson);
+			reject(logger.formatErrorMessage(`metadata.json for is empty for ${hostname}`, module, null, config.MessageCodes.MetadataEmpty));
 		}
 		else {
 			resolve(metadata);
@@ -429,9 +421,7 @@ DataServices.prototype.isHostnamePathValidAsync = function (path, module, hostna
 	return new Promise(function (resolve, reject) {
 
 		if (!self.isPathExists(path)) {//provided invalid hostname
-			var errMsg = self.formatDebugMessage(module, config.MessageCodes.NodeFolderNotExists, "Provided hostname is invalid, list ./.beame to see existing hostnames", {"hostname": hostname});
-			console.error(errMsg);
-			reject(errMsg);
+			reject(logger.formatErrorMessage(`Provided hostname ${hostname} is invalid, list ./.beame to see existing hostnames`, module));
 		}
 		else {
 			resolve(true);
@@ -477,12 +467,7 @@ DataServices.prototype.isNodeCertsExistsAsync = function (path, nodeFiles, modul
 	return new Promise(function (resolve, reject) {
 
 		if (!self.isNodeFilesExists(path, nodeFiles, module)) {
-			var errMsg = beameUtils.formatDebugMessage(module, config.MessageCodes.NodeFilesMissing, nodeLevel + " files not found", {
-				"level":    nodeLevel,
-				"hostname": hostname
-			});
-			console.error(errMsg);
-			reject(errMsg);
+			reject(logger.formatErrorMessage(`${nodeLevel} files not found for ${hostname}`, module));
 		}
 		else {
 			resolve(true);

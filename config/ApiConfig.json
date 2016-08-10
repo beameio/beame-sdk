@@ -1,9 +1,6 @@
 {
     "Endpoints": {
-        "Local": "https://prov.beameio.net",
-        "Online": "https://prov.beameio.net",
-        "AuthServer": "https://registration.beameio.net",
-        "CertEndpoint": "https://beameio-net-certs.s3.amazonaws.com"
+        "BaseUrl": "https://prov-staging.beameio.net"
     },
     "RetryAttempts": 10,
     "Actions": {
@@ -31,6 +28,9 @@
             },
             "GetStats": {
                 "endpoint": "/api/v1/dev/stats"
+            },
+            "GetMetadata": {
+                "endpoint": "/api/v1/dev/meta"
             },
             "RegisterDeveloper": {
                 "name": "register developer",

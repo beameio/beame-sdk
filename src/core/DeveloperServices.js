@@ -5,14 +5,16 @@
 
 var fs = require('fs');
 
-var config  = require('../../config/Config');
-var debug   = require("debug")("./src/services/DeveloperServices.js");
-var _       = require('underscore');
-var path    = require('path');
-var os      = require('os');
-var home    = os.homedir();
-var homedir = home;
-var devPath = config.localCertsDir;
+var config        = require('../../config/Config');
+const module_name = config.AppModules.Developer;
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
+var _             = require('underscore');
+var path          = require('path');
+var os            = require('os');
+var home          = os.homedir();
+var homedir       = home;
+var devPath       = config.localCertsDir;
 
 new (require('../services/BeameStore'))();
 
@@ -67,15 +69,15 @@ var isRequestValid = function (hostname, devDir) {
 		}
 
 		function getMetadata() {
-			dataServices.getNodeMetadataAsync(devDir, hostname, config.AppModules.Developer).then(onMetadataReceived, onValidationError);
+			dataServices.getNodeMetadataAsync(devDir, hostname, module_name).then(onMetadataReceived, onValidationError);
 		}
 
 		function validateDevCerts() {
-			dataServices.isNodeCertsExistsAsync(devDir, config.ResponseKeys.NodeFiles, config.AppModules.Developer, hostname, config.AppModules.Developer).then(getMetadata).catch(onValidationError);
+			dataServices.isNodeCertsExistsAsync(devDir, config.ResponseKeys.NodeFiles, module_name, hostname, module_name).then(getMetadata).catch(onValidationError);
 		}
 
 		if (_.isEmpty(hostname)) {
-			reject('Hostname required');
+			reject(logger.formatErrorMessage("FQDN required", module_name));
 		}
 		else {
 			validateDevCerts();
@@ -89,7 +91,7 @@ var isRequestValid = function (hostname, devDir) {
  * @param {String} email
  * @param {Function} callback
  */
-var saveDeveloper = function (email, developerName, callback) {
+var registerDeveloper = function (email, developerName, callback) {
 
 	provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
 
@@ -100,8 +102,12 @@ var saveDeveloper = function (email, developerName, callback) {
 
 	var apiData = beameUtils.getApiData(apiActions.CreateDeveloper.endpoint, postData, true);
 
+	logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registering, email);
+
 	provisionApi.runRestfulAPI(apiData, function (error, payload) {
 		if (!error) {
+
+			logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registered, payload.hostname);
 
 			payload.name  = developerName;
 			payload.email = email;
@@ -110,11 +116,11 @@ var saveDeveloper = function (email, developerName, callback) {
 
 			dataServices.createDir(devDir);
 
-			dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, config.AppModules.Developer, function (error) {
+			dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, module_name, function (error) {
 				if (!callback) return;
 
 				if (!error) {
-					dataServices.getNodeMetadataAsync(devDir, payload.hostname, config.AppModules.Developer).then(function (metadata) {
+					dataServices.getNodeMetadataAsync(devDir, payload.hostname, module_name).then(function (metadata) {
 						callback(null, metadata);
 					}, callback);
 				}
@@ -125,7 +131,6 @@ var saveDeveloper = function (email, developerName, callback) {
 
 		}
 		else {
-			//console.error(error);
 			callback && callback(error, null);
 		}
 
@@ -139,13 +144,11 @@ var saveDeveloper = function (email, developerName, callback) {
  * @param {Function} callback
  */
 var getCert = function (hostname, callback) {
-	var errMsg;
 	var devDir = beameUtils.makePath(devPath, hostname + "/");
 
 	if (_.isEmpty(hostname)) {
-		errMsg = beameUtils.formatDebugMessage(config.AppModules.Developer, config.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-		//console.error(errMsg);
-		callback && callback(errMsg, null);
+
+		callback && callback(logger.formatErrorMessage("Get developer certs => Developer fqdn required", module_name), null);
 		return;
 	}
 
@@ -164,31 +167,41 @@ var getCert = function (hostname, callback) {
 
 				var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
 
+				logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.RequestingCerts, hostname);
+
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
+
+						logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.ReceivedCerts, hostname);
 
 						dataServices.saveCerts(devDir, payload, callback);
 					}
 					else {
 						error.data.hostname = hostname;
-						//console.error(error);
 						callback(error, null);
 					}
 				});
 
 			},
 			function onCsrCreationFailed(error) {
-				//console.error(error);
 				callback && callback(error, null);
 			});
 	}
 
 	function getDeveloperMetadata() {
 		/*---------- read developer data and proceed -------------*/
-		dataServices.getNodeMetadataAsync(devDir, hostname, config.AppModules.Developer).then(onMetadataReceived).catch(beameUtils.onValidationError.bind(null, callback));
+		dataServices.getNodeMetadataAsync(devDir, hostname, module_name).then(onMetadataReceived).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	dataServices.isHostnamePathValidAsync(devDir, config.AppModules.Developer, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
+	dataServices.isHostnamePathValidAsync(devDir, module_name, hostname).then(getDeveloperMetadata).catch(beameUtils.onValidationError.bind(null, callback));
+};
+
+var getMetadata = function (developer_fqdn, devDir, callback) {
+	provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+
+	var apiData = beameUtils.getApiData(apiActions.GetMetadata.endpoint, {}, false);
+
+	provisionApi.runRestfulAPI(apiData, callback, 'GET');
 };
 
 /**
@@ -207,13 +220,9 @@ var DeveloperServices = function () {
  */
 DeveloperServices.prototype.createDeveloper = function (developerName, developerEmail, callback) {
 
-	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.Developer, config.MessageCodes.DebugInfo, "Call Create Developer", {
-		"name":  developerName,
-		"email": developerEmail
-	});
-	debug(debugMsg);
+	logger.info(`Creating developer ${developerName} with email ${developerEmail}`);
 
-	saveDeveloper(developerEmail, developerName, function (error, payload) {
+	registerDeveloper(developerEmail, developerName, function (error, payload) {
 		if (!error) {
 
 			var hostname = payload.hostname;
@@ -252,37 +261,42 @@ DeveloperServices.prototype.canRegisterDeveloper = DeveloperServices.prototype.c
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {String} uid
  * @param {Function} callback
  */
-DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, uid, callback) {
-	var errMsg;
+DeveloperServices.prototype.completeDeveloperRegistration = function (developer_fqdn, uid, callback) {
 
-	if (_.isEmpty(hostname)) {
-		errMsg = beameUtils.formatDebugMessage(config.AppModules.Developer, config.MessageCodes.HostnameRequired, "Get developer certs, hostname missing", {"error": "hostname missing"});
-		//console.error(errMsg);
-		callback && callback(errMsg, null);
+
+	if (_.isEmpty(developer_fqdn)) {
+		callback && callback(logger.formatErrorMessage("Complete developer registration => Developer fqdn required", module_name), null);
 		return;
 	}
 
-	var devDir = makeDeveloperDir(hostname);
+	if (_.isEmpty(uid)) {
+		callback && callback(logger.formatErrorMessage("Complete developer registration => Uid required", module_name), null);
+		return;
+	}
+
+	logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registering, developer_fqdn);
+
+	var devDir = makeDeveloperDir(developer_fqdn);
 
 	dataServices.createDir(devDir);
 
-	/** @type {typeof CompleteRegistrationRequestToken} **/
+	/** @type {CompleteRegistrationRequestToken} **/
 	var payload = {
-		hostname: hostname,
+		hostname: developer_fqdn,
 		uid:      uid,
-		name:     hostname,
-		email:    hostname
+		name:     developer_fqdn,
+		email:    developer_fqdn
 	};
 
-	dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, config.AppModules.Developer, function (error) {
+	dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, module_name, function (error) {
 		if (!callback) return;
 
 		if (!error) {
-			dataServices.getNodeMetadataAsync(devDir, payload.hostname, config.AppModules.Developer).then(onMetadataReceived, callback);
+			dataServices.getNodeMetadataAsync(devDir, payload.hostname, module_name).then(onMetadataReceived, callback);
 		}
 		else {
 			callback(error, null);
@@ -292,7 +306,7 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 	/*---------- private callbacks -------------------*/
 	function onMetadataReceived(metadata) {
 
-		dataServices.createCSR(devDir, hostname).then(
+		dataServices.createCSR(devDir, developer_fqdn).then(
 			function onCsrCreated(csr) {
 
 				var postData = {
@@ -303,21 +317,48 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
 				var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
 
+				logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.RequestingCerts, developer_fqdn);
+
 				provisionApi.runRestfulAPI(apiData, function (error, payload) {
 					if (!error) {
 
-						dataServices.saveCerts(devDir, payload, callback);
+						logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.ReceivedCerts, developer_fqdn);
+
+						dataServices.saveCerts(devDir, payload, function (error) {
+							if (!error) {
+								getMetadata(developer_fqdn, devDir, function (error, payload) {
+									if (!error) {
+										dataServices.savePayload(devDir, payload, config.ResponseKeys.DeveloperCreateResponseKeys, module_name, function (error) {
+											if (!callback) return;
+
+											if (!error) {
+												dataServices.getNodeMetadataAsync(devDir, developer_fqdn, module_name).then(function (metadata) {
+													callback(null, metadata);
+												}, callback);
+											}
+											else {
+												callback(error, null);
+											}
+										});
+									}
+									else {
+										callback(error, null);
+									}
+								});
+							}
+							else {
+								callback(error, null);
+							}
+						});
 					}
 					else {
-						error.data.hostname = hostname;
-						//console.error(error);
+						error.data.hostname = developer_fqdn;
 						callback(error, null);
 					}
 				});
 
 			},
 			function onCsrCreationFailed(error) {
-				//console.error(error);
 				callback && callback(error, null);
 			});
 	}
@@ -326,12 +367,12 @@ DeveloperServices.prototype.completeDeveloperRegistration = function (hostname, 
 
 /**
  *
- * @param {String} hostname => developer hostname
+ * @param {String} developer_fqdn => developer hostname
  * @param {String} email
  * @param {String|null|undefined} [name]
  * @param {Function} callback
  */
-DeveloperServices.prototype.updateProfile = function (hostname, name, email, callback) {
+DeveloperServices.prototype.updateProfile = function (developer_fqdn, name, email, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
@@ -357,8 +398,7 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
 				callback(null, metadata);
 			}
 			else {
-				error.data.hostname = hostname;
-				//console.error(error);
+				error.data.hostname = developer_fqdn;
 				callback(error, null);
 			}
 		});
@@ -374,19 +414,19 @@ DeveloperServices.prototype.updateProfile = function (hostname, name, email, cal
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {Function} callback
  */
-DeveloperServices.prototype.renewCert = function (hostname, callback) {
+DeveloperServices.prototype.renewCert = function (developer_fqdn, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
@@ -394,7 +434,7 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 
 		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
-		dataServices.createCSR(devDir, hostname, config.CertFileNames.TEMP_PRIVATE_KEY).then(
+		dataServices.createCSR(devDir, developer_fqdn, config.CertFileNames.TEMP_PRIVATE_KEY).then(
 			function onCsrCreated(csr) {
 
 				var postData = {
@@ -420,15 +460,13 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 
 						dataServices.deleteFile(devDir, config.CertFileNames.TEMP_PRIVATE_KEY);
 
-						error.data.hostname = hostname;
-						//console.error(error);
+						error.data.hostname = developer_fqdn;
 						callback(error, null);
 					}
 				});
 
 			},
 			function onCsrCreationFailed(error) {
-				//console.error(error);
 				callback && callback(error, null);
 			});
 	}
@@ -442,35 +480,35 @@ DeveloperServices.prototype.renewCert = function (hostname, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {Function} callback
  */
-DeveloperServices.prototype.restoreCert = function (hostname, callback) {
+DeveloperServices.prototype.restoreCert = function (developer_fqdn, callback) {
 	var devDir;
 
 	function onRequestValidated() {
 		var recoveryData = dataServices.readJSON(beameUtils.makePath(devDir, config.CertFileNames.RECOVERY));
 
 		if (_.isEmpty(recoveryData)) {
-			callback('Recovery code not found', null);
+			callback(logger.formatErrorMessage("Restore developer credentials => recovery code not found", module_name), null);
 			return;
 		}
 
-		dataServices.createCSR(devDir, hostname).then(function onCsrCreated(csr) {
+		dataServices.createCSR(devDir, developer_fqdn).then(function onCsrCreated(csr) {
 
 
-			/** @type {typeof DeveloperRestoreCertRequestToken} **/
+			/** @type {DeveloperRestoreCertRequestToken} **/
 			var postData = {
 				csr:           csr,
-				hostname:      hostname,
+				hostname:      developer_fqdn,
 				recovery_code: recoveryData.recovery_code
 			};
 
@@ -484,8 +522,7 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 					dataServices.saveCerts(beameUtils.makePath(devDir, '/'), payload, callback);
 				}
 				else {
-					error.data.hostname = hostname;
-					//console.error(error);
+					error.data.hostname = developer_fqdn;
 					callback(error, null);
 				}
 			});
@@ -501,19 +538,19 @@ DeveloperServices.prototype.restoreCert = function (hostname, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {Function} callback
  */
-DeveloperServices.prototype.revokeCert = function (hostname, callback) {
+DeveloperServices.prototype.revokeCert = function (developer_fqdn, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
@@ -522,7 +559,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
-			hostname: hostname
+			hostname: developer_fqdn
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
@@ -530,7 +567,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
 
-				beameUtils.deleteHostCerts(hostname);
+				beameUtils.deleteHostCerts(developer_fqdn);
 
 				dataServices.saveFile(devDir, config.CertFileNames.RECOVERY, beameUtils.stringify(payload), function (error) {
 					if (!callback) return;
@@ -545,8 +582,7 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 
 			}
 			else {
-				error.data.hostname = hostname;
-				//console.error(error);
+				error.data.hostname = developer_fqdn;
 				callback(error, null);
 			}
 		});
@@ -561,19 +597,19 @@ DeveloperServices.prototype.revokeCert = function (hostname, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
 /**
  *
- * @param {String} hostname
+ * @param {String} developer_fqdn
  * @param {Function} callback
  */
-DeveloperServices.prototype.getStats = function (hostname, callback) {
+DeveloperServices.prototype.getStats = function (developer_fqdn, callback) {
 	var devDir;
 
 	/*---------- private callbacks -------------------*/
@@ -593,10 +629,10 @@ DeveloperServices.prototype.getStats = function (hostname, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(hostname, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developer_fqdn, devDir).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(hostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(developer_fqdn).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
 
@@ -627,7 +663,6 @@ DeveloperServices.prototype.registerDeveloper = function (developerName, develop
 
 		}
 		else {
-			//console.error(error);
 			callback && callback(error, null);
 		}
 

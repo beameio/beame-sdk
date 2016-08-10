@@ -2,15 +2,15 @@
  * Created by zenit1 on 04/07/2016.
  */
 'use strict';
-var debug = require("debug")("./src/services/AtomServices.js");
-var _     = require('underscore');
-
-var provisionApi = new (require('../services/ProvisionApi'))();
-var dataServices = new (require('../services/DataServices'))();
-var beameUtils   = require('../utils/BeameUtils');
-var apiActions   = require('../../config/ApiConfig.json').Actions.AtomApi;
-var config       = require('../../config/Config');
-
+var _             = require('underscore');
+var provisionApi  = new (require('../services/ProvisionApi'))();
+var dataServices  = new (require('../services/DataServices'))();
+var beameUtils    = require('../utils/BeameUtils');
+var apiActions    = require('../../config/ApiConfig.json').Actions.AtomApi;
+var config        = require('../../config/Config');
+const module_name = config.AppModules.Atom;
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Atom folder not found';
 
@@ -28,12 +28,12 @@ var isRequestValid = function (hostname, devDir, atomDir, validateAppCerts) {
 		}
 
 		function getMetadata() {
-			dataServices.getNodeMetadataAsync(atomDir || devDir, hostname, config.AppModules.Atom).then(onMetadataReceived, onValidationError);
+			dataServices.getNodeMetadataAsync(atomDir || devDir, hostname, module_name).then(onMetadataReceived, onValidationError);
 		}
 
 		function validateAtomCerts() {
 			if (validateAppCerts) {
-				dataServices.isNodeCertsExistsAsync(atomDir, config.ResponseKeys.NodeFiles, config.AppModules.Atom, hostname, config.AppModules.Developer).then(getMetadata, onValidationError);
+				dataServices.isNodeCertsExistsAsync(atomDir, config.ResponseKeys.NodeFiles, module_name, hostname, module_name).then(getMetadata, onValidationError);
 			}
 			else {
 				getMetadata();
@@ -41,11 +41,11 @@ var isRequestValid = function (hostname, devDir, atomDir, validateAppCerts) {
 		}
 
 		function validateDevCerts() {
-			dataServices.isNodeCertsExistsAsync(devDir, config.ResponseKeys.NodeFiles, config.AppModules.Atom, hostname, config.AppModules.Developer).then(validateAtomCerts).catch(onValidationError);
+			dataServices.isNodeCertsExistsAsync(devDir, config.ResponseKeys.NodeFiles, module_name, hostname, config.AppModules.Developer).then(validateAtomCerts).catch(onValidationError);
 		}
 
 		if (_.isEmpty(hostname)) {
-			reject('Hostname required');
+			reject(logger.formatErrorMessage("FQDN required", module_name));
 		}
 		else {
 			validateDevCerts();
@@ -84,11 +84,11 @@ var registerAtom = function (developerHostname, atomName, callback) {
 
 				dataServices.createDir(atomDir);
 
-				dataServices.savePayload(atomDir, payload, config.ResponseKeys.AtomCreateResponseKeys, config.AppModules.Atom, function (error) {
+				dataServices.savePayload(atomDir, payload, config.ResponseKeys.AtomCreateResponseKeys, module_name, function (error) {
 					if (!callback) return;
 
 					if (!error) {
-						dataServices.getNodeMetadataAsync(atomDir, payload.hostname, config.AppModules.Atom).then(function (metadata) {
+						dataServices.getNodeMetadataAsync(atomDir, payload.hostname, module_name).then(function (metadata) {
 							callback(null, metadata);
 						}, callback);
 					}
@@ -99,7 +99,6 @@ var registerAtom = function (developerHostname, atomName, callback) {
 			}
 			else {
 				error.data.hostname = developerHostname;
-				console.error(error);
 				callback(error, null);
 			}
 		});
@@ -124,16 +123,16 @@ var registerAtom = function (developerHostname, atomName, callback) {
 /**
  *
  * @param {String} developerHostname
- * @param {String}  atomHostname
+ * @param {String}  atom_fqdn
  * @param {Function} callback
  */
-var getCert = function (developerHostname, atomHostname, callback) {
+var getCert = function (developerHostname, atom_fqdn, callback) {
 	var devDir, atomDir;
 
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated(metadata) {
 
-		dataServices.createCSR(atomDir, atomHostname).then(
+		dataServices.createCSR(atomDir, atom_fqdn).then(
 			function onCsrCreated(csr) {
 
 				provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
@@ -145,27 +144,29 @@ var getCert = function (developerHostname, atomHostname, callback) {
 
 				var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
 
+				logger.printStandardEvent(BeameLogger.EntityLevel.Atom, BeameLogger.StandardFlowEvent.RequestingCerts, atom_fqdn);
+
 				provisionApi.runRestfulAPI(apiData,
 					/**
-					 * @param {DebugMessage} error
+					 * @param {LoggerMessage} error
 					 * @param {Object} payload
 					 */
 					function (error, payload) {
 						if (!error) {
 
+							logger.printStandardEvent(BeameLogger.EntityLevel.Atom, BeameLogger.StandardFlowEvent.ReceivedCerts, atom_fqdn);
+
 							dataServices.saveCerts(beameUtils.makePath(atomDir, '/'), payload, callback);
 						}
 						else {
 							//noinspection JSUnresolvedVariable
-							error.data.hostname = atomHostname;
-							console.error(error);
+							error.data.hostname = atom_fqdn;
 							callback(error, null);
 						}
 					});
 
 			},
 			function onCsrCreationFailed(error) {
-				console.error(error);
 				callback && callback(error, null);
 			});
 	}
@@ -182,7 +183,7 @@ var getCert = function (developerHostname, atomHostname, callback) {
 		isRequestValid(developerHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
-	beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+	beameUtils.findHostPathAndParentAsync(atom_fqdn).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
 /**
@@ -199,21 +200,30 @@ var AtomServices = function () {
  * @param {Function} callback
  */
 AtomServices.prototype.createAtom = function (developerHostname, atomName, callback) {
-	var debugMsg = beameUtils.formatDebugMessage(config.AppModules.Atom, config.MessageCodes.DebugInfo, "Call Create Atom", {
+	logger.debug("Call Create Atom", {
 		"developer": developerHostname,
 		"name":      atomName
 	});
-	debug(debugMsg);
+
 
 	if (_.isEmpty(developerHostname)) {
-		callback('Developer host required', null);
+		callback(logger.formatErrorMessage('Create Atom => Developer fqdn required', module_name), null);
 		return;
 	}
+
+	if (_.isEmpty(atomName)) {
+		callback(logger.formatErrorMessage('Create Atom => Atom name required', module_name), null);
+		return;
+	}
+
+	logger.printStandardEvent(BeameLogger.EntityLevel.Atom, BeameLogger.StandardFlowEvent.Registering, atomName);
 
 	function onAtomRegistered(error, payload) {
 		if (!error) {
 
 			var hostname = payload.hostname;
+
+			logger.printStandardEvent(BeameLogger.EntityLevel.Atom, BeameLogger.StandardFlowEvent.Registered, `${atomName} with host ${hostname}`);
 
 			getCert(developerHostname, hostname, function (error) {
 				if (callback) {
@@ -260,7 +270,6 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
 			}
 			else {
 				error.data.hostname = atomHostname;
-				console.error(error);
 				callback && callback(error, null);
 			}
 		});
@@ -315,7 +324,6 @@ AtomServices.prototype.deleteAtom = function (atomHostname, callback) {
 			}
 			else {
 				error.data.hostname = atomHostname;
-				console.error(error);
 				callback && callback(error, null);
 			}
 		});
@@ -375,17 +383,13 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 
 					}
 					else {
-
 						dataServices.deleteFile(atomDir, config.CertFileNames.TEMP_PRIVATE_KEY);
-
-						console.error(error);
 						callback(error, null);
 					}
 				});
 
 			},
 			function onCsrCreationFailed(error) {
-				console.error(error);
 				callback && callback(error, null);
 			});
 	}
@@ -434,7 +438,6 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
 				callback && callback(null, 'done');
 			}
 			else {
-				console.error(error);
 				callback && callback(error, null);
 			}
 		});

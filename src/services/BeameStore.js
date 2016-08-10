@@ -1,19 +1,19 @@
 'use strict';
-var async       = require('async');
+var async         = require('async');
 //var exec        = require('child_process').exec;
-var fs          = require('fs');
-var _           = require('underscore');
-var os          = require('os');
-var debug       = require("debug")("beamestore");
-var config      = require('../../config/Config');
-var jmespath    = require('jmespath');
-var beameDirApi = require('./BeameDirServices');
-var sprintf     = require('sprintf');
-var mkdirp      = require('mkdirp');
-var path        = require('path');
-var request     = require('sync-request');
-var apiConfig   = require("../../config/ApiConfig.json");
-var url         = require('url');
+var fs            = require('fs');
+var _             = require('underscore');
+var os            = require('os');
+var config        = require('../../config/Config');
+const module_name = config.AppModules.BeameStore;
+var logger        = new (require('../utils/Logger'))(module_name);
+var jmespath      = require('jmespath');
+var beameDirApi   = require('./BeameDirServices');
+var sprintf       = require('sprintf');
+var mkdirp        = require('mkdirp');
+var path          = require('path');
+var request       = require('sync-request');
+var url           = require('url');
 // The idea is this object framework above BeameDirServices.js
 // BeameStore will load the directory and manage it in memory as well be capabale proving high level
 // API to work with JSON.
@@ -31,7 +31,7 @@ var url         = require('url');
 
 var beameStoreInstance = null;
 
-var DEVELOPER_DATA_STRUCT = '{name:name, hostname:hostname, level:level, parent:""}';
+var DEVELOPER_DATA_STRUCT    = '{name:name, hostname:hostname, level:level, parent:""}';
 var CHILD_ENTITY_DATA_STRUCT = '{name:name, hostname:hostname, level:level, parent:parent_fqdn}';
 
 function BeameStore() {
@@ -55,7 +55,7 @@ function BeameStore() {
 		{type: "developer", 'func': this.searchDevelopers},
 		{type: "atom", 'func': this.searchAtoms},
 		{type: "edgeclient", 'func': this.searchEdge},
-		{type: "localclient", 'func':this.searchLocal}
+		{type: "localclient", 'func': this.searchLocal}
 	];
 
 	beameStoreInstance = this;
@@ -64,7 +64,7 @@ function BeameStore() {
 
 BeameStore.prototype.jsearch = function (searchItem, level) {
 	if (!searchItem) {
-		return new Error({"Status": "error", "Message": "searchDevelopers called with either name and fqdn"});
+		logger.fatal(`fqdn required on ${level}`);
 	}
 
 	var queryString = "";
@@ -89,10 +89,10 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 			break;
 		}
 		default: {
-			throw new Error("Invalid level passed to search ", level);
+			logger.fatal(`search invalid level ${level}`);
 		}
 	}
-	debug("Query string " + queryString);
+	logger.debug(`Search level ${level} with query ${queryString}`);
 	return jmespath.search(this.beameStore, queryString);
 
 };
@@ -145,9 +145,7 @@ BeameStore.prototype.searchLocal = function (name) {
 BeameStore.prototype.searchEdgeLocals = function (edgeClientFqdn) {
 
 	var queryString = sprintf("[].atom[].localclient[?(edge_client_fqdn=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", edgeClientFqdn);
-	var r = jmespath.search(this.beameStore, queryString);
-
-	return r;
+	return jmespath.search(this.beameStore, queryString);
 
 };
 
@@ -198,7 +196,7 @@ BeameStore.prototype.listCurrentLocalClients = function () {
 BeameStore.prototype.ensureFreshBeameStore = function () {
 	var newHash = beameDirApi.generateDigest(config.localCertsDir);
 	if (this.digest !== newHash) {
-		debug("reading beamedir %j", config.localCertsDir);
+		logger.debug(`reading beamedir ${config.localCertsDir}`);
 		this.beameStore = beameDirApi.readBeameDir(config.localCertsDir);
 		this.digest     = newHash;
 	}
@@ -221,7 +219,7 @@ BeameStore.prototype.list = function (type, name) {
 	if (type && type.length) {
 		var listFunc = _.where(this.listFunctions, {'type': type});
 		if (listFunc.length != 1) {
-			throw new Error("Listfunc dictionary is broken -- bad code change ")
+			logger.fatal("Listfunc dictionary is broken -- bad code change ");
 		}
 		var newArray = listFunc[0].func.call(this);
 		returnArray  = returnArray.concat(newArray);
@@ -254,8 +252,8 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 	if (fs.existsSync(remoteCertPath)) {
 		certBody = fs.readFileSync(remoteCertPath);
 	} else {
-		var requestPath = apiConfig.Endpoints.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
-		console.warn(`Getting certificate from ${requestPath}`);
+		var requestPath = config.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
+		logger.debug(`Getting certificate from ${requestPath}`);
 		var response = request('GET', requestPath);
 		//noinspection JSUnresolvedFunction
 		certBody     = response.getBody() + "";
@@ -263,7 +261,7 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 		//noinspection JSUnresolvedVariable
 		if (response.statusCode == 200) {
 			mkdirp(path.parse(remoteCertPath).dir);
-			console.warn("Saving file to %j", remoteCertPath);
+			logger.debug(`Saving file to ${remoteCertPath}`);
 			fs.writeFileSync(remoteCertPath, certBody);
 		}
 	}
@@ -297,7 +295,7 @@ BeameStore.prototype.shredCredentials = function (fqdn, callback) {
 	// XXX: Fix exit code
 	var item = this.search(fqdn)[0];
 	if (!item) {
-		callback(`Shredding failed: fqdn ${fqdn} not found`);
+		callback(logger.formatErrorMessage(`Shredding failed: fqdn ${fqdn} not found`, module_name));
 		return;
 	}
 
@@ -311,9 +309,9 @@ BeameStore.prototype.shredCredentials = function (fqdn, callback) {
 	async.parallel(del_functions, error => {
 		this.ensureFreshBeameStore();
 		if (error) {
-			callback({"status": "error", "message": error});
+			callback(logger.formatErrorMessage(`Shredding failed: fqdn ${fqdn} not found`, module_name, {"status": "error", "message": error}),null);
 		} else {
-			callback({"status": "ok", "message": `${files.length} files deleted`});
+			callback(null,{"status": "ok", "message": `${files.length} files deleted`});
 		}
 	})
 };
