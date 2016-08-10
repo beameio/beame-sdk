@@ -433,20 +433,49 @@ function importCredentials(data, file) {
  * @param {String} fqdn
  */
 function importNonBeameCredentials(fqdn) {
-	var tls  = require('tls');
-	var conn = tls.connect(443, fqdn, {host: fqdn}, function () {
-		//noinspection JSUnresolvedFunction
-		var cert = conn.getPeerCertificate(true);
-		conn.end();
-		var buffer         = new Buffer(cert.raw, "hex");
-		var certBody       = "-----BEGIN CERTIFICATE-----\r\n";
-		certBody += buffer.toString("base64");
-		certBody += "-----END CERTIFICATE-----";
-		var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
+	var tls = require('tls');
+	try {
 
-		mkdirp(path.parse(remoteCertPath).dir);
-		fs.writeFileSync(remoteCertPath, certBody);
-	});
+		var conn = tls.connect(443, fqdn, {host: fqdn});
+
+		var onSecureConnected = function (err, data) {
+			//noinspection JSUnresolvedFunction
+			var cert = conn.getPeerCertificate(true);
+			conn.end();
+			var buffer   = new Buffer(cert.raw, "hex");
+			var bas64Str = buffer.toString("base64");
+
+			var certBody = "-----BEGIN CERTIFICATE-----\r\n";
+
+			for (let i = 0; i < bas64Str.length; i += 64) {
+
+				certBody += (bas64Str.substr(i, 64) + "\r\n");
+
+			}
+
+			certBody += "-----END CERTIFICATE-----";
+
+			var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
+
+			mkdirp(path.parse(remoteCertPath).dir);
+
+			fs.writeFileSync(remoteCertPath, certBody);
+		};
+
+		conn.on('error', function (error) {
+
+			var msg = error && error.message || error.toString();
+
+			logger.fatal(msg);
+		});
+
+		conn.once('secureConnect', onSecureConnected);
+
+	}
+	catch (e) {
+		logger.fatal(e.toString());
+	}
+
 }
 
 /**
@@ -469,7 +498,7 @@ function stats(fqdn, callback) {
 
 	var cb = function (error, payload) {
 		if (!error) {
-			return callback(null,payload);
+			return callback(null, payload);
 		}
 
 		logger.fatal(error);
