@@ -32,25 +32,25 @@ _The Beame SDK provides tools that allow you to create credentials to identify m
 
 See the example folder to copy-paste and try it for yourself!
 
- - Build your own networking application
- - Global, local, or hybrid socket.io chat over TLS
- - Patient ID in clinics using mobile phone
- - BYOD in local networks (access behind NAT)
  - Multi-factor authentication
  - Check signatures of arbitrary data
  - Encrypt arbitrary data so that only a specified entity can decrypt it
  - Decrypt arbitrary data that was sent to one of the entities you own (encrypted with one of your public keys)
  - Sign arbitrary data with any of your certificates
-
+ - Build your own networking application
+ - Global, local, or hybrid socket.io chat over TLS
+ - Patient ID in clinics using mobile phone
+ - BYOD in local networks (access behind NAT)
+ 
 ## System Requirements
 Mac OS or Windows 8.1 (or higher);
 NPM installed on your machine;
-For Mac: Click here to for instructions if current shell version does not support auto-completion.
+for Mac: See the Mac instructions if current shell version does not support auto-completion.
 
 ## Easy Installation Instructions
-You will create three tiers of credentials (each with multiple components: RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate). If you want to skip all intro, [jump directly to action](#beame-cli)
+You will create three tiers of credentials (each with multiple components: a RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate). If you want to skip the intro, [jump directly to start!](#beame-cli)
 
-1. First, generate your Developer credentials.
+1. First, generate Developer credentials.
 2. Second, generate application credentials. We call this level an Atom.
 3. Create your Client server credentials.  We call this level an Edge-Client.
 
@@ -124,14 +124,14 @@ Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program 
 ### Quick start by following instructions below
 Install the Beame SDK by running
 `npm install -g beame-sdk`
-Register as a developer, by submitting form at [https://registration.beameio.net/](#https://registration.beameio.net/)
-Copy the command from reply email, It should look like:
+Register as a developer, by submitting the form at [https://registration.beameio.net/](#https://registration.beameio.net/)
+Copy the unique activation command from the email you receive, it should look like:
 `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f`
 Start your first HTTPS server by running:
 `beame servers startFirstBeameNode`
-it should print to your console something like:
+it should print to your console something that looks like:
 `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
-*Done*. You have your public HTTPS server running. Just copy-paste the address to a web browser.
+*Done*. You have your public HTTPS server running. Just copy-paste the address to any web browser.
 
 #Beame.io Networking Solution Overview
 
@@ -163,7 +163,7 @@ Actions to employ:
 
 *CMPS* (Customer Managed Provisioning Server) credentials are pinned in the *Atom*, during *CMPS* deployment, prior to the first run of the service.
 
-The custom provisioning process requires *Customer* to deploy *Edge Clients* (*CMPS*s) with corresponding permissions under his internal security policy.
+The custom provisioning process requires *Customer* to deploy *Edge Clients* (*CMPS*s) with corresponding permissions under Customer's internal security policy.
 
 The custom provisioning process uses the *Atom* as single authorization point.
 
@@ -218,7 +218,7 @@ Receive publicly trusted cert with a pseudo-random routable hostname and run you
 
 Current SDK release intends extensive CLI usage (see description above). So Node.js APIs provide a high level of access.
 
-Be aware that API on each level requires credentials created on previous/higher level:
+Be aware that API on each level requires credentials created on the previous/higher level:
 
 To use any API from beame-sdk include
 `var beameSDK = require ("beame-sdk");`
