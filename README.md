@@ -20,6 +20,7 @@ _The Beame SDK provides tools that allow you to create credentials to identify m
  - [Easy Installation Instructions](#easy-installation-instructions)
  - [Getting Started - Mac](#getting-started---mac)
  - [Getting Started - Windows](#getting-started---windows)
+ - [Quicl Start](#get-started-in-minutes)
  - [High Level Architecture](#high-level-architecture)
  - [Beame Network Infrastructure](#beame-network-infrastructure)
  - [Custom Provisioning Workflow](#custom-provisioning-workflow)
@@ -129,6 +130,19 @@ Perl is needed for building OpenSSL
 
 npm install -g beame-sdk
 ```
+
+***
+##Get started in minutes
+###Quick start by following instructions below
+####Install the Beame SDK by running 
+`npm install -g beame-sdk`
+####Register as a developer 
+Copy the command from the email. It should look like this: 
+`beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f` 
+####Run 
+`beame servers startFirstBeameNode` 
+it will print out to you something that looks like this: `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address` 
+You have your public HTTPS server running. Copy-paste the address to your web browser. 
 ***
 ***
 #Beame.io Networking Solution Overview
