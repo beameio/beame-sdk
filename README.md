@@ -124,16 +124,13 @@ Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program 
 ## Get started in minutes
 
 ### Quick start by following instructions below
-Install the Beame SDK by running
-`npm install -g beame-sdk`
-Register as a developer, by submitting the form at [https://registration.beameio.net/](#https://registration.beameio.net/)
-Copy the unique activation command from the email you receive, it should look like:
-`beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f`
-Start your first HTTPS server by running:
-`beame servers startFirstBeameNode`
-it should print to your console something that looks like:
-`Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
-*Done*. You have your public HTTPS server running. Just copy-paste the address to any web browser.
+
+1. Install the Beame SDK by running `npm install -g beame-sdk`
+2. Register as a developer, by submitting the form at [https://registration.beameio.net/](#https://registration.beameio.net/)
+3. Copy the unique activation command from the email you receive, it should look like: `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f`
+4. Start your first HTTPS server by running `beame servers startFirstBeameNode`. It should print to your console something that looks like `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
+
+*Done*. You now have your public HTTPS server running. Just copy-paste the address to any web browser.
 
 #Beame.io Networking Solution Overview
 
