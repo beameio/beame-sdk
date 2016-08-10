@@ -113,18 +113,31 @@ var startFirstBeameNode = function (sharedFolder) {
 		return;
 	}
 
+
+	var createEdgeClient = function (atom_fqdn) {
+		beameSDK.creds.createEdgeClient(atom_fqdn, function (error, edgeData) {
+			if (error) {
+				logger.fatal(error.message, error.data, config.AppModules.EdgeClient);
+			}
+
+			var edgeHostname = edgeData.hostname;
+			logger.info(`Congrats! My new hostname is: https://${edgeHostname}`);
+			runTestBeameServer(edgeHostname);
+			edgeClientCreated = true;
+		});
+	};
+
 	if (atoms.length == 0 && edgeclients.length == 0 && developers.length > 0) {
 		logger.info("You have developer credentials now we will set up an Atom SSL cert, and  edgeClient cert ");
 		logger.info("It will take about 30 seconds, please wait patiently, yes we understand..., it will be much faster soon (:- ");
 		var devHostname = developers[0].hostname;
-		beameSDK.creds.createAtom(devHostname, "BeameNodeXXX", 1, function (data) {
+		beameSDK.creds.createAtom(devHostname, "BeameNodeXXX", function (error, data) {
+			if (error) {
+				logger.fatal(error.message, error.data, config.AppModules.Atom);
+			}
+
 			logger.info(`Just created atom with host:${data.hostname}`);
-			beameSDK.creds.createEdgeClient(data.hostname, 1, function (edgeData) {
-				var edgeHostname = edgeData.hostname;
-				logger.info(`Congrats! My new hostname is: https://${edgeHostname}`);
-				runTestBeameServer(edgeHostname);
-				edgeClientCreated = true;
-			});
+			createEdgeClient(data.hostname);
 		});
 	}
 
@@ -132,12 +145,7 @@ var startFirstBeameNode = function (sharedFolder) {
 		logger.info(`You already have atom credentials your atom hostname is ${atoms[0].hostname}`);
 		logger.info("All we need to do is to create the webserver aka edgeCert for the demo, about 30 seconds, yes its slow, but not for long");
 
-		beameSDK.creds.createEdgeClient(atoms[0].hostname, 1, function (edgeData) {
-			var edgeHostname = edgeData.hostname;
-			logger.info(`Congrats! My new hostname is: https://${edgeHostname}`);
-			runTestBeameServer(edgeHostname);
-			edgeClientCreated = true;
-		});
+		createEdgeClient(atoms[0].hostname);
 	}
 };
 

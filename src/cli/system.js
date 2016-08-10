@@ -23,19 +23,19 @@ function start() {
 			inter.question("Please Enter Atom Name (For example 'MyApp'): ", function (atomName) {
 				logger.info(`Creating developer level cert this will take about 30 seconds....`);
 				creds.createDeveloper(developerFqdn, uid, function (error, data) {
-					if(error){
+					if (error) {
 						logger.fatal(error.message, error.data, config.AppModules.Developer);
 					}
 					logger.info(`Developer credentials have been created: ${developerFqdn}`);
 					logger.info(`Creating atom ${atomName}`);
 					creds.createAtom(developerFqdn, atomName, function (error, data) {
-						if(error){
+						if (error) {
 							logger.fatal(error.message, error.data, config.AppModules.Atom);
 						}
 						logger.info(`Atom credentials have been created and signed:${data.hostname}`);
 						logger.info(`Creating edge client`);
 						creds.createEdgeClient(data.hostname, function (error, data) {
-							if(error){
+							if (error) {
 								logger.fatal(error.message, error.data, config.AppModules.EdgeClient);
 							}
 							logger.info(`Edge client credentials have been created and signed:${data.hostname}`);
