@@ -93,12 +93,6 @@ source /usr/local/lib/node_modules/beame-sdk/src/cli/completion.sh
 ``` 
 Open new terminal and begin using beame-sdk cli with auto-completion. 
 
- - Install the Beame SDK by running `npm install -g beame-sdk` 
- - Register as a developer. 
- - Copy the command from the email. It should look like this: `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f` 
- - Run `beame servers startFirstBeameNode` it will print out to you something that looks like this: 
-`Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address` 
-
 ***
 ## Getting Started - Windows 
 
@@ -136,13 +130,15 @@ npm install -g beame-sdk
 ###Quick start by following instructions below
 ####Install the Beame SDK by running 
 `npm install -g beame-sdk`
-####Register as a developer 
-Copy the command from the email. It should look like this: 
+####Register as a developer by submitting form at [https://registration.beameio.net/](#https://registration.beameio.net/)
+####Copy the command from the email 
+It should look like this: 
 `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f` 
-####Run 
+####Run your first HTTPS server: 
 `beame servers startFirstBeameNode` 
-it will print out to you something that looks like this: `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address` 
-You have your public HTTPS server running. Copy-paste the address to your web browser. 
+it will print out to you something that will look like: `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address` 
+
+ *Done*. You have your public HTTPS server running. Just copy-paste the address to a web browser. 
 ***
 ***
 #Beame.io Networking Solution Overview
