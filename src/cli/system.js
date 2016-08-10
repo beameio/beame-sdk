@@ -28,13 +28,13 @@ function start() {
 					}
 					logger.info(`Developer credentials have been created: ${developerFqdn}`);
 					logger.info(`Creating atom ${atomName}`);
-					creds.createAtom(developerFqdn, atomName, 1, function (error, data) {
+					creds.createAtom(developerFqdn, atomName, function (error, data) {
 						if(error){
 							logger.fatal(error.message, error.data, config.AppModules.Atom);
 						}
 						logger.info(`Atom credentials have been created and signed:${data.hostname}`);
 						logger.info(`Creating edge client`);
-						creds.createEdgeClient(data.hostname, 1, function (error, data) {
+						creds.createEdgeClient(data.hostname, function (error, data) {
 							if(error){
 								logger.fatal(error.message, error.data, config.AppModules.EdgeClient);
 							}
