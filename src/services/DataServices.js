@@ -7,6 +7,7 @@ var path          = require('path');
 var debug         = require("debug")("./src/services/DataServices.js");
 var fs            = require('fs');
 var exec          = require('child_process').exec;
+var execFile      = require('child_process').execFile;
 var async         = require('async');
 var rimraf        = require('rimraf');
 var _             = require('underscore');
@@ -223,10 +224,13 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 					function (callback) {
 						var pwd = randomPassword();
 
-						var cmd = "openssl pkcs12 -export -in " + path.join(dirPath, config.CertFileNames.X509) + " -certfile " + path.join(dirPath, config.CertFileNames.CA) + " -inkey " + path.join(dirPath, config.CertFileNames.PRIVATE_KEY) + " -password pass:\"" + pwd + "\" -out " + path.join(dirPath + config.CertFileNames.PKCS12);
+						// var cmd = "openssl pkcs12 -export -in " + path.join(dirPath, config.CertFileNames.X509) + " -certfile " + path.join(dirPath, config.CertFileNames.CA) + " -inkey " + path.join(dirPath, config.CertFileNames.PRIVATE_KEY) + " -password pass:\"" + pwd + "\" -out " + path.join(dirPath + config.CertFileNames.PKCS12);
+
+						var action = "openssl";
+						var args = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.X509), "-certfile", path.join(dirPath, config.CertFileNames.CA), "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath + config.CertFileNames.PKCS12)];
 
 						try {
-							exec(cmd, function (error) {
+							execFile(action, args, function (error) {
 								if (error) {
 									callback(error, null);
 									return;
