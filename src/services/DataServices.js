@@ -224,8 +224,6 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 					function (callback) {
 						var pwd = randomPassword();
 
-						// var cmd = "openssl pkcs12 -export -in " + path.join(dirPath, config.CertFileNames.X509) + " -certfile " + path.join(dirPath, config.CertFileNames.CA) + " -inkey " + path.join(dirPath, config.CertFileNames.PRIVATE_KEY) + " -password pass:\"" + pwd + "\" -out " + path.join(dirPath + config.CertFileNames.PKCS12);
-
 						var action = "openssl";
 						var args = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.X509), "-certfile", path.join(dirPath, config.CertFileNames.CA), "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath + config.CertFileNames.PKCS12)];
 
