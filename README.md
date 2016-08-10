@@ -87,8 +87,7 @@ Open new terminal and begin using beame-sdk cli with auto-completion.
 
 ## Getting Started - Windows
 
-Before running `npm install -g beame-sdk` please make sure you have OpenSSL installed in `C:\OpenSSL-Win64` .
-One of the possible ways of installing OpenSSL is described below (Install Visual C++ Build Tools and Python 2.7, Upgrade NPM, Install Perl, Install OpenSSL). The procedure was tested on Microsoft Windows Server 2012 R2 Standard and Windows 10.
+Before running `npm install -g beame-sdk` please make sure you have OpenSSL installed in `C:\OpenSSL-Win64` . If you you already have OpenSSL installed at that location, skip the instructions below and just issue `npm install -g beame-sdk`. If you don't have OpenSSL in `C:\OpenSSL-Win64`, one of the possible ways of installing OpenSSL is described below (Install Visual C++ Build Tools and Python 2.7, Upgrade NPM, Install Perl, Install OpenSSL). The procedure was tested on Microsoft Windows Server 2012 R2 Standard and Windows 10. We recommend to use your “Windows PowerShell” and run it with administrator rights for the following commands:
 
 ### Install Visual C++ Build Tools and Python 2.7
 
@@ -99,20 +98,21 @@ One of the possible ways of installing OpenSSL is described below (Install Visua
 `npm -g install npm@latest`
 
 ### Install Perl
+
 Get Perl from
-`http://downloads.activestate.com/ActivePerl/releases/5.24.0.2400/ActivePerl-5.24.0.2400-MSWin32-x64-300558.exe`
+`https://downloads.activestate.com/ActivePerl/releases/5.24.0.2400/ActivePerl-5.24.0.2400-MSWin32-x64-300558.exe` (SHA256 is `9e6ab2bb1335372cab06ef311cbaa18fe97c96f9dd3d5c8413bc864446489b92`)
 or another source.
 Perl is needed for building OpenSSL.
 
 ### Install OpenSSL
 
-Download and extract `https://www.openssl.org/source/openssl-1.0.1t.tar.gz`
+Download and extract `https://www.openssl.org/source/openssl-1.0.1t.tar.gz` (other versions might work but were not tested)
 
-Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program Files (x86)\Microsoft Visual C++ Build Tools\` in the OpenSSL directory:
+Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program Files (x86)\Microsoft Visual C++ Build Tools\` in the OpenSSL directory issue the following commands:
 
     perl Configure VC-WIN64A no-asm --prefix=C:\OpenSSL-Win64
     .\ms\do_win64a.bat
-	# If the following clean fails it's OK, just continue with following commands
+	# If the following "clean" fails it's OK, just continue with following commands
     nmake -f ms\ntdll.mak clean
     nmake -f ms\ntdll.mak
     nmake -f ms\ntdll.mak install
