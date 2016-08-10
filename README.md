@@ -99,10 +99,12 @@ Before running `npm install -g beame-sdk` please make sure you have OpenSSL inst
 
 ### Install Perl
 
+Perl is needed for building OpenSSL. If you already have Perl installed, please skip the `Install Perl` section.
+
 Get Perl from
 `https://downloads.activestate.com/ActivePerl/releases/5.24.0.2400/ActivePerl-5.24.0.2400-MSWin32-x64-300558.exe` (SHA256 is `9e6ab2bb1335372cab06ef311cbaa18fe97c96f9dd3d5c8413bc864446489b92`)
 or another source.
-Perl is needed for building OpenSSL.
+ This version of Perl [might have](https://community.activestate.com/node/19784) [security](https://www.virustotal.com/en/file/9e6ab2bb1335372cab06ef311cbaa18fe97c96f9dd3d5c8413bc864446489b92/analysis/) [issue](https://www.metadefender.com/#!/results/file/c869301df9424b02aa49ce15d7bce692/regular/analysis) but my estimation is that it's false positive. Consider installing other versions or Perl built by other companies.
 
 ### Install OpenSSL
 
