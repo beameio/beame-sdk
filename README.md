@@ -214,7 +214,7 @@ The following commands are used for acquiring and manipulating certificates.
 
 _The idea behind the Node.js SDK APIs is that you can employ Beame CLI functionality in your own Node.js project._
 
-Receive publicly trusted cert with a pseudo-random routable hostname and run your new SSL server in the same flow (or later, whenever you see it fit).
+Receive publicly trusted cert with a pseudo-random routable hostname and run your new TLS(SSL) server in the same flow (or later, whenever you see it fit).
 
 Current SDK release intends extensive CLI usage (see description above). So Node.js APIs provide a high level of access.
 
