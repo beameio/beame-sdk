@@ -3,9 +3,9 @@ var path = require('path');
 var os   = require('os');
 var home = os.homedir();
 
-const AuthServerEndPoint = "https://registration-staging.beameio.net";
+const AuthServerEndPoint = "https://registration.beameio.net";
 
-const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
+const CertEndpoint = "https://beameio-net-certs.s3.amazonaws.com";
 
 /** @const {String} **/
 var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
@@ -17,7 +17,7 @@ var localCertsDir = path.join(rootDir, 'v1', 'local');
 var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
 
 /** @const {String} **/
-var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
+var loadBalancerURL = process.env.BEAME_LB || "http://lb.beameio.net/";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";
