@@ -1,14 +1,16 @@
 <img align="right" src="img/beame.png">
 _The Beame SDK provides tools that allow you to create credentials to identify machines and devices. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for organizations or services that require users to prove identity._
 
-###**By deploying your network using Beame infrastructure, you can:**
+:heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
+
+### By deploying your network using Beame infrastructure, you can:
 
 1. Quickly host a public HTTPS server on a local machine (does not require public static IP, DMZ, nor port forwarding);
 2. Generate credentials and assign your own meaning to them (identity);
 3. Deploy services that are accessible from the Internet or only from your LAN without network reconfiguration.
 
 
-###**How:**
+### How:
 1. Get a unique hostname under the Beame subdomain;
 2. Generate your private key locally;
 3. Get a matching certificate from Beame (signed by a root CA).
