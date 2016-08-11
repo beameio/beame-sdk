@@ -58,11 +58,12 @@ var isRequestValid = function (hostname, devDir, atomDir, validateAppCerts) {
  *
  * @param {String} developerHostname
  * @param {String} atomName
+ * @param {Boolean} makeRoutable => make atom routable
  * @param {Function} callback
  */
-var registerAtom = function (developerHostname, atomName, callback) {
+var registerAtom = function (developerHostname, atomName, makeRoutable, callback) {
 
-	var devDir;
+	var devDir, edgeHostname = null;
 
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
@@ -70,15 +71,17 @@ var registerAtom = function (developerHostname, atomName, callback) {
 		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
-			name: atomName
+			name:     atomName,
+			hostname: edgeHostname
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.CreateAtom.endpoint, postData, false);
 
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
-				payload.name        = atomName;
-				payload.parent_fqdn = developerHostname;
+				payload.name         = atomName;
+				payload.parent_fqdn  = developerHostname;
+				payload.edgeHostname = edgeHostname || "";
 
 				var atomDir = beameUtils.makePath(devDir, payload.hostname + '/');
 
@@ -113,7 +116,24 @@ var registerAtom = function (developerHostname, atomName, callback) {
 
 		devDir = data['path'];
 
-		isRequestValid(developerHostname, devDir, null, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		isRequestValid(developerHostname, devDir, null, false).then(function () {
+
+			if (makeRoutable) {
+				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, function (error, edge) {
+					if (!error) {
+						edgeHostname = edge.endpoint;
+						onRequestValidated();
+					}
+					else {
+						callback && callback(error);
+					}
+				});
+			}
+			else {
+				onRequestValidated();
+			}
+
+		}).catch(beameUtils.onValidationError.bind(null, callback));
 	}
 
 	beameUtils.findHostPathAndParentAsync(developerHostname).then(onDeveloperPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Developer folder not found'));
@@ -198,13 +218,15 @@ var AtomServices = function () {
  * @param {String} developerHostname
  * @param {String} atomName
  * @param {Function} callback
+ * @param {Boolean} [routable] => make atom routable, default = true
  */
-AtomServices.prototype.createAtom = function (developerHostname, atomName, callback) {
+AtomServices.prototype.createAtom = function (developerHostname, atomName, callback, routable) {
 	logger.debug("Call Create Atom", {
 		"developer": developerHostname,
 		"name":      atomName
 	});
 
+	var makeRoutable = routable || true;
 
 	if (_.isEmpty(developerHostname)) {
 		callback(logger.formatErrorMessage('Create Atom => Developer fqdn required', module_name), null);
@@ -236,7 +258,7 @@ AtomServices.prototype.createAtom = function (developerHostname, atomName, callb
 		}
 	}
 
-	registerAtom(developerHostname, atomName, onAtomRegistered);
+	registerAtom(developerHostname, atomName, makeRoutable, onAtomRegistered);
 
 };
 
