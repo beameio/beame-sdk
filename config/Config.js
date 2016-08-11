@@ -109,7 +109,7 @@ var MessageCodes = {
 var ResponseKeys = {
 	"NodeFiles":                   [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
 	"DeveloperCreateResponseKeys": ["hostname", "uid", "name", "email"],
-	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn"],
+	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn","edgeHostname"],
 	"EdgeClientResponseKeys":      ["uid", "hostname", "edgeHostname", "parent_fqdn"],
 	"LocalClientResponseKeys":     ["uid", "hostname", "parent_fqdn", "edge_client_fqdn", "local_ip"],
 	"CertificateResponseKeys":     ["x509", "pkcs7", "ca"],
