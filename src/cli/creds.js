@@ -438,20 +438,16 @@ function importNonBeameCredentials(fqdn) {
 
 		var conn = tls.connect(443, fqdn, {host: fqdn});
 
-		var onSecureConnected = function (err, data) {
+		var onSecureConnected = function () {
 			//noinspection JSUnresolvedFunction
 			var cert = conn.getPeerCertificate(true);
 			conn.end();
-			var buffer   = new Buffer(cert.raw, "hex");
-			var bas64Str = buffer.toString("base64");
+
+			var bas64Str   = new Buffer(cert.raw, "hex").toString("base64");
 
 			var certBody = "-----BEGIN CERTIFICATE-----\r\n";
 
-			for (let i = 0; i < bas64Str.length; i += 64) {
-
-				certBody += (bas64Str.substr(i, 64) + "\r\n");
-
-			}
+			certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
 
 			certBody += "-----END CERTIFICATE-----";
 

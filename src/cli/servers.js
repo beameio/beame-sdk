@@ -10,8 +10,7 @@ var creds         = beameSDK.creds;
 var developers    = beameSDK.creds.list("developer", "", "JSON");
 var atoms         = beameSDK.creds.list("atom", "", "JSON");
 var edgeclients   = beameSDK.creds.list("edgeclient", "", "JSON");
-//var developerHostname;
-var edgeClientCreated;
+
 var config        = require('../../config/Config');
 const module_name = config.AppModules.BeameServer;
 var BeameLogger   = require('../utils/Logger');
@@ -58,6 +57,7 @@ function runTestBeameServer(hostname) {
 		appExpress.use(express.static(defaultPublicDir));
 
 		var serveIndex = require('serve-index');
+
 		if (hostname.indexOf(".r.") > 0)
 			logger.info(`Server started on https://${hostname} this is a publicly accessible address`);
 		else
@@ -90,7 +90,7 @@ var startBeameNode = function (sharedFolder, edgeClientFqdn) {
 		defaultSharedFolder = path.normalize(sharedFolder + "/");
 	}
 	runTestBeameServer(edgeClientFqdn);
-	edgeClientCreated = true;
+
 };
 
 var startFirstBeameNode = function (sharedFolder) {
@@ -123,7 +123,6 @@ var startFirstBeameNode = function (sharedFolder) {
 			var edgeHostname = edgeData.hostname;
 			logger.info(`Congrats! My new hostname is: https://${edgeHostname}`);
 			runTestBeameServer(edgeHostname);
-			edgeClientCreated = true;
 		});
 	};
 
