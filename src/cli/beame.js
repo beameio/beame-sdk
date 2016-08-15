@@ -5,7 +5,11 @@
 var argv = require('minimist')(process.argv.slice(2));
 var _    = require('underscore');
 
-var BeameStore = require("../services/BeameStore");
+var BeameStore    = require("../services/BeameStore");
+var config        = require('../../config/Config');
+const module_name = config.AppModules.BeameSDKCli;
+var BeameLogger   = require('../utils/Logger');
+var logger        = new BeameLogger(module_name);
 
 var commands = {};
 _.each(['creds', 'servers', 'crypto', 'system'], function (cmdName) {
@@ -23,12 +27,13 @@ var parametersSchema = {
 	'format':         {required: false, options: ['text', 'json'], default: 'text'},
 	'fqdn':           {required: false},
 	'signature':      {required: true},
-	'type':           {required: false, options: ['developer', 'atom', 'edgeclient']},
+	'type':           {required: false, options: ['developer', 'atom', 'edgeclient', 'localclient']},
 	'uid':            {required: true},
 	'targetFqdn':     {required: true},
 	'file':           {required: false},
 	'count':          {required: false, default: 1},
-	'sharedFolder':   {required: false}
+	'sharedFolder':   {required: false},
+	'localIp':        {required: true}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -45,9 +50,8 @@ function getParamsNames(fun) {
 		.replace(/\s+/g, '').split(',');
 	var ret         = (names.length == 1 && !names[0] ? [] : names);
 	var useCallback = false;
-	// console.log('PARAMS', ret);
+
 	ret             = _.filter(ret, function (x) {
-		// console.log('X', x);
 		if (x == 'callback') {
 			useCallback = true;
 			return false;
@@ -67,11 +71,11 @@ function main() {
 	var cmd = commands[cmdName];
 
 	if (!cmd) {
-		throw new InvalidArgv("Command '" + cmdName + "' not found. Valid top-level commands are: " + _.keys(commands));
+		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + _.keys(commands));
 	}
 
 	if (!commands[cmdName][subCmdName]) {
-		throw new InvalidArgv("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + _.keys(commands[cmdName]));
+		logger.fatal("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + _.keys(commands[cmdName]));
 	}
 
 	// TODO: handle boolean such as in "--fqdn --some-other-switch" or "--no-fqdn"
@@ -81,7 +85,7 @@ function main() {
 
 		// Required parameter missing
 		if (parametersSchema[paramName].required && !_.has(argv, paramName)) {
-			throw new InvalidArgv("Command '" + cmdName + ' ' + subCmdName + "' - required argument '" + paramName + "' is missing.");
+			logger.fatal("Command '" + cmdName + ' ' + subCmdName + "' - required argument '" + paramName + "' is missing.");
 		}
 
 		// Optional parameter missing
@@ -95,15 +99,23 @@ function main() {
 		// Parameter must be one of the specified values ("options")
 		if (parametersSchema[paramName].options) {
 			if (_.indexOf(parametersSchema[paramName].options, argv[paramName]) == -1) {
-				throw new InvalidArgv("Command '" + cmdName + ' ' + subCmdName + "' - argument '" + paramName + "' must be one of: " + parametersSchema[paramName].options.join(','));
+				logger.fatal("Command '" + cmdName + ' ' + subCmdName + "' - argument '" + paramName + "' must be one of: " + parametersSchema[paramName].options.join(','));
 			}
 		}
 		return argv[paramName];
 	});
 
-	// console.log('CB', paramsNames.useCallback);
-	// console.log('P', paramsNames);
-	function commandResultsReady(output) {
+	/**
+	 *
+	 * @param {Object} error
+	 * @param {Object} output
+	 */
+	function commandResultsReady(error, output) {
+
+		if (error) {
+			logger.fatal(error.message, error.data, error.module)
+		}
+
 		if (output === undefined) {
 			return;
 		}
@@ -113,6 +125,7 @@ function main() {
 		} else {
 			output = commands[cmdName][subCmdName].toText(output).toString();
 		}
+
 		console.log(output);
 	}
 
@@ -122,7 +135,7 @@ function main() {
 		commands[cmdName][subCmdName].apply(null, args);
 	} else {
 		var output = commands[cmdName][subCmdName].apply(null, args);
-		commandResultsReady(output);
+		commandResultsReady(null, output);
 	}
 }
 
@@ -139,7 +152,7 @@ function usage() {
 			var params = paramsNames.map(function (paramName) {
 				var ret = '--' + paramName;
 				if (!parametersSchema[paramName])
-					throw new Error("Missing " + paramName);
+					logger.fatal("Missing " + paramName);
 				if (parametersSchema[paramName].options) {
 					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
 				} else {

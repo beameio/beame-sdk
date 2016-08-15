@@ -3,6 +3,8 @@
  */
 "use strict";
 
+process.env.BEAME_LOG_LEVEL = "Debug";
+
 var fullFLowTest = require('./modules/full_flow_test');
 
 fullFLowTest.run();

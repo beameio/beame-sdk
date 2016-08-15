@@ -1,25 +1,30 @@
 'use strict';
+
+/** @namespace BaseHttpsServer */
+
 var fs = require('fs');
 
 var https       = require("https");
 var ProxyClient = require("./ProxyClient");
 var BeameStore  = require("./BeameStore");
-
-
-var debug      = require("debug")("SampleBeameServer");
-var beamestore = new BeameStore();
+var SNIServer   = require("./SNIServer");
+var config      = require('../../config/Config');
+var logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
+var beamestore  = new BeameStore();
 
 /**
- *
- * @param {String|null|undefined} [instanceHostname]
- * @param {String|null|undefined} [projectName]
- * @param {Boolean} usrExpress
+ * Starts sample HTTPS server. Either instanceHostname or projectName must be specified.
+ * @public
+ * @method BaseHttpsServer.SampleBeameServer
+ * @param {String|null} [instanceHostname] - fqdn of the HTTPS server. You must have private key of the entity.
+ * @param {String|null} [projectName] - name of environment variable to get fqdn from.
+ * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
- * @constructor
  */
-var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hostOnlineCallback) {
+var SampleBeameServer = function (instanceHostname, projectName, requestListener, hostOnlineCallback) {
 	if (!instanceHostname && !projectName) {
-		throw new Error('instance hostname or project name required');
+		logger.error('instance hostname or project name required');
+		return;
 	}
 
 
@@ -28,48 +33,70 @@ var SampleBeameServer = function (instanceHostname, projectName, usrExpress, hos
 		var varName = projectName;
 		host        = process.env[varName];
 		if (host == undefined) {
-			console.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
-			process.exit(1);
+			logger.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
+			return;
 		}
 	}
 	else {
 		host = instanceHostname;
 	}
-	var edgeCert = beamestore.search(host);
-	var serverInfo;
-	var app;
-	if (edgeCert.length != 1) {
-		throw new Error("Could not find certificate for " + host);
+
+	//could be edge client or routable atom
+	var server_entity = beamestore.search(host);
+
+	if (server_entity.length != 1) {
+		logger.error("Could not find certificate for " + host);
+		return;
 	}
-	edgeCert    = edgeCert[0];
-	var options = {
-		key:  edgeCert.PRIVATE_KEY,
-		cert: edgeCert.P7B,
-		ca:   edgeCert.CA
+	server_entity            = server_entity[0];
+	/** @type {ServerCertificates} **/
+	var edgeClientCerts = {
+		key:  server_entity.PRIVATE_KEY,
+		cert: server_entity.P7B,
+		ca:   server_entity.CA
 	};
 
-	if (usrExpress) {
-		var xprsApp = https.createServer(options, usrExpress);
-		app         = xprsApp.listen.apply(xprsApp);
-	}
-	else {
-		app = https.createServer(options);
-	}
-	app.listen(0, "127.0.0.1", function (options) {
+	var srv = SNIServer.get(config.SNIServerPort, requestListener);
+	srv.addFqdn(host, edgeClientCerts);
+
+	var edgeLocals = beamestore.searchEdgeLocals(host);
+	edgeLocals.forEach(edgeLocal => {
+		var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
+		srv.addFqdn(edgeLocalData.hostname, {
+			key:  edgeLocalData.PRIVATE_KEY,
+			cert: edgeLocalData.P7B,
+			ca:   edgeLocalData.CA
+		});
+	});
+
+	srv.start(function () {
 		function onLocalServerCreated(data) {
 			if (hostOnlineCallback) {
-				serverInfo = data;
-				hostOnlineCallback(data, app);
-//				console.error(data); //user undfriendly printout
+				hostOnlineCallback(data, srv.getServer());
 			}
 		}
 
 		//noinspection JSUnresolvedVariable
-		new ProxyClient("HTTPS", edgeCert.hostname,
-			edgeCert.edgeHostname, 'localhost',
-			app.address().port, {onLocalServerCreated: onLocalServerCreated},
-			undefined, options);
-	}.bind(null, options));
+		if (server_entity.hostname.indexOf(".r.") > 0 || server_entity.level === "atom") {
+
+			if (!server_entity.edgeHostname) {
+				logger.fatal('Edge server hostname required');
+			}
+
+			if (!server_entity.hostname) {
+				logger.fatal('Server hostname required');
+			}
+
+			//noinspection JSUnresolvedVariable
+			new ProxyClient("HTTPS", server_entity.hostname,
+				server_entity.edgeHostname, 'localhost',
+				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
+				null, edgeClientCerts);
+		}
+		else {
+			onLocalServerCreated(null);
+		}
+	});
 };
 
 module.exports = {SampleBeameServer: SampleBeameServer};

@@ -1,10 +1,9 @@
-'use strict';
+"use strict";
 
-var debug             = require("debug")("./src/services/ProvisionApi.js");
 var provisionSettings = require('../../config/ApiConfig.json');
-var beameUtils        = require('../utils/BeameUtils');
 var config            = require('../../config/Config');
-
+const module_name     = config.AppModules.ProvisionApi;
+var logger            = new (require('../utils/Logger'))(module_name);
 /**
  * @typedef {Object} CertSettings
  * @property {String} appCertPath
@@ -39,12 +38,10 @@ function isObject(str) {
 }
 
 function clearJSON(json) {
-	//console.log('clear json %j',json);
 
 	var jsonCleaned = {};
 
 	Object.keys(json).map(function (k) {
-		//console.log('element is %j,val is %j, key is %j',json[k],val,k);
 		if (k === '$id') return;
 		if (!isObject(json[k])) {
 			jsonCleaned[k] = json[k];
@@ -53,25 +50,22 @@ function clearJSON(json) {
 		var jsonProp = json[k];
 		delete jsonProp['$id'];
 		jsonCleaned[k] = jsonProp;
-		//return jsonProp;
-	});
-	//console.log('cleared json %j',jsonCleaned);
 
+	});
 
 	return jsonCleaned;
 }
 
 //private helpers
 var parseProvisionResponse = function (error, response, body, type, callback) {
-	var errMsg;
+
 	if (!response) {
-		callback && callback(new Error('empty response'), null);
+		callback && callback(logger.formatErrorMessage("Provision Api => empty response", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
 
 	if (error) {
-		errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Provision Api response error", {"error": error});
-		callback(errMsg, null);
+		callback(logger.formatErrorMessage("Provision Api response error", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
 
@@ -102,11 +96,11 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, payload.Message || "Provision Api response error", {
+		var errMsg = logger.formatErrorMessage(payload.Message || "Provision Api response error", module_name, {
 			"status":  response.statusCode,
 			"message": payload.Message || payload
-		});
-		console.error(errMsg);
+		}, config.MessageCodes.ApiRestError);
+
 		callback && callback(errMsg, null);
 	}
 
@@ -122,16 +116,15 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
  * @param {Function} callback
  */
 var postToProvisionApi = function (url, options, type, retries, sleep, callback) {
-	var errMsg;
 
 	retries--;
 
 	var onApiError = function (error) {
-		errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Provision Api post error", {
+		logger.warn("Provision Api post error", {
 			"error": error,
 			"url":   url
 		});
-		console.error(errMsg);
+
 		sleep = parseInt(sleep * (Math.random() + 1.5));
 
 		setTimeout(function () {
@@ -143,9 +136,10 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 
 	try {
 		if (retries == 0) {
-			var consoleMessage = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Post to provision failed", {"url": url});
-			console.error(consoleMessage);
-			callback && callback(consoleMessage, null);
+			callback && callback(logger.formatErrorMessage("Post to provision failed", module_name, {
+				url,
+				options
+			}, config.MessageCodes.ApiRestError), null);
 		}
 		else {
 			request.post(
@@ -192,16 +186,15 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
  */
 var getFromProvisionApi = function (url, options, type, retries, sleep, callback) {
 
-	var errMsg;
 
 	retries--;
 
 	var onApiError = function (error) {
-		errMsg = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Provision Api get error", {
+		logger.warn("Provision Api get error", {
 			"error": error,
 			"url":   url
 		});
-		console.error(errMsg);
+
 		sleep = parseInt(sleep * (Math.random() + 1.5));
 
 		setTimeout(function () {
@@ -211,9 +204,10 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 
 	try {
 		if (retries == 0) {
-			var consoleMessage = beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.ApiRestError, "Get from provision failed", {"url": url});
-			console.error(consoleMessage);
-			callback && callback(consoleMessage, null);
+			callback && callback(logger.formatErrorMessage("Get from provision failed", module_name, {
+				url,
+				options
+			}, config.MessageCodes.ApiRestError), null);
 		}
 		else {
 			request.get(
@@ -256,8 +250,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 var ProvApiService = function () {
 
 	/** @member {String} **/
-	this.provApiEndpoint = beameUtils.isAmazon() ? provisionSettings.Endpoints.Online : provisionSettings.Endpoints.Local;
-	debug(beameUtils.formatDebugMessage(config.AppModules.ProvisionApi, config.MessageCodes.DebugInfo, "Provision Api Constructor", {"endpoint": this.provApiEndpoint}));
+	this.provApiEndpoint = provisionSettings.Endpoints.BaseUrl;
 
 };
 
@@ -282,7 +275,7 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method) {
 
 	var options     = _.extend(this.options || {}, {form: apiData.postData});
 	var apiEndpoint = this.provApiEndpoint + apiData.api;
-	debug('Posting to: ' + apiEndpoint);
+	logger.debug(`Api call to : ${apiEndpoint}`);
 	var _method = method || 'POST';
 
 	switch (_method) {

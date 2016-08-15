@@ -3,6 +3,10 @@ var path = require('path');
 var os   = require('os');
 var home = os.homedir();
 
+const AuthServerEndPoint = "https://registration-staging.beameio.net";
+
+const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
+
 /** @const {String} **/
 var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
@@ -35,6 +39,20 @@ var CertFileNames = {
 };
 
 /**
+ * Certificate file names
+ *  @enum {string}
+ */
+var CertificateFiles = {
+	"PRIVATE_KEY":      "private_key.pem",
+	"X509":             "x509.pem",
+	"CA":               "ca.pem",
+	"PKCS7":            "pkcs7.pem",
+	"P7B":              "p7b.cer",
+	"PKCS12":           "cert.pfx",
+	"PWD":              "pwd.txt"
+};
+
+/**
  * Certificate response fields
  *  @enum {string}
  */
@@ -50,12 +68,24 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
-	"Developer":    "Developer",
-	"Atom":         "Atom",
-	"EdgeClient":   "EdgeClient",
-	"ProvisionApi": "ProvisionApi",
-	"DataServices": "DataServices",
-	"UnitTest":     "UnitTest"
+	"BeameSDKCli":      "BeameSDKCli",
+	"BeameCreds":       "BeameCreds",
+	"BeameCrypto":      "BeameCrypto",
+	"BeameServer":      "BeameServer",
+	"BeameUtils":       "BeameUtils",
+	"BeameStore":       "BeameStore",
+	"BeameSystem":       "BeameSystem",
+	"BeameDirServices": "BeameDirServices",
+	"Developer":        "Developer",
+	"Atom":             "Atom",
+	"EdgeClient":       "EdgeClient",
+	"LocalClient":      "LocalClient",
+	"ProvisionApi":     "ProvisionApi",
+	"DataServices":     "DataServices",
+	"UnitTest":         "UnitTest",
+	"BaseHttpsServer":  "BaseHttpsServer",
+	"SNIServer":        "SNIServer",
+	"ProxyClient":      "ProxyClient"
 };
 
 /**
@@ -79,8 +109,9 @@ var MessageCodes = {
 var ResponseKeys = {
 	"NodeFiles":                   [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
 	"DeveloperCreateResponseKeys": ["hostname", "uid", "name", "email"],
-	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn"],
+	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn","edgeHostname"],
 	"EdgeClientResponseKeys":      ["uid", "hostname", "edgeHostname", "parent_fqdn"],
+	"LocalClientResponseKeys":     ["uid", "hostname", "parent_fqdn", "edge_client_fqdn", "local_ip"],
 	"CertificateResponseKeys":     ["x509", "pkcs7", "ca"],
 	"RevokeDevCertResponseKeys":   ["recovery_code"]
 };
@@ -96,6 +127,8 @@ var TimeUnits = {
 	"Day":    "d"
 };
 
+var SNIServerPort = process.env.SNI_SERVER_PORT || 8443;
+
 module.exports = {
 	rootDir,
 	localCertsDir,
@@ -103,9 +136,13 @@ module.exports = {
 	loadBalancerURL,
 	metadataFileName,
 	CertFileNames,
+	CertificateFiles,
 	CertResponseFields,
 	AppModules,
 	MessageCodes,
 	ResponseKeys,
-	TimeUnits
+	TimeUnits,
+	SNIServerPort,
+	AuthServerEndPoint,
+	CertEndpoint
 };
