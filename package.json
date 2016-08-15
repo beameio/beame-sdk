@@ -63,6 +63,7 @@
   },
   "devDependencies": {
     "JSON": "latest",
+    "babel-preset-es2015": "^6.13.2",
     "chai": "^3.5.0",
     "gulp": "^3.9.1",
     "gulp-jsdoc3": "^0.3.0",
