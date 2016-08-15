@@ -76,7 +76,7 @@ function readSubDevDir(devDir) {
 
 	_.each(subfolders, function (dir) {
 		var deeperLevel = readSubDevDir(makepath(devDir, dir), false);
-		if (!currentObject[deeperLevel.level]) {
+		if (_.isEmpty(currentObject[deeperLevel.level])) {
 			currentObject[deeperLevel.level] = [];
 		}
 		currentObject[deeperLevel.level].push(deeperLevel);

@@ -58,10 +58,11 @@ function runTestBeameServer(hostname) {
 
 		var serveIndex = require('serve-index');
 
-		if (hostname.indexOf(".r.") > 0)
-			logger.info(`Server started on https://${hostname} this is a publicly accessible address`);
-		else
+		if (hostname.indexOf(".l.") > 0)
 			logger.info(`Server started on https://${hostname}:8443 this is an address on local network`);
+		else
+			logger.info(`Server started on https://${hostname} this is a publicly accessible address`);
+
 
 		appExpress.use('/shared', express.static(defaultSharedFolder));
 		appExpress.use('/shared', serveIndex(defaultSharedFolder, {'icons': true}));
