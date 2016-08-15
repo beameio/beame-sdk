@@ -30,6 +30,7 @@ class SNIServer {
 		this.server.listen(this.port, callback);
 
 		for (let host in this.hosts) {
+			//noinspection JSUnfilteredForInLoop
 			logger.info(`starting server on ${host}`)
 		}
 
