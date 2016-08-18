@@ -219,6 +219,24 @@ var EdgeClientServices = function () {
  * @param {String} atom_fqdn
  * @param {Function} callback
  */
+EdgeClientServices.prototype.registerEdgeClient = function (atom_fqdn, callback) {
+
+	logger.debug("Call register Edge Client", {"atom": atom_fqdn});
+
+	if (_.isEmpty(atom_fqdn)) {
+		callback(logger.formatErrorMessage("Create Edge Client => Atom fqdn required", module_name), null);
+		return;
+	}
+
+	registerEdgeClient(atom_fqdn, callback);
+
+};
+
+/**
+ *
+ * @param {String} atom_fqdn
+ * @param {Function} callback
+ */
 EdgeClientServices.prototype.createEdgeClient = function (atom_fqdn, callback) {
 
 	logger.debug("Call Create Edge Client", {"atom": atom_fqdn});
@@ -414,7 +432,6 @@ EdgeClientServices.prototype.revokeCert = function (edge_client_fqdn, callback) 
 
 	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
-
 
 EdgeClientServices.prototype.getStats = function (edge_client_fqdn, callback) {
 	var edgeClientDir, atomDir;

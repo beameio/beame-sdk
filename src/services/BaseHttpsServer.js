@@ -50,14 +50,14 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 	}
 	server_entity            = server_entity[0];
 	/** @type {ServerCertificates} **/
-	this.edgeClientCerts = {
+	this.serverCerts = {
 		key:  server_entity.PRIVATE_KEY,
 		cert: server_entity.P7B,
 		ca:   server_entity.CA
 	};
 
 	var srv = SNIServer.get(config.SNIServerPort, requestListener);
-	srv.addFqdn(host, this.edgeClientCerts);
+	srv.addFqdn(host, this.serverCerts);
 
 	var edgeLocals = beamestore.searchEdgeLocals(host);
 	edgeLocals.forEach(edgeLocal => {
@@ -91,7 +91,7 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 			new ProxyClient("HTTPS", server_entity.hostname,
 				server_entity.edgeHostname, 'localhost',
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
-				null, this.edgeClientCerts);
+				null, this.serverCerts);
 		}
 		else {
 			onLocalServerCreated(null);

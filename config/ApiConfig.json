@@ -51,6 +51,9 @@
             "UpdateAtom": {
                 "endpoint": "/api/v1/atom/update"
             },
+            "UpdateAtomType": {
+                "endpoint": "/api/v1/atom/type/save"
+            },
             "GetCert": {
                 "endpoint": "/api/v1/atom/cert/get"
             },
@@ -62,6 +65,9 @@
             },
             "GetStats": {
                 "endpoint": "/api/v1/atom/stats"
+            },
+            "GetCreds": {
+                "endpoint": "/api/v1/atom/creds/get"
             }
         },
         "EdgeClient": {
