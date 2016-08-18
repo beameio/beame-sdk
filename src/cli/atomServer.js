@@ -10,7 +10,7 @@ const module_name = config.AppModules.AtomAgent;
 var BeameLogger = require('../utils/Logger');
 var logger = new BeameLogger(module_name);
 /** @type {String} **/
-var atomFqdn = null;
+var atom_fqdn = null;
 
 /** @type {AtomType} **/
 var atomType = config.AtomType.Default;
@@ -34,9 +34,9 @@ var buildErrorResponse = function (message) {
 };
 
 var setAtomType = function () {
-	if (!atomFqdn) return;
+	if (!atom_fqdn) return;
 	
-	atomServices.getCreds(atomFqdn, function (error, payload) {
+	atomServices.getCreds(atom_fqdn, function (error, payload) {
 		if (!error) {
 			if (payload.type) {
 				atomType = payload.type;
@@ -64,9 +64,9 @@ var buildResponse = function (req, res, statusCode, data) {
 	res.end();
 };
 
-function startAtomBeameNode(atom_fqdn) {
+function startAtomBeameNode(atomFqdn) {
 	
-	atomFqdn = atom_fqdn;
+	atom_fqdn = atomFqdn;
 	
 	beameSDK.BaseHttpsServer.SampleBeameServer(atom_fqdn, null, null, function (data, app) {
 		//noinspection JSUnresolvedFunction
@@ -106,7 +106,7 @@ function startAtomBeameNode(atom_fqdn) {
 							}
 							else {
 								status = 403;
-								response_data = buildErrorResponse(`Action forbidden for ${atomFqdn}`);
+								response_data = buildErrorResponse(`Action forbidden for ${atom_fqdn}`);
 							}
 							break;
 						case config.AtomServerRequests.AuthorizeToken:
@@ -131,7 +131,7 @@ function startAtomBeameNode(atom_fqdn) {
 							}
 							else {
 								status = 403;
-								response_data = buildErrorResponse(`Action forbidden for ${atomFqdn}`);
+								response_data = buildErrorResponse(`Action forbidden for ${atom_fqdn}`);
 							}
 							break;
 						case config.AtomServerRequests.SignAuthToken:
@@ -157,7 +157,7 @@ function startAtomBeameNode(atom_fqdn) {
 							}
 							else {
 								status = 403;
-								response_data = buildErrorResponse(`Action forbidden for ${atomFqdn}`);
+								response_data = buildErrorResponse(`Action forbidden for ${atom_fqdn}`);
 							}
 							break;
 						default:
