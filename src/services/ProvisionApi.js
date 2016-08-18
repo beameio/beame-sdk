@@ -300,5 +300,33 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
 	}
 };
 
+/** **/
+ProvApiService.prototype.postRequest = function (url ,postData, callback) {
+	
+	var options = _.extend(this.options || {}, {data: postData});
+	
+	request.post(
+		url,
+		options,
+		function (error, response, body) {
+			parseProvisionResponse(error, response, body, type, function (error, payload) {
+				if (payload) {
+					callback(null, payload);
+				}
+				else {
+					if (_.isEmpty(error.data)) {
+						error.data = {};
+					}
+					error.data.url = url;
+					error.data.postData = options.form;
+					callback(error, null);
+				}
+			});
+			
+		}
+	);
+};
+
+
 
 module.exports = ProvApiService;

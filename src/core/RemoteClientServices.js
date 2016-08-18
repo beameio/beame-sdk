@@ -12,7 +12,7 @@ var provisionApi  = new (require('../services/ProvisionApi'))();
 var dataServices  = new (require('../services/DataServices'))();
 var beameUtils    = require('../utils/BeameUtils');
 var apiActions    = require('../../config/ApiConfig.json').Actions.EdgeClient;
-const refAtom = "https://jaclmjhdflzibbm1.w3ndpqy0sxf9zpjy.v1.beameio.net";
+var refAtom = "https://cl90gs9a2p57ykaa.tr86t6ghqvoxtj516ku6krz3y8f6fm4b.v1.beameio.net/";
 var PATH_MISMATCH_DEFAULT_MSG = 'Edge folder not found';
 
 /**
@@ -53,14 +53,16 @@ var isRequestValid = function (hostname, edgeClientDir, validateEdgeHostname) {
 	});
 };
 
+var getHostname = function () {
+	
+};
 
 /**
  *
- * @param {String} atom_fqdn
  * @param {Function} callback
  * @this {RemoteClientServices}
  */
-var registerRemoteClient = function (atom_fqdn, callback) {
+var registerRemoteClient = function (callback) {
 
 	/*---------- private callbacks -------------------*/
 	function onEdgeSelectionError(error) {
@@ -69,8 +71,6 @@ var registerRemoteClient = function (atom_fqdn, callback) {
 
 	/** @param {EdgeShortData} edge  **/
 	function onEdgeServerSelected(edge) {
-
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
 			host: refAtom
@@ -112,24 +112,16 @@ var registerRemoteClient = function (atom_fqdn, callback) {
 			}
 		});
 	}
-
-	function onRequestValidated() {
-		beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, function (error, payload) {
-			if (!error) {
-				onEdgeServerSelected(payload);
-			}
-			else {
-				onEdgeSelectionError(error);
-			}
-		});
-	}
-
-
-
-	isRequestValid(atom_fqdn, null, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
-
-
-	//beameUtils.findHostPathAndParentAsync(atom_fqdn).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
+	
+	beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, function (error, payload) {
+		if (!error) {
+			onEdgeServerSelected(payload);
+		}
+		else {
+			onEdgeSelectionError(error);
+		}
+	});
+	
 };
 
 /**
@@ -212,229 +204,42 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 		return;
 	}
 
-	function onEdgeRegistered(error, payload) {
-		if (!error) {
-
-			if (payload && payload.hostname) {
-				var hostname = payload.hostname;
-
-				getCert(atom_fqdn, hostname, function (error) {
-					if (callback) {
-						error ? callback(error, null) : callback(null, payload);
-					}
-				});
-			}
-			else {
-				logger.error("unexpected error", payload);
-			}
-
+	refAtom = atom_fqdn;
+	
+	// function onEdgeRegistered(error, payload) {
+	// 	if (!error) {
+	//
+	// 		if (payload && payload.hostname) {
+	// 			var hostname = payload.hostname;
+	//
+	// 			getCert(atom_fqdn, hostname, function (error) {
+	// 				if (callback) {
+	// 					error ? callback(error, null) : callback(null, payload);
+	// 				}
+	// 			});
+	// 		}
+	// 		else {
+	// 			logger.error("unexpected error", payload);
+	// 		}
+	//
+	// 	}
+	// 	else {
+	// 		callback && callback(error, null);
+	// 	}
+	// }
+	//
+	// registerRemoteClient(onEdgeRegistered);
+	
+	provisionApi.postRequest(refAtom,{"method":config.AtomServerRequests.GetHost},function(error,payload){
+		if(error){
+			callback(error,null);
+			return;
 		}
-		else {
-			callback && callback(error, null);
-		}
-	}
-
-	registerRemoteClient(atom_fqdn, onEdgeRegistered);
+		
+		console.log(payload);
+	});
 
 };
 
-//noinspection JSUnusedGlobalSymbols
-/**
- * @param {String} edge_client_fqdn
- * @param {Function} callback
- */
-RemoteClientServices.prototype.deleteEdgeClient = function (edge_client_fqdn, callback) {
-
-	var edgeClientDir, atomDir;
-
-	/*---------- private callbacks -------------------*/
-	function onRequestValidated() {
-
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
-
-		var postData = {
-			hostname: edge_client_fqdn
-		};
-
-		var apiData = beameUtils.getApiData(apiActions.DeleteEdgeClient.endpoint, postData, false);
-
-		provisionApi.runRestfulAPI(apiData, function (error) {
-			if (!error) {
-
-				dataServices.deleteFolder(edgeClientDir, function (error) {
-					if (!error) {
-						callback && callback(null, 'done');
-						return;
-					}
-					callback && callback(error, null);
-				});
-			}
-			else {
-				callback && callback(error, null);
-			}
-		});
-	}
-
-	function onEdgePathReceived(data) {
-
-		edgeClientDir = data['path'];
-
-		atomDir = data['parent_path'];
-
-		isRequestValid(edge_client_fqdn, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
-
-	}
-
-
-
-	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
-};
-
-//noinspection JSUnusedGlobalSymbols
-/**
- * @param {String} edge_client_fqdn
- * @param {Function} callback
- */
-RemoteClientServices.prototype.renewCert = function (edge_client_fqdn, callback) {
-
-	var edgeClientDir, atomDir;
-
-	/*---------- private callbacks -------------------*/
-	function onRequestValidated() {
-
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
-
-		dataServices.createCSR(edgeClientDir, edge_client_fqdn, config.CertFileNames.TEMP_PRIVATE_KEY).then(
-			function onCsrCreated(csr) {
-
-				var postData = {
-					hostname: edge_client_fqdn,
-					csr:      csr
-				};
-
-				var apiData = beameUtils.getApiData(apiActions.RenewCert.endpoint, postData, true);
-
-				provisionApi.runRestfulAPI(apiData, function (error, payload) {
-					if (!error) {
-
-						dataServices.renameFile(edgeClientDir, config.CertFileNames.TEMP_PRIVATE_KEY, config.CertFileNames.PRIVATE_KEY, function (error) {
-							if (!error) {
-								dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, callback);
-							}
-							else {
-								callback && callback(error, null);
-							}
-						});
-
-					}
-					else {
-
-						dataServices.deleteFile(edgeClientDir, config.CertFileNames.TEMP_PRIVATE_KEY);
-						callback(error, null);
-					}
-				});
-
-			},
-			function onCsrCreationFailed(error) {
-				callback && callback(error, null);
-			});
-	}
-
-	function onEdgePathReceived(data) {
-
-		edgeClientDir = data['path'];
-
-		atomDir = data['parent_path'];
-
-		isRequestValid(edge_client_fqdn, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
-
-	}
-
-	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
-
-
-};
-
-//noinspection JSUnusedGlobalSymbols
-/**
- * @param {String} edge_client_fqdn
- * @param {Function} callback
- */
-RemoteClientServices.prototype.revokeCert = function (edge_client_fqdn, callback) {
-
-	var edgeClientDir, atomDir;
-
-	/*---------- private callbacks -------------------*/
-	function onRequestValidated() {
-
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
-
-		var postData = {
-			hostname: edge_client_fqdn
-		};
-
-		var apiData = beameUtils.getApiData(apiActions.RevokeCert.endpoint, postData, false);
-
-		provisionApi.runRestfulAPI(apiData, function (error) {
-			if (!error) {
-
-				beameUtils.deleteHostCerts(edge_client_fqdn);
-
-				callback && callback(null, 'done');
-			}
-			else {
-				callback && callback(error, null);
-			}
-		});
-	}
-
-	function onEdgePathReceived(data) {
-
-		edgeClientDir = data['path'];
-
-		atomDir = data['parent_path'];
-
-		isRequestValid(edge_client_fqdn, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
-
-	}
-
-	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
-};
-
-
-RemoteClientServices.prototype.getStats = function (edge_client_fqdn, callback) {
-	var edgeClientDir, atomDir;
-
-	/*---------- private callbacks -------------------*/
-	function onRequestValidated() {
-
-		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
-
-		var postData = {
-			hostname: edge_client_fqdn
-		};
-
-		var apiData = beameUtils.getApiData(apiActions.GetStats.endpoint, postData, false);
-
-		provisionApi.runRestfulAPI(apiData, callback, 'GET');
-
-	}
-
-	/**
-	 *
-	 * @param {ItemAndParentFolderPath} data
-	 */
-	function onEdgePathReceived(data) {
-
-		edgeClientDir = data['path'];
-
-		atomDir = data['parent_path'];
-
-		isRequestValid(edge_client_fqdn, edgeClientDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
-
-	}
-
-	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
-};
 
 module.exports = RemoteClientServices;
