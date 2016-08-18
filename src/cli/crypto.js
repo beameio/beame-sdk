@@ -90,6 +90,19 @@ function getPublicKey(cert) {
 	return {};
 }
 
+function getPublicKeyEncodedDer(cert) {
+	var xcert = x509.parseCert(cert + "");
+	if (xcert) {
+		var publicKey = xcert.publicKey;
+		var modulus = new Buffer(publicKey.n, 'hex');
+		var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
+		var midheader = new Buffer("0203", "hex");
+		var exponent = new Buffer("010001", "hex");
+		var buffer = Buffer.concat([header, modulus, midheader, exponent]);
+		return buffer;
+	}
+	return {};
+}
 /**
  * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
  * @public

@@ -1,6 +1,6 @@
 {
     "Endpoints": {
-        "BaseUrl": "https://zenit.office.beameio.net"
+        "BaseUrl": "https://prov-staging.beameio.net"
     },
     "RetryAttempts": 10,
     "Actions": {
