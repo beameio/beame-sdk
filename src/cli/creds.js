@@ -32,6 +32,7 @@ var developerServices   = new (require('../core/DeveloperServices'))();
 var atomServices        = new (require('../core/AtomServices'))();
 var edgeClientServices  = new (require('../core/EdgeClientServices'))();
 var localClientServices = new (require('../core/LocalClientServices'))();
+var remoteClientServices = new (require('../core/RemoteClientServices'))();
 
 var path   = require('path');
 var fs     = require('fs');
@@ -46,6 +47,7 @@ module.exports = {
 	createAtom,
 	createEdgeClient,
 	createLocalClient,
+	createRemoteClient,
 	createDeveloper,
 	exportCredentials,
 	importCredentials,
@@ -338,6 +340,18 @@ createEdgeClient.toText = lineToText;
 function createLocalClient(atomFqdn, edgeClientFqdn, callback) {
 	logger.info(`Creating local client for Atom ${atomFqdn}`);
 	localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, callback);
+}
+
+/**
+ * Create Edge Client under Remote Atom
+ * @public
+ * @method Creds.createRemoteClient
+ * @param {String} atomFqdn
+ * @param {Function} callback
+ */
+function createRemoteClient(atomFqdn, callback) {
+	logger.info(`Creating client for remote Atom ${atomFqdn}`);
+	remoteClientServices.createEdgeClient(atomFqdn, callback);
 }
 
 /**
