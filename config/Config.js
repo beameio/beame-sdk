@@ -74,10 +74,11 @@ var AppModules = {
 	"BeameServer":      "BeameServer",
 	"BeameUtils":       "BeameUtils",
 	"BeameStore":       "BeameStore",
-	"BeameSystem":       "BeameSystem",
+	"BeameSystem":      "BeameSystem",
 	"BeameDirServices": "BeameDirServices",
 	"Developer":        "Developer",
 	"Atom":             "Atom",
+	"AtomAgent":        "AtomAgent",
 	"EdgeClient":       "EdgeClient",
 	"LocalClient":      "LocalClient",
 	"ProvisionApi":     "ProvisionApi",
@@ -127,6 +128,26 @@ var TimeUnits = {
 	"Day":    "d"
 };
 
+/**
+ * Atom type values
+ *  @enum {number}
+ */
+var AtomType = {
+	"Default" : 0,
+	"AuthorizationAgent"  : 1,
+	"AuthorizationServer" : 2
+};
+
+/**
+ * Atom request types
+ *  @enum {string}
+ */
+var AtomServerRequests = {
+	"GetHost" : "getHost",
+	"AuthorizeToken" : "authorizeToken",
+	"SignAuthToken" : "signAuthToken"
+};
+
 var SNIServerPort = process.env.SNI_SERVER_PORT || 8443;
 
 module.exports = {
@@ -142,6 +163,8 @@ module.exports = {
 	MessageCodes,
 	ResponseKeys,
 	TimeUnits,
+	AtomType,
+	AtomServerRequests,
 	SNIServerPort,
 	AuthServerEndPoint,
 	CertEndpoint

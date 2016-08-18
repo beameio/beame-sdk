@@ -315,6 +315,55 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
 
 //noinspection JSUnusedGlobalSymbols
 /**
+ * Update atom type, verified by developer license
+ * @param {String} atomHostname
+ * @param {AtomType} type
+ * @param {Function} callback
+ */
+AtomServices.prototype.updateType = function (atomHostname, type, callback) {
+	var devDir, atomDir;
+
+	/*---------- private callbacks -------------------*/
+	function onRequestValidated() {
+
+		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+
+		var postData = {
+			hostname: atomHostname,
+			type:     type
+		};
+
+		var apiData = beameUtils.getApiData(apiActions.UpdateAtomType.endpoint, postData, false);
+
+		provisionApi.runRestfulAPI(apiData, function (error) {
+			if (!error) {
+				callback && callback(null, 'done');
+			}
+			else {
+				error.data.hostname = atomHostname;
+				callback && callback(error, null);
+			}
+		});
+	}
+
+	/**
+	 *
+	 * @param {ItemAndParentFolderPath} data
+	 */
+	function onAtomPathReceived(data) {
+
+		atomDir = data['path'];
+		devDir  = data['parent_path'];
+
+		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+	}
+
+	beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+
+};
+
+//noinspection JSUnusedGlobalSymbols
+/**
  * @param {String} atomHostname
  * @param {Function} callback
  */
@@ -500,6 +549,45 @@ AtomServices.prototype.getStats = function (atomHostname, callback) {
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.GetStats.endpoint, postData, false);
+
+		provisionApi.runRestfulAPI(apiData, callback, 'GET');
+
+	}
+
+	/**
+	 *
+	 * @param {ItemAndParentFolderPath} data
+	 */
+	function onAtomPathReceived(data) {
+
+		atomDir = data['path'];
+		devDir  = data['parent_path'];
+
+		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+	}
+
+	beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
+};
+
+//noinspection JSUnusedGlobalSymbols
+/**
+ * get atom creds
+ * @param {string} atomHostname
+ * @param {Function} callback
+ */
+AtomServices.prototype.getCreds = function (atomHostname, callback) {
+	var devDir, atomDir;
+
+	/*---------- private callbacks -------------------*/
+	function onRequestValidated() {
+
+		provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+
+		var postData = {
+			hostname: atomHostname
+		};
+
+		var apiData = beameUtils.getApiData(apiActions.GetCreds.endpoint, postData, false);
 
 		provisionApi.runRestfulAPI(apiData, callback, 'GET');
 
