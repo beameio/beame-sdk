@@ -303,13 +303,13 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
 /** **/
 ProvApiService.prototype.postRequest = function (url ,postData, callback) {
 	
-	var options = _.extend(this.options || {}, {data: postData});
-	
+	var options = _.extend(this.options || {}, {"data": postData});
+	options.headers = {'Content-Type': 'application/json', 'Content-Length':postData.length};
 	request.post(
 		url,
 		options,
 		function (error, response, body) {
-			parseProvisionResponse(error, response, body, type, function (error, payload) {
+			parseProvisionResponse(error, response, body, null, function (error, payload) {
 				if (payload) {
 					callback(null, payload);
 				}
