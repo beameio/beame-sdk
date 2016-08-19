@@ -12,8 +12,30 @@ var provisionApi  = new (require('../services/ProvisionApi'))();
 var dataServices  = new (require('../services/DataServices'))();
 var beameUtils    = require('../utils/BeameUtils');
 var apiActions    = require('../../config/ApiConfig.json').Actions.EdgeClient;
-var refAtom = "https://cl90gs9a2p57ykaa.tr86t6ghqvoxtj516ku6krz3y8f6fm4b.v1.beameio.net/";
+var refAtom = "https://jaclmjhdflzibbm1.w3ndpqy0sxf9zpjy.v1.beameio.net";
+var https = require('https');
+	//"cl90gs9a2p57ykaa.tr86t6ghqvoxtj516ku6krz3y8f6fm4b.v1.beameio.net/";
 var PATH_MISMATCH_DEFAULT_MSG = 'Edge folder not found';
+
+var options = {
+	host: 'hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net',
+	port: 443,
+	path: '/upload',
+	method: 'POST'
+};
+
+var req = https.request(options, function(res) {
+	if(res.statusCode != 200){
+		logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
+	}
+	else{
+		res.setEncoding('utf8');
+		res.on('data', function (data) {
+			var parsedData = JSON.parse(data);
+			logger.info('Received Hostname: ' + parsedData.body.hostname);
+		});
+	}
+});
 
 /**
  * @param {String} hostname
@@ -229,7 +251,10 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 	// }
 	//
 	// registerRemoteClient(onEdgeRegistered);
-	
+
+
+	req.end(`{"method":"${config.AtomServerRequests.GetHost}"}`);
+	/*
 	provisionApi.postRequest(refAtom,{"method":config.AtomServerRequests.GetHost},function(error,payload){
 		if(error){
 			callback(error,null);
@@ -237,7 +262,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 		}
 		
 		console.log(payload);
-	});
+	});*/
 
 };
 

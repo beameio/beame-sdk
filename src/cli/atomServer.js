@@ -13,7 +13,7 @@ var logger = new BeameLogger(module_name);
 var atom_fqdn = null;
 
 /** @type {AtomType} **/
-var atomType = config.AtomType.Default;
+var atomType = config.AtomType.AuthorizationServer;
 
 var atomServices = new (require('../../src/core/AtomServices'))();
 var edgeClientServices = new (require('../../src/core/EdgeClientServices'))();
@@ -52,13 +52,12 @@ var setAtomType = function () {
 var buildResponse = function (req, res, statusCode, data) {
 	
 	res.writeHead(statusCode, {'Content-Type': 'application/json'});
-	
+
 	var responseBody = {
 		url: req.url,
 		headers: req.headers,
 		body: data
 	};
-	
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	res.write(JSON.stringify(responseBody));
 	res.end();
@@ -80,6 +79,7 @@ function startAtomBeameNode(atomFqdn) {
 		app.on("request", function (req, res) {
 			logger.debug("On Request", {hostname: atom_fqdn, method: req.method, url: req.url, headers: req.headers});
 			if (req.method == 'POST') {
+				
 				req.on('data', function (data) {
 					
 					//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -96,7 +96,7 @@ function startAtomBeameNode(atomFqdn) {
 							if (isAuthorized) {
 								edgeClientServices.registerEdgeClient(atom_fqdn, function (error, payload) {
 									if (!error) {
-										response_data = {hostname: payload.hostname};
+										buildResponse(req, res, status, {hostname: payload.hostname});
 									}
 									else {
 										status = 400;
@@ -166,8 +166,8 @@ function startAtomBeameNode(atomFqdn) {
 							break;
 					}
 					
-					
-					buildResponse(req, res, status, response_data);
+					if(Object.keys(response_data).length>0)
+						buildResponse(req, res, status, response_data);
 				});
 			}
 		});

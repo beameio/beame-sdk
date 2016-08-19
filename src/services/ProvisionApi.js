@@ -304,7 +304,7 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
 ProvApiService.prototype.postRequest = function (url ,postData, callback) {
 	
 	var options = _.extend(this.options || {}, {"data": postData});
-	options.headers = {'Content-Type': 'application/json', 'Content-Length':postData.length};
+	options.headers = {'Content-Type': 'application/json', 'Content-Length': Object.keys(postData).length};
 	request.post(
 		url,
 		options,
