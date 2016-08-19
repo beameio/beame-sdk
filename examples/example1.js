@@ -27,7 +27,7 @@ var runTestBeameServer = function(hostname){
 		
 		var serveIndex = require('serve-index');
 
-		console.log('Server started on https://'+hostname + " this is a publically accesiable addess");
+		console.log('Server started on https://'+hostname + " this is a publically accessible address");
 		appExpress.use('/shared', serveIndex(sharedFolder, {'icons': true}));
 		console.log("****************************************************************************************************");
 		console.log("*****************************SERVER **********************STARTED***********************************");
@@ -61,8 +61,8 @@ if(edgeclients.length> 0){
 }
 
 if(atoms.length == 0 && edgeclients.length ==  0 && developers.length > 0){
-	console.log("You have developer credentials now we will set up an Atom SSL cert, and actual edgeClient cert ");
-	console.log("It will take about 30 seconds please wait paintly, yes we understand..., it will be much faster soon");
+	console.log("You have developer credentials; now we will set up an Atom SSL cert, and actual edgeClient cert ");
+	console.log("It will take about 30 seconds please wait patiently, yes we understand..., it will be much faster soon");
 	var devHostname = developers[0].hostname;
 	beameSDK.creds.createAtom(devHostname ,"BeameNode2", 1, function(data){
 		console.log('Just created atom with host:'+data.hostname);
