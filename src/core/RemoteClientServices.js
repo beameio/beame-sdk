@@ -12,7 +12,8 @@ var provisionApi  = new (require('../services/ProvisionApi'))();
 var dataServices  = new (require('../services/DataServices'))();
 var beameUtils    = require('../utils/BeameUtils');
 var apiActions    = require('../../config/ApiConfig.json').Actions.EdgeClient;
-var refAtom = "https://jaclmjhdflzibbm1.w3ndpqy0sxf9zpjy.v1.beameio.net";
+var refAtom = "";
+var remoteClientHostname;
 var https = require('https');
 	//"cl90gs9a2p57ykaa.tr86t6ghqvoxtj516ku6krz3y8f6fm4b.v1.beameio.net/";
 var PATH_MISMATCH_DEFAULT_MSG = 'Edge folder not found';
@@ -24,6 +25,47 @@ var options = {
 	method: 'POST'
 };
 
+var req2 = https.request(options, function(res) {
+	if(res.statusCode != 200){
+		logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
+	}
+	else{
+		res.setEncoding('utf8');
+		res.on('data', function (data) {
+			console.log('DATA:',data);
+			var parsedData = JSON.parse(data);
+			if(parsedData.method == config.AtomServerRequests.SignAuthToken){
+				logger.info('Received Authentication: ' + parsedData.body.authToken);
+				//here to direct request cert from provision
+			}
+			else{
+				logger.error('Failed to create remote edgeClient');
+			}
+		});
+	}
+});
+
+var req1 = https.request(options, function(res) {
+	if(res.statusCode != 200){
+		logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
+	}
+	else{
+		res.setEncoding('utf8');
+		res.on('data', function (data) {
+			console.log('DATA:',data);
+			var parsedData = JSON.parse(data);
+			if(parsedData.method == config.AtomServerRequests.AuthorizeToken){
+				logger.info('Received Authorization: ' + parsedData.body.token);
+				req2.end(`{"method":"${config.AtomServerRequests.SignAuthToken}","authToken":"${parsedData.body.token}",
+				"fqdn":"${remoteClientHostname}"}`);
+			}
+			else{
+				logger.error('Failed to create remote edgeClient');
+			}
+		});
+	}
+});
+
 var req = https.request(options, function(res) {
 	if(res.statusCode != 200){
 		logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
@@ -31,11 +73,21 @@ var req = https.request(options, function(res) {
 	else{
 		res.setEncoding('utf8');
 		res.on('data', function (data) {
+			console.log('DATA:',data);
 			var parsedData = JSON.parse(data);
-			logger.info('Received Hostname: ' + parsedData.body.hostname);
+			if(parsedData.method == config.AtomServerRequests.GetHost){
+				remoteClientHostname = parsedData.body.hostname;
+				logger.info('Received Hostname: ' + remoteClientHostname);
+				req1.end(`{"method":"${config.AtomServerRequests.AuthorizeToken}","fqdn":"${remoteClientHostname}"}`);
+			}
+			else{
+				logger.error('Failed to create remote edgeClient');
+			}
 		});
 	}
 });
+
+
 
 /**
  * @param {String} hostname

@@ -49,13 +49,14 @@ var setAtomType = function () {
 	});
 };
 
-var buildResponse = function (req, res, statusCode, data) {
+var buildResponse = function (req, res, statusCode, data, method) {
 	
 	res.writeHead(statusCode, {'Content-Type': 'application/json'});
 
 	var responseBody = {
 		url: req.url,
 		headers: req.headers,
+		method: method,
 		body: data
 	};
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -77,7 +78,7 @@ function startAtomBeameNode(atomFqdn) {
 		
 		//noinspection JSUnusedLocalSymbols
 		app.on("request", function (req, res) {
-			logger.debug("On Request", {hostname: atom_fqdn, method: req.method, url: req.url, headers: req.headers});
+
 			if (req.method == 'POST') {
 				
 				req.on('data', function (data) {
@@ -89,14 +90,15 @@ function startAtomBeameNode(atomFqdn) {
 					var method = postData["method"];
 					
 					var status = 200, response_data = {};
-					
+					logger.info(`Request:${method}`);
+
 					switch (method) {
 						case config.AtomServerRequests.GetHost:
 							var isAuthorized = allowedSign();
 							if (isAuthorized) {
 								edgeClientServices.registerEdgeClient(atom_fqdn, function (error, payload) {
 									if (!error) {
-										buildResponse(req, res, status, {hostname: payload.hostname});
+										buildResponse(req, res, status, {hostname: payload.hostname}, method);
 									}
 									else {
 										status = 400;
@@ -112,6 +114,7 @@ function startAtomBeameNode(atomFqdn) {
 						case config.AtomServerRequests.AuthorizeToken:
 							isAuthorized = allowedAuthorize();
 							if (isAuthorized) {
+
 								var fqdn = postData["fqdn"];
 								
 								if (!fqdn) {
@@ -138,6 +141,7 @@ function startAtomBeameNode(atomFqdn) {
 							isAuthorized = allowedSign();
 							if (isAuthorized) {
 								var authToken = postData["authToken"];
+								var fqdn = postData["fqdn"];
 								if (!authToken) {
 									status = 400;
 									response_data = buildErrorResponse(`Auth Token required`);
@@ -167,7 +171,7 @@ function startAtomBeameNode(atomFqdn) {
 					}
 					
 					if(Object.keys(response_data).length>0)
-						buildResponse(req, res, status, response_data);
+						buildResponse(req, res, status, response_data, method);
 				});
 			}
 		});
