@@ -85,7 +85,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 				return onError(error);
 			}
 			
-			var signature = payload.authToken;
+			var signature = payload.body.authToken;
 			
 			if (!signature) {
 				return onError({message: "Signature not valid"});
@@ -101,7 +101,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 				return onError(error);
 			}
 			
-			var authToken = payload.token;
+			var authToken = payload.body.token;
 			
 			if (!authToken) {
 				return onError({message: "Authorization token not valid"});
@@ -117,8 +117,8 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 			return onError(error);
 		}
 		
-		metadata = payload;
-		remoteClientHostname = payload.hostname;
+		metadata = payload.body;
+		remoteClientHostname = payload.body.hostname;
 		
 		logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registered, remoteClientHostname);
 		
@@ -126,7 +126,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 		
 		dataServices.createDir(edgeClientDir);
 		
-		dataServices.savePayload(edgeClientDir, payload, config.ResponseKeys.EdgeClientResponseKeys, module_name, function (error) {
+		dataServices.savePayload(edgeClientDir, metadata, config.ResponseKeys.EdgeClientResponseKeys, module_name, function (error) {
 			
 		});
 		
