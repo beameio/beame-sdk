@@ -48,14 +48,16 @@ function BeameStore() {
 		{type: "developer", 'func': this.listCurrentDevelopers},
 		{type: "atom", 'func': this.listCurrentAtoms},
 		{type: "edgeclient", 'func': this.listCurrentEdges},
-		{type: "localclient", 'func': this.listCurrentLocalClients}
+		{type: "localclient", 'func': this.listCurrentLocalClients},
+		{type: "remoteclient", 'func': this.listCurrentRemoteClients}
 	];
 
 	this.searchFunctions = [
 		{type: "developer", 'func': this.searchDevelopers},
 		{type: "atom", 'func': this.searchAtoms},
 		{type: "edgeclient", 'func': this.searchEdge},
-		{type: "localclient", 'func': this.searchLocal}
+		{type: "localclient", 'func': this.searchLocal},
+		{type: "remoteclient", 'func': this.searchRemote}
 	];
 
 	beameStoreInstance = this;
@@ -72,6 +74,11 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 	switch (level) {
 		case "developer": {
 			queryString = sprintf("[?(hostname=='%s' )|| (name =='%s' )]." + DEVELOPER_DATA_STRUCT, searchItem, searchItem);
+			break;
+		}
+
+		case "remoteclient": {
+			queryString = sprintf("[?(hostname=='%s' )|| (name =='%s' )]." + CHILD_ENTITY_DATA_STRUCT, searchItem, searchItem);
 			break;
 		}
 
@@ -142,6 +149,17 @@ BeameStore.prototype.searchLocal = function (name) {
 	return returnDict;
 };
 
+BeameStore.prototype.searchRemote = function (name) {
+	var names      = this.jsearch(name, "remoteclient");
+	var returnDict = [];
+
+	_.each(names, _.bind(function (item) {
+		var qString = sprintf("[?hostname == '%s'] | []", item.hostname);
+		returnDict  = returnDict.concat(jmespath.search(this.beameStore, qString));
+	}, this));
+	return returnDict;
+};
+
 BeameStore.prototype.searchEdgeLocals = function (edgeClientFqdn) {
 
 	var queryString = sprintf("[].atom[].localclient[?(edge_client_fqdn=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", edgeClientFqdn);
@@ -191,6 +209,10 @@ BeameStore.prototype.listCurrentEdges = function () {
 
 BeameStore.prototype.listCurrentLocalClients = function () {
 	return jmespath.search(this.beameStore, "[].atom[].localclient[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
+};
+
+BeameStore.prototype.listCurrentRemoteClients = function () {
+	return jmespath.search(this.beameStore, "[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.ensureFreshBeameStore = function () {
