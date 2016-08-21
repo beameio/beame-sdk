@@ -1,6 +1,8 @@
 <img align="right" src="img/beame.png">
 _The Beame SDK provides tools that allow you to create credentials to identify machines and devices. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for organizations or services that require users to prove identity._
 
+[Click to Get Started Now!](https://registration.beameio.net/)
+
 :heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
 
 ### By deploying your network using Beame infrastructure, you can:
@@ -52,7 +54,7 @@ for Mac: See the Mac instructions if current shell version does not support auto
 ## Easy Installation Instructions
 You will create three tiers of credentials (each with multiple components: a RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate). If you want to skip the intro, [jump directly to start!](#beame-cli)
 
-1. First, generate Developer credentials.
+1. First, generate [Developer credentials.](https://registration.beameio.net/)
 2. Second, generate application credentials. We call this level an Atom.
 3. Create your Client server credentials.  We call this level an Edge-Client.
 
