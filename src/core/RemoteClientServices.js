@@ -198,31 +198,11 @@ var getCert = function (atom_fqdn, edge_client_fqdn, signature, callback) {
  *
  * @param {String} payload
  */
-function createBeameDirStructure(payload) {
-	var devDir = beameUtils.makePath(config.localCertsDir, refDeveloper + '/');
-	dataServices.createDir(devDir);
-	var metadata = {
-		"level": "developer",
-		"hostname": refDeveloper,
-		"uid": refDeveloper,
-		"name": refDeveloper,
-		"email": refDeveloper
-	};
-	fs.writeFileSync(path.join(devDir, "metadata.json"), JSON.stringify(metadata));
-	metadata = {
-		"level": "atom",
-		"hostname": refAtomPath,
-		"uid": "remote-Atom",
-		"name": "authAtom",
-		"parent_fqdn": refDeveloper,
-		"edgeHostname": "remote-atom"
-	};
-	var atomDir = beameUtils.makePath(devDir, refAtomPath + '/');
-	dataServices.createDir(atomDir);
-	fs.writeFileSync(path.join(atomDir, "metadata.json"), JSON.stringify(metadata));
+function createClientDir(payload) {
+	var clientDir = beameUtils.makePath(config.localCertsDir, payload.hostname + '/');
+	dataServices.createDir(clientDir);
 
-	var edgeClientDir = beameUtils.makePath(atomDir, remoteClientHostname + '/');
-	dataServices.createDir(edgeClientDir);
+	fs.writeFileSync(path.join(devDir, "metadata.json"), JSON.stringify(metadata));
 
 	dataServices.savePayload(edgeClientDir, payload, config.ResponseKeys.EdgeClientResponseKeys, module_name, function (error) {
 		/*if (!callback) return;
@@ -283,7 +263,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 	//
 	// registerRemoteClient(onEdgeRegistered);
 	var options = {
-		host: 'hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net',
+		host: refAtomPath,
 		port: 443,
 		path: '/upload',
 		method: 'POST'
@@ -343,7 +323,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 				if(parsedData.method == config.AtomServerRequests.GetHost){
 					remoteClientHostname = parsedData.body.hostname;
 					logger.info('Received Hostname: ' + remoteClientHostname);
-					createBeameDirStructure(parsedData);
+					createClientDir(parsedData);
 					req1.end(`{"method":"${config.AtomServerRequests.AuthorizeToken}","fqdn":"${remoteClientHostname}"}`);
 				}
 				else{
@@ -354,9 +334,18 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 	});
 
 
-	req.end(`{"method":"${config.AtomServerRequests.GetHost}"}`);
+	//req.end(`{"method":"${config.AtomServerRequests.GetHost}"}`);
 
-
+	provisionApi.postRequest(refAtom,`{"method":"${config.AtomServerRequests.GetHost}"}`,function(error,data){
+		console.log('DATA:',data);
+		var parsedData = JSON.parse(data);
+		remoteClientHostname = parsedData.body.hostname;
+		logger.info('Received Hostname: ' + remoteClientHostname);
+		createClientDir(parsedData);
+		provisionApi.postRequest(refAtom,`{"method":"${config.AtomServerRequests.AuthorizeToken}","fqdn":"${remoteClientHostname}"}`,function(error,data){
+			
+		});
+	});
 };
 
 
