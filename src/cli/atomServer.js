@@ -2,6 +2,7 @@
 var BeameStore = require("../services/BeameStore");
 
 var beameSDK = require("../../index.js");
+var beameUtils    = require('../utils/BeameUtils');
 var express = require('express');
 // This require is only cause the example is inside the beame-sdk repository, you will be using require('beame-sdk');
 
@@ -9,6 +10,8 @@ var config = require('../../config/Config');
 const module_name = config.AppModules.AtomAgent;
 var BeameLogger = require('../utils/Logger');
 var logger = new BeameLogger(module_name);
+var developers    = beameSDK.creds.list("developer", "", "JSON");
+
 /** @type {String} **/
 var atom_fqdn = null;
 
@@ -98,7 +101,8 @@ function startAtomBeameNode(atomFqdn) {
 							if (isAuthorized) {
 								edgeClientServices.registerEdgeClient(atom_fqdn, function (error, payload) {
 									if (!error) {
-										buildResponse(req, res, status, {hostname: payload.hostname}, method);
+										beameUtils.findHostPathAndParentAsync(atom_fqdn).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
+										buildResponse(req, res, status, payload, method);
 									}
 									else {
 										status = 400;

@@ -608,5 +608,4 @@ AtomServices.prototype.getCreds = function (atomHostname, callback) {
 	beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 };
 
-
 module.exports = AtomServices;

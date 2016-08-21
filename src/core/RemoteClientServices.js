@@ -12,80 +12,18 @@ var provisionApi  = new (require('../services/ProvisionApi'))();
 var dataServices  = new (require('../services/DataServices'))();
 var beameUtils    = require('../utils/BeameUtils');
 var apiActions    = require('../../config/ApiConfig.json').Actions.EdgeClient;
-var refAtom = "";
+var atomServices = new (require('../../src/core/AtomServices'))();
+var path          = require('path');
+var fs          = require('fs');
+var _			= require('underscore');
+var refAtom = "https://";
+var refAtomPath;
+const refDeveloper = "remote-developer";
 var remoteClientHostname;
 var https = require('https');
 	//"cl90gs9a2p57ykaa.tr86t6ghqvoxtj516ku6krz3y8f6fm4b.v1.beameio.net/";
 var PATH_MISMATCH_DEFAULT_MSG = 'Edge folder not found';
 
-var options = {
-	host: 'hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net',
-	port: 443,
-	path: '/upload',
-	method: 'POST'
-};
-
-var req2 = https.request(options, function(res) {
-	if(res.statusCode != 200){
-		logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
-	}
-	else{
-		res.setEncoding('utf8');
-		res.on('data', function (data) {
-			console.log('DATA:',data);
-			var parsedData = JSON.parse(data);
-			if(parsedData.method == config.AtomServerRequests.SignAuthToken){
-				logger.info('Received Authentication: ' + parsedData.body.authToken);
-				//here to direct request cert from provision
-			}
-			else{
-				logger.error('Failed to create remote edgeClient');
-			}
-		});
-	}
-});
-
-var req1 = https.request(options, function(res) {
-	if(res.statusCode != 200){
-		logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
-	}
-	else{
-		res.setEncoding('utf8');
-		res.on('data', function (data) {
-			console.log('DATA:',data);
-			var parsedData = JSON.parse(data);
-			if(parsedData.method == config.AtomServerRequests.AuthorizeToken){
-				logger.info('Received Authorization: ' + parsedData.body.token);
-				req2.end(`{"method":"${config.AtomServerRequests.SignAuthToken}","authToken":"${parsedData.body.token}",
-				"fqdn":"${remoteClientHostname}"}`);
-			}
-			else{
-				logger.error('Failed to create remote edgeClient');
-			}
-		});
-	}
-});
-
-var req = https.request(options, function(res) {
-	if(res.statusCode != 200){
-		logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
-	}
-	else{
-		res.setEncoding('utf8');
-		res.on('data', function (data) {
-			console.log('DATA:',data);
-			var parsedData = JSON.parse(data);
-			if(parsedData.method == config.AtomServerRequests.GetHost){
-				remoteClientHostname = parsedData.body.hostname;
-				logger.info('Received Hostname: ' + remoteClientHostname);
-				req1.end(`{"method":"${config.AtomServerRequests.AuthorizeToken}","fqdn":"${remoteClientHostname}"}`);
-			}
-			else{
-				logger.error('Failed to create remote edgeClient');
-			}
-		});
-	}
-});
 
 
 
@@ -125,10 +63,6 @@ var isRequestValid = function (hostname, edgeClientDir, validateEdgeHostname) {
 			validateEdgeClientHost();
 		}
 	});
-};
-
-var getHostname = function () {
-	
 };
 
 /**
@@ -202,10 +136,11 @@ var registerRemoteClient = function (callback) {
  *
  * @param {String} atom_fqdn
  * @param {String} edge_client_fqdn
+ * @param {String} signature
  * @param {Function} callback
  * @this {RemoteClientServices}
  */
-var getCert = function (atom_fqdn, edge_client_fqdn, callback) {
+var getCert = function (atom_fqdn, edge_client_fqdn, signature, callback) {
 	var edgeClientDir, atomDir;
 
 
@@ -214,7 +149,7 @@ var getCert = function (atom_fqdn, edge_client_fqdn, callback) {
 		dataServices.createCSR(edgeClientDir, edge_client_fqdn).then(
 			function onCsrCreated(csr) {
 
-				provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+				//provisionApi.setAuthData(beameUtils.getAuthToken(atomDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 				var postData = {
 					csr: csr,
@@ -235,7 +170,7 @@ var getCert = function (atom_fqdn, edge_client_fqdn, callback) {
 						error.data.hostname = edge_client_fqdn;
 						callback(error, null);
 					}
-				});
+				}, null, signature);
 
 			},
 			function onCsrCreationFailed(error) {
@@ -259,7 +194,51 @@ var getCert = function (atom_fqdn, edge_client_fqdn, callback) {
 	beameUtils.findHostPathAndParentAsync(edge_client_fqdn).then(onEdgePathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
 };
+/**
+ *
+ * @param {String} payload
+ */
+function createBeameDirStructure(payload) {
+	var devDir = beameUtils.makePath(config.localCertsDir, refDeveloper + '/');
+	dataServices.createDir(devDir);
+	var metadata = {
+		"level": "developer",
+		"hostname": refDeveloper,
+		"uid": refDeveloper,
+		"name": refDeveloper,
+		"email": refDeveloper
+	};
+	fs.writeFileSync(path.join(devDir, "metadata.json"), JSON.stringify(metadata));
+	metadata = {
+		"level": "atom",
+		"hostname": refAtomPath,
+		"uid": "remote-Atom",
+		"name": "authAtom",
+		"parent_fqdn": refDeveloper,
+		"edgeHostname": "remote-atom"
+	};
+	var atomDir = beameUtils.makePath(devDir, refAtomPath + '/');
+	dataServices.createDir(atomDir);
+	fs.writeFileSync(path.join(atomDir, "metadata.json"), JSON.stringify(metadata));
 
+	var edgeClientDir = beameUtils.makePath(atomDir, remoteClientHostname + '/');
+	dataServices.createDir(edgeClientDir);
+
+	dataServices.savePayload(edgeClientDir, payload, config.ResponseKeys.EdgeClientResponseKeys, module_name, function (error) {
+		/*if (!callback) return;
+
+		if (!error) {
+
+			dataServices.getNodeMetadataAsync(edgeClientDir, payload.hostname, module_name).then(function (metadata) {
+				callback(null, metadata);
+			}, callback);
+		}
+		else {
+			callback(error, null);
+		}*/
+		return;
+	});
+}
 
 var RemoteClientServices = function () {
 };
@@ -278,43 +257,105 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 		return;
 	}
 
-	refAtom = atom_fqdn;
-	
-	// function onEdgeRegistered(error, payload) {
-	// 	if (!error) {
-	//
-	// 		if (payload && payload.hostname) {
-	// 			var hostname = payload.hostname;
-	//
-	// 			getCert(atom_fqdn, hostname, function (error) {
-	// 				if (callback) {
-	// 					error ? callback(error, null) : callback(null, payload);
-	// 				}
-	// 			});
-	// 		}
-	// 		else {
-	// 			logger.error("unexpected error", payload);
-	// 		}
-	//
-	// 	}
-	// 	else {
-	// 		callback && callback(error, null);
-	// 	}
-	// }
+	refAtomPath = atom_fqdn;
+	refAtom += atom_fqdn;
+	function onEdgeRegistered(error, payload) {
+		if (!error) {
+
+			if (payload && payload.hostname) {
+				var hostname = payload.hostname;
+
+				getCert(refAtomPath, hostname, payload.AuthToken, function (error) {
+					if (callback) {
+						error ? callback(error, null) : callback(null, payload);
+					}
+				});
+			}
+			else {
+				logger.error("unexpected error", payload);
+			}
+
+		}
+		else {
+			callback && callback(error, null);
+		}
+	}
 	//
 	// registerRemoteClient(onEdgeRegistered);
+	var options = {
+		host: 'hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net',
+		port: 443,
+		path: '/upload',
+		method: 'POST'
+	};
+
+	var req2 = https.request(options, function(res) {
+		if(res.statusCode != 200){
+			logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
+		}
+		else{
+			res.setEncoding('utf8');
+			res.on('data', function (data) {
+				console.log('DATA:',data);
+				var parsedData = JSON.parse(data);
+				if(parsedData.method == config.AtomServerRequests.SignAuthToken){
+					logger.info('Received Authentication: ' + parsedData.body.authToken);
+
+					onEdgeRegistered(null,{"hostname":remoteClientHostname, "AuthToken":parsedData.body.authToken});
+				}
+				else{
+					logger.error('Failed to create remote edgeClient');
+				}
+			});
+		}
+	});
+
+	var req1 = https.request(options, function(res) {
+		if(res.statusCode != 200){
+			logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
+		}
+		else{
+			res.setEncoding('utf8');
+			res.on('data', function (data) {
+				console.log('DATA:',data);
+				var parsedData = JSON.parse(data);
+				if(parsedData.method == config.AtomServerRequests.AuthorizeToken){
+					logger.info('Received Authorization: ' + parsedData.body.token);
+					req2.end(`{"method":"${config.AtomServerRequests.SignAuthToken}","authToken":"${parsedData.body.token}",
+				"fqdn":"${remoteClientHostname}"}`);
+				}
+				else{
+					logger.error('Failed to create remote edgeClient');
+				}
+			});
+		}
+	});
+
+	var req = https.request(options, function(res) {
+		if(res.statusCode != 200){
+			logger.error('Failed to create edgeClient hostname\n'+'HEADERS: ' + JSON.stringify(res.headers));
+		}
+		else{
+			res.setEncoding('utf8');
+			res.on('data', function (data) {
+				console.log('DATA:',data);
+				var parsedData = JSON.parse(data);
+				if(parsedData.method == config.AtomServerRequests.GetHost){
+					remoteClientHostname = parsedData.body.hostname;
+					logger.info('Received Hostname: ' + remoteClientHostname);
+					createBeameDirStructure(parsedData);
+					req1.end(`{"method":"${config.AtomServerRequests.AuthorizeToken}","fqdn":"${remoteClientHostname}"}`);
+				}
+				else{
+					logger.error('Failed to create remote edgeClient');
+				}
+			});
+		}
+	});
 
 
 	req.end(`{"method":"${config.AtomServerRequests.GetHost}"}`);
-	/*
-	provisionApi.postRequest(refAtom,{"method":config.AtomServerRequests.GetHost},function(error,payload){
-		if(error){
-			callback(error,null);
-			return;
-		}
-		
-		console.log(payload);
-	});*/
+
 
 };
 
