@@ -274,7 +274,9 @@ ProvApiService.prototype.setAuthData = function (authData) {
  */
 ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, signature) {
 	
-	var options = _.extend(this.options || {}, {form: apiData.postData});
+	this.options = this.options || {};
+	
+	var options = _.extend(this.options, {form: apiData.postData});
 
 	if (signature) {
 		this.options.headers = {
