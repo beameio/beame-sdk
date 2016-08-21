@@ -57,9 +57,9 @@ var buildResponse = function (req, res, statusCode, data, method) {
 	res.writeHead(statusCode, {'Content-Type': 'application/json'});
 
 	var responseBody = {
-		url: req.url,
-		headers: req.headers,
-		method: method,
+	//	url: req.url,
+	//	headers: req.headers,
+    //	method: method,
 		body: data
 	};
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -101,7 +101,7 @@ function startAtomBeameNode(atomFqdn) {
 							if (isAuthorized) {
 								edgeClientServices.registerEdgeClient(atom_fqdn, function (error, payload) {
 									if (!error) {
-										beameUtils.findHostPathAndParentAsync(atom_fqdn).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
+										//beameUtils.findHostPathAndParentAsync(atom_fqdn).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
 										buildResponse(req, res, status, payload, method);
 									}
 									else {
@@ -145,7 +145,7 @@ function startAtomBeameNode(atomFqdn) {
 							isAuthorized = allowedSign();
 							if (isAuthorized) {
 								var authToken = postData["authToken"];
-								var fqdn = postData["fqdn"];
+								 fqdn = postData["fqdn"];
 								if (!authToken) {
 									status = 400;
 									response_data = buildErrorResponse(`Auth Token required`);

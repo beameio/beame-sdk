@@ -80,6 +80,7 @@ var AppModules = {
 	"Atom":             "Atom",
 	"AtomAgent":        "AtomAgent",
 	"EdgeClient":       "EdgeClient",
+	"RemoteClient":      "RemoteClient",
 	"LocalClient":      "LocalClient",
 	"ProvisionApi":     "ProvisionApi",
 	"DataServices":     "DataServices",

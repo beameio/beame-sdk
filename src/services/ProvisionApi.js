@@ -300,31 +300,16 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
 	}
 };
 
-/** **/
+/**
+ * Common post method for given url
+ * @param {String} url
+ * @param {Object} postData
+ * @param {Function} callback
+ */
 ProvApiService.prototype.postRequest = function (url ,postData, callback) {
-	
-	var options = _.extend(this.options || {}, {"data": postData});
-	options.headers = {'Content-Type': 'application/json', 'Content-Length': Object.keys(postData).length};
-	request.post(
-		url,
-		options,
-		function (error, response, body) {
-			parseProvisionResponse(error, response, body, null, function (error, payload) {
-				if (payload) {
-					callback(null, payload);
-				}
-				else {
-					if (_.isEmpty(error.data)) {
-						error.data = {};
-					}
-					error.data.url = url;
-					error.data.postData = options.form;
-					callback(error, null);
-				}
-			});
-			
-		}
-	);
+	var options = _.extend(this.options || {}, {"form": postData});
+	options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+	postToProvisionApi(url, options, "custom_post", provisionSettings.RetryAttempts, 1000, callback);
 };
 
 

@@ -9,7 +9,8 @@
     "test_atom": "mocha ./tests/unit-tests/single_tests/atom_test.js",
     "test_edge": "mocha ./tests/unit-tests/single_tests/edge_test.js",
     "test_full_flow": "mocha ./tests/unit-tests/full_flow_test.js",
-    "startChat": "node ./examples/example1.js"
+    "startChat": "node ./examples/example1.js",
+    "runAtomServer" : "node ./tests/serge_test/test_cli.js"
   },
   "bin": {
     "beame": "src/cli/beame.js"
