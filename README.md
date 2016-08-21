@@ -129,7 +129,7 @@ Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program 
 ## Light Configuration *coming soon 
 1. Install the Beame SDK by running `npm install -g beame-sdk` and this will quickly output a link that will be your first HTTPS Server with your new Beame Credentials. 
 
-### Full Configuration -Quick Start: 
+## Full Configuration -Quick Start: 
 
 1. Register as a developer, by submitting your email at [https://registration.beameio.net/](#https://registration.beameio.net/) 
 2. Install the Beame SDK by running `npm install -g beame-sdk`
