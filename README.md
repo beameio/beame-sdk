@@ -3,14 +3,11 @@ _The Beame SDK provides tools that allow you to create credentials to identify m
 
 [Click to Get Started Now!](https://registration.beameio.net/)
 
-:heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
-
 ### By deploying your network using Beame infrastructure, you can:
 
 1. Quickly host a public HTTPS server on a local machine (does not require public static IP, DMZ, nor port forwarding);
 2. Generate credentials and assign your own meaning to them (identity);
 3. Deploy services that are accessible from the Internet or only from your LAN without network reconfiguration.
-
 
 ### How:
 1. Get a unique hostname under the Beame subdomain;
@@ -31,6 +28,8 @@ _The Beame SDK provides tools that allow you to create credentials to identify m
  - [Beame CLI (credentials, running test server, encryption)](#beame-cli)
  - [Beame NodeJS API](#beame-nodejs-api)
  - [Examples of full-stack of credentials and https server with express support](#sample-https-server)
+
+:heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
 
 ## Common Uses for Beame SDK
 
@@ -127,10 +126,13 @@ Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program 
 
 ## Get started in minutes
 
-### Quick start by following instructions below
+## Light Configuration *coming soon 
+1. Install the Beame SDK by running `npm install -g beame-sdk` and this will quickly output a link that will be your first HTTPS Server with your new Beame Credentials. 
 
-1. Install the Beame SDK by running `npm install -g beame-sdk`
-2. Register as a developer, by submitting the form at [https://registration.beameio.net/](#https://registration.beameio.net/)
+## Full Configuration -Quick Start: 
+
+1. Register as a developer, by submitting your email at [https://registration.beameio.net/](#https://registration.beameio.net/) 
+2. Install the Beame SDK by running `npm install -g beame-sdk`
 3. Copy the unique activation command from the email you receive, it should look like: `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f`
 4. Start your first HTTPS server by running `beame servers startFirstBeameNode`. It should print to your console something that looks like `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
 
