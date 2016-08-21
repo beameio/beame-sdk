@@ -17,10 +17,16 @@ var localCertsDir = path.join(rootDir, 'v1', 'local');
 var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
 
 /** @const {String} **/
+var remotePKsDir = path.join(rootDir, 'pki');
+
+/** @const {String} **/
 var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";
+
+/** @const {String} **/
+var PKsFileName = "PKs.json";
 
 /**
  * Certificate file names
@@ -155,6 +161,7 @@ module.exports = {
 	rootDir,
 	localCertsDir,
 	remoteCertsDir,
+	remotePKsDir,
 	loadBalancerURL,
 	metadataFileName,
 	CertFileNames,
@@ -168,5 +175,6 @@ module.exports = {
 	AtomServerRequests,
 	SNIServerPort,
 	AuthServerEndPoint,
+	PKsFileName,
 	CertEndpoint
 };

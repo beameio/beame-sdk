@@ -46,6 +46,7 @@ module.exports = {
 	shred,
 	createAtom,
 	updateAtomType,
+	importPKtoAtom,
 	createEdgeClient,
 	createLocalClient,
 	createRemoteClient,
@@ -368,6 +369,19 @@ function createLocalClient(atomFqdn, edgeClientFqdn, callback) {
 function createRemoteClient(atomFqdn, callback) {
 	logger.info(`Creating client for remote Atom ${atomFqdn}`);
 	remoteClientServices.createEdgeClient(atomFqdn, callback);
+}
+
+/**
+ * Import PK to Authorization Server Atom
+ * @public
+ * @method Creds.importPKtoAtom
+ * @param {String} PKfilePath
+ * @param {String} authSrvFqdn
+ * @param {Function} callback
+ */
+function importPKtoAtom(PKfilePath, authSrvFqdn, callback) {
+	logger.info(`Importing PK for ${authSrvFqdn} from ${PKfilePath}`);
+	atomServices.importPKtoAtom(PKfilePath, authSrvFqdn, callback);
 }
 
 /**

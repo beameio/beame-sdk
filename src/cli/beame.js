@@ -30,6 +30,8 @@ var parametersSchema = {
 	'atomType':       {required: true}, options: config.AtomType,
 	'type':           {required: false, options: ['developer', 'atom', 'edgeclient', 'localclient']},
 	'uid':            {required: true},
+	'PKfilePath':	  {required: true},
+	'authSrvFqdn':	  {required: true},
 	'targetFqdn':     {required: true},
 	'file':           {required: false},
 	'count':          {required: false, default: 1},

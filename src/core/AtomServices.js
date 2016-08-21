@@ -6,6 +6,8 @@ var _             = require('underscore');
 var provisionApi  = new (require('../services/ProvisionApi'))();
 var dataServices  = new (require('../services/DataServices'))();
 var beameUtils    = require('../utils/BeameUtils');
+var crypto		  = require('../cli/crypto');
+var fs 			  = require('fs');
 var apiActions    = require('../../config/ApiConfig.json').Actions.AtomApi;
 var config        = require('../../config/Config');
 const module_name = config.AppModules.Atom;
@@ -360,6 +362,40 @@ AtomServices.prototype.updateType = function (atomHostname, type, callback) {
 
 	beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
 
+};
+
+/**
+ * Import external PK to .beame
+ * @param {String} PKfilePath
+ * @param {String} authSrvFqdn
+ * @param {Function} callback
+ */
+AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callback) {
+	var fileContent = {};
+	var PKsFile = beameUtils.makePath(config.remotePKsDir, config.PKsFileName);
+	try {
+		fileContent = JSON.parse(fs.readFileSync(PKsFile));
+		if(fileContent[authSrvFqdn].data){
+			logger.error(`PK already pinned for ${authSrvFqdn}`);
+			return;
+		}
+	}
+	catch (e) {
+		logger.debug(`${PKsFile} is not there yet, will be created now`);
+	}
+	try {
+		var PK = fs.readFileSync(PKfilePath);
+		if(crypto.checkPK(PK)){
+			fileContent[authSrvFqdn] = PK;
+			fs.writeFileSync(PKsFile, JSON.stringify(fileContent));
+		}
+		else{
+			logger.error(`Provided PK in file *${PKfilePath}* is invalid`);
+		}
+	}
+	catch (e){
+		logger.error(`Provided PK file *${PKfilePath}* does not exist, or the PK is invalid`);
+	}
 };
 
 //noinspection JSUnusedGlobalSymbols

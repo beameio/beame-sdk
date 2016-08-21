@@ -194,6 +194,18 @@ function sign(data, fqdn) {
 }
 
 /**
+ * Signs given data. You must have private key of the fqdn.
+ * @public
+ * @method Crypto.checkPK
+ * @param {String} PK - PK to test
+ * @returns {string}
+ */
+function checkPK(PK) {
+	var key = new NodeRsa(PK, 'pkcs8-public-pem');
+	return(key.isPublic(true));
+}
+
+/**
  * Sign data with given private key
  * @param {String} data - data to sign
  * @param {string|buffer|object}  pk - private key
@@ -239,6 +251,7 @@ module.exports = {
 	decrypt,
 	sign,
 	signWithKey,
+	checkPK,
 	checkSignature,
 	aesEncrypt,
 	aesDecrypt

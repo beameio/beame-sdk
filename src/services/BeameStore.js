@@ -42,6 +42,8 @@ function BeameStore() {
 
 	mkdirp.sync(config.localCertsDir);
 	mkdirp.sync(config.remoteCertsDir);
+	mkdirp.sync(config.remotePKsDir);
+
 	this.ensureFreshBeameStore();
 
 	this.listFunctions = [
