@@ -40,9 +40,12 @@ var setAtomType = function () {
 	
 	atomServices.getCreds(atom_fqdn, function (error, payload) {
 		if (!error) {
-			if (payload.type) {
+			try {
 				atomType = payload.type;
 				logger.info(`Atom allowed sign: ${allowedSign()}, allowed authorize: ${allowedAuthorize()}`);
+			}
+			catch (e) {
+				logger.error(e.toString());
 			}
 		}
 		else {
