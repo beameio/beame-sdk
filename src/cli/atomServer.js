@@ -10,13 +10,12 @@ var config = require('../../config/Config');
 const module_name = config.AppModules.AtomAgent;
 var BeameLogger = require('../utils/Logger');
 var logger = new BeameLogger(module_name);
-var developers    = beameSDK.creds.list("developer", "", "JSON");
 
 /** @type {String} **/
 var atom_fqdn = null;
 
 /** @type {AtomType} **/
-var atomType = config.AtomType.AuthorizationServer;
+var atomType = config.AtomType.Default;
 
 var atomServices = new (require('../../src/core/AtomServices'))();
 var edgeClientServices = new (require('../../src/core/EdgeClientServices'))();
