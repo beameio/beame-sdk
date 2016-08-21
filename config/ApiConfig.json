@@ -80,6 +80,9 @@
             "GetCert": {
                 "endpoint": "/api/v1/client/cert/get"
             },
+		    "GetRemoteCert": {
+                "endpoint": "/api/v1/auth/edge/cert/get"
+            },
             "RenewCert": {
                 "endpoint": "/api/v1/client/cert/renew"
             },

@@ -57,7 +57,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 					uid: metadata.uid
 				};
 				
-				var apiData = beameUtils.getApiData(apiActions.GetCert.endpoint, postData, true);
+				var apiData = beameUtils.getApiData(apiActions.GetRemoteCert.endpoint, postData, true);
 				
 				logger.printStandardEvent(BeameLogger.EntityLevel.EdgeClient, BeameLogger.StandardFlowEvent.RequestingCerts, remoteClientHostname);
 				
