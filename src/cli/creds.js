@@ -45,6 +45,7 @@ module.exports = {
 	//revoke,
 	shred,
 	createAtom,
+	updateAtomType,
 	createEdgeClient,
 	createLocalClient,
 	createRemoteClient,
@@ -314,6 +315,21 @@ function createAtom(developerFqdn, atomName, callback) {
 
 }
 createAtom.toText = lineToText;
+
+/**
+ * Update Atom
+ * @public
+ * @method Creds.updateAtom
+ * @param {String} atomFqdn
+ * @param {String} atomType
+ * @param {Function} callback
+ */
+function updateAtomType(atomFqdn, atomType, callback) {
+	logger.info(`Updating atom ${atomFqdn} to type ${atomType} `);
+	atomServices.updateType(atomFqdn, atomType, callback);
+
+}
+updateAtomType.toText = lineToText;
 
 /**
  * Create Edge Client for Atom

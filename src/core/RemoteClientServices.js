@@ -54,6 +54,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 				
 				var postData = {
 					csr: csr,
+					atomFqdn: refAtomFqdn,
 					uid: metadata.uid
 				};
 				
@@ -72,7 +73,6 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 						callback(error, null);
 					}
 				}, null, signature);
-				
 			},
 			function onCsrCreationFailed(error) {
 				callback && callback(error, null);
@@ -122,7 +122,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 		
 		logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registered, remoteClientHostname);
 		
-		edgeClientDir = beameUtils.makePath(remoteClientHostname + '/');
+		edgeClientDir = beameUtils.makePath(config.localCertsDir,remoteClientHostname + '/');
 		
 		dataServices.createDir(edgeClientDir);
 		

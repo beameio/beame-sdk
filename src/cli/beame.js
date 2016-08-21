@@ -27,6 +27,7 @@ var parametersSchema = {
 	'format':         {required: false, options: ['text', 'json'], default: 'text'},
 	'fqdn':           {required: false},
 	'signature':      {required: true},
+	'atomType':       {required: true}, options: config.AtomType,
 	'type':           {required: false, options: ['developer', 'atom', 'edgeclient', 'localclient']},
 	'uid':            {required: true},
 	'targetFqdn':     {required: true},

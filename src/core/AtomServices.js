@@ -337,7 +337,7 @@ AtomServices.prototype.updateType = function (atomHostname, type, callback) {
 
 		provisionApi.runRestfulAPI(apiData, function (error) {
 			if (!error) {
-				callback && callback(null, 'done');
+				callback && callback(null, {'updating atom type':'done'});
 			}
 			else {
 				error.data.hostname = atomHostname;
