@@ -7,6 +7,9 @@ const AuthServerEndPoint = "https://registration-staging.beameio.net";
 
 const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 
+const AuthorizationAtom = "hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net";
+const AuthenticationAtom = "jaclmjhdflzibbm1.w3ndpqy0sxf9zpjy.v1.beameio.net";
+
 /** @const {String} **/
 var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
@@ -175,6 +178,8 @@ module.exports = {
 	AtomServerRequests,
 	SNIServerPort,
 	AuthServerEndPoint,
+	AuthorizationAtom,
+	AuthenticationAtom,
 	PKsFileName,
 	CertEndpoint
 };

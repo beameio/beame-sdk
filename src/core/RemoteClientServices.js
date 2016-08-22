@@ -17,6 +17,9 @@ var fs = require('fs');
 
 var refAtomUri = "https://";
 var refAtomFqdn;
+
+
+
 var remoteClientHostname;
 var https = require('https');
 
@@ -38,8 +41,8 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 		return;
 	}
 	
-	refAtomFqdn = atom_fqdn;
-	refAtomUri += atom_fqdn;
+	refAtomFqdn = config.AuthenticationAtom;//atom_fqdn;
+	refAtomUri += config.AuthenticationAtom;//atom_fqdn;
 	var edgeClientDir, metadata = {};
 	
 	
@@ -111,8 +114,8 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 	var getAuthorizationToken = function (remoteClientHostname) {
 		var data = `{"method":"${config.AtomServerRequests.AuthorizeToken}",
 					"fqdn":"${remoteClientHostname}"}`;
-		
-		provisionApi.postRequest(refAtomUri, data, function (error, payload) {
+		var authorizationUri = "https://"+config.AuthorizationAtom;
+		provisionApi.postRequest(authorizationUri, data, function (error, payload) {
 			if (error) {
 				return onError(error);
 			}
@@ -123,7 +126,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 				return onError({message: "Authorization token not valid"});
 			}
 			
-			getSignature(remoteClientHostname, authToken, refAtomFqdn);
+			getSignature(remoteClientHostname, authToken, config.AuthorizationAtom);
 		});
 	};
 	

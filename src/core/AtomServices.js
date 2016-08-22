@@ -2,17 +2,17 @@
  * Created by zenit1 on 04/07/2016.
  */
 'use strict';
-var _             = require('underscore');
-var provisionApi  = new (require('../services/ProvisionApi'))();
-var dataServices  = new (require('../services/DataServices'))();
-var beameUtils    = require('../utils/BeameUtils');
-var crypto		  = require('../cli/crypto');
-var fs 			  = require('fs');
-var apiActions    = require('../../config/ApiConfig.json').Actions.AtomApi;
-var config        = require('../../config/Config');
+var _ = require('underscore');
+var provisionApi = new (require('../services/ProvisionApi'))();
+var dataServices = new (require('../services/DataServices'))();
+var beameUtils = require('../utils/BeameUtils');
+var crypto = require('../cli/crypto');
+var fs = require('fs');
+var apiActions = require('../../config/ApiConfig.json').Actions.AtomApi;
+var config = require('../../config/Config');
 const module_name = config.AppModules.Atom;
-var BeameLogger   = require('../utils/Logger');
-var logger        = new BeameLogger(module_name);
+var BeameLogger = require('../utils/Logger');
+var logger = new BeameLogger(module_name);
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Atom folder not found';
 
@@ -73,7 +73,7 @@ var registerAtom = function (developerHostname, atomName, makeRoutable, callback
 		provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
 		var postData = {
-			name:     atomName,
+			name: atomName,
 			hostname: edgeHostname
 		};
 
@@ -81,8 +81,8 @@ var registerAtom = function (developerHostname, atomName, makeRoutable, callback
 
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
-				payload.name         = atomName;
-				payload.parent_fqdn  = developerHostname;
+				payload.name = atomName;
+				payload.parent_fqdn = developerHostname;
 				payload.edgeHostname = edgeHostname || "";
 
 				var atomDir = beameUtils.makePath(devDir, payload.hostname + '/');
@@ -200,7 +200,7 @@ var getCert = function (developerHostname, atom_fqdn, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir  = data['parent_path'];
+		devDir = data['parent_path'];
 
 		isRequestValid(developerHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -225,7 +225,7 @@ var AtomServices = function () {
 AtomServices.prototype.createAtom = function (developerHostname, atomName, callback, routable) {
 	logger.debug("Call Create Atom", {
 		"developer": developerHostname,
-		"name":      atomName
+		"name": atomName
 	});
 
 	var makeRoutable = routable || true;
@@ -281,7 +281,7 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
 
 		var postData = {
 			hostname: atomHostname,
-			name:     atomName
+			name: atomName
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.UpdateAtom.endpoint, postData, false);
@@ -306,7 +306,7 @@ AtomServices.prototype.updateAtom = function (atomHostname, atomName, callback) 
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir  = data['parent_path'];
+		devDir = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -332,14 +332,14 @@ AtomServices.prototype.updateType = function (atomHostname, type, callback) {
 
 		var postData = {
 			hostname: atomHostname,
-			type:     type
+			type: type
 		};
 
 		var apiData = beameUtils.getApiData(apiActions.UpdateAtomType.endpoint, postData, false);
 
 		provisionApi.runRestfulAPI(apiData, function (error) {
 			if (!error) {
-				callback && callback(null, {'updating atom type':'done'});
+				callback && callback(null, {'updating atom type': 'done'});
 			}
 			else {
 				error.data.hostname = atomHostname;
@@ -355,7 +355,7 @@ AtomServices.prototype.updateType = function (atomHostname, type, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir  = data['parent_path'];
+		devDir = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -377,10 +377,10 @@ AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callb
 	try {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		fileContent = JSON.parse(fs.readFileSync(PKsFile));
-		if(fileContent[authSrvFqdn].data){
+		if (fileContent[authSrvFqdn].data) {
 			msg = `PK already pinned for ${authSrvFqdn}`;
 			logger.warn(msg);
-			callback(null, {"message":msg});
+			callback(null, {"message": msg});
 			return;
 		}
 	}
@@ -389,23 +389,23 @@ AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callb
 	}
 	try {
 		var PK = fs.readFileSync(PKfilePath);
-		if(crypto.checkPK(PK)){
+		if (crypto.checkPK(PK)) {
 			fileContent[authSrvFqdn] = String.fromCharCode.apply(null, PK);
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			fs.writeFileSync(PKsFile, JSON.stringify(fileContent));
-			callback(null,{"message":"Key imported successfully"});
+			callback(null, {"message": "Key imported successfully"});
 		}
-		else{
+		else {
 			msg = `Provided PK in file *${PKfilePath}* is invalid`;
-			callback({"message":msg},null);
+			callback({"message": msg}, null);
 			logger.error(msg);
 		}
 	}
-	catch (e){
+	catch (e) {
 		msg = `Provided PK file *${PKfilePath}* does not exist, or the PK is invalid`;
 		logger.error(msg);
-		callback({"message":msg},null);
-		
+		callback({"message": msg}, null);
+
 	}
 };
 
@@ -470,7 +470,7 @@ AtomServices.prototype.deleteAtom = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir  = data['parent_path'];
+		devDir = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -498,7 +498,7 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 
 				var postData = {
 					hostname: atomHostname,
-					csr:      csr
+					csr: csr
 				};
 
 				var apiData = beameUtils.getApiData(apiActions.RenewCert.endpoint, postData, true);
@@ -535,7 +535,7 @@ AtomServices.prototype.renewCert = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir  = data['parent_path'];
+		devDir = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -585,7 +585,7 @@ AtomServices.prototype.revokeCert = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir  = data['parent_path'];
+		devDir = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -624,7 +624,7 @@ AtomServices.prototype.getStats = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir  = data['parent_path'];
+		devDir = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}
@@ -663,7 +663,7 @@ AtomServices.prototype.getCreds = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir  = data['parent_path'];
+		devDir = data['parent_path'];
 
 		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
 	}

@@ -15,7 +15,7 @@ var PKi = {};
 var atom_fqdn = null;
 
 /** @type {AtomType} **/
-var atomType = config.AtomType.Default;
+var atomType = config.AtomType.AuthorizationServer;
 
 var atomServices = new (require('../../src/core/AtomServices'))();
 var edgeClientServices = new (require('../../src/core/EdgeClientServices'))();
@@ -35,15 +35,26 @@ var buildErrorResponse = function (message) {
 	};
 };
 
-var setAtomType = function () {
+var setAtomType = function (requiredLevel) {
 	if (!atom_fqdn) return;
-	
+	try {
+		if (config.AtomType[requiredLevel] != null) {
+			atomServices.updateType(atom_fqdn, atomType, null);
+		}
+	}
+	catch (e) {
+		logger.info("Desired access level not provided");
+	}
 	atomServices.getCreds(atom_fqdn, function (error, payload) {
 		if (!error) {
 			try {
 				atomType = payload.type;
-				logger.info(`Atom allowed sign: ${allowedSign()}, allowed authorize: ${allowedAuthorize()}`);
-				if(atomType > config.AtomType.Default){
+
+				if(atomType!=config.AtomType[requiredLevel])
+					logger.error('Failed to set required type for Atom: '+config.AtomType[requiredLevel]);
+
+				logger.info(`Atom started with access level: allowed sign: ${allowedSign()}, allowed authorize: ${allowedAuthorize()}`);
+				if (allowedAuthorize()) {
 					PKi = atomServices.readPKsFile();
 				}
 			}
@@ -58,7 +69,7 @@ var setAtomType = function () {
 };
 
 var buildResponse = function (req, res, statusCode, data) {
-	
+
 	res.writeHead(statusCode, {'Content-Type': 'application/json'});
 
 	var responseBody = {
@@ -69,31 +80,31 @@ var buildResponse = function (req, res, statusCode, data) {
 	res.end();
 };
 
-function startAtomBeameNode(atomFqdn) {
-	
+function startAtomBeameNode(atomFqdn, requiredLevel) {
+
 	atom_fqdn = atomFqdn;
-	
+
 	beameSDK.BaseHttpsServer.SampleBeameServer(atom_fqdn, null, null, function (data, app) {
 		//noinspection JSUnresolvedFunction
-		
-		setAtomType();
-		
+
+		setAtomType(requiredLevel);
+
 		logger.info(`Atom server started on https://${atom_fqdn} this is a publicly accessible address`);
-		
-		
+
+
 		//noinspection JSUnusedLocalSymbols
 		app.on("request", function (req, res) {
 
 			if (req.method == 'POST') {
-				
+
 				req.on('data', function (data) {
-					
+
 					//noinspection ES6ModulesDependencies,NodeModulesDependencies
 					/** @type {Object} **/
 					var postData = JSON.parse(data + '');
-					
+
 					var method = postData["method"];
-					
+
 					var status = 200, response_data = {};
 					logger.info(`Request:${method}`);
 
@@ -106,10 +117,10 @@ function startAtomBeameNode(atomFqdn) {
 										buildResponse(req, res, status, payload, method);
 										return;
 									}
-									
+
 									status = 400;
 									response_data = buildErrorResponse(error.message);
-									
+
 								}, true);
 							}
 							else {
@@ -122,7 +133,7 @@ function startAtomBeameNode(atomFqdn) {
 							if (isAuthorized) {
 
 								var fqdn = postData["fqdn"];
-								
+
 								if (!fqdn) {
 									status = 400;
 									response_data = buildErrorResponse(`Fqdn required for authorization`);
@@ -147,7 +158,7 @@ function startAtomBeameNode(atomFqdn) {
 							isAuthorized = allowedSign();
 							if (isAuthorized) {
 								var authToken = postData["authToken"];
-								 fqdn = postData["fqdn"];
+								fqdn = postData["fqdn"];
 								var authServer = postData["authServer"];
 								if (!authToken) {
 									status = 400;
@@ -156,7 +167,7 @@ function startAtomBeameNode(atomFqdn) {
 								else {
 									try {
 										var PK = PKi[authServer];
-										if(crypto.checkSignatureWithPK(fqdn, PK, authToken)){
+										if (crypto.checkSignatureWithPK(fqdn, PK, authToken)) {
 											token = crypto.sign(fqdn, atom_fqdn);
 											if (!token) {
 												status = 400;
@@ -166,11 +177,11 @@ function startAtomBeameNode(atomFqdn) {
 												response_data = {"authToken": token};
 											}
 										}
-										else{
+										else {
 											response_data = buildErrorResponse(`Signature verification failed`);
 										}
 									}
-									catch (e){
+									catch (e) {
 										response_data = buildErrorResponse(`Sign failed - no PK`);
 									}
 								}
@@ -185,13 +196,13 @@ function startAtomBeameNode(atomFqdn) {
 							response_data = buildErrorResponse("Unknown request type");
 							break;
 					}
-					
-					if(Object.keys(response_data).length>0)
+
+					if (Object.keys(response_data).length > 0)
 						buildResponse(req, res, status, response_data, method);
 				});
 			}
 		});
-		
+
 	});
 }
 
