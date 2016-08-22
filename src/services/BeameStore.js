@@ -79,11 +79,6 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 			break;
 		}
 
-		case "remoteclient": {
-			queryString = sprintf("[?((hostname=='%s' ) && (level=='remoteclient'))]." + CHILD_ENTITY_DATA_STRUCT, searchItem, searchItem);
-			break;
-		}
-
 		case "atom": {
 			queryString = sprintf("[].atom[?((hostname=='%s') || (name=='%s')) && (level=='atom')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
@@ -93,10 +88,17 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s') && (level=='edgeclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
+		
 		case "localclient": {
 			queryString = sprintf("[].atom[].localclient[?(hostname=='%s') && (level=='localclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
+		
+		case "remoteclient": {
+			queryString = sprintf("[?((hostname=='%s' ) && (level=='remoteclient'))]." + CHILD_ENTITY_DATA_STRUCT, searchItem, searchItem);
+			break;
+		}
+		
 		default: {
 			logger.fatal(`search invalid level ${level}`);
 		}
