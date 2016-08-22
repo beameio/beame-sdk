@@ -197,11 +197,11 @@ function sign(data, fqdn) {
  * Signs given data. You must have private key of the fqdn.
  * @public
  * @method Crypto.checkPK
- * @param {String} PK - PK to test
+ * @param {String} pk - PK to test
  * @returns {string}
  */
-function checkPK(PK) {
-	var key = new NodeRsa(PK, 'pkcs8-public-pem');
+function checkPK(pk) {
+	var key = new NodeRsa(pk, 'pkcs8-public-pem');
 	return(key.isPublic(true));
 }
 
@@ -254,9 +254,9 @@ function checkSignature(data, fqdn, signature) {
  * @param {String} PK - public key
  * @param {String} signature
  */
-function checkSignatureWithPK(data, PK, signature) {
-	if(this.checkPK(PK)){
-		var key = new NodeRsa(PK, 'pkcs8-public-pem');
+function checkSignatureWithPK(data, pk, signature) {
+	if(checkPK(pk)){
+		var key = new NodeRsa(pk, 'pkcs8-public-pem');
 		var status = key.verify(data, signature, "utf8", "base64");
 		logger.info(`signature verification status is ${status}`);
 		return status;
