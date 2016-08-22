@@ -202,9 +202,9 @@ The following commands are used for acquiring and manipulating certificates.
 
 ### Running test server
 
-* `beame servers HttpsServerTestStart --edgeClientFqdn edgeClientFqdn` - run a HTTPS server for the specified hostname
-* `beame.js servers startFirstBeameNode [--sharedFolder sharedFolder]` - run chat example for first hostname in creds list
-* `beame.js servers startBeameNode [--sharedFolder sharedFolder] --edgeClientFqdn edgeClientFqdn` - run chat example for the specified hostname
+* `beame servers launchHelloWorldServer --edgeClientFqdn edgeClientFqdn` - run a "Hello World" HTTPS server for the specified hostname
+* `beame.js servers launchFirstChat [--sharedFolder sharedFolder]` - run chat example for first hostname in creds list
+* `beame.js servers launchChat --edgeClientFqdn edgeClientFqdn [--sharedFolder sharedFolder]` - run chat example for the specified hostname
 
 ### Beame.io CLI - encryption
 

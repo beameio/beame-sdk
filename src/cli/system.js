@@ -40,7 +40,7 @@ function start() {
 							}
 							logger.info(`Edge client credentials have been created and signed:${data.hostname}`);
 							logger.info(`Launching a webserver at https://${data.hostname}/`);
-							servers.HttpsServerTestStart(data.hostname);
+							servers.launchHelloWorldServer(data.hostname);
 						});
 					})
 				});

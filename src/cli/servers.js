@@ -20,7 +20,55 @@ var path                = require('path');
 var defaultSharedFolder = path.resolve(__dirname, "../../examples/public/shared");
 var defaultPublicDir    = path.resolve(__dirname, "../../examples/public");
 
-function HttpsServerTestStart(edgeClientFqdn) {
+/**
+ * run sample chat on given fqdn
+ * @param {String} hostname
+ */
+function runSampleChat(hostname) {
+	beameSDK.BaseHttpsServer.SampleBeameServer(hostname, null, appExpress, function (data, app) {
+		var fqdn = hostname;
+		var pinning = require('./pinning');
+		var header = pinning.createPublicKeyPinningHeader(fqdn, true, true);
+		
+		appExpress.use(function(req, resp, next){
+			resp.setHeader( 'Public-Key-Pins' , header);
+			console.log(pinning);
+			next();
+		});
+		
+		//noinspection JSUnresolvedFunction
+		appExpress.use(express.static(defaultPublicDir));
+		
+		var serveIndex = require('serve-index');
+		
+		if (hostname.indexOf(".l.") > 0)
+			logger.info(`Server started on https://${hostname}:8443 this is an address on local network`);
+		else
+			logger.info(`Server started on https://${hostname} this is a publicly accessible address`);
+		
+		
+		appExpress.use('/shared', express.static(defaultSharedFolder));
+		appExpress.use('/shared', serveIndex(defaultSharedFolder, {'icons': true}));
+		logger.debug(`Server Local Directory ${defaultSharedFolder}`);
+		
+		
+		//noinspection JSUnusedLocalSymbols
+		app.on("request", function (req, resp) {
+			logger.debug("On Request", {hostname: hostname, method: req.method, url: req.url, headers: req.headers});
+		});
+		
+		//noinspection JSUnusedLocalSymbols
+		app.on("upgrade", function (req, resp) {
+			logger.debug("On upgrade", {hostname: hostname, method: req.method, url: req.url, headers: req.headers});
+		});
+		
+		var socketio = require('socket.io')(app);
+		var chat     = require('../../examples/chat/chatserver.js')(socketio);
+	});
+}
+
+
+function launchHelloWorldServer(edgeClientFqdn) {
 
 	new BeameServer(edgeClientFqdn, null, null, function (data, app) {
 		logger.info(`Server started on ${edgeClientFqdn}`);
@@ -51,59 +99,24 @@ function HttpsServerTestStart(edgeClientFqdn) {
 	});
 }
 
-function runTestBeameServer(hostname) {
-	beameSDK.BaseHttpsServer.SampleBeameServer(hostname, null, appExpress, function (data, app) {
-		var fqdn = hostname;
-		var pinning = require('./pinning');
-		var header = pinning.createPublicKeyPinningHeader(fqdn, true, true);
-		
-		appExpress.use(function(req, resp, next){
-			resp.setHeader( 'Public-Key-Pins' , header);
-			console.log(pinning);
-			next();
-		});
-
-		//noinspection JSUnresolvedFunction
-		appExpress.use(express.static(defaultPublicDir));
-
-		var serveIndex = require('serve-index');
-
-		if (hostname.indexOf(".l.") > 0)
-			logger.info(`Server started on https://${hostname}:8443 this is an address on local network`);
-		else
-			logger.info(`Server started on https://${hostname} this is a publicly accessible address`);
-
-
-		appExpress.use('/shared', express.static(defaultSharedFolder));
-		appExpress.use('/shared', serveIndex(defaultSharedFolder, {'icons': true}));
-		logger.debug(`Server Local Directory ${defaultSharedFolder}`);
-
-
-		//noinspection JSUnusedLocalSymbols
-		app.on("request", function (req, resp) {
-			logger.debug("On Request", {hostname: hostname, method: req.method, url: req.url, headers: req.headers});
-		});
-
-		//noinspection JSUnusedLocalSymbols
-		app.on("upgrade", function (req, resp) {
-			logger.debug("On upgrade", {hostname: hostname, method: req.method, url: req.url, headers: req.headers});
-		});
-
-		var socketio = require('socket.io')(app);
-		var chat     = require('../../examples/chat/chatserver.js')(socketio);
-	});
-}
-
-var startBeameNode = function (sharedFolder, edgeClientFqdn) {
+/**
+ * launch chat server on given fqdn
+ * @param {String} edgeClientFqdn
+ * @param {String} [sharedFolder]
+ */
+function launchChat (edgeClientFqdn, sharedFolder) {
 	if (sharedFolder) {
 		logger.debug("Custom folder specified");
 		defaultSharedFolder = path.normalize(sharedFolder + "/");
 	}
-	runTestBeameServer(edgeClientFqdn);
+	runSampleChat(edgeClientFqdn);
+}
 
-};
-
-var startFirstBeameNode = function (sharedFolder) {
+/**
+ * create developer hierarchy atom/edge client , if not exists, and launch chat server first edge client
+ * @param {String} [sharedFolder]
+ */
+function launchFirstChat (sharedFolder) {
 
 	if (sharedFolder) {
 		logger.debug("Custom folder specified");
@@ -119,10 +132,9 @@ var startFirstBeameNode = function (sharedFolder) {
 
 	if (edgeclients.length > 0) {
 		logger.info("You have edgeclient ready to go starting ....");
-		runTestBeameServer(edgeclients[0].hostname);
+		runSampleChat(edgeclients[0].hostname);
 		return;
 	}
-
 
 	var createEdgeClient = function (atom_fqdn) {
 		beameSDK.creds.createEdgeClient(atom_fqdn, function (error, edgeData) {
@@ -132,7 +144,7 @@ var startFirstBeameNode = function (sharedFolder) {
 
 			var edgeHostname = edgeData.hostname;
 			logger.info(`Congrats! My new hostname is: https://${edgeHostname}`);
-			runTestBeameServer(edgeHostname);
+			runSampleChat(edgeHostname);
 		});
 	};
 
@@ -156,12 +168,11 @@ var startFirstBeameNode = function (sharedFolder) {
 
 		createEdgeClient(atoms[0].hostname);
 	}
-};
+}
 
 
 module.exports = {
-	HttpsServerTestStart: HttpsServerTestStart,
-	                      startFirstBeameNode,
-	                      startBeameNode
-
+	  launchHelloWorldServer,
+	  launchFirstChat,
+	  launchChat
 };
