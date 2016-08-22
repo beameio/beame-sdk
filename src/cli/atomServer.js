@@ -104,6 +104,7 @@ function startAtomBeameNode(atomFqdn) {
 								edgeClientServices.registerEdgeClient(atom_fqdn, function (error, payload) {
 									if (!error) {
 										buildResponse(req, res, status, payload, method);
+										return;
 									}
 									else {
 										status = 400;

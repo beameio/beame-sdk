@@ -66,7 +66,14 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 					if (!error) {
 						logger.printStandardEvent(BeameLogger.EntityLevel.EdgeClient, BeameLogger.StandardFlowEvent.ReceivedCerts, remoteClientHostname);
 						
-						dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, callback);
+						dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, function (err, msg){
+							if(!err){
+								logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registered, remoteClientHostname);
+							}
+							else {
+								logger.error('Remote client creation failed at getting certs');
+							}
+						});
 					}
 					else {
 						error.data.hostname = remoteClientHostname;
@@ -129,7 +136,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 		metadata = payload.body;
 		remoteClientHostname = payload.body.hostname;
 		
-		logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registered, remoteClientHostname);
+		logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registering, remoteClientHostname);
 		
 		edgeClientDir = beameUtils.makePath(config.localCertsDir, remoteClientHostname + '/');
 		
@@ -139,7 +146,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 			if (error) {
 				return onError(error);
 			}
-			
+
 			getAuthorizationToken(remoteClientHostname);
 		});
 	};
