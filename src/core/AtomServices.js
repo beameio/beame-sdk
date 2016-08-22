@@ -398,6 +398,22 @@ AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callb
 	}
 };
 
+/**
+ * Read PKs file
+ */
+AtomServices.prototype.readPKsFile = function () {
+	var fileContent = {};
+	var PKsFile = beameUtils.makePath(config.remotePKsDir, config.PKsFileName);
+	try {
+		fileContent = JSON.parse(fs.readFileSync(PKsFile));
+		return fileContent;
+	}
+	catch (e) {
+		logger.debug(`${PKsFile} foes not exist`);
+		return null;
+	}
+};
+
 //noinspection JSUnusedGlobalSymbols
 /**
  * @param {String} atomHostname

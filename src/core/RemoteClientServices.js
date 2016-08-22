@@ -79,18 +79,20 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 			});
 	};
 	
-	var getSignature = function (remoteClientHostname, authToken) {
-		provisionApi.postRequest(refAtomUri, `{"method":"${config.AtomServerRequests.SignAuthToken}","authToken":"${authToken}", "fqdn":"${remoteClientHostname}"}`, function (error, payload) {
+	var getSignature = function (remoteClientHostname, authToken, authServer) {
+		provisionApi.postRequest(refAtomUri, `{"method":"${config.AtomServerRequests.SignAuthToken}",
+		"authServer":"${authServer}","authToken":"${authToken}", "fqdn":"${remoteClientHostname}"}`,
+			function (error, payload) {
 			if (error) {
 				return onError(error);
 			}
-			
+
 			var signature = payload.body.authToken;
-			
+
 			if (!signature) {
 				return onError({message: "Signature not valid"});
 			}
-			
+
 			getCerts(signature);
 		});
 	};
@@ -107,7 +109,7 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 				return onError({message: "Authorization token not valid"});
 			}
 			
-			getSignature(remoteClientHostname, authToken);
+			getSignature(remoteClientHostname, authToken, refAtomFqdn);
 		});
 	};
 	

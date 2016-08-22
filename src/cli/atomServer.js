@@ -10,6 +10,7 @@ var config = require('../../config/Config');
 const module_name = config.AppModules.AtomAgent;
 var BeameLogger = require('../utils/Logger');
 var logger = new BeameLogger(module_name);
+var PKi = {};
 
 /** @type {String} **/
 var atom_fqdn = null;
@@ -43,6 +44,9 @@ var setAtomType = function () {
 			try {
 				atomType = payload.type;
 				logger.info(`Atom allowed sign: ${allowedSign()}, allowed authorize: ${allowedAuthorize()}`);
+				if(atomType > config.AtomType.Default){
+					PKi = atomServices.readPKsFile();
+				}
 			}
 			catch (e) {
 				logger.error(e.toString());
@@ -148,21 +152,30 @@ function startAtomBeameNode(atomFqdn) {
 							if (isAuthorized) {
 								var authToken = postData["authToken"];
 								 fqdn = postData["fqdn"];
+								var authServer = postData["authServer"];
 								if (!authToken) {
 									status = 400;
 									response_data = buildErrorResponse(`Auth Token required`);
 								}
 								else {
 									//TODO add validate authorization token
-									
-									token = crypto.sign(fqdn, atom_fqdn);
-									if (!token) {
-										status = 400;
-										response_data = buildErrorResponse(`Sign failed`);
+									try {
+										var PK = PKi[authServer];
+										if(crypto.checkSignature()){
+											token = crypto.sign(fqdn, atom_fqdn);
+											if (!token) {
+												status = 400;
+												response_data = buildErrorResponse(`Sign failed`);
+											}
+											else {
+												response_data = {"authToken": token};
+											}
+										}
 									}
-									else {
-										response_data = {"authToken": token};
+									catch (e){
+										response_data = buildErrorResponse(`Sign failed - no PK`);
 									}
+
 								}
 							}
 							else {
