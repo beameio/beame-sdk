@@ -390,7 +390,7 @@ AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callb
 	try {
 		var PK = fs.readFileSync(PKfilePath);
 		if(crypto.checkPK(PK)){
-			fileContent[authSrvFqdn] = PK;
+			fileContent[authSrvFqdn] = String.fromCharCode.apply(null, PK);
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			fs.writeFileSync(PKsFile, JSON.stringify(fileContent));
 			callback(null,{"message":"Key imported successfully"});
@@ -420,7 +420,7 @@ AtomServices.prototype.readPKsFile = function () {
 		return fileContent;
 	}
 	catch (e) {
-		logger.debug(`${PKsFile} foes not exist`);
+		logger.error(`${PKsFile} does not exist`);
 		return null;
 	}
 };

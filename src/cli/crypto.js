@@ -255,10 +255,16 @@ function checkSignature(data, fqdn, signature) {
  * @param {String} signature
  */
 function checkSignatureWithPK(data, PK, signature) {
-	var key = new NodeRsa(PK, 'pkcs8-public-pem');
-	var status = rsaKey.verify(data, signature, "utf8", "base64");
-	logger.info(`signing status is ${status} ${fqdn}`);
-	return status;
+	if(this.checkPK(PK)){
+		var key = new NodeRsa(PK, 'pkcs8-public-pem');
+		var status = key.verify(data, signature, "utf8", "base64");
+		logger.info(`signature verification status is ${status}`);
+		return status;
+	}
+	else{
+		logger.error(`Invalid public key, signature not verified`);
+		return false;
+	}
 }
 
 module.exports = {

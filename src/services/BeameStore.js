@@ -80,12 +80,12 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 		}
 
 		case "remoteclient": {
-			queryString = sprintf("[?(hostname=='%s' ) && (level=='remoteclient')]." + CHILD_ENTITY_DATA_STRUCT, searchItem, searchItem);
+			queryString = sprintf("[?((hostname=='%s' ) && (level=='remoteclient'))]." + CHILD_ENTITY_DATA_STRUCT, searchItem, searchItem);
 			break;
 		}
 
 		case "atom": {
-			queryString = sprintf("[].atom[?(hostname=='%s') || (name=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
+			queryString = sprintf("[].atom[?((hostname=='%s') || (name=='%s')) && (level=='remoteclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 

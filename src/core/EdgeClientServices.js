@@ -14,6 +14,7 @@ var beameUtils    = require('../utils/BeameUtils');
 var apiActions    = require('../../config/ApiConfig.json').Actions.EdgeClient;
 
 var PATH_MISMATCH_DEFAULT_MSG = 'Edge folder not found';
+var remote = false;
 
 /**
  * @param {String} hostname
@@ -70,7 +71,6 @@ var isRequestValid = function (hostname, atomDir, edgeClientDir, validateEdgeHos
  */
 var registerEdgeClient = function (atom_fqdn, callback) {
 	var atomDir;
-
 	/*---------- private callbacks -------------------*/
 	function onEdgeSelectionError(error) {
 		callback && callback(logger.formatErrorMessage("select best proxy error", module_name, error), null);
@@ -96,7 +96,7 @@ var registerEdgeClient = function (atom_fqdn, callback) {
 
 				payload.parent_fqdn = atom_fqdn;
 
-				var edgeClientDir = beameUtils.makePath(atomDir, payload.hostname + '/');
+				var edgeClientDir = (remote)?beameUtils.makePath(config.remoteCertsDir, 'remoteEdgeClients/'):beameUtils.makePath(atomDir, payload.hostname + '/');
 
 				dataServices.createDir(edgeClientDir);
 
@@ -218,11 +218,12 @@ var EdgeClientServices = function () {
  *
  * @param {String} atom_fqdn
  * @param {Function} callback
+ * @param {Boolean|null} [isRemote] entity fqdn
  */
-EdgeClientServices.prototype.registerEdgeClient = function (atom_fqdn, callback) {
+EdgeClientServices.prototype.registerEdgeClient = function (atom_fqdn, callback, isRemote) {
 
 	logger.debug("Call register Edge Client", {"atom": atom_fqdn});
-
+	if(isRemote)remote=isRemote;
 	if (_.isEmpty(atom_fqdn)) {
 		callback(logger.formatErrorMessage("Create Edge Client => Atom fqdn required", module_name), null);
 		return;

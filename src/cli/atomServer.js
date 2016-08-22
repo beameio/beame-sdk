@@ -103,14 +103,13 @@ function startAtomBeameNode(atomFqdn) {
 							if (isAuthorized) {
 								edgeClientServices.registerEdgeClient(atom_fqdn, function (error, payload) {
 									if (!error) {
-										//beameUtils.findHostPathAndParentAsync(atom_fqdn).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, 'Atom folder not found'));
 										buildResponse(req, res, status, payload, method);
 									}
 									else {
 										status = 400;
 										response_data = buildErrorResponse(error.message);
 									}
-								});
+								}, true);
 							}
 							else {
 								status = 403;
@@ -166,11 +165,13 @@ function startAtomBeameNode(atomFqdn) {
 												response_data = {"authToken": token};
 											}
 										}
+										else{
+											response_data = buildErrorResponse(`Signature verification failed`);
+										}
 									}
 									catch (e){
 										response_data = buildErrorResponse(`Sign failed - no PK`);
 									}
-
 								}
 							}
 							else {
