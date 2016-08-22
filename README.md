@@ -30,8 +30,8 @@ See the example folder to copy-paste and try it for yourself!
 
 ### Table of Contents
  - [System Requirements](#system-requirements)
- - [Easy Installation Instructions](#installation-guide)
- - [Quick Start](#get-started-in-minutes)
+ - [Installation Guide](#installation-guide)
+ - [Quick Start](#quick-start)
  - [Getting Started - Mac](#mac-system-requirements)
  - [Getting Started - Windows](#windows-system-requirements)
  - [High Level Architecture](#high-level-architecture)
@@ -60,7 +60,7 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
  - To access the chat, just copy the URL to your browser. (By the way, you can freely send it to other people on other networks. The server is global and the TLS is real).
  - To access the file share function, open the `url/shared`.
 
-## Get started in minutes
+## Quick Start
 
 ### Light Configuration *coming soon 
 1. Install the Beame SDK by running `npm install -g beame-sdk` and this will quickly output a link that will be your first HTTPS Server with your new Beame Credentials. 
@@ -156,7 +156,7 @@ All routable nodes created with the Beame SDK are clients of Beame services. Fro
 ## Beame Network Infrastructure
 
 Actions to employ:
- - *Developer* registration using email-based procedure
+ - *Developer* registration using [email-based procedure](https://registration.beameio.net/)
  - Deployment of *Atom* as entity to control access permissions for all devices intended to be a part of the network (customers and clients)
  - Deployment of *Customer Edge Clients*. Each of the hosts, created on this step, shall be used as a Customer’s provisioning entry point. Any *client* that needs to be allowed into the network must undergo registration procedure as described below
  - Provisioning *clients* into *Customer*’s network
@@ -184,7 +184,7 @@ The custom provisioning process uses the *Atom* as single authorization point.
 
 ## Beame CLI
 
-If you have completed the "Getting Started The Easy Way" above, and know how your future application will look, you can feel free to use all of what's described below.
+If you have completed the ["Quick Start"](#quick-start) above, and know how your future application will look, you can feel free to use all of what's described below.
 At any moment, using beame-sdk, you can see all credentials you currently own by running:
  - `beame creds show`
 
