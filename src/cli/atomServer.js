@@ -15,7 +15,7 @@ var PKi = {};
 var atom_fqdn = null;
 
 /** @type {AtomType} **/
-var atomType = config.AtomType.AuthorizationServer;
+var atomType = config.AtomType.Default;
 
 var atomServices = new (require('../../src/core/AtomServices'))();
 var edgeClientServices = new (require('../../src/core/EdgeClientServices'))();
