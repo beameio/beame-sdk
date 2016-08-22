@@ -66,8 +66,8 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 					if (!error) {
 						logger.printStandardEvent(BeameLogger.EntityLevel.EdgeClient, BeameLogger.StandardFlowEvent.ReceivedCerts, remoteClientHostname);
 						
-						dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, function (err, msg){
-							if(!err){
+						dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, function (error){
+							if(!error){
 								logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registered, remoteClientHostname);
 							}
 							else {

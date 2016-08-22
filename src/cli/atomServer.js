@@ -106,10 +106,10 @@ function startAtomBeameNode(atomFqdn) {
 										buildResponse(req, res, status, payload, method);
 										return;
 									}
-									else {
-										status = 400;
-										response_data = buildErrorResponse(error.message);
-									}
+									
+									status = 400;
+									response_data = buildErrorResponse(error.message);
+									
 								}, true);
 							}
 							else {
