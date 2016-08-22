@@ -1,37 +1,9 @@
 <img align="right" src="img/beame.png">
-_The Beame SDK provides tools that allow you to create credentials to identify machines and devices. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for organizations or services that require users to prove identity._
+_The Beame SDK allows you to establish a HTTPS session between two machines without public IPs, with no prior configuration. This SDK  allows you to create credentials and use them to identify machines. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for services that host credentials to require users to prove identity._
 
 [Click to Get Started Now!](https://registration.beameio.net/)
 
-### By deploying your network using Beame infrastructure, you can:
-
-1. Quickly host a public HTTPS server on a local machine (does not require public static IP, DMZ, nor port forwarding);
-2. Generate credentials and assign your own meaning to them (identity);
-3. Deploy services that are accessible from the Internet or only from your LAN without network reconfiguration.
-
-### How:
-1. Get a unique hostname under the Beame subdomain;
-2. Generate your private key locally;
-3. Get a matching certificate from Beame (signed by a root CA).
-
-## Table of Contents
- - [Common Uses for Beame SDK](#common-uses-for-beame-sdk)
- - [System Requirements](#system-requirements)
- - [Easy Installation Instructions](#easy-installation-instructions)
- - [Getting Started - Mac](#getting-started---mac)
- - [Getting Started - Windows](#getting-started---windows)
- - [Quick Start](#get-started-in-minutes)
- - [High Level Architecture](#high-level-architecture)
- - [Beame Network Infrastructure](#beame-network-infrastructure)
- - [Custom Provisioning Workflow](#custom-provisioning-workflow)
- - [Custom Client Provisioning Flow Chart](#custom-client-provisioning-flow-chart)
- - [Beame CLI (credentials, running test server, encryption)](#beame-cli)
- - [Beame NodeJS API](#beame-nodejs-api)
- - [Examples of full-stack of credentials and https server with express support](#sample-https-server)
-
-:heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
-
-## Common Uses for Beame SDK
+## Common Uses for Beame SDK Network Infrastructure 
 
 See the example folder to copy-paste and try it for yourself!
 
@@ -44,13 +16,40 @@ See the example folder to copy-paste and try it for yourself!
  - Global, local, or hybrid socket.io chat over TLS
  - Patient ID in clinics using mobile phone
  - BYOD in local networks (access behind NAT)
+
+### By deploying your network using Beame infrastructure, you can:
+
+1. Quickly host a public HTTPS server on a local machine (does not require public static IP, DMZ, nor port forwarding);
+2. Generate credentials and assign your own meaning to them (identity);
+3. Deploy services that are accessible from the Internet or only from your LAN without network reconfiguration.
+
+## Here's how:
+1. You will get a unique hostname under the Beame subdomain;
+2. You will generate your private key locally;
+3. You will get a matching certificate from Beame (signed by a root CA).
+
+### Table of Contents
+ - [System Requirements](#system-requirements)
+ - [Installation Guide](#installation-guide)
+ - [Quick Start](#quick-start)
+ - [Getting Started - Mac](#mac-system-requirements)
+ - [Getting Started - Windows](#windows-system-requirements)
+ - [High Level Architecture](#high-level-architecture)
+ - [Beame Network Infrastructure](#beame-network-infrastructure)
+ - [Custom Provisioning Workflow](#custom-provisioning-workflow)
+ - [Custom Client Provisioning Flow Chart](#custom-client-provisioning-flow-chart)
+ - [Beame CLI (credentials, running test server, encryption)](#beame-cli)
+ - [Beame NodeJS API](#beame-nodejs-api)
+ - [Examples of full-stack of credentials and https server with express support](#sample-https-server)
+
+:heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
  
 ## System Requirements
 Mac OS or Windows 8.1 (or higher);
 NPM installed on your machine;
 for Mac: See the Mac instructions if current shell version does not support auto-completion.
 
-## Easy Installation Instructions
+## Installation Guide
 You will create three tiers of credentials (each with multiple components: a RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate). If you want to skip the intro, [jump directly to start!](#beame-cli)
 
 1. First, generate [Developer credentials.](https://registration.beameio.net/)
@@ -61,7 +60,21 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
  - To access the chat, just copy the URL to your browser. (By the way, you can freely send it to other people on other networks. The server is global and the TLS is real).
  - To access the file share function, open the `url/shared`.
 
-## Getting Started - Mac
+## Quick Start
+
+### Light Configuration *coming soon 
+1. Install the Beame SDK by running `npm install -g beame-sdk` and this will quickly output a link that will be your first HTTPS Server with your new Beame Credentials. 
+
+### Full Configuration: 
+
+1. Register as a developer, by submitting your email at [https://registration.beameio.net/](#https://registration.beameio.net/) 
+2. Install the Beame SDK by running `npm install -g beame-sdk`
+3. Copy the unique activation command from the email you receive, it should look like: `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f`
+4. Start your first HTTPS server by running `beame servers startFirstBeameNode`. It should print to your console something that looks like `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
+
+You now have your public HTTPS server running. Just copy-paste the address to any web browser.
+
+## Mac System Requirements
 First ensure that your bash version is 4.3 or higher (`echo $BASH_VERSION`). If not - upgrade it.
 Take care to replace 4.3.46 from snippets below by your new bash version:
 ```
@@ -88,7 +101,7 @@ source /usr/local/lib/node_modules/beame-sdk/src/cli/completion.sh
 ```
 Open new terminal and begin using beame-sdk cli with auto-completion.
 
-## Getting Started - Windows
+## Windows System Requirements
 
 Before running `npm install -g beame-sdk` please make sure you have OpenSSL installed in `C:\OpenSSL-Win64` . If you you already have OpenSSL installed at that location, skip the instructions below and just issue `npm install -g beame-sdk`. If you don't have OpenSSL in `C:\OpenSSL-Win64`, one of the possible ways of installing OpenSSL is described below (Install Visual C++ Build Tools and Python 2.7, Upgrade NPM, Install Perl, Install OpenSSL). The procedure was tested on Microsoft Windows Server 2012 R2 Standard and Windows 10. We recommend to use your “Windows PowerShell” and run it with administrator rights for the following commands:
 
@@ -124,20 +137,6 @@ Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program 
 
 	npm install -g beame-sdk
 
-## Get started in minutes
-
-## Light Configuration *coming soon 
-1. Install the Beame SDK by running `npm install -g beame-sdk` and this will quickly output a link that will be your first HTTPS Server with your new Beame Credentials. 
-
-## Full Configuration -Quick Start: 
-
-1. Register as a developer, by submitting your email at [https://registration.beameio.net/](#https://registration.beameio.net/) 
-2. Install the Beame SDK by running `npm install -g beame-sdk`
-3. Copy the unique activation command from the email you receive, it should look like: `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f`
-4. Start your first HTTPS server by running `beame servers startFirstBeameNode`. It should print to your console something that looks like `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
-
-*Done*. You now have your public HTTPS server running. Just copy-paste the address to any web browser.
-
 #Beame.io Networking Solution Overview
 
 ## High Level Architecture
@@ -157,7 +156,7 @@ All routable nodes created with the Beame SDK are clients of Beame services. Fro
 ## Beame Network Infrastructure
 
 Actions to employ:
- - *Developer* registration using email-based procedure
+ - *Developer* registration using [email-based procedure](https://registration.beameio.net/)
  - Deployment of *Atom* as entity to control access permissions for all devices intended to be a part of the network (customers and clients)
  - Deployment of *Customer Edge Clients*. Each of the hosts, created on this step, shall be used as a Customer’s provisioning entry point. Any *client* that needs to be allowed into the network must undergo registration procedure as described below
  - Provisioning *clients* into *Customer*’s network
@@ -185,7 +184,7 @@ The custom provisioning process uses the *Atom* as single authorization point.
 
 ## Beame CLI
 
-If you have completed the "Getting Started The Easy Way" above, and know how your future application will look, you can feel free to use all of what's described below.
+If you have completed the ["Quick Start"](#quick-start) above, and know how your future application will look, you can feel free to use all of what's described below.
 At any moment, using beame-sdk, you can see all credentials you currently own by running:
  - `beame creds show`
 
