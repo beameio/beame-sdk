@@ -372,29 +372,40 @@ AtomServices.prototype.updateType = function (atomHostname, type, callback) {
  */
 AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callback) {
 	var fileContent = {};
+	var msg;
 	var PKsFile = beameUtils.makePath(config.remotePKsDir, config.PKsFileName);
 	try {
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		fileContent = JSON.parse(fs.readFileSync(PKsFile));
 		if(fileContent[authSrvFqdn].data){
-			logger.error(`PK already pinned for ${authSrvFqdn}`);
+			msg = `PK already pinned for ${authSrvFqdn}`;
+			logger.warn(msg);
+			callback(null, {"message":msg});
 			return;
 		}
 	}
 	catch (e) {
-		logger.debug(`${PKsFile} is not there yet, will be created now`);
+		logger.info(`${PKsFile} is not there yet, will be created now`);
 	}
 	try {
 		var PK = fs.readFileSync(PKfilePath);
 		if(crypto.checkPK(PK)){
 			fileContent[authSrvFqdn] = PK;
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			fs.writeFileSync(PKsFile, JSON.stringify(fileContent));
+			callback(null,{"message":"Key imported successfully"});
 		}
 		else{
-			logger.error(`Provided PK in file *${PKfilePath}* is invalid`);
+			msg = `Provided PK in file *${PKfilePath}* is invalid`;
+			callback({"message":msg},null);
+			logger.error(msg);
 		}
 	}
 	catch (e){
-		logger.error(`Provided PK file *${PKfilePath}* does not exist, or the PK is invalid`);
+		msg = `Provided PK file *${PKfilePath}* does not exist, or the PK is invalid`;
+		logger.error(msg);
+		callback({"message":msg},null);
+		
 	}
 };
 

@@ -2,7 +2,6 @@
 var BeameStore = require("../services/BeameStore");
 
 var beameSDK = require("../../index.js");
-var beameUtils    = require('../utils/BeameUtils');
 var express = require('express');
 // This require is only cause the example is inside the beame-sdk repository, you will be using require('beame-sdk');
 
@@ -58,14 +57,11 @@ var setAtomType = function () {
 	});
 };
 
-var buildResponse = function (req, res, statusCode, data, method) {
+var buildResponse = function (req, res, statusCode, data) {
 	
 	res.writeHead(statusCode, {'Content-Type': 'application/json'});
 
 	var responseBody = {
-	//	url: req.url,
-	//	headers: req.headers,
-    //	method: method,
 		body: data
 	};
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -158,7 +154,6 @@ function startAtomBeameNode(atomFqdn) {
 									response_data = buildErrorResponse(`Auth Token required`);
 								}
 								else {
-									//TODO add validate authorization token
 									try {
 										var PK = PKi[authServer];
 										if(crypto.checkSignature()){
