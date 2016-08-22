@@ -246,6 +246,21 @@ function checkSignature(data, fqdn, signature) {
 	return status;
 }
 
+/**
+ * Checks signature.
+ * @public
+ * @method Crypto.checkSignatureWithPK
+ * @param {String} data - signed data
+ * @param {String} PK - public key
+ * @param {String} signature
+ */
+function checkSignatureWithPK(data, PK, signature) {
+	var key = new NodeRsa(PK, 'pkcs8-public-pem');
+	var status = rsaKey.verify(data, signature, "utf8", "base64");
+	logger.info(`signing status is ${status} ${fqdn}`);
+	return status;
+}
+
 module.exports = {
 	encrypt,
 	decrypt,
@@ -253,6 +268,7 @@ module.exports = {
 	signWithKey,
 	checkPK,
 	checkSignature,
+	checkSignatureWithPK,
 	aesEncrypt,
 	aesDecrypt
 };

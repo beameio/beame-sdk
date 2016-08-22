@@ -156,7 +156,7 @@ function startAtomBeameNode(atomFqdn) {
 								else {
 									try {
 										var PK = PKi[authServer];
-										if(crypto.checkSignature()){
+										if(crypto.checkSignatureWithPK(fqdn, PK, authToken)){
 											token = crypto.sign(fqdn, atom_fqdn);
 											if (!token) {
 												status = 400;
