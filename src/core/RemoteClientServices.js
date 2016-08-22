@@ -42,13 +42,13 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 	refAtomUri += atom_fqdn;
 	var edgeClientDir, metadata = {};
 	
-		
+	
 	var onError = function (error) {
 		logger.error(error.message, error);
 		callback(error, null);
 	};
 	
-	var getCerts = function(signature){
+	var getCerts = function (signature) {
 		dataServices.createCSR(edgeClientDir, remoteClientHostname).then(
 			function onCsrCreated(csr) {
 				
@@ -80,25 +80,32 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 	};
 	
 	var getSignature = function (remoteClientHostname, authToken, authServer) {
-		provisionApi.postRequest(refAtomUri, `{"method":"${config.AtomServerRequests.SignAuthToken}",
-		"authServer":"${authServer}","authToken":"${authToken}", "fqdn":"${remoteClientHostname}"}`,
+		var data = `{"method":"${config.AtomServerRequests.SignAuthToken}",
+					 "authServer":"${authServer}",
+					 "authToken":"${authToken}", 
+					 "fqdn":"${remoteClientHostname}"}`;
+		
+		provisionApi.postRequest(refAtomUri, data,
 			function (error, payload) {
-			if (error) {
-				return onError(error);
-			}
-
-			var signature = payload.body.authToken;
-
-			if (!signature) {
-				return onError({message: "Signature not valid"});
-			}
-
-			getCerts(signature);
-		});
+				if (error) {
+					return onError(error);
+				}
+				
+				var signature = payload.body.authToken;
+				
+				if (!signature) {
+					return onError({message: "Signature not valid"});
+				}
+				
+				getCerts(signature);
+			});
 	};
 	
 	var getAuthorizationToken = function (remoteClientHostname) {
-		provisionApi.postRequest(refAtomUri, `{"method":"${config.AtomServerRequests.AuthorizeToken}","fqdn":"${remoteClientHostname}"}`, function (error, payload) {
+		var data = `{"method":"${config.AtomServerRequests.AuthorizeToken}",
+					"fqdn":"${remoteClientHostname}"}`;
+		
+		provisionApi.postRequest(refAtomUri, data, function (error, payload) {
 			if (error) {
 				return onError(error);
 			}
@@ -124,15 +131,17 @@ RemoteClientServices.prototype.createEdgeClient = function (atom_fqdn, callback)
 		
 		logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registered, remoteClientHostname);
 		
-		edgeClientDir = beameUtils.makePath(config.localCertsDir,remoteClientHostname + '/');
+		edgeClientDir = beameUtils.makePath(config.localCertsDir, remoteClientHostname + '/');
 		
 		dataServices.createDir(edgeClientDir);
 		
 		dataServices.savePayload(edgeClientDir, metadata, config.ResponseKeys.EdgeClientResponseKeys, module_name, function (error) {
+			if (error) {
+				return onError(error);
+			}
 			
+			getAuthorizationToken(remoteClientHostname);
 		});
-		
-		getAuthorizationToken(remoteClientHostname);
 	};
 	
 	provisionApi.postRequest(refAtomUri, `{"method":"${config.AtomServerRequests.GetHost}"}`, onHostReceived);
