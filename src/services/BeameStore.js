@@ -75,7 +75,7 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 
 	switch (level) {
 		case "developer": {
-			queryString = sprintf("[?((hostname=='%s') && (level=='developer'))|| (name =='%s' )]." + DEVELOPER_DATA_STRUCT, searchItem, searchItem);
+			queryString = sprintf("[?((hostname=='%s') || (name =='%s' )) && (level=='developer')]." + DEVELOPER_DATA_STRUCT, searchItem, searchItem);
 			break;
 		}
 
@@ -85,16 +85,16 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 		}
 
 		case "atom": {
-			queryString = sprintf("[].atom[?((hostname=='%s') || (name=='%s')) && (level=='remoteclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
+			queryString = sprintf("[].atom[?((hostname=='%s') || (name=='%s')) && (level=='atom')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 
 		case "edgeclient": {
-			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
+			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s') && (level=='edgeclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 		case "localclient": {
-			queryString = sprintf("[].atom[].localclient[?(hostname=='%s')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
+			queryString = sprintf("[].atom[].localclient[?(hostname=='%s') && (level=='localclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 		default: {
@@ -198,7 +198,7 @@ BeameStore.prototype.searchItemAndParentFolderPath = function (fqdn) {
 };
 
 BeameStore.prototype.listCurrentDevelopers = function () {
-	return jmespath.search(this.beameStore, "[*]." + DEVELOPER_DATA_STRUCT + " | []");
+	return jmespath.search(this.beameStore, "[?(level=='developer')]." + DEVELOPER_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.listCurrentAtoms = function () {
@@ -214,7 +214,7 @@ BeameStore.prototype.listCurrentLocalClients = function () {
 };
 
 BeameStore.prototype.listCurrentRemoteClients = function () {
-	return jmespath.search(this.beameStore, "[*]." + CHILD_ENTITY_DATA_STRUCT + " | []");
+	return jmespath.search(this.beameStore, "[?(level=='remoteclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []");
 };
 
 BeameStore.prototype.ensureFreshBeameStore = function () {
