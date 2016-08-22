@@ -39,7 +39,14 @@ var setAtomType = function (requiredLevel) {
 	if (!atom_fqdn) return;
 	try {
 		if (config.AtomType[requiredLevel] != null) {
-			atomServices.updateType(atom_fqdn, atomType, null);
+			atomServices.updateType(atom_fqdn, config.AtomType[requiredLevel], function (error, message) {
+				if(!error){
+					logger.info('Atom type successfully updated');
+				}
+				else{
+					logger.error('failed to set atom level');
+				}
+			});
 		}
 	}
 	catch (e) {
