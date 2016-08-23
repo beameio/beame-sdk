@@ -374,6 +374,7 @@ AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callb
 	var fileContent = {};
 	var msg;
 	var PKsFile = beameUtils.makePath(config.remotePKsDir, config.PKsFileName);
+	
 	try {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		fileContent = JSON.parse(fs.readFileSync(PKsFile));
@@ -387,6 +388,7 @@ AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callb
 	catch (e) {
 		logger.info(`${PKsFile} is not there yet, will be created now`);
 	}
+	
 	try {
 		var PK = fs.readFileSync(PKfilePath);
 		if (crypto.checkPK(PK)) {
@@ -411,17 +413,19 @@ AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callb
 
 /**
  * Read PKs file
+ * @param {Function} callback
  */
-AtomServices.prototype.readPKsFile = function () {
+AtomServices.prototype.readPKsFile = function (callback) {
 	var fileContent = {};
 	var PKsFile = beameUtils.makePath(config.remotePKsDir, config.PKsFileName);
 	try {
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		fileContent = JSON.parse(fs.readFileSync(PKsFile));
-		return fileContent;
+		callback(null,fileContent);
 	}
 	catch (e) {
 		logger.error(`${PKsFile} does not exist`);
-		return null;
+		callback(e,null)
 	}
 };
 

@@ -21,8 +21,8 @@ var atomServices = new (require('../../src/core/AtomServices'))();
 var edgeClientServices = new (require('../../src/core/EdgeClientServices'))();
 var crypto = require('../../src/cli/crypto');
 
-var allowedSign = function () {
-	return atomType == config.AtomType.AuthorizationAgent || atomType == config.AtomType.AuthorizationServer;
+var allowedAuthenticate = function () {
+	return atomType == config.AtomType.AuthenticationServer ;
 };
 
 var allowedAuthorize = function () {
@@ -35,53 +35,62 @@ var buildErrorResponse = function (message) {
 	};
 };
 
+/**
+ *
+ * @param {String|null} [requiredLevel]
+ */
 var setAtomType = function (requiredLevel) {
 	if (!atom_fqdn) return;
-	try {
-		if (config.AtomType[requiredLevel] != null) {
-			atomServices.updateType(atom_fqdn, config.AtomType[requiredLevel], function (error, message) {
-				if(!error){
-					logger.info('Atom type successfully updated');
-				}
-				else{
-					logger.error('failed to set atom level');
-				}
-			});
-		}
-	}
-	catch (e) {
-		logger.info("Desired access level not provided");
-	}
-	atomServices.getCreds(atom_fqdn, function (error, payload) {
-		if (!error) {
-			try {
+	
+	function getCreds() {
+		atomServices.getCreds(atom_fqdn, function (error, payload) {
+			if (!error) {
 				atomType = payload.type;
-
-				if(atomType!=config.AtomType[requiredLevel])
-					logger.error('Failed to set required type for Atom: '+config.AtomType[requiredLevel]);
-
-				logger.info(`Atom started with access level: allowed sign: ${allowedSign()}, allowed authorize: ${allowedAuthorize()}`);
-				if (allowedSign()) {
-					PKi = atomServices.readPKsFile();
-					if(PKi){
-						logger.info('loaded PKs to auth Atom');
-					}
+				
+				if (requiredLevel && atomType != config.AtomType[requiredLevel]){
+					logger.fatal(`Failed to set required type for Atom: ${requiredLevel}`);
+				}
+				
+				logger.info(`Atom started with access level: allowed authenticate: ${allowedAuthenticate()}, allowed authorize: ${allowedAuthorize()}`);
+				
+				if (allowedAuthenticate()) {
+					atomServices.readPKsFile(function(error,data){
+						if(!error){
+							PKi = data;
+						}
+						else{
+							logger.fatal('loaded PKs to auth Atom failed',error);
+						}
+					});
 				}
 			}
-			catch (e) {
-				logger.error(e.toString());
+			else {
+				logger.error(error.message);
 			}
-		}
-		else {
-			logger.error(error.message);
-		}
-	});
+		});
+	}
+	
+	if (requiredLevel && config.AtomType[requiredLevel] != null) {
+		atomServices.updateType(atom_fqdn, config.AtomType[requiredLevel], function (error) {
+			if (!error) {
+				logger.info('Atom type successfully updated');
+				getCreds();
+			}
+			else {
+				logger.fatal('failed to set atom level');
+			}
+		});
+	}
+	else {
+		getCreds();
+	}
+	
 };
 
 var buildResponse = function (req, res, statusCode, data) {
-
+	
 	res.writeHead(statusCode, {'Content-Type': 'application/json'});
-
+	
 	var responseBody = {
 		body: data
 	};
@@ -90,47 +99,51 @@ var buildResponse = function (req, res, statusCode, data) {
 	res.end();
 };
 
+/**
+ *
+ * @param {String} atomFqdn
+ * @param {String|null} [requiredLevel]
+ */
 function startAtomBeameNode(atomFqdn, requiredLevel) {
-
+	
 	atom_fqdn = atomFqdn;
-
+	
 	beameSDK.BaseHttpsServer.SampleBeameServer(atom_fqdn, null, null, function (data, app) {
 		//noinspection JSUnresolvedFunction
-
+		
 		setAtomType(requiredLevel);
-
+		
 		logger.info(`Atom server started on https://${atom_fqdn} this is a publicly accessible address`);
-
-
+		
 		//noinspection JSUnusedLocalSymbols
 		app.on("request", function (req, res) {
-
+			
 			if (req.method == 'POST') {
-
+				
 				req.on('data', function (data) {
-
+					
 					//noinspection ES6ModulesDependencies,NodeModulesDependencies
 					/** @type {Object} **/
 					var postData = JSON.parse(data + '');
-
+					
 					var method = postData["method"];
-
+					
 					var status = 200, response_data = {};
 					logger.info(`Request:${method}`);
-
+					
 					switch (method) {
 						case config.AtomServerRequests.GetHost:
-							var isAuthorized = allowedSign();
+							var isAuthorized = allowedAuthenticate();
 							if (isAuthorized) {
 								edgeClientServices.registerEdgeClient(atom_fqdn, function (error, payload) {
 									if (!error) {
 										buildResponse(req, res, status, payload, method);
 										return;
 									}
-
+									
 									status = 400;
 									response_data = buildErrorResponse(error.message);
-
+									
 								}, true);
 							}
 							else {
@@ -141,9 +154,9 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 						case config.AtomServerRequests.AuthorizeToken:
 							isAuthorized = allowedAuthorize();
 							if (isAuthorized) {
-
+								
 								var fqdn = postData["fqdn"];
-
+								
 								if (!fqdn) {
 									status = 400;
 									response_data = buildErrorResponse(`Fqdn required for authorization`);
@@ -165,7 +178,7 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 							}
 							break;
 						case config.AtomServerRequests.SignAuthToken:
-							isAuthorized = allowedSign();
+							isAuthorized = allowedAuthenticate();
 							if (isAuthorized) {
 								var authToken = postData["authToken"];
 								fqdn = postData["fqdn"];
@@ -206,13 +219,13 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 							response_data = buildErrorResponse("Unknown request type");
 							break;
 					}
-
+					
 					if (Object.keys(response_data).length > 0)
 						buildResponse(req, res, status, response_data, method);
 				});
 			}
 		});
-
+		
 	});
 }
 
