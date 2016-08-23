@@ -63,7 +63,7 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
 ## Quick Start
 
 ### Light Configuration *coming soon 
-1. Install the Beame SDK by running `npm install -g beame-sdk` and this will quickly output a link that will be your first HTTPS Server with your new Beame Credentials. 
+1. Install the Beame SDK by running `npm install -g beame-sdk` and this will quickly output a URL that will be a hostname for your first HTTPS Server with your new Beame Credentials. 
 
 ### Full Configuration: 
 
