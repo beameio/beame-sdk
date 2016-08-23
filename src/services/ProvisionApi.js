@@ -96,9 +96,9 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		var errMsg = logger.formatErrorMessage(payload.Message || "Provision Api response error", module_name, {
+		var errMsg = logger.formatErrorMessage(payload.Message || payload.body.message || "Provision Api response error", module_name, {
 			"status": response.statusCode,
-			"message": payload.Message || payload
+			"message": payload.Message || payload.body.message || payload
 		}, config.MessageCodes.ApiRestError);
 		
 		callback && callback(errMsg, null);
