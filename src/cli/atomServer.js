@@ -61,8 +61,11 @@ var setAtomType = function (requiredLevel) {
 					logger.error('Failed to set required type for Atom: '+config.AtomType[requiredLevel]);
 
 				logger.info(`Atom started with access level: allowed sign: ${allowedSign()}, allowed authorize: ${allowedAuthorize()}`);
-				if (allowedAuthorize()) {
+				if (allowedSign()) {
 					PKi = atomServices.readPKsFile();
+					if(PKi){
+						logger.info('loaded PKs to auth Atom');
+					}
 				}
 			}
 			catch (e) {
