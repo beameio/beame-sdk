@@ -125,10 +125,15 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 					
 					//noinspection ES6ModulesDependencies,NodeModulesDependencies
 					/** @type {Object} **/
-					var postData = JSON.parse(data + '');
-					
-					var method = postData["method"];
-					
+					try {
+						var postData = JSON.parse(data + '');
+						var method = postData["method"];
+					}
+					catch (e){
+						buildErrorResponse('Failed to parse post data; '+e.toString());
+						return;
+					}
+
 					var status = 200, response_data = {};
 					logger.info(`Request:${method}`);
 					
@@ -167,7 +172,7 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 									var edgeClientFqdn = null;
 									
 									if(postData["edge_fqdn"]){
-										edgeClientFqdn = postData["edge_fqdn"]
+										edgeClientFqdn = postData["edge_fqdn"];
 									}
 									
 									var ipsArray = local_ips.split(',');
@@ -177,10 +182,11 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 									edgeLocalClientServices.registerLocalEdgeClients(atom_fqdn, edgeClientFqdn, ipsArray,function (error, payload) {
 										logger.info(`registerLocalEdgeClients received payload ${JSON.stringify(payload)}  and error ${JSON.stringify(error)}`);
 										if (!error) {
+											logger.info('returning data to client');
 											buildResponse(req, res, status, payload, method);
 											return;
 										}
-										
+										logger.info(`failed to register ***${error.message}***`);
 										status = 400;
 										response_data = buildErrorResponse(error.message);
 										
@@ -198,12 +204,13 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 							if (isAuthorized) {
 								
 								var fqdn = postData["fqdn"];
-								
+
 								if (!fqdn) {
 									status = 400;
 									response_data = buildErrorResponse(`Fqdn required for authorization`);
 								}
 								else {
+									logger.info(`authorizing for ${fqdn}`);
 									var token = crypto.sign(fqdn, atom_fqdn);
 									if (!token) {
 										status = 400;
@@ -226,6 +233,7 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 							if (isAuthorized) {
 								var authToken = postData["authToken"];
 								fqdn = postData["fqdn"];
+								logger.info(`authenticating for ${fqdn}`);
 								var authServer = postData["authServer"];
 								if (!authToken) {
 									status = 400;

@@ -48,7 +48,7 @@ function createPublicKeyPinningHeader(edgeFqdn, pinAtom, pinDeveloper){
 
 	var edgeHash = require('crypto').createHash('sha256').update(edgeCertKeyDer).digest("base64");
 	var atomHash = require('crypto').createHash('sha256').update(atomCertDer).digest("base64");
-	console.log(edgeHash);
+	//console.log(edgeHash);
 	return 'pin-sha256="' + edgeHash + '";pin-sha256="'+ atomHash +'"; max-age=315000';
 
 };

@@ -9,7 +9,7 @@ const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 
 const AuthorizationAtomFqdn = "hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net";
 const AuthenticationAtomFqdn = "jaclmjhdflzibbm1.w3ndpqy0sxf9zpjy.v1.beameio.net";
-
+const InitFirstRemoteEdgeClient = true;
 /** @const {String} **/
 var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
@@ -96,6 +96,7 @@ var AppModules = {
 	"UnitTest": "UnitTest",
 	"BaseHttpsServer": "BaseHttpsServer",
 	"SNIServer": "SNIServer",
+	"BeameSDKlauncher": "BeameSDKlauncher",
 	"ProxyClient": "ProxyClient"
 };
 
@@ -182,5 +183,6 @@ module.exports = {
 	AuthorizationAtomFqdn,
 	AuthenticationAtomFqdn,
 	PKsFileName,
-	CertEndpoint
+	CertEndpoint,
+	InitFirstRemoteEdgeClient
 };

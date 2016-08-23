@@ -99,7 +99,7 @@ function registerHost(module, callback, edge_metadata, error, payload) {
 						dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, function (error) {
 							if (!error) {
 								logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registered, remoteClientHostname);
-								callback(null, {"message": `Remote edge client registered on ${remoteClientHostname}`});
+								callback(null, {"hostname": `${remoteClientHostname}`});
 							}
 							else {
 								logger.error('Remote client creation failed at getting certs');

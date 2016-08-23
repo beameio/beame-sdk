@@ -32,7 +32,6 @@ function runSampleChat(hostname) {
 		
 		appExpress.use(function(req, resp, next){
 			resp.setHeader( 'Public-Key-Pins' , header);
-			console.log(pinning);
 			next();
 		});
 		
@@ -42,9 +41,9 @@ function runSampleChat(hostname) {
 		var serveIndex = require('serve-index');
 		
 		if (hostname.indexOf(".l.") > 0)
-			logger.info(`Server started on https://${hostname}:${app.address().port} this is an address on local network`);
+			logger.info(`\nServer started on local address: \nhttps://${hostname}:${app.address().port} \n`);
 		else
-			logger.info(`Server started on https://${hostname} this is a publicly accessible address`);
+			logger.info(`\nServer started on publicly accessible address: \nhttps://${hostname} \n`);
 		
 		
 		appExpress.use('/shared', express.static(defaultSharedFolder));

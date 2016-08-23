@@ -279,7 +279,7 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 		certBody = fs.readFileSync(remoteCertPath);
 	} else {
 		var requestPath = config.CertEndpoint + '/' + fqdn + '/' + 'x509.pem';
-		logger.debug(`Getting certificate from ${requestPath}`);
+		logger.info(`Getting certificate from ${requestPath}`);
 		var response = request('GET', requestPath);
 		//noinspection JSUnresolvedFunction
 		certBody     = response.getBody() + "";
@@ -287,7 +287,7 @@ BeameStore.prototype.getRemoteCertificate = function (fqdn) {
 		//noinspection JSUnresolvedVariable
 		if (response.statusCode == 200) {
 			mkdirp(path.parse(remoteCertPath).dir);
-			logger.debug(`Saving file to ${remoteCertPath}`);
+			logger.info(`Saving cert to ${remoteCertPath}`);
 			fs.writeFileSync(remoteCertPath, certBody);
 		}
 	}
