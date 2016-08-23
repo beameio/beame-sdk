@@ -166,8 +166,10 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 									if (!token) {
 										status = 400;
 										response_data = buildErrorResponse(`Sign failed`);
+										logger.info('request sign failed');
 									}
 									else {
+										logger.info('request signed');
 										response_data = {"token": token};
 									}
 								}
