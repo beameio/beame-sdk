@@ -172,7 +172,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 	catch (error) {
 		onApiError(error);
 	}
-	
+
 };
 
 /**

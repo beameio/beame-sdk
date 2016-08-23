@@ -42,7 +42,7 @@ function runSampleChat(hostname) {
 		var serveIndex = require('serve-index');
 		
 		if (hostname.indexOf(".l.") > 0)
-			logger.info(`Server started on https://${hostname}:8443 this is an address on local network`);
+			logger.info(`Server started on https://${hostname}:${app.address().port} this is an address on local network`);
 		else
 			logger.info(`Server started on https://${hostname} this is a publicly accessible address`);
 		
