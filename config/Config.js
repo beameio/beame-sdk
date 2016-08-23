@@ -158,7 +158,7 @@ var AtomServerRequests = {
 	"SignAuthToken" : "signAuthToken"
 };
 
-var SNIServerPort = process.env.SNI_SERVER_PORT || 8443;
+var SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT<65536)? process.env.SNI_SERVER_PORT:0;// || 8443;
 
 module.exports = {
 	rootDir,
