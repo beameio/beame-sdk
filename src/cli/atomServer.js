@@ -156,21 +156,32 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 							isAuthorized = allowedAuthenticate();
 							if (isAuthorized) {
 								
-								var edgeClientFqdn = null;
-								if(postData["edge_fqdn"]){
-									edgeClientFqdn = postData["edge_fqdn"]
-								}
+								var local_ips = postData["local_ips"];
 								
-								edgeLocalClientServices.registerLocalEdgeClients(atom_fqdn, edgeClientFqdn, function (error, payload) {
-									if (!error) {
-										buildResponse(req, res, status, payload, method);
-										return;
+								if(!local_ips || typeof local_ips != Array){
+									status = 400;
+									response_data = buildErrorResponse("local_ips required");
+								}
+								else{
+									
+									var edgeClientFqdn = null;
+									
+									if(postData["edge_fqdn"]){
+										edgeClientFqdn = postData["edge_fqdn"]
 									}
 									
-									status = 400;
-									response_data = buildErrorResponse(error.message);
-									
-								});
+									edgeLocalClientServices.registerLocalEdgeClients(atom_fqdn, edgeClientFqdn, function (error, payload) {
+										if (!error) {
+											buildResponse(req, res, status, payload, method);
+											return;
+										}
+										
+										status = 400;
+										response_data = buildErrorResponse(error.message);
+										
+									});
+								}
+								
 							}
 							else {
 								status = 403;

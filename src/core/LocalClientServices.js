@@ -210,9 +210,10 @@ var LocalClientServices = function () {
  *
  * @param {String} atom_fqdn
  * @param {String|null} [edge_client_fqdn]
+ * @param {Array} local_ips
  * @param {Function} callback
  */
-LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn,  edge_client_fqdn, callback) {
+LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn,  edge_client_fqdn, local_ips,callback) {
 	
 	logger.debug("Call Register Edge Client", {"atom": atom_fqdn});
 	
@@ -221,32 +222,27 @@ LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn,  e
 		return;
 	}
 	
-	beameUtils.getLocalActiveInterfaces().then(function (addresses) {
-		var errorMessage = null,
-			isSuccess = true,
-			totalAddressesFound = addresses.length,
-			host_names = [];
-		
-		
-		for (var i = 0; i < totalAddressesFound; i++) {
-			registerLocalClient(atom_fqdn, addresses[i], edge_client_fqdn, _.bind(function (current, error, payload) {
-				if (error) {
-					errorMessage += (error + ';');
-					isSuccess = false;
-				}
-				else {
-					host_names.push(payload);
-				}
-				if (current + 1 == totalAddressesFound) {
-					isSuccess ? callback(null, host_names) : callback(errorMessage, null);
-				}
-				
-			}, null, i));
-		}
-		
-	}, function (error) {
-		callbacks(error, null);
-	})
+	var errorMessage = null,
+		isSuccess = true,
+		totalAddressesFound = local_ips.length,
+		host_names = [];
+	
+	
+	for (var i = 0; i < totalAddressesFound; i++) {
+		registerLocalClient(atom_fqdn, local_ips[i], edge_client_fqdn, _.bind(function (current, error, payload) {
+			if (error) {
+				errorMessage += (error + ';');
+				isSuccess = false;
+			}
+			else {
+				host_names.push(payload);
+			}
+			if (current + 1 == totalAddressesFound) {
+				isSuccess ? callback(null, host_names) : callback(errorMessage, null);
+			}
+			
+		}, null, i));
+	}
 	
 };
 

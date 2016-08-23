@@ -38,7 +38,7 @@ function onError (error) {
 	callback(error, null);
 }
 
-function registerHost(module,error, payload){
+function registerHost(module, callback, edge_metadata, error, payload){
 	
 	var edgeClientDir, metadata = {};
 	
@@ -138,8 +138,24 @@ function registerHost(module,error, payload){
 		return onError(error);
 	}
 	
-	metadata = payload.body;
-	remoteClientHostname = payload.body.hostname;
+	metadata = edge_metadata || payload.body;
+	remoteClientHostname = metadata.hostname;
+	var payload_keys = [], level;
+	
+	switch (module){
+		case config.AppModules.RemoteClient:
+			payload_keys = config.ResponseKeys.EdgeClientResponseKeys;
+			level = metadata.level;
+			break;
+		case config.AppModules.LocalClient:
+			payload_keys = config.ResponseKeys.LocalClientResponseKeys;
+			//TODO hack , before .beame becomes flat
+			level = config.AppModules.RemoteClient;
+			break;
+		default:
+			return onError("Invalid Edge client type");
+	}
+	
 	
 	logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registering, remoteClientHostname);
 	
@@ -147,7 +163,7 @@ function registerHost(module,error, payload){
 	
 	dataServices.createDir(edgeClientDir);
 	
-	dataServices.savePayload(edgeClientDir, metadata, config.ResponseKeys.EdgeClientResponseKeys, module, function (error) {
+	dataServices.savePayload(edgeClientDir, metadata, payload_keys, level, function (error) {
 		if (error) {
 			return onError(error);
 		}
@@ -176,12 +192,20 @@ RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge
 			return onError(error);
 		}
 		
-		payload.forEach(metadata=>{
-			registerHost(config.AppModules.LocalClient,metadata);
+		payload.body.forEach(metadata=>{
+			registerHost(config.AppModules.LocalClient,callback,metadata,null,null);
 		});
 	};
 	
-	provisionApi.postRequest(authenticationAtomUri, `{"method":"${config.AtomServerRequests.GetHostsForLocalClients}","edge_fqdn":"${edge_client_fqdn}"}`, onHostsReceived);
+	
+	beameUtils.getLocalActiveInterfaces().then(function (addresses) {
+		provisionApi.postRequest(authenticationAtomUri, `{"method":"${config.AtomServerRequests.GetHostsForLocalClients}","edge_fqdn":"${edge_client_fqdn}","local_ips":${addresses}`, onHostsReceived);
+		
+	}, function (error) {
+		callbacks(error, null);
+	})
+	
+	
 };
 
 /**
@@ -300,7 +324,7 @@ RemoteClientServices.prototype.createEdgeClient = function (callback, authorizat
 	// 	});
 	// };
 	
-	provisionApi.postRequest(authenticationAtomUri, `{"method":"${config.AtomServerRequests.GetHost}"}`, _.bind(registerHost, null, config.AppModules.RemoteClient));
+	provisionApi.postRequest(authenticationAtomUri, `{"method":"${config.AtomServerRequests.GetHost}"}`, _.bind(registerHost, null, config.AppModules.RemoteClient, callback, null));
 };
 
 module.exports = RemoteClientServices;
