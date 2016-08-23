@@ -230,8 +230,13 @@ LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn, ed
 	
 	
 	for (var i = 0; i < totalAddressesFound; i++) {
+		
+		logger.info(`Calling Local Edge Client registered for ${local_ips[i]}`);
+		
 		registerLocalClient(atom_fqdn, local_ips[i], edge_client_fqdn, function (error, payload) {
+			
 			logger.info(`Local Edge Client registered with payload ${JSON.stringify(payload)}  and error ${JSON.stringify(error)}`, {"atom": atom_fqdn});
+			
 			cnt++;
 			
 			if (error) {
