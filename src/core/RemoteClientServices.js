@@ -194,11 +194,13 @@ RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge
 			return onError(error, callback);
 		}
 		
-		var local_ips = payload.body;
-		var errorMessage = null,
+		var local_ips = payload.body,
+			errorMessage = null,
 			isSuccess = true,
 			host_names = [],
 			cnt = 0;
+		
+		logger.info(`Received hostnames for local ips ${JSON.stringify(local_ips)}`);
 		
 		function onHostRegistered(error, data) {
 			cnt++;
@@ -228,7 +230,12 @@ RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge
 	
 	
 	beameUtils.getLocalActiveInterfaces().then(function (addresses) {
-		provisionApi.postRequest(authenticationAtomUri, `{"method":"${config.AtomServerRequests.GetHostsForLocalClients}","local_ips":"${addresses.join()}","edge_fqdn":"${edge_client_fqdn}"}`, onHostsReceived);
+		
+		var local_ips = addresses.join();
+		
+		logger.info(`Requesting hostnames for local ips ${local_ips.toString()}`);
+		
+		provisionApi.postRequest(authenticationAtomUri, `{"method":"${config.AtomServerRequests.GetHostsForLocalClients}","local_ips":"${local_ips}","edge_fqdn":"${edge_client_fqdn}"}`, onHostsReceived);
 		
 	}, function (error) {
 		callbacks(error, null);
