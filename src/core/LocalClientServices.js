@@ -213,7 +213,7 @@ var LocalClientServices = function () {
  * @param {Array} local_ips
  * @param {Function} callback
  */
-LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn,  edge_client_fqdn, local_ips,callback) {
+LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn, edge_client_fqdn, local_ips, callback) {
 	
 	logger.debug("Call Register Edge Client", {"atom": atom_fqdn});
 	
@@ -225,11 +225,13 @@ LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn,  e
 	var errorMessage = null,
 		isSuccess = true,
 		totalAddressesFound = local_ips.length,
-		host_names = [];
+		host_names = [],
+		cnt = 0;
 	
 	
 	for (var i = 0; i < totalAddressesFound; i++) {
-		registerLocalClient(atom_fqdn, local_ips[i], edge_client_fqdn, _.bind(function (current, error, payload) {
+		registerLocalClient(atom_fqdn, local_ips[i], edge_client_fqdn, function (error, payload) {
+			cnt++;
 			if (error) {
 				errorMessage += (error + ';');
 				isSuccess = false;
@@ -237,11 +239,11 @@ LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn,  e
 			else {
 				host_names.push(payload);
 			}
-			if (current + 1 == totalAddressesFound) {
+			
+			if (cnt == totalAddressesFound) {
 				isSuccess ? callback(null, host_names) : callback(errorMessage, null);
 			}
-			
-		}, null, i));
+		});
 	}
 	
 };
