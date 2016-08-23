@@ -170,7 +170,12 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 										edgeClientFqdn = postData["edge_fqdn"]
 									}
 									
-									edgeLocalClientServices.registerLocalEdgeClients(atom_fqdn, edgeClientFqdn, local_ips.split(','),function (error, payload) {
+									var ipsArray = local_ips.split(',');
+									
+									logger.info(`Calling registerLocalEdgeClients for ${ipsArray}`);
+									
+									edgeLocalClientServices.registerLocalEdgeClients(atom_fqdn, edgeClientFqdn, ipsArray,function (error, payload) {
+										logger.info(`registerLocalEdgeClients received payload ${JSON.stringify(payload)}  and error ${JSON.stringify(error)}`);
 										if (!error) {
 											buildResponse(req, res, status, payload, method);
 											return;
