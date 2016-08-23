@@ -19,6 +19,7 @@ var atomType = config.AtomType.Default;
 
 var atomServices = new (require('../../src/core/AtomServices'))();
 var edgeClientServices = new (require('../../src/core/EdgeClientServices'))();
+var edgeLocalClientServices = new (require('../../src/core/LocalClientServices'))();
 var crypto = require('../../src/cli/crypto');
 
 var allowedAuthenticate = function () {
@@ -145,6 +146,31 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 									response_data = buildErrorResponse(error.message);
 									
 								}, true);
+							}
+							else {
+								status = 403;
+								response_data = buildErrorResponse(`Action forbidden for ${atom_fqdn}`);
+							}
+							break;
+						case config.AtomServerRequests.GetHostsForLocalClients:
+							isAuthorized = allowedAuthenticate();
+							if (isAuthorized) {
+								
+								var edgeClientFqdn = null;
+								if(postData["edge_fqdn"]){
+									edgeClientFqdn = postData["edge_fqdn"]
+								}
+								
+								edgeLocalClientServices.registerLocalEdgeClients(atom_fqdn, edgeClientFqdn, function (error, payload) {
+									if (!error) {
+										buildResponse(req, res, status, payload, method);
+										return;
+									}
+									
+									status = 400;
+									response_data = buildErrorResponse(error.message);
+									
+								});
 							}
 							else {
 								status = 403;
