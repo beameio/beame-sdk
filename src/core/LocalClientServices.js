@@ -215,7 +215,7 @@ var LocalClientServices = function () {
  */
 LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn, edge_client_fqdn, local_ips, callback) {
 	
-	logger.debug("Call Register Edge Client", {"atom": atom_fqdn});
+	logger.info(`Call Register Local Edge Clients for ${JSON.stringify(local_ips)}`, {"atom": atom_fqdn});
 	
 	if (_.isEmpty(atom_fqdn)) {
 		callback(logger.formatErrorMessage("Create Edge Client => Atom fqdn required", module_name), null);
@@ -231,7 +231,9 @@ LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn, ed
 	
 	for (var i = 0; i < totalAddressesFound; i++) {
 		registerLocalClient(atom_fqdn, local_ips[i], edge_client_fqdn, function (error, payload) {
+			logger.info(`Local Edge Client registered with payload ${JSON.stringify(payload)}  and error ${JSON.stringify(error)}`, {"atom": atom_fqdn});
 			cnt++;
+			
 			if (error) {
 				errorMessage += (error + ';');
 				isSuccess = false;
@@ -241,6 +243,7 @@ LocalClientServices.prototype.registerLocalEdgeClients = function (atom_fqdn, ed
 			}
 			
 			if (cnt == totalAddressesFound) {
+				logger.info(`registerLocalEdgeClients returning ${JSON.stringify(host_names)}`);
 				isSuccess ? callback(null, host_names) : callback(errorMessage, null);
 			}
 		});
