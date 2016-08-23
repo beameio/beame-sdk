@@ -96,9 +96,9 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		var errMsg = logger.formatErrorMessage(payload.Message || payload.body.message || "Provision Api response error", module_name, {
+		var errMsg = logger.formatErrorMessage(payload.Message || (payload.body && payload.body.message) || "Provision Api response error", module_name, {
 			"status": response.statusCode,
-			"message": payload.Message || payload.body.message || payload
+			"message": payload.Message || (payload.body && payload.body.message) || payload
 		}, config.MessageCodes.ApiRestError);
 		
 		callback && callback(errMsg, null);
@@ -172,7 +172,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 	catch (error) {
 		onApiError(error);
 	}
-
+	
 };
 
 /**
@@ -277,13 +277,13 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
 	this.options = this.options || {};
 	
 	var options = _.extend(this.options, {form: apiData.postData});
-
+	
 	if (signature) {
 		this.options.headers = {
 			"AuthToken": signature
 		};
 	}
-
+	
 	var apiEndpoint = this.provApiEndpoint + apiData.api;
 	logger.debug(`Api call to : ${apiEndpoint}`);
 	var _method = method || 'POST';
@@ -308,12 +308,11 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
  * @param {Object} postData
  * @param {Function} callback
  */
-ProvApiService.prototype.postRequest = function (url ,postData, callback) {
+ProvApiService.prototype.postRequest = function (url, postData, callback) {
 	var options = _.extend(this.options || {}, {"form": postData});
 	options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
 	postToProvisionApi(url, options, "custom_post", provisionSettings.RetryAttempts, 1000, callback);
 };
-
 
 
 module.exports = ProvApiService;

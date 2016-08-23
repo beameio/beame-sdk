@@ -17,7 +17,7 @@ var apiEdgeClientActions = require('../../config/ApiConfig.json').Actions.EdgeCl
 var apiLocalEdgeClientActions = require('../../config/ApiConfig.json').Actions.LocalClient;
 
 
-var authenticationAtomFqdn, authenticationAtomUri, authorizationAtomFqdn, authorizationAtomUri, remoteClientHostname;
+var authenticationAtomFqdn, authenticationAtomUri, authorizationAtomFqdn, authorizationAtomUri;
 
 var https = require('https');
 
@@ -25,7 +25,7 @@ function toHttpsUri(fqdn) {
 	return "https://" + fqdn;
 }
 
-function initServersUris(authorization_atom_fqdn, authentication_atom_fqdn){
+function initServersUris(authorization_atom_fqdn, authentication_atom_fqdn) {
 	authenticationAtomFqdn = authentication_atom_fqdn || config.AuthenticationAtomFqdn;
 	authenticationAtomUri = toHttpsUri(authenticationAtomFqdn);
 	
@@ -38,14 +38,32 @@ function initServersUris(authorization_atom_fqdn, authentication_atom_fqdn){
  * @param {Object} error
  * @param {Function} callback
  */
-function onError (error,callback) {
+function onError(error, callback) {
 	logger.error(error.message, error);
 	callback(error, null);
 }
 
-function registerHost(module, callback, edge_metadata, error, payload){
+function registerHost(module, callback, edge_metadata, error, payload) {
 	
-	var edgeClientDir, metadata = {};
+	var edgeClientDir,
+		metadata = edge_metadata || payload.body,
+		remoteClientHostname = metadata.hostname,
+		payload_keys = [];
+	
+	if (error) {
+		return onError(error, callback);
+	}
+	
+	switch (module) {
+		case config.AppModules.RemoteClient:
+			payload_keys = config.ResponseKeys.EdgeClientResponseKeys;
+			break;
+		case config.AppModules.LocalClient:
+			payload_keys = config.ResponseKeys.LocalClientResponseKeys;
+			break;
+		default:
+			return onError("Invalid Edge client type", callback);
+	}
 	
 	var getCerts = function (signature) {
 		dataServices.createCSR(edgeClientDir, remoteClientHostname).then(
@@ -59,7 +77,7 @@ function registerHost(module, callback, edge_metadata, error, payload){
 				
 				var getCertsUrl;
 				
-				switch (module){
+				switch (module) {
 					case config.AppModules.RemoteClient:
 						getCertsUrl = apiEdgeClientActions.GetRemoteCert.endpoint;
 						break;
@@ -67,7 +85,7 @@ function registerHost(module, callback, edge_metadata, error, payload){
 						getCertsUrl = apiLocalEdgeClientActions.GetRemoteCert.endpoint;
 						break;
 					default:
-						return onError("Invalid Edge client type",callback);
+						return onError("Invalid Edge client type", callback);
 				}
 				
 				var apiData = beameUtils.getApiData(getCertsUrl, postData, true);
@@ -81,9 +99,11 @@ function registerHost(module, callback, edge_metadata, error, payload){
 						dataServices.saveCerts(beameUtils.makePath(edgeClientDir, '/'), payload, function (error) {
 							if (!error) {
 								logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registered, remoteClientHostname);
+								callback(null, {"message": `Remote edge client registered on ${remoteClientHostname}`});
 							}
 							else {
 								logger.error('Remote client creation failed at getting certs');
+								callback(error, null);
 							}
 						});
 					}
@@ -139,36 +159,13 @@ function registerHost(module, callback, edge_metadata, error, payload){
 		});
 	};
 	
-	if (error) {
-		return onError(error, callback);
-	}
-	
-	metadata = edge_metadata || payload.body;
-	remoteClientHostname = metadata.hostname;
-	var payload_keys = [], level;
-	
-	switch (module){
-		case config.AppModules.RemoteClient:
-			payload_keys = config.ResponseKeys.EdgeClientResponseKeys;
-			level = metadata.level;
-			break;
-		case config.AppModules.LocalClient:
-			payload_keys = config.ResponseKeys.LocalClientResponseKeys;
-			//TODO hack , before .beame becomes flat
-			level = config.AppModules.RemoteClient;
-			break;
-		default:
-			return onError("Invalid Edge client type", callback);
-	}
-	
-	
 	logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registering, remoteClientHostname);
 	
 	edgeClientDir = beameUtils.makePath(config.localCertsDir, remoteClientHostname + '/');
 	
 	dataServices.createDir(edgeClientDir);
 	
-	dataServices.savePayload(edgeClientDir, metadata, payload_keys, level, function (error) {
+	dataServices.savePayload(edgeClientDir, metadata, payload_keys, config.AppModules.RemoteClient, function (error) {
 		if (error) {
 			return onError(error, callback);
 		}
@@ -187,7 +184,7 @@ var RemoteClientServices = function () {
  * @param {String} [authorization_atom_fqdn]
  * @param {String} [authentication_atom_fqdn]
  */
-RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge_client_fqdn ,authorization_atom_fqdn, authentication_atom_fqdn) {
+RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge_client_fqdn, authorization_atom_fqdn, authentication_atom_fqdn) {
 	
 	initServersUris(authorization_atom_fqdn, authentication_atom_fqdn);
 	
@@ -197,9 +194,36 @@ RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge
 			return onError(error, callback);
 		}
 		
-		payload.body.forEach(metadata=>{
-			registerHost(config.AppModules.LocalClient,callback,metadata,null,null);
-		});
+		var local_ips = payload.body;
+		var errorMessage = null,
+			isSuccess = true,
+			host_names = [],
+			cnt = 0;
+		
+		function onHostRegistered(error, data) {
+			cnt++;
+			if (error) {
+				errorMessage += (error + ';');
+				isSuccess = false;
+			}
+			else {
+				host_names.push(data);
+			}
+			
+			if (cnt == local_ips.length) {
+				isSuccess ? callback(null, host_names) : callback(errorMessage, null);
+			}
+		}
+		
+		for (var i = 0; i < local_ips.length; i++) {
+			logger.info(`create remote local edge client ${JSON.stringify(local_ips[i])}`);
+			registerHost(config.AppModules.LocalClient, onHostRegistered, local_ips[i], null, null);
+		}
+		//
+		// payload.body.forEach(metadata=>{
+		// 	logger.info(`create remote local edge client ${JSON.stringify(metadata)}`);
+		// 	registerHost(config.AppModules.LocalClient,callback,metadata,null,null);
+		// });
 	};
 	
 	
