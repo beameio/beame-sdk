@@ -158,7 +158,7 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 								
 								var local_ips = postData["local_ips"];
 								
-								if(!local_ips || typeof local_ips != Array){
+								if(!local_ips){
 									status = 400;
 									response_data = buildErrorResponse("local_ips required");
 								}
@@ -170,7 +170,7 @@ function startAtomBeameNode(atomFqdn, requiredLevel) {
 										edgeClientFqdn = postData["edge_fqdn"]
 									}
 									
-									edgeLocalClientServices.registerLocalEdgeClients(atom_fqdn, edgeClientFqdn, local_ips,function (error, payload) {
+									edgeLocalClientServices.registerLocalEdgeClients(atom_fqdn, edgeClientFqdn, local_ips.split(','),function (error, payload) {
 										if (!error) {
 											buildResponse(req, res, status, payload, method);
 											return;
