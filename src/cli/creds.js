@@ -363,12 +363,13 @@ function createLocalClient(atomFqdn, edgeClientFqdn, callback) {
  * Create Edge Client under Remote Atom
  * @public
  * @method Creds.createRemoteClient
- * @param {String} atomFqdn
+ * @param {String|null} [authorizationFqdn]
+ * @param {String|null} [authenticationFqdn]
  * @param {Function} callback
- */
-function createRemoteClient(atomFqdn, callback) {
-	logger.info(`Creating client for remote Atom ${atomFqdn}`);
-	remoteClientServices.createEdgeClient(atomFqdn, callback);
+ * */
+function createRemoteClient(authorizationFqdn, authenticationFqdn, callback) {
+	logger.info(`Creating client for remote Atom`);
+	remoteClientServices.createEdgeClient(callback, authorizationFqdn, authenticationFqdn);
 }
 
 /**

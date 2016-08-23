@@ -28,10 +28,10 @@ var RemoteClientServices = function () {
 /**
  *
  * @param {Function} callback
- * @param {String} [authentication_atom_fqdn]
  * @param {String} [authorization_atom_fqdn]
+ * @param {String} [authentication_atom_fqdn]
  */
-RemoteClientServices.prototype.createEdgeClient = function (callback, authentication_atom_fqdn, authorization_atom_fqdn) {
+RemoteClientServices.prototype.createEdgeClient = function (callback, authorization_atom_fqdn, authentication_atom_fqdn) {
 	
 	authenticationAtomFqdn = authentication_atom_fqdn || config.AuthenticationAtomFqdn;
 	authenticationAtomUri = toHttpsUri(authenticationAtomFqdn);

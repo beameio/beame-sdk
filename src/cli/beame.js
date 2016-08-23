@@ -34,6 +34,8 @@ var parametersSchema = {
 	'authSrvFqdn':	  {required: true},
 	'targetFqdn':     {required: true},
 	'file':           {required: false},
+	'authorizationFqdn':{required: false},
+	'authenticationFqdn':{required: false},
 	'pk':             {required: true},
 	'requiredLevel':  {required: false, options: ['Default','AuthenticationServer','AuthorizationServer']},
 	'count':          {required: false, default: 1},
