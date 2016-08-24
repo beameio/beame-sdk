@@ -45,6 +45,7 @@ module.exports = {
 	//revoke,
 	shred,
 	createAtom,
+	updateAtomName,
 	updateAtomType,
 	importPKtoAtom,
 	createEdgeClient,
@@ -318,16 +319,37 @@ function createAtom(developerFqdn, atomName, callback) {
 createAtom.toText = lineToText;
 
 /**
- * Update Atom
+ * Update Atom Name
  * @public
- * @method Creds.updateAtom
+ * @method Creds.updateAtomName
+ * @param {String} atomFqdn
+ * @param {String} atomName
+ * @param {Function} callback
+ */
+function updateAtomName(atomFqdn, atomName, callback) {
+	logger.info(`Updating atom ${atomFqdn} name to ${atomName} `);
+	atomServices.updateAtom(atomFqdn, atomName, callback);
+
+}
+updateAtomName.toText = lineToText;
+
+/**
+ * Update Atom Type
+ * @public
+ * @method Creds.updateAtomType
  * @param {String} atomFqdn
  * @param {String} atomType
  * @param {Function} callback
  */
 function updateAtomType(atomFqdn, atomType, callback) {
+	
+	if(config.AtomType[atomType] == null){
+		logger.fatal('Invalid atom type');
+	}
+	
 	logger.info(`Updating atom ${atomFqdn} to type ${atomType} `);
-	atomServices.updateType(atomFqdn, atomType, callback);
+	
+	atomServices.updateType(atomFqdn, config.AtomType[atomType], callback);
 
 }
 updateAtomType.toText = lineToText;
