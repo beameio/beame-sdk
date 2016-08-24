@@ -218,11 +218,6 @@ RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge
 			}
 		}
 
-		// for (var i = 0; i < local_ips.length; i++) {
-		// 	logger.info(`create remote local edge client ${JSON.stringify(local_ips[i])}`);
-		// 	registerHost(config.AppModules.LocalClient, onHostRegistered, local_ips[i], null, null);
-		// }
-		//
 
 		local_ips.forEach(metadata=>{
 			registerHost(config.AppModules.LocalClient,onHostRegistered,metadata,null,null);
