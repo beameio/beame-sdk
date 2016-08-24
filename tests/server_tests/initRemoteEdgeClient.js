@@ -25,7 +25,7 @@ if(config.InitFirstRemoteEdgeClient){
 				console.log("                    /************************************************************\\");
 				console.log("              /**********Bbbb   EEEEE     A******M       M  EEEEE ***<^^>*** ooo *******\\");
 				console.log("         /***************B   B  E        A A*****M*M   M*M  E    ********* oo   oo ***********\\");
-				console.log("     <==*****************B==B   EEEE    A   A****M   M   M  EEEE ****i  i oo     oo ***********==>");
+				console.log("     <==@@@@*************B==B   EEEE    A   A****M   M   M  EEEE ****i  i oo     oo *******@@@@==>");
 				console.log("             \\***********B    B*E      AAAAAAA***M       M  E    ****i  i* oo   oo ******/");
 				console.log("              \\**********Bbbbb  EEEEE*A       A**M       M**EEEEE*@**i_ i*** ooo *******/");
 				console.log("                    \\************************************************************/");
