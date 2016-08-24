@@ -237,9 +237,11 @@ RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge
 
 		var ipsStr = local_ips.join();
 
-		logger.info(`Requesting hostnames for local ips ${ipsStr.toString()}`);
+		var data = {"method":config.AtomServerRequests.GetHostsForLocalClients,
+			"local_ips":ipsStr,
+			"edge_fqdn":edge_client_fqdn};
 
-		provisionApi.postRequest(authenticationAtomUri, `{"method":"${config.AtomServerRequests.GetHostsForLocalClients}","local_ips":"${local_ips}","edge_fqdn":"${edge_client_fqdn}"}`, onHostsReceived);
+		provisionApi.postRequest(authenticationAtomUri, JSON.stringify(data), onHostsReceived);
 	};
 
 	if (ips) {
