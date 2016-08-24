@@ -27,13 +27,15 @@ var defaultPublicDir    = path.resolve(__dirname, "../../examples/public");
 function runSampleChat(hostname) {
 	beameSDK.BaseHttpsServer.SampleBeameServer(hostname, null, appExpress, function (data, app) {
 		var fqdn = hostname;
-		var pinning = require('./pinning');
-		var header = pinning.createPublicKeyPinningHeader(fqdn, true, true);
-		
-		appExpress.use(function(req, resp, next){
-			resp.setHeader( 'Public-Key-Pins' , header);
-			next();
-		});
+		if(config.PinAtomPKbyDefault){
+			var pinning = require('./pinning');
+			var header = pinning.createPublicKeyPinningHeader(fqdn, true, true);
+
+			appExpress.use(function(req, resp, next){
+				resp.setHeader( 'Public-Key-Pins' , header);
+				next();
+			});
+		}
 		
 		//noinspection JSUnresolvedFunction
 		appExpress.use(express.static(defaultPublicDir));
