@@ -12,7 +12,7 @@ var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 
 var commands = {};
-_.each(['creds', 'servers', 'atomServer', 'crypto', 'system', 'pinning'], function (cmdName) {
+_.each(['creds', 'servers', 'atomServer', 'crypto', 'system', 'pinning','tunnel'], function (cmdName) {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 
@@ -43,7 +43,8 @@ var parametersSchema = {
 	'localIp':        {required: true},
 	'edgeFqdn':       {required: true },
 	'pinAtom': 		  {required: true, options: ['true', 'false'], default: 'true'},
-	'pinDeveloper':   {required: true, options: ['true', 'false'], default: 'true'}
+	'pinDeveloper':   {required: true, options: ['true', 'false'], default: 'true'},
+	'localPort':      {required:true}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
