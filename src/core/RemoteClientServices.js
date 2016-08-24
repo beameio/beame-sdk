@@ -218,15 +218,15 @@ RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge
 			}
 		}
 
-		for (var i = 0; i < local_ips.length; i++) {
-			logger.info(`create remote local edge client ${JSON.stringify(local_ips[i])}`);
-			registerHost(config.AppModules.LocalClient, onHostRegistered, local_ips[i], null, null);
-		}
+		// for (var i = 0; i < local_ips.length; i++) {
+		// 	logger.info(`create remote local edge client ${JSON.stringify(local_ips[i])}`);
+		// 	registerHost(config.AppModules.LocalClient, onHostRegistered, local_ips[i], null, null);
+		// }
 		//
-		// payload.body.forEach(metadata=>{
-		// 	logger.info(`create remote local edge client ${JSON.stringify(metadata)}`);
-		// 	registerHost(config.AppModules.LocalClient,callback,metadata,null,null);
-		// });
+
+		local_ips.forEach(metadata=>{
+			registerHost(config.AppModules.LocalClient,onHostRegistered,metadata,null,null);
+		});
 	};
 
 	/**
@@ -239,11 +239,7 @@ RemoteClientServices.prototype.createLocalEdgeClients = function (callback, edge
 
 		logger.info(`Requesting hostnames for local ips ${ipsStr.toString()}`);
 
-		var data = {"method":config.AtomServerRequests.GetHostsForLocalClients,
-		            "local_ips":ipsStr,
-					"edge_fqdn":edge_client_fqdn};
-
-		provisionApi.postRequest(authenticationAtomUri, data, onHostsReceived);
+		provisionApi.postRequest(authenticationAtomUri, `{"method":"${config.AtomServerRequests.GetHostsForLocalClients}","local_ips":"${local_ips}","edge_fqdn":"${edge_client_fqdn}"}`, onHostsReceived);
 	};
 
 	if (ips) {
