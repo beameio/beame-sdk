@@ -80,7 +80,7 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 		}
 
 		case "atom": {
-			queryString = sprintf("[].atom[?((hostname=='%s') || (name=='%s')) && (level=='atom')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
+			queryString = sprintf("[?((hostname=='%s') || (name =='%s' )) && (level=='atom')] || [].atom[?((hostname=='%s') || (name=='%s')) && (level=='atom')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
 
@@ -124,7 +124,7 @@ BeameStore.prototype.searchAtoms = function (name) {
 	var returnDict = [];
 
 	_.each(names, _.bind(function (item) {
-		var qString = sprintf("[].atom[?hostname == '%s'] | []", item.hostname);
+		var qString = sprintf("[?((hostname=='%s')) && (level=='atom')] || [].atom[?((hostname=='%s'))]", item.hostname);
 		returnDict  = returnDict.concat(jmespath.search(this.beameStore, qString));
 	}, this));
 
