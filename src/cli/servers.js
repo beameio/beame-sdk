@@ -171,24 +171,41 @@ function launchFirstChat(sharedFolder) {
 	}
 }
 
-function runShell(path2Script) {
-	var spawn = require("child_process").spawn, child;
+function runShell(path2Script,fqdn) {
 	
-	child = spawn("powershell.exe", [`"${path2Script}"`]);
+	var beameStore    = new (require('../../src/services/BeameStore'))();
 	
-	child.stdout.on("data", function (data) {
-		console.log("Powershell Data: " + data);
+	var entity = beameStore.search(fqdn)[0];
+	if(!entity)
+		logger.fatal('fqdn folder not found');
+	
+	var path2Pfx = path.join(entity.path ,config.CertFileNames.PKCS12);
+	var path2Pwd = path.join(entity.path ,config.CertFileNames.PWD);
+		
+	var exec = require("child_process").execFile, child;
+	//
+	// var script = `"${path.resolve(__dirname, path2Script )} -$pathToPfx  ${path2Pfx}  -$pathToPfxPwd ${path2Pwd}  \"Default Web Site\""`;
+	// console.log(script);
+	
+	
+	var args = [path.resolve(__dirname, path2Script ),path2Pfx,path2Pwd,'local.lfe.com',fqdn];
+	var cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -ArgumentList '-ExecutionPolicy RemoteSigned -File \"%1\"' -Verb RunAs";
+
+	console.log(`args ${args}`);
+
+	
+	exec(cmd,args, (error, stdout, stderr) => {
+		if (stderr) {
+			console.error('stderr', stderr);
+			throw error;
+		}
+		
+		console.log('finished....',stdout);
 	});
 	
-	child.stderr.on("data", function (data) {
-		console.log("Powershell Errors: " + data);
-	});
-	
-	child.on("exit", function () {
-		console.log("Powershell Script finished");
-	});
-	
-	child.stdin.end();
+	// var creds = require('../../src/cli/tunnel');
+	//
+	// creds.httpsTunnel(fqdn,443);
 }
 
 module.exports = {
