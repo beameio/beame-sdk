@@ -190,7 +190,7 @@ BeameStore.prototype.searchItemAndParentFolderPath = function (fqdn) {
 			return {};
 		if (item.parent_fqdn != null) {
 			var parent = this.search(item.parent_fqdn)[0];
-			return {path: item.path, parent_path: parent.path};
+			return parent  ? {path: item.path, parent_path: parent.path} : {path: item.path};
 		}
 		return {path: item.path};
 	}
