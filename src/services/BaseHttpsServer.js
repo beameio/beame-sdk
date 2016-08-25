@@ -77,7 +77,7 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		}
 
 		//noinspection JSUnresolvedVariable
-		if (server_entity.hostname.indexOf(".r.") > 0 || server_entity.level === "atom") {
+		if (server_entity.level === "edgeclient" || server_entity.level === "remoteclient" || server_entity.level === "atom") {
 
 			if (!server_entity.edgeHostname) {
 				logger.fatal('Edge server hostname required');

@@ -643,7 +643,7 @@ AtomServices.prototype.getStats = function (atomHostname, callback) {
  * @param {Function} callback
  */
 AtomServices.prototype.getCreds = function (atomHostname, callback) {
-	var devDir, atomDir;
+	var atomDir;
 
 	/*---------- private callbacks -------------------*/
 	function onRequestValidated() {
@@ -667,9 +667,8 @@ AtomServices.prototype.getCreds = function (atomHostname, callback) {
 	function onAtomPathReceived(data) {
 
 		atomDir = data['path'];
-		devDir = data['parent_path'];
-
-		isRequestValid(atomHostname, devDir, atomDir, false).then(onRequestValidated).catch(beameUtils.onValidationError.bind(null, callback));
+		
+		onRequestValidated();
 	}
 
 	beameUtils.findHostPathAndParentAsync(atomHostname).then(onAtomPathReceived).catch(beameUtils.onSearchFailed.bind(null, callback, PATH_MISMATCH_DEFAULT_MSG));
