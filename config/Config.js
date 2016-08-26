@@ -15,10 +15,10 @@ const PinAtomPKbyDefault = false;
 var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
 /** @const {String} **/
-var localCertsDir = path.join(rootDir, 'v1', 'local');
+var localCertsDir = path.join(rootDir, 'v2', 'local');
 
 /** @const {String} **/
-var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
+var remoteCertsDir = path.join(rootDir, 'v2', 'remote');
 
 /** @const {String} **/
 var remotePKsDir = path.join(rootDir, 'pki');
@@ -61,6 +61,15 @@ var CertificateFiles = {
 	"PKCS12": "cert.pfx",
 	"PWD": "pwd.txt"
 };
+
+var CREDENTIAL_STATUS = { 
+	PRIVATE_KEY 	, 1 << 1,
+	CERT            , 1 << 2,
+	BEAME_ISSUED_CERT		: 1 << 3,
+	NON_BEAME_CERT 		: 1 << 4,
+	EMPTY_DIR             : 1 << 5,
+	DIR_NOTREAD           : 1 << 6
+}
 
 /**
  * Certificate response fields
