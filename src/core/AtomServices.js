@@ -373,7 +373,7 @@ AtomServices.prototype.updateType = function (atomHostname, type, callback) {
 AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callback) {
 	var fileContent = {};
 	var msg;
-	var PKsFile = beameUtils.makePath(config.remotePKsDir, config.PKsFileName);
+	var PKsFile = beameUtils.makePath(config.remotePKsDir[config.rootDirIndex], config.PKsFileName);
 	
 	try {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -417,7 +417,7 @@ AtomServices.prototype.importPKtoAtom = function (PKfilePath, authSrvFqdn, callb
  */
 AtomServices.prototype.readPKsFile = function (callback) {
 	var fileContent = {};
-	var PKsFile = beameUtils.makePath(config.remotePKsDir, config.PKsFileName);
+	var PKsFile = beameUtils.makePath(config.remotePKsDir[config.rootDirIndex], config.PKsFileName);
 	try {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		fileContent = JSON.parse(fs.readFileSync(PKsFile));

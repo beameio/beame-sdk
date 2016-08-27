@@ -169,7 +169,7 @@ DataServices.prototype.savePayload = function (dirPath, payload, keys, level, ca
 DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 	var self = this;
 	var errMsg;
-
+logger.info(`Saving certs to ${dirPath}`);
 	var saveCert = function (responseField, targetName, callback) {
 		if (!payload[responseField]) {
 			errMsg = logger.formatErrorMessage(`${responseField} missing in API response on ${dirPath}`, module_name, null, config.MessageCodes.ApiRestError);

@@ -1,30 +1,37 @@
 'use strict';
 var path = require('path');
-var os = require('os');
+var os   = require('os');
+var npmPrefix = require('npm-prefix');
 var home = os.homedir();
 
-const AuthServerEndPoint = "https://registration-staging.beameio.net";
+const AuthServerEndPoint = "https://registration.beameio.net";
 
-const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
+const CertEndpoint = "https://beameio-net-certs.s3.amazonaws.com";
 
-const AuthorizationAtomFqdn = "hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net";
-const AuthenticationAtomFqdn = "jaclmjhdflzibbm1.w3ndpqy0sxf9zpjy.v1.beameio.net";
+const AuthorizationAtomFqdn = "q42e67f142vaz8up.tr86t6ghqvoxtj516ku6krz3y8f6fm4b.v1.beameio.net";
+const AuthenticationAtomFqdn = "brfgbn2alitzkpkg.tr86t6ghqvoxtj516ku6krz3y8f6fm4b.v1.beameio.net";
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault = false;
+const beameStoreNdxRoot = 1;
+const beameStoreNdxHome = 0;
+const npmRootDir = npmPrefix();
+
+const certDirNdx = [beameStoreNdxHome, beameStoreNdxRoot];
+var rootDirIndex = 0;
 /** @const {String} **/
-var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
+var rootDir = [process.env.BEAME_DIR || path.join(home, '.beame'),path.join(npmRootDir, '.beame')];
 
 /** @const {String} **/
-var localCertsDir = path.join(rootDir, 'v2', 'local');
+var localCertsDir = [path.join(rootDir[beameStoreNdxHome], 'v1', 'local'), path.join(rootDir[beameStoreNdxRoot], 'v1', 'local')];
 
 /** @const {String} **/
-var remoteCertsDir = path.join(rootDir, 'v2', 'remote');
+var remoteCertsDir = [path.join(rootDir[beameStoreNdxHome], 'v1', 'remote'), path.join(rootDir[beameStoreNdxRoot], 'v1', 'remote')];
 
 /** @const {String} **/
-var remotePKsDir = path.join(rootDir, 'pki');
+var remotePKsDir = [path.join(rootDir[beameStoreNdxHome], 'pki'),path.join(rootDir[beameStoreNdxRoot], 'pki')];
 
 /** @const {String} **/
-var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
+var loadBalancerURL = process.env.BEAME_LB || "http://lb.beameio.net/";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";
@@ -37,15 +44,15 @@ var PKsFileName = "PKs.json";
  *  @enum {string}
  */
 var CertFileNames = {
-	"PRIVATE_KEY": "private_key.pem",
+	"PRIVATE_KEY":      "private_key.pem",
 	"TEMP_PRIVATE_KEY": "temp_private_key.pem",
-	"X509": "x509.pem",
-	"CA": "ca.pem",
-	"PKCS7": "pkcs7.pem",
-	"P7B": "p7b.cer",
-	"PKCS12": "cert.pfx",
-	"PWD": "pwd.txt",
-	"RECOVERY": "recovery"
+	"X509":             "x509.pem",
+	"CA":               "ca.pem",
+	"PKCS7":            "pkcs7.pem",
+	"P7B":              "p7b.cer",
+	"PKCS12":           "cert.pfx",
+	"PWD":              "pwd.txt",
+	"RECOVERY":         "recovery"
 };
 
 /**
@@ -53,16 +60,16 @@ var CertFileNames = {
  *  @enum {string}
  */
 var CertificateFiles = {
-	"PRIVATE_KEY": "private_key.pem",
-	"X509": "x509.pem",
-	"CA": "ca.pem",
-	"PKCS7": "pkcs7.pem",
-	"P7B": "p7b.cer",
-	"PKCS12": "cert.pfx",
-	"PWD": "pwd.txt"
+	"PRIVATE_KEY":      "private_key.pem",
+	"X509":             "x509.pem",
+	"CA":               "ca.pem",
+	"PKCS7":            "pkcs7.pem",
+	"P7B":              "p7b.cer",
+	"PKCS12":           "cert.pfx",
+	"PWD":              "pwd.txt"
 };
 
-var CREDENTIAL_STATUS = { 
+var CREDENTIAL_STATUS = {
 	PRIVATE_KEY 	, 1 << 1,
 	CERT            , 1 << 2,
 	BEAME_ISSUED_CERT		: 1 << 3,
@@ -76,9 +83,9 @@ var CREDENTIAL_STATUS = {
  *  @enum {string}
  */
 var CertResponseFields = {
-	"x509": "x509",
+	"x509":  "x509",
 	"pkcs7": "pkcs7",
-	"ca": "ca"
+	"ca":    "ca"
 };
 
 
@@ -145,8 +152,8 @@ var ResponseKeys = {
 var TimeUnits = {
 	"Second": "s",
 	"Minute": "m",
-	"Hour": "h",
-	"Day": "d"
+	"Hour":   "h",
+	"Day":    "d"
 };
 
 /**
@@ -173,6 +180,11 @@ var AtomServerRequests = {
 var SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
+	npmRootDir,
+	certDirNdx,
+	beameStoreNdxRoot,
+	beameStoreNdxHome,
+	rootDirIndex,
 	rootDir,
 	localCertsDir,
 	remoteCertsDir,

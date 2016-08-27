@@ -1,7 +1,11 @@
 var config        = require('../../config/Config');
+console.log('Trying to init first Beame remote edgeClient');
 if(config.InitFirstRemoteEdgeClient){
-	var servers = require("../../src/cli/servers");
-	var creds = require("../../src/cli/creds");
+	config.rootDirIndex = config.beameStoreNdxRoot;
+	var beameSdkDir = config.npmRootDir+"/lib/node_modules/beame-sdk";
+
+	var servers = require(beameSdkDir+"/src/cli/servers");
+	var creds = require(beameSdkDir+"/src/cli/creds");
 
 	var atoms         = creds.list("atom", "", "JSON");
 	var edgeclients   = creds.list("edgeclient", "", "JSON");
@@ -10,8 +14,9 @@ if(config.InitFirstRemoteEdgeClient){
 		console.log('beame credentials found, initializing FIRST client aborted');
 	}
 	else{
-		var remoteClientServices = new (require('../../src/core/RemoteClientServices'))();
-		var BeameLogger = require('../../src/utils/Logger');
+		var remoteClientServices = new (require(beameSdkDir+'/src/core/RemoteClientServices'))();
+		var BeameLogger = require(beameSdkDir+'/src/utils/Logger');
+
 
 		const module_name = config.AppModules.BeameSDKlauncher;
 		var logger        = new BeameLogger(module_name);
@@ -48,7 +53,10 @@ if(config.InitFirstRemoteEdgeClient){
 						}
 					}
 				},500);*/
+			}else{
+				logger.error(JSON.stringify(error));
 			}
+
 		}, null, null);
 	}
 }
