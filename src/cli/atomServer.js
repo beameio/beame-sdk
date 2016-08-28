@@ -66,12 +66,12 @@ var setAtomType = function (requiredLevel) {
 				}
 			}
 			else {
-				logger.error(error.toString());
+				logger.error(error.message);
 			}
 		});
 	}
 	
-/*	if (requiredLevel && config.AtomType[requiredLevel] != null) {
+	if (requiredLevel && config.AtomType[requiredLevel] != null) {
 		atomServices.updateType(atom_fqdn, config.AtomType[requiredLevel], function (error) {
 			if (!error) {
 				logger.info('Atom type successfully updated');
@@ -84,8 +84,8 @@ var setAtomType = function (requiredLevel) {
 	}
 	else {
 		getCreds();
-	}*/
-	getCreds();
+	}
+	
 };
 
 var buildResponse = function (req, res, statusCode, data) {

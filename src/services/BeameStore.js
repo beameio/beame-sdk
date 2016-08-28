@@ -14,7 +14,6 @@ var mkdirp        = require('mkdirp');
 var path          = require('path');
 var request       = require('sync-request');
 var url           = require('url');
-var localDirIndex = config.beameStoreNdxHome;
 // The idea is this object framework above BeameDirServices.js
 // BeameStore will load the directory and manage it in memory as well be capabale proving high level
 // API to work with JSON.
@@ -30,20 +29,20 @@ var localDirIndex = config.beameStoreNdxHome;
 // beame.store offers api for accessing beame.dir datastructre, upon construction it will parse the directory structure, and produce a json object structure.
 //
 
-var beameStoreInstance = [null,null];
+var beameStoreInstance = null;
 
 var DEVELOPER_DATA_STRUCT    = '{name:name, hostname:hostname, level:level, parent:""}';
 var CHILD_ENTITY_DATA_STRUCT = '{name:name, hostname:hostname, level:level, parent:parent_fqdn}';
 
 function BeameStore() {
-	localDirIndex = config.rootDirIndex;
-	if (beameStoreInstance[localDirIndex]) {
-		return beameStoreInstance[localDirIndex];
+
+	if (beameStoreInstance) {
+		return beameStoreInstance;
 	}
 
-	mkdirp.sync(config.localCertsDir[localDirIndex]);
-	mkdirp.sync(config.remoteCertsDir[localDirIndex]);
-	mkdirp.sync(config.remotePKsDir[localDirIndex]);
+	mkdirp.sync(config.localCertsDir);
+	mkdirp.sync(config.remoteCertsDir);
+	mkdirp.sync(config.remotePKsDir);
 
 	this.ensureFreshBeameStore();
 
@@ -63,7 +62,7 @@ function BeameStore() {
 		{type: "remoteclient", 'func': this.searchRemote}
 	];
 
-	beameStoreInstance[config.rootDirIndex] = this;
+	beameStoreInstance = this;
 }
 
 
@@ -221,89 +220,60 @@ BeameStore.prototype.listCurrentRemoteClients = function () {
 };
 
 BeameStore.prototype.ensureFreshBeameStore = function () {
-	var newHash = beameDirApi.generateDigest(config.localCertsDir[localDirIndex]);
+	var newHash = beameDirApi.generateDigest(config.localCertsDir);
 	if (this.digest !== newHash) {
-		logger.debug(`reading beamedir ${config.localCertsDir[localDirIndex]}`);
-		this.beameStore = beameDirApi.readBeameDir(config.localCertsDir[localDirIndex]);
+		logger.debug(`reading beamedir ${config.localCertsDir}`);
+		this.beameStore = beameDirApi.readBeameDir(config.localCertsDir);
 		this.digest     = newHash;
 	}
 };
 
 BeameStore.prototype.search = function (name) {
-	var found = false;
-	var that = this;
-	var results = {};
-	config.certDirNdx.forEach(function (index) {
-		if(!found){
-			localDirIndex = index;
-			that.ensureFreshBeameStore();
+	this.ensureFreshBeameStore();
 
-			results = _.map(that.searchFunctions, _.bind(function (item) {
-				return item.func.call(that, name);
-			}, that));
-			results     = _.flatten(results, true);
-		}
-		if(results.length>0){
-			found=true;
-		}
-	});
-	localDirIndex = config.rootDirIndex;
+	var results = _.map(this.searchFunctions, _.bind(function (item) {
+		return item.func.call(this, name);
+	}, this));
+	results     = _.flatten(results, true);
 	return results;
 };
 
 BeameStore.prototype.list = function (type, name) {
+	this.ensureFreshBeameStore();
+
 	var returnArray = [];
-	var that = this;
 	if (type && type.length) {
-		try {
-			config.certDirNdx.forEach(function (index) {
-				localDirIndex = index;
-				that.ensureFreshBeameStore();
-				var listFunc = _.where(that.listFunctions, {'type': type});
-				if (listFunc.length != 1) {
-					logger.fatal("Listfunc dictionary is broken -- bad code change ");
-				}
-				var newArray = listFunc[0].func.call(that);
-				returnArray  = returnArray.concat(newArray);
-			});
+		var listFunc = _.where(this.listFunctions, {'type': type});
+		if (listFunc.length != 1) {
+			logger.fatal("Listfunc dictionary is broken -- bad code change ");
 		}
-		catch (e){
-			logger.debug('Tried to access non-existing data');
-		}
+		var newArray = listFunc[0].func.call(this);
+		returnArray  = returnArray.concat(newArray);
 		return returnArray;
 	} else {
-		try {
-			config.certDirNdx.forEach(function (index) {
-				localDirIndex = index;
-				that.ensureFreshBeameStore();
-				if (name && name.length) {
-					var fullResult = [];
-					_.each(this.listFunctions, _.bind(function (item) {
-						var newArray = item.func.call(that);
-						fullResult = fullResult.concat(newArray);
-					}, that));
+		if (name && name.length) {
+			var fullResult = [];
+			_.each(this.listFunctions, _.bind(function (item) {
+				var newArray = item.func.call(this);
+				fullResult   = fullResult.concat(newArray);
+			}, this));
 
-					return _.filter(fullResult, function (item) {
-						if (item.hostname.indexOf(name) != -1) {
-							return true;
-						}
-					});
-
+			return _.filter(fullResult, function (item) {
+				if (item.hostname.indexOf(name) != -1) {
+					return true;
 				}
-				_.each(that.listFunctions, _.bind(function (item) {
-					returnArray = returnArray.concat(item.func.call(this));
-				}, that));
 			});
+
 		}
-		catch (e){
-			logger.debug('Tried to access non-existing data');
-		}
+		_.each(this.listFunctions, _.bind(function (item) {
+			returnArray = returnArray.concat(item.func.call(this));
+		}, this));
 		return returnArray;
 	}
 };
 
 BeameStore.prototype.getRemoteCertificate = function (fqdn) {
-	var remoteCertPath = path.join(config.remoteCertsDir[config.rootDirIndex], fqdn, 'x509.pem');
+	var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
 	var certBody       = "";
 	if (fs.existsSync(remoteCertPath)) {
 		certBody = fs.readFileSync(remoteCertPath);
@@ -328,7 +298,7 @@ BeameStore.prototype.importCredentials = function (data) {
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var credToImport = JSON.parse(data);
 	//var host         = credToImport.hostname;
-	var targetPath   = path.join(config.localCertsDir[config.rootDirIndex], credToImport.path);
+	var targetPath   = path.join(config.localCertsDir, credToImport.path);
 	mkdirp(targetPath);
 
 	var metadata = {};

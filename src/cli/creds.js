@@ -423,7 +423,7 @@ function exportCredentials(fqdn, targetFqdn, file) {
 	creds.edgeclient      = {};
 	creds.atom            = {};
 	creds['relativePath'] = relativePath;
-	creds.path            = creds.path.replace(config.localCertsDir[config.rootDirIndex], "");
+	creds.path            = creds.path.replace(config.localCertsDir, "");
 
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var jsonString = JSON.stringify(creds);
@@ -518,7 +518,7 @@ function importNonBeameCredentials(fqdn) {
 
 			certBody += "-----END CERTIFICATE-----";
 
-			var remoteCertPath = path.join(config.remoteCertsDir[config.rootDirIndex], fqdn, 'x509.pem');
+			var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
 
 			mkdirp(path.parse(remoteCertPath).dir);
 

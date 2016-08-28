@@ -161,7 +161,7 @@ function registerHost(module, callback, edge_metadata, error, payload) {
 
 	logger.printStandardEvent(module_name, BeameLogger.StandardFlowEvent.Registering, remoteClientHostname);
 
-	edgeClientDir = beameUtils.makePath(config.localCertsDir[config.rootDirIndex], remoteClientHostname + '/');
+	edgeClientDir = beameUtils.makePath(config.localCertsDir, remoteClientHostname + '/');
 
 	dataServices.createDir(edgeClientDir);
 

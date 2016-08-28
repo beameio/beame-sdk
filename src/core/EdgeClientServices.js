@@ -96,7 +96,7 @@ var registerEdgeClient = function (atom_fqdn, callback) {
 				
 				payload.parent_fqdn = atom_fqdn;
 				
-				var edgeClientDir = (remote) ? beameUtils.makePath(config.remoteCertsDir[config.rootDirIndex], 'remoteEdgeClients/') : beameUtils.makePath(atomDir, payload.hostname + '/');
+				var edgeClientDir = (remote) ? beameUtils.makePath(config.remoteCertsDir, 'remoteEdgeClients/') : beameUtils.makePath(atomDir, payload.hostname + '/');
 				
 				dataServices.createDir(edgeClientDir);
 				
