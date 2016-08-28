@@ -1,6 +1,6 @@
 {
   "name": "beame-sdk",
-  "version": "1.1.10",
+  "version": "1.1.18",
   "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "index.js",
   "engine": "node >= 4.4.0",
@@ -10,7 +10,7 @@
     "test_edge": "mocha ./tests/unit-tests/single_tests/edge_test.js",
     "test_full_flow": "mocha ./tests/unit-tests/full_flow_test.js",
     "startChat": "node ./examples/example1.js",
-    "runAtomServer" : "node ./tests/serge_test/test_cli.js"
+    "runAtomServer": "node ./tests/serge_test/test_cli.js"
   },
   "bin": {
     "beame": "src/cli/beame.js"
