@@ -48,8 +48,8 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 		logger.error("Could not find certificate for " + host);
 		return;
 	}
-	server_entity            = server_entity[0];
-	/** @type {typeof ServerCertificates} **/
+	server_entity   = server_entity[0];
+	/** @type {ServerCertificates} **/
 	var serverCerts = {
 		key:  server_entity.PRIVATE_KEY,
 		cert: server_entity.P7B,
