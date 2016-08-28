@@ -89,15 +89,19 @@ var setAtomType = function (requiredLevel) {
 };
 
 var buildResponse = function (req, res, statusCode, data) {
-	
-	res.writeHead(statusCode, {'Content-Type': 'application/json'});
-	
-	var responseBody = {
-		body: data
-	};
-	//noinspection ES6ModulesDependencies,NodeModulesDependencies
-	res.write(JSON.stringify(responseBody));
-	res.end();
+	try {
+		res.writeHead(statusCode, {'Content-Type': 'application/json'});
+
+		var responseBody = {
+			body: data
+		};
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		res.write(JSON.stringify(responseBody));
+		res.end();
+	}
+	catch (e){
+		logger.error(`Error on reply: ${e.toString()}`);
+	}
 };
 
 /**
