@@ -8,6 +8,7 @@
 * run tests
 * `npm shrinkwrap`
 * Make sure `config/ApiConfig.json` and `config/Config.js` are correct
+* Make sure email text sent by provision matches the SDK
 * `npm version patch`
 * `npm publish`
 * `git tag` the prod branch with the `cat package.json | jq .version -r` version and push the tag
