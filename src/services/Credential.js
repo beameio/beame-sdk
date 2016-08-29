@@ -1,5 +1,5 @@
 //
-// Created by Zeev Glozman 
+// Created by Zeev Glozman
 // Beame.io Ltd, 2016.
 //
 /*jshint esversion: 6 */
@@ -18,6 +18,7 @@ var mkdirp        = require('mkdirp');
 var path          = require('path');
 var request       = require('sync-request');
 var url           = require('url');
+var BeameStoreDataServices = require('../services/BeameStoreDataServices');
 
 
 class Credential{
@@ -27,31 +28,31 @@ class Credential{
 		this.parent_fqdn = parentFqdn;
 		this.dirShaStatus = "";
 		determineCertStatus();
-		this.dataHelper = new BeameStoreHelper(this.fqdn);
+		this.dataHelper = new BeameStoreDataServices(this.fqdn);
 	}
 	//
 	// this function will scan the beamedis of the this.fqdn this is not intended to be used directly.
 	//
 
 	determineCertStatus(){
-		
+
 
 
 			if(dirShaStatus && dirShaStatu.lenght !== 0){
 				//
-				// This means this is a brand new object and we dont know anything at all 
+				// This means this is a brand new object and we dont know anything at all
 				this.credentials = this.readCertificateDir();
-			
+
 			}
 			if(this.doesHaveX509()){
 				this.state = this.state | config.CREDENTIAL_STATUS.CERT;
 			}
-			
+
 			if(this.state & config.CREDENTIAL_STATUS.CERT && this.extractCommonName().indexOf("beameio.net")){
 				this.state = this.state | config.CREDENTIAL_STATUS.BEAME_ISSUED_CERT;
 				this.state = this.state & config.CREDENTIAL_STATUS.NON_BEAME_CERT;
 			}else{
-			
+
 				this.state = this.state | config.CREDENTIAL_STATUS.BEAME_ISSUED_CERT;
 				this.state = this.state & config.CREDENTIAL_STATUS.NON_BEAME_CERT;
 			}

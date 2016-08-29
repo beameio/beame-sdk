@@ -29,15 +29,15 @@ var metadataFileName = "metadata.json";
  *  @enum {string}
  */
 var CertFileNames = {
-	"PRIVATE_KEY"      : "private_key.pem",
-	"TEMP_PRIVATE_KEY" : "temp_private_key.pem",
-	"X509"             : "x509.pem",
-	"CA"               : "ca.pem",
-	"PKCS7"            : "pkcs7.pem",
-	"P7B"              : "p7b.cer",
-	"PKCS12"           : "cert.pfx",
-	"PWD"              : "pwd.txt",
-	"RECOVERY"         : "recovery"
+	"PRIVATE_KEY":      "private_key.pem",
+	"TEMP_PRIVATE_KEY": "temp_private_key.pem",
+	"X509":             "x509.pem",
+	"CA":               "ca.pem",
+	"PKCS7":            "pkcs7.pem",
+	"P7B":              "p7b.cer",
+	"PKCS12":           "cert.pfx",
+	"PWD":              "pwd.txt",
+	"RECOVERY":         "recovery"
 };
 
 /**
@@ -45,25 +45,24 @@ var CertFileNames = {
  *  @enum {string}
  */
 var CertificateFiles = {
-	"PRIVATE_KEY" : "private_key.pem",
-	"X509"        : "x509.pem",
-	"CA"          : "ca.pem",
-	"PKCS7"       : "pkcs7.pem",
-	"P7B"         : "p7b.cer",
-	"PKCS12"      : "cert.pfx",
-	"PWD"         : "pwd.txt"
+	"PRIVATE_KEY": "private_key.pem",
+	"X509":        "x509.pem",
+	"CA":          "ca.pem",
+	"PKCS7":       "pkcs7.pem",
+	"P7B":         "p7b.cer",
+	"PKCS12":      "cert.pfx",
+	"PWD":         "pwd.txt"
 };
 
-var CredentialStatus = { 
-	PRIVATE_KEY       : 1 << 1,
-	CERT              : 1 << 2,
-	BEAME_ISSUED_CERT : 1 << 3,
-	NON_BEAME_CERT    : 1 << 4,
-	EMPTY_DIR         : 1 << 5,
-	DIR_NOTREAD       : 1 << 6
-}
+var CredentialStatus = {
+	PRIVATE_KEY:       1 << 1,
+	CERT:              1 << 2,
+	BEAME_ISSUED_CERT: 1 << 3,
+	NON_BEAME_CERT:    1 << 4,
+	EMPTY_DIR:         1 << 5,
+	DIR_NOTREAD:       1 << 6
+};
 
->>>>>>> Stashed changes
 /**
  * Certificate response fields
  *  @enum {string}
@@ -80,24 +79,25 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
-	"BeameSDKCli":      "BeameSDKCli",
-	"BeameCreds":       "BeameCreds",
-	"BeameCrypto":      "BeameCrypto",
-	"BeameServer":      "BeameServer",
-	"BeameUtils":       "BeameUtils",
-	"BeameStore":       "BeameStore",
-	"BeameSystem":       "BeameSystem",
-	"BeameDirServices": "BeameDirServices",
-	"Developer":        "Developer",
-	"Atom":             "Atom",
-	"EdgeClient":       "EdgeClient",
-	"LocalClient":      "LocalClient",
-	"ProvisionApi":     "ProvisionApi",
-	"DataServices":     "DataServices",
-	"UnitTest":         "UnitTest",
-	"BaseHttpsServer":  "BaseHttpsServer",
-	"SNIServer":        "SNIServer",
-	"ProxyClient":      "ProxyClient"
+	"BeameSDKCli":          "BeameSDKCli",
+	"BeameCreds":           "BeameCreds",
+	"BeameCrypto":          "BeameCrypto",
+	"BeameServer":          "BeameServer",
+	"BeameUtils":           "BeameUtils",
+	"BeameStore":           "BeameStore",
+	"BeameStoreDataHelper": "BeameStoreDataHelper",
+	"BeameSystem":          "BeameSystem",
+	"BeameDirServices":     "BeameDirServices",
+	"Developer":            "Developer",
+	"Atom":                 "Atom",
+	"EdgeClient":           "EdgeClient",
+	"LocalClient":          "LocalClient",
+	"ProvisionApi":         "ProvisionApi",
+	"DataServices":         "DataServices",
+	"UnitTest":             "UnitTest",
+	"BaseHttpsServer":      "BaseHttpsServer",
+	"SNIServer":            "SNIServer",
+	"ProxyClient":          "ProxyClient"
 };
 
 /**
@@ -121,7 +121,7 @@ var MessageCodes = {
 var ResponseKeys = {
 	"NodeFiles":                   [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
 	"DeveloperCreateResponseKeys": ["hostname", "uid", "name", "email"],
-	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn","edgeHostname"],
+	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn", "edgeHostname"],
 	"EdgeClientResponseKeys":      ["uid", "hostname", "edgeHostname", "parent_fqdn"],
 	"LocalClientResponseKeys":     ["uid", "hostname", "parent_fqdn", "edge_client_fqdn", "local_ip"],
 	"CertificateResponseKeys":     ["x509", "pkcs7", "ca"],
@@ -144,7 +144,6 @@ var SNIServerPort = process.env.SNI_SERVER_PORT || 8443;
 module.exports = {
 	rootDir,
 	localCertsDir,
-	remoteCertsDir,
 	loadBalancerURL,
 	metadataFileName,
 	CertFileNames,
@@ -156,5 +155,6 @@ module.exports = {
 	TimeUnits,
 	SNIServerPort,
 	AuthServerEndPoint,
-	CertEndpoint
+	CertEndpoint,
+	CredentialStatus
 };

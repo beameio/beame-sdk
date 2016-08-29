@@ -2,6 +2,7 @@
  * Created by zenit1 on 03/07/2016.
  */
 'use strict';
+//noinspection BadExpressionStatementJS
 'use esscript 6';
 
 

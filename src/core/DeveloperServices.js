@@ -15,6 +15,7 @@ var os            = require('os');
 var home          = os.homedir();
 var homedir       = home;
 var devPath       = config.localCertsDir;
+var BeameStoreDataServices = require('../services/BeameStoreDataServices');
 
 new (require('../services/BeameStore'))();
 

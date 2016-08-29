@@ -1,5 +1,5 @@
 //
-// Created by Zeev Glozman 
+// Created by Zeev Glozman
 // Beame.io Ltd, 2016.
 //
 
@@ -22,18 +22,18 @@ var url           = require('url');
 
 class BeameStoreV2 {
 	constructor(){
-	
-	
+
+
 	}
 	search(fqdn); // returns credential objects
-	
+
 	addToStore(x509);
-:
+
 	getNewCredentials(parentFqdn, challange ){
 		if(parentFqdn.isPrivateKeyLocal()){
 			let fqdn  = getHostnameFromProvision(parentFqdn, challange);
 			let credential = new Credential(fqdn);
-		
+
 
 			//
 		}
@@ -42,26 +42,13 @@ class BeameStoreV2 {
 
 
 
-	if (beameStoreInstance) {
-		return beameStoreInstance;
-	}
-
-	this.ensureFreshBeameStore();
-
-	beameStoreInstance = this;
+	// if (beameStoreInstance) {
+	// 	return beameStoreInstance;
+	// }
+	//
+	// this.ensureFreshBeameStore();
+	//
+	// beameStoreInstance = this;
 }
 
-class BeameStoreHealper{
-	constructor(fqdn){
-		// init store 
-		//
-		this.fqdn = fqdn;
-		this.dir = makepath(config.localCertsDir, fqdn);
-		mkdirp.sync(this.dir);
 
-	}
-	
-	readObject(key);
-	writeObject(data,  key);
-	
-}
