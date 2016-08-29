@@ -11,10 +11,12 @@ const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 var rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
 /** @const {String} **/
-var localCertsDir = path.join(rootDir, 'v1', 'local');
+var localCertsDir = path.join(rootDir, 'v2');
 
 /** @const {String} **/
-var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
+
+/** @const {String} **/
+var remotePKsDir = path.join(rootDir, 'pki');
 
 /** @const {String} **/
 var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
@@ -27,15 +29,15 @@ var metadataFileName = "metadata.json";
  *  @enum {string}
  */
 var CertFileNames = {
-	"PRIVATE_KEY":      "private_key.pem",
-	"TEMP_PRIVATE_KEY": "temp_private_key.pem",
-	"X509":             "x509.pem",
-	"CA":               "ca.pem",
-	"PKCS7":            "pkcs7.pem",
-	"P7B":              "p7b.cer",
-	"PKCS12":           "cert.pfx",
-	"PWD":              "pwd.txt",
-	"RECOVERY":         "recovery"
+	"PRIVATE_KEY"      : "private_key.pem",
+	"TEMP_PRIVATE_KEY" : "temp_private_key.pem",
+	"X509"             : "x509.pem",
+	"CA"               : "ca.pem",
+	"PKCS7"            : "pkcs7.pem",
+	"P7B"              : "p7b.cer",
+	"PKCS12"           : "cert.pfx",
+	"PWD"              : "pwd.txt",
+	"RECOVERY"         : "recovery"
 };
 
 /**
@@ -43,15 +45,25 @@ var CertFileNames = {
  *  @enum {string}
  */
 var CertificateFiles = {
-	"PRIVATE_KEY":      "private_key.pem",
-	"X509":             "x509.pem",
-	"CA":               "ca.pem",
-	"PKCS7":            "pkcs7.pem",
-	"P7B":              "p7b.cer",
-	"PKCS12":           "cert.pfx",
-	"PWD":              "pwd.txt"
+	"PRIVATE_KEY" : "private_key.pem",
+	"X509"        : "x509.pem",
+	"CA"          : "ca.pem",
+	"PKCS7"       : "pkcs7.pem",
+	"P7B"         : "p7b.cer",
+	"PKCS12"      : "cert.pfx",
+	"PWD"         : "pwd.txt"
 };
 
+var CredentialStatus = { 
+	PRIVATE_KEY       : 1 << 1,
+	CERT              : 1 << 2,
+	BEAME_ISSUED_CERT : 1 << 3,
+	NON_BEAME_CERT    : 1 << 4,
+	EMPTY_DIR         : 1 << 5,
+	DIR_NOTREAD       : 1 << 6
+}
+
+>>>>>>> Stashed changes
 /**
  * Certificate response fields
  *  @enum {string}

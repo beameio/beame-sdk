@@ -2,6 +2,8 @@
  * Created by zenit1 on 03/07/2016.
  */
 'use strict';
+'use esscript 6';
+
 
 var path          = require('path');
 var debug         = require("debug")("./src/services/DataServices.js");
