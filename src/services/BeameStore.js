@@ -80,7 +80,7 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 		}
 
 		case "atom": {
-			queryString = sprintf("[?((hostname=='%s') || (name =='%s' )) && (level=='atom')] || [].atom[?((hostname=='%s') || (name=='%s')) && (level=='atom')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
+			queryString = sprintf("[?((hostname=='%s') || (name =='%s' )) && (level=='atom')] || [].atom[?((hostname=='%s') || (name=='%s')) && (level=='atom')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem, searchItem, searchItem);
 			break;
 		}
 
@@ -88,17 +88,17 @@ BeameStore.prototype.jsearch = function (searchItem, level) {
 			queryString = sprintf("[].atom[].edgeclient[?(hostname=='%s') && (level=='edgeclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
-		
+
 		case "localclient": {
 			queryString = sprintf("[].atom[].localclient[?(hostname=='%s') && (level=='localclient')]." + CHILD_ENTITY_DATA_STRUCT + " | []", searchItem, searchItem);
 			break;
 		}
-		
+
 		case "remoteclient": {
 			queryString = sprintf("[?((hostname=='%s' ) && (level=='remoteclient'))]." + CHILD_ENTITY_DATA_STRUCT, searchItem, searchItem);
 			break;
 		}
-		
+
 		default: {
 			logger.fatal(`search invalid level ${level}`);
 		}
@@ -124,7 +124,7 @@ BeameStore.prototype.searchAtoms = function (name) {
 	var returnDict = [];
 
 	_.each(names, _.bind(function (item) {
-		var qString = sprintf("[?((hostname=='%s')) && (level=='atom')] || [].atom[?((hostname=='%s'))]", item.hostname);
+		var qString = sprintf("[?((hostname=='%s')) && (level=='atom')] || [].atom[?((hostname=='%s'))] | []", item.hostname, item.hostname);
 		returnDict  = returnDict.concat(jmespath.search(this.beameStore, qString));
 	}, this));
 
