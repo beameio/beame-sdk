@@ -1,9 +1,9 @@
 'use strict';
-var path = require('path');
-var os   = require('os');
-var home = os.homedir();
-var npmPrefix = require('npm-prefix');
-const npmRootDir = npmPrefix();
+var path                 = require('path');
+var os                   = require('os');
+var home                 = os.homedir();
+var npmPrefix            = require('npm-prefix');
+const npmRootDir         = npmPrefix();
 const AuthServerEndPoint = "https://registration-staging.beameio.net";
 
 const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
@@ -81,10 +81,10 @@ var SecurityPolicy = {
 };
 
 /** @enum {String} **/
-var IdentityType = {
-	"Developer" : "Developer",
-	"Atom" : "Atom",
-	"EdgeClient" : "EdgeClient"
+var IdentityType       = {
+	"Developer":  "Developer",
+	"Atom":       "Atom",
+	"EdgeClient": "EdgeClient"
 };
 /**
  * Certificate response fields
@@ -102,6 +102,7 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
+	"BeameIdentity":    "BeameIdentity",
 	"BeameSDKCli":      "BeameSDKCli",
 	"BeameCreds":       "BeameCreds",
 	"BeameCrypto":      "BeameCrypto",
