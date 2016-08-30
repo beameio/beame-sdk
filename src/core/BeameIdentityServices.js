@@ -5,7 +5,7 @@ var config        = require('../../config/Config');
 const module_name = config.AppModules.IdentityService;
 var logger        = new (require('../utils/Logger'))(module_name);
 
-class Identity {
+class BeameIdentity {
 
 	/**
 	 *
@@ -29,9 +29,15 @@ class Identity {
 	}
 
 
+	createTopLevelCredentials() {
+
+	}
+
 	createCredentials() {
 
 	}
+
+
 }
 
 module.exports = Identity;
