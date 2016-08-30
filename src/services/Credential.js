@@ -82,8 +82,9 @@ class Credential {
 		}
 	}
 
-	getHostNmae(){
 
+	getFqdnName(){
+	
 	}
 
 

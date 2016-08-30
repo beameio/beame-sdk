@@ -14,12 +14,12 @@ const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 /** @const {String} **/
 var rootDir                     = process.env.BEAME_DIR || path.join(home, '.beame');
+var beameMasterCredFqdn 		= process.env.BEAME_MASTER_CREDS || null;
+/** @const {String} **/
+var localCertsDir = path.join(rootDir, 'v1', 'local');
 
 /** @const {String} **/
-var localCertsDir = path.join(rootDir, 'v2', 'local');
-
-/** @const {String} **/
-var remoteCertsDir = path.join(rootDir, 'v2', 'remote');
+var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
 
 /** @const {String} **/
 var remotePKsDir = path.join(rootDir, 'pki');
