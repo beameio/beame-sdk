@@ -63,15 +63,29 @@ var CertificateFiles = {
 	"PWD":         "pwd.txt"
 };
 
-/*var CREDENTIAL_STATUS = {
-	PRIVATE_KEY 	, 1 << 1,
-	CERT            , 1 << 2,
-	BEAME_ISSUED_CERT		: 1 << 3,
-	NON_BEAME_CERT 		: 1 << 4,
-	EMPTY_DIR             : 1 << 5,
-	DIR_NOTREAD           : 1 << 6
-}*/
+var CredentialStatus = {
+	PRIVATE_KEY:       1 << 1,
+	CERT:              1 << 2,
+	BEAME_ISSUED_CERT: 1 << 3,
+	NON_BEAME_CERT:    1 << 4,
+	EMPTY_DIR:         1 << 5,
+	DIR_NOTREAD:       1 << 6
+};
 
+var SecurityPolicy = {
+	Basic:           1 << 0,
+	CanHasChildren:  1 << 1,
+	CanAuthorize:    1 << 2,
+	CanAuthenticate: 1 << 3,
+	CanAttachPolicy: 1 << 4
+};
+
+/** @enum {String} **/
+var IdentityType = {
+	"Developer" : "Developer",
+	"Atom" : "Atom",
+	"EdgeClient" : "EdgeClient"
+};
 /**
  * Certificate response fields
  *  @enum {string}
@@ -198,5 +212,8 @@ module.exports = {
 	PKsFileName,
 	CertEndpoint,
 	InitFirstRemoteEdgeClient,
-	PinAtomPKbyDefault
+	PinAtomPKbyDefault,
+	CredentialStatus,
+	SecurityPolicy,
+	IdentityType
 };
