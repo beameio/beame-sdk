@@ -63,6 +63,21 @@ var CredentialStatus = {
 	DIR_NOTREAD:       1 << 6
 };
 
+var SecurityPolicy = {
+	Basic:           1 << 0,
+	CanHasChildren:  1 << 1,
+	CanAuthorize:    1 << 2,
+	CanAuthenticate: 1 << 3,
+	CanAttachPolicy: 1 << 4
+};
+
+/** @enum {String} **/
+var IdentityType = {
+	"Developer" : "Developer",
+	"Atom" : "Atom",
+	"EdgeClient" : "EdgeClient"
+};
+
 /**
  * Certificate response fields
  *  @enum {string}
@@ -79,6 +94,7 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
+	"IdentityService":      "IdentityService",
 	"BeameSDKCli":          "BeameSDKCli",
 	"BeameCreds":           "BeameCreds",
 	"BeameCrypto":          "BeameCrypto",
@@ -156,5 +172,7 @@ module.exports = {
 	SNIServerPort,
 	AuthServerEndPoint,
 	CertEndpoint,
-	CredentialStatus
+	CredentialStatus,
+	SecurityPolicy,
+	IdentityType
 };
