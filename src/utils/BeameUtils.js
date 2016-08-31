@@ -123,14 +123,14 @@ module.exports = {
 	/**
 	 * @param {String} endpoint
 	 * @param {Object} postData
-	 * @param {boolean} answerExpected
+	 * @param {boolean} [answerExpected]
 	 * @returns {typeof ApiData}
 	 */
 	getApiData: function (endpoint, postData, answerExpected) {
 		return {
 			api:            endpoint,
 			postData:       postData,
-			answerExpected: answerExpected
+			answerExpected: answerExpected || true
 		};
 	},
 

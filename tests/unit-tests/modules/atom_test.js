@@ -23,7 +23,7 @@ function run() {
 
 			console.log('####### receive developer_fqdn');
 
-			developerHostname = process.env.developer_fqdn;
+			developerHostname = 'afe8v0dadyulbesw.v1.beameio.net'; //process.env.developer_fqdn;
 
 			assert.isDefined(developerHostname, 'Developer hostname required');
 			assert.isNotNull(developerHostname, 'Developer hostname required');

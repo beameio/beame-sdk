@@ -92,7 +92,7 @@ class BeameLogger {
 	/**
 	 *
 	 * @param {String} message
-	 * @param {String} module
+	 * @param {String|null} [module]
 	 * @param {Object|null|undefined} [data]
 	 * @param {String|null|undefined} [error_code]
 	 * @returns {typeof LoggerMessage}
@@ -100,7 +100,7 @@ class BeameLogger {
 	formatErrorMessage(message, module, data,error_code) {
 		return {
 			message,
-			module,
+			module: module || this.module,
 			data,
 			code:error_code
 		}
@@ -229,7 +229,7 @@ class BeameLogger {
 		var log = {
 			message,
 			data,
-			module
+			module: module || this.module
 		};
 
 		this.printLogMessage(LogLevel.Error, log);

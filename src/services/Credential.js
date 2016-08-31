@@ -4,6 +4,7 @@
 //
 /*jshint esversion: 6 */
 
+
 var async                  = require('async');
 //var exec        = require('child_process').exec;
 var _                      = require('underscore');
@@ -21,25 +22,24 @@ var url                    = require('url');
 var BeameStoreDataServices = require('../services/BeameStoreDataServices');
 
 
-var authData = {
-	"PK_PATH":   "/authData/pk.pem",
-	"CERT_PATH": "/authData/x509.pem"
-};
-
+/**
+ * @class {Object} Credential
+ */
 class Credential {
 
 	/**
 	 *
-	 * @param {IdentityType} type
+	 * @param {String|null} [fqdn]
 	 * @param {String|null} [parent_fqdn]
 	 * @param {Array.<SecurityPolicy>} [policies]
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
 	 * @param {String|null} [local_ip]
 	 */
-	constructor(type, parent_fqdn, policies, name, email, local_ip) {
+	constructor(fqdn, parent_fqdn, policies, name, email, local_ip) {
 
-		this.type        = type;
+
+		this.fqdn        = fqdn;
 		this.parent_fqdn = parent_fqdn;
 		this.name        = name;
 		this.email       = email;
@@ -62,7 +62,7 @@ class Credential {
 			this.credentials = this.readCertificateDir();
 
 		}
-		if (this.doesHaveX509()) {
+		if (this.hasX509()) {
 			this.state = this.state | config.CredentialStatus.CERT;
 		}
 
@@ -75,7 +75,7 @@ class Credential {
 			this.state = this.state & config.CredentialStatus.NON_BEAME_CERT;
 		}
 
-		if (this.doesHavePrivateKey()) {
+		if (this.hasPrivateKey()) {
 			this.state = this.state & config.CredentialStatus.PRIVATE_KEY;
 		} else {
 			this.state = this.state | config.CredentialStatus.PRIVATE_KEY;
@@ -84,7 +84,7 @@ class Credential {
 
 
 	getFqdnName(){
-	
+
 	}
 
 
@@ -114,11 +114,11 @@ class Credential {
 		}
 	}
 
-	doesHavePrivateKey() {
+	hasPrivateKey() {
 
 	}
 
-	doesHaveX509() {
+	hasX509() {
 
 	}
 

@@ -16,10 +16,10 @@ const PinAtomPKbyDefault        = false;
 var rootDir                     = process.env.BEAME_DIR || path.join(home, '.beame');
 var beameMasterCredFqdn 		= process.env.BEAME_MASTER_CREDS || null;
 /** @const {String} **/
-var localCertsDir = path.join(rootDir, 'v1', 'local');
+var localCertsDir = path.join(rootDir, 'v2', 'local');
 
 /** @const {String} **/
-var remoteCertsDir = path.join(rootDir, 'v1', 'remote');
+var remoteCertsDir = path.join(rootDir, 'v2', 'remote');
 
 /** @const {String} **/
 var remotePKsDir = path.join(rootDir, 'pki');
@@ -27,8 +27,16 @@ var remotePKsDir = path.join(rootDir, 'pki');
 /** @const {String} **/
 var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
 
+var beameZeroLevelAuthData = {
+	"PK_PATH":   "/authData/pk.pem",
+	"CERT_PATH": "/authData/x509.pem"
+};
+
 /** @const {String} **/
 var metadataFileName = "metadata.json";
+
+/** @const {String} **/
+var s3MetadataFileName = "metadata.json";
 
 /** @const {String} **/
 var PKsFileName = "PKs.json";
@@ -102,7 +110,7 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
-	"BeameIdentity":    "BeameIdentity",
+	"BeameEntity":    "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
 	"BeameCreds":       "BeameCreds",
 	"BeameCrypto":      "BeameCrypto",
@@ -197,6 +205,7 @@ module.exports = {
 	remotePKsDir,
 	loadBalancerURL,
 	metadataFileName,
+	s3MetadataFileName,
 	CertFileNames,
 	CertificateFiles,
 	CertResponseFields,
@@ -216,5 +225,6 @@ module.exports = {
 	PinAtomPKbyDefault,
 	CredentialStatus,
 	SecurityPolicy,
-	IdentityType
+	IdentityType,
+	beameZeroLevelAuthData
 };

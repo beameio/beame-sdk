@@ -1,7 +1,17 @@
 //
 // Created by Zeev Glozman
 // Beame.io Ltd, 2016.
-//
+
+"use strict";
+
+/**
+ * S3 public metadata.json structure, should be compliant to backend EntityMetadata Class
+ * @typedef {Object} S3Metadata
+ * @property {String} level
+ * @property {String} fqdn
+ * @property {String|null} parent_fqdn
+ */
+
 
 var async         = require('async');
 //var exec        = require('child_process').exec;
@@ -18,20 +28,31 @@ var mkdirp        = require('mkdirp');
 var path          = require('path');
 var request       = require('sync-request');
 var url           = require('url');
+var provApi       = new (require('./ProvisionApi'))();
 
 
-class BeameStoreV2 {
-	constructor(){
+
+class BeameStore {
+	constructor() {
 
 
 	}
-	search(fqdn); // returns credential objects
 
-	addToStore(x509);
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @returns {Credential}
+	 */
+	search(fqdn) {
+		/** @type {Credential} **/
+		return {};
+	};
 
-	getNewCredentials(parentFqdn, challange ){
-		if(parentFqdn.isPrivateKeyLocal()){
-			let fqdn  = getHostnameFromProvision(parentFqdn, challange);
+	addToStore(x509){};
+
+	getNewCredentials(parentFqdn, challange) {
+		if (parentFqdn.isPrivateKeyLocal()) {
+			let fqdn       = getHostnameFromProvision(parentFqdn, challange);
 			let credential = new Credential(fqdn);
 
 
@@ -39,6 +60,28 @@ class BeameStoreV2 {
 		}
 
 	}; // returns a new Credential object.
+
+	/**
+	 * return metadata.json stored in public S3 bucket
+	 * @param {String} fqdn
+	 * @returns {Promise.<S3Metadata|Object>}
+	 */
+	getRemoteMetadata(fqdn) {
+		var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
+
+		return new Promise(
+			(resolve, reject) => {
+				provApi.getRequest(requestPath, function (error, data) {
+					if (!error) {
+						resolve(data);
+					}
+					else {
+						reject(error);
+					}
+				});
+			}
+		);
+	}
 
 
 
@@ -51,3 +94,4 @@ class BeameStoreV2 {
 	// beameStoreInstance = this;
 }
 
+module.exports = BeameStore;
