@@ -153,7 +153,7 @@ function launchFirstChat(sharedFolder) {
 		logger.info("You have developer credentials now we will set up an Atom SSL cert, and  edgeClient cert ");
 		logger.info("It will take about 30 seconds, please wait patiently, yes we understand..., it will be much faster soon (:- ");
 		var devHostname = developers[0].hostname;
-		beameSDK.creds.createAtom(devHostname, "BeameNodeXXX", function (error, data) {
+		beameSDK.creds.createAtom(devHostname, "BeameNodeXXX1", function (error, data) {
 			if (error) {
 				logger.fatal(error.message, error.data, config.AppModules.Atom);
 			}

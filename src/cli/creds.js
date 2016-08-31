@@ -33,7 +33,7 @@ var atomServices        = new (require('../core/AtomServices'))();
 var edgeClientServices  = new (require('../core/EdgeClientServices'))();
 var localClientServices = new (require('../core/LocalClientServices'))();
 var remoteClientServices = new (require('../core/RemoteClientServices'))();
-
+var dataServices 		 = new (require('../services/DataServices'))();
 var path   = require('path');
 var fs     = require('fs');
 var mkdirp = require("mkdirp");
@@ -55,7 +55,8 @@ module.exports = {
 	exportCredentials,
 	importCredentials,
 	importNonBeameCredentials,
-	stats
+	stats,
+	convertCredentialsToV2
 };
 
 
@@ -643,7 +644,13 @@ function revoke(fqdn) {
 	}
 
 }
-
-
+function convertCredentialsToV2(){
+	let creds = store.list();
+	for(let cred of creds){
+		let rec = store.search(cred.hostname)[0];
+		console.log(`**********************${JSON.stringify(rec.path)}********************`);
+//		mkdirp(config.localCertsDirV2);
+	};
+}
 
 

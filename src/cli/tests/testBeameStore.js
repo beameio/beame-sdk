@@ -9,6 +9,8 @@ var currentDevelopers = store.listCurrentDevelopers();
 var currentAtoms = store.listCurrentAtoms();
 var currentInstances = store.listCurrentEdges();
 
+
+/*
 function testBeameStruct(beameStruct, keyword, func, useNameSearch){
 	console.log("****************Listing " + keyword + " started *************");
 	_.each(beameStruct, function(item){
@@ -48,7 +50,7 @@ store.search("", currentDevelopers[0].hostname);
 store.searchItemAndParentFolderPath('bmvaow3ewjji3vfy.v1.beameio.net');
 store.searchItemAndParentFolderPath('w9tlixkmx5exsesm.vbo7y31f7o98qwpe.v1.beameio.net');
 store.searchItemAndParentFolderPath('ri5vmbuj8ezu79k8.v1.r.d.edge.eu-central-1a-1.v1.beameio.net');
-
+*/
 
 //
 // check searching by hostname

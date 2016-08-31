@@ -16,13 +16,16 @@ const PinAtomPKbyDefault        = false;
 var rootDir                     = process.env.BEAME_DIR || path.join(home, '.beame');
 var beameMasterCredFqdn 		= process.env.BEAME_MASTER_CREDS || null;
 /** @const {String} **/
-var localCertsDir = path.join(rootDir, 'v2', 'local');
+var localCertsDirV1 = path.join(rootDir, 'v1', 'local');
 
 /** @const {String} **/
-var remoteCertsDir = path.join(rootDir, 'v2', 'remote');
+var remotePKsDirV1 = path.join(rootDir, 'pki');
 
 /** @const {String} **/
-var remotePKsDir = path.join(rootDir, 'pki');
+var remoteCertsDirV1 = path.join(rootDir, 'v1', 'remote');
+
+var localCertsDirV2 = path.join(rootDir, 'v2', 'local');
+
 
 /** @const {String} **/
 var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
@@ -200,9 +203,10 @@ var SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_P
 module.exports = {
 	rootDir,
 	npmRootDir,
-	localCertsDir,
-	remoteCertsDir,
-	remotePKsDir,
+	localCertsDirV1,
+	localCertsDirV2,
+	remoteCertsDirV1,
+	remotePKsDirV1,
 	loadBalancerURL,
 	metadataFileName,
 	s3MetadataFileName,

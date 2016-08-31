@@ -521,4 +521,20 @@ DataServices.prototype.readJSON = function (dirPath) {
 	return {};
 };
 
+DataServices.prototype.copyDir = function(src, dest) {
+	mkdirp(dest);
+	var files = fs.readdirSync(src);
+	for(var i = 0; i < files.length; i++) {
+		var current = fs.lstatSync(path.join(src, files[i]));
+		if(current.isDirectory()) {
+			copyDir(path.join(src, files[i]), path.join(dest, files[i]));
+		} else if(current.isSymbolicLink()) {
+			var symlink = fs.readlinkSync(path.join(src, files[i]));
+			fs.symlinkSync(symlink, path.join(dest, files[i]));
+		} else {
+			copy(path.join(src, files[i]), path.join(dest, files[i]));
+		}
+	}
+};
+
 module.exports = DataServices;

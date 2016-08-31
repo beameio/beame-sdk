@@ -40,9 +40,9 @@ function BeameStore() {
 		return beameStoreInstance;
 	}
 
-	mkdirp.sync(config.localCertsDir);
-	mkdirp.sync(config.remoteCertsDir);
-	mkdirp.sync(config.remotePKsDir);
+	mkdirp.sync(config.localCertsDirV1);
+	mkdirp.sync(config.remoteCertsDirV1);
+	mkdirp.sync(config.remotePKsDirV1);
 
 	this.ensureFreshBeameStore();
 
@@ -220,10 +220,10 @@ BeameStore.prototype.listCurrentRemoteClients = function () {
 };
 
 BeameStore.prototype.ensureFreshBeameStore = function () {
-	var newHash = beameDirApi.generateDigest(config.localCertsDir);
+	var newHash = beameDirApi.generateDigest(config.localCertsDirV1);
 	if (this.digest !== newHash) {
-		logger.debug(`reading beamedir ${config.localCertsDir}`);
-		this.beameStore = beameDirApi.readBeameDir(config.localCertsDir);
+		logger.debug(`reading beamedir ${config.localCertsDirV1}`);
+		this.beameStore = beameDirApi.readBeameDir(config.localCertsDirV1);
 		this.digest     = newHash;
 	}
 };
@@ -298,7 +298,7 @@ BeameStore.prototype.importCredentials = function (data) {
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	var credToImport = JSON.parse(data);
 	//var host         = credToImport.hostname;
-	var targetPath   = path.join(config.localCertsDir, credToImport.path);
+	var targetPath   = path.join(config.localCertsDirV1, credToImport.path);
 	mkdirp(targetPath);
 
 	var metadata = {};
