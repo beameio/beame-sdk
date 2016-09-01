@@ -7,6 +7,7 @@
  * @property {String|null} [email]
  * @property {String|null} [local_ip]
  * @property {String|null} [edge_fqdn]
+ * @property {String|null} [parent_fqdn]
  */
 
 /**
