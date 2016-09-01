@@ -45,9 +45,8 @@ F do_test(name:Str, f:Fun) {
 		msg = f()
 		"OK: $msg"
 	} catch(tf:TestFail) {
-		# TODO: .info should be .message when fixed in NGS
 		global exit_code = max([exit_code, 1])
-		"FAIL: ${tf.info}"
+		"FAIL: ${tf.message}"
 	} catch(e) {
 		global exit_code = max([exit_code, 2])
 		"FAIL: $e"
@@ -166,7 +165,7 @@ if creds_exported {
 	})
 	do_test("[Import credentials] Check certificate exists", F() {
 		# https://beameio-net-certs-dev.s3.amazonaws.com/h9dgcv7wdlsff7oo.h7zujy4ch0hg8rgd.v1.beameio.net/x509.pem
-		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
+		url = "https://beameio-net-certs-staging.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
 		$(curl -s $url)
 		"URL $url is available"
 	})
@@ -186,7 +185,7 @@ if edge_clients {
 
 		servers = edge_clients.map(F(edge_client) {
 			echo("  Starting server at https://${edge_client.hostname}/")
-			Thread(F() $($BEAME_BIN servers HttpsServerTestStart --edgeClientFqdn ${edge_client.hostname}))
+			Thread(F() $($BEAME_BIN servers launchHelloWorldServer --edgeClientFqdn ${edge_client.hostname}))
 		})
 		echo("  Waiting 5 seconds for servers to come up")
 		$(sleep 5)
@@ -195,7 +194,7 @@ if edge_clients {
 			`curl --silent --max-time 10 "https://${edge_client.hostname}/"`
 		})
 		echo("  Killing servers")
-		$(pkill -f HttpsServerTestStart)
+		$(pkill -f launchHelloWorldServer)
 		servers.join()
 		echo("  Checking outputs")
 		outputs.any(is, ProcessFail) throws TestFail("Some curl processes failed: $outputs")
@@ -204,20 +203,41 @@ if edge_clients {
 	})
 }
 
-do_test("S3 credentials", F() {
-	results = ([developer] + atoms + edge_clients).hostname.map(F(hostname) {
-		echo("  Checking $hostname")
-		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
+s3_hostnames = ([developer] + atoms + edge_clients).hostname
+
+do_test("S3 pem files", F() {
+	results = s3_hostnames / F(hostname) {
+		url = "https://beameio-net-certs-staging.s3.amazonaws.com/$hostname/x509.pem"
+		echo("  Checking $url")
 		try {
 			$(curl -m 5 -s $url)
 			true
 		} catch(pf:ProcessFail) {
 			false
 		}
-	})
+	}
 	oks = results.count()
 	oks < results.len() throws TestFail("Only $oks out of ${results.len()} certificates are present in S3")
 	"All $oks certificates present in S3"
+})
+
+do_test("S3 metadata files", F() {
+	results = s3_hostnames / F(hostname) {
+		url = "https://beameio-net-certs-staging.s3.amazonaws.com/$hostname/metadata.json"
+		echo("  Checking $url")
+		try {
+			data = ``curl -m 5 -s $url``
+			echo("DATA $data")
+			data is not Hash throws TestFail("Metadata data must be hash, not $enc")
+			data.fqdn != hostname throws TestFail("FQDN in metadata is ${data.fqdn} while expected $hostname")
+			true
+		} catch(pf:ProcessFail) {
+			false
+		}
+	}
+	oks = results.count()
+	oks < results.len() throws TestFail("Only $oks out of ${results.len()} metadata files are present in S3")
+	"All $oks metadata files present in S3"
 })
 
 if Path(CREDS_FILE) {
