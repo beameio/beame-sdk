@@ -4,7 +4,7 @@
 'use strict';
 
 var path          = require('path');
-var debug         = require("debug")("./src/services/DataServices.js");
+var debug         = require("debug")("./src/services/DirectoryServices.js");
 var fs            = require('fs');
 var exec          = require('child_process').exec;
 var execFile      = require('child_process').execFile;
@@ -47,11 +47,11 @@ var DataServices = function () {
 /**
  *
  * @param {String} dirPath
- * @param {String} hostname
+ * @param {String} fqdn
  * @param {String|null|undefined} [pkName]
  * @returns {Promise}
  */
-DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
+DataServices.prototype.createCSR = function (dirPath, fqdn, pkName) {
 	var self = this;
 	var errMsg;
 
@@ -82,7 +82,7 @@ DataServices.prototype.createCSR = function (dirPath, hostname, pkName) {
 
 			self.saveFile(dirPath, pkFileName, devPK, function (error) {
 				if (!error) {
-					cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (csrSubj + hostname) + "\"";
+					cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (csrSubj + fqdn) + "\"";
 					logger.debug("generating CSR with", {"cmd": cmd});
 
 					try {
@@ -312,7 +312,7 @@ DataServices.prototype.mkdirp = function (dirPath) {
 		return mkdirp(path)
 	}
 	catch (e) {
-		logger.error(`could not create directory ${path}`);
+		//logger.info(`could not create directory ${path}`);
 	}
 };
 
@@ -396,21 +396,21 @@ DataServices.prototype.saveFileAsync = function (dirPath, data, cb) {
 
 /**
  * try read metadata file for node
- * @param {String} devDir
- * @param {String} hostname
+ * @param {String} dir
+ * @param {String} fqdn
  * @param {String} module
  * @returns {Promise.<Object>}
  */
-DataServices.prototype.getNodeMetadataAsync = function (devDir, hostname, module) {
+DataServices.prototype.getNodeMetadataAsync = function (dir, fqdn, module) {
 	var self = this;
 
 	return new Promise(function (resolve, reject) {
 
-		var developerMetadataPath = beameUtils.makePath(devDir, config.metadataFileName);
+		var developerMetadataPath = beameUtils.makePath(dir, config.metadataFileName);
 		var metadata              = self.readJSON(developerMetadataPath);
 
 		if (_.isEmpty(metadata)) {
-			reject(logger.formatErrorMessage(`metadata.json for is empty for ${hostname}`, module, null, config.MessageCodes.MetadataEmpty));
+			reject(logger.formatErrorMessage(`metadata.json for is empty for ${fqdn}`, module, null, config.MessageCodes.MetadataEmpty));
 		}
 		else {
 			resolve(metadata);
@@ -419,20 +419,28 @@ DataServices.prototype.getNodeMetadataAsync = function (devDir, hostname, module
 	});
 };
 
+DataServices.prototype.readMetadataSync = function (dir, fqdn) {
+	let self = this;
+	let p = beameUtils.makePath(dir,  fqdn, config.metadataFileName);
+	var metadata = this.readJSON(p);
+	metadata.path = p;
+	return metadata;
+};
+
 /**
  *
  * @param {String} path
  * @param {String} module
- * @param {String} hostname
+ * @param {String} fqdn
  * @returns {Promise}
  */
-DataServices.prototype.isHostnamePathValidAsync = function (path, module, hostname) {
+DataServices.prototype.isHostnamePathValidAsync = function (path, module, fqdn ) {
 	var self = this;
 
 	return new Promise(function (resolve, reject) {
 
-		if (!self.isPathExists(path)) {//provided invalid hostname
-			reject(logger.formatErrorMessage(`Provided hostname ${hostname} is invalid, list ./.beame to see existing hostnames`, module));
+		if (!self.isPathExists(path)) {//provided invalid fqdn
+			reject(logger.formatErrorMessage(`Provided fqdn  ${fqdn } is invalid, list ./.beame to see existing fqdn s`, module));
 		}
 		else {
 			resolve(true);
@@ -442,15 +450,15 @@ DataServices.prototype.isHostnamePathValidAsync = function (path, module, hostna
 
 /**
  *
- * @param {String} hostname
+ * @param {String} fqdn
  * @param {Array} nodeFiles
  * @param {String} module
  * @returns {boolean}
  */
-DataServices.prototype.validateHostCertsSync = function (hostname, nodeFiles, module) {
+DataServices.prototype.validateHostCertsSync = function (fqdn , nodeFiles, module) {
 	var self = this;
 
-	var data = beameStore.searchItemAndParentFolderPath(hostname);
+	var data = beameStore.searchItemAndParentFolderPath(fqdn );
 	if (!_.isEmpty(data)) {
 		var path = data['path'];
 
@@ -468,17 +476,17 @@ DataServices.prototype.validateHostCertsSync = function (hostname, nodeFiles, mo
  * @param {String} path
  * @param {Array} nodeFiles
  * @param {String} module
- * @param {String} hostname
+ * @param {String} fqdn
  * @param {String} nodeLevel => Developer | Atom | EdgeClient
  * @returns {Promise}
  */
-DataServices.prototype.isNodeCertsExistsAsync = function (path, nodeFiles, module, hostname, nodeLevel) {
+DataServices.prototype.isNodeCertsExistsAsync = function (path, nodeFiles, module, fqdn , nodeLevel) {
 	var self = this;
 
 	return new Promise(function (resolve, reject) {
 
 		if (!self.isNodeFilesExists(path, nodeFiles, module)) {
-			reject(logger.formatErrorMessage(`${nodeLevel} files not found for ${hostname}`, module));
+			reject(logger.formatErrorMessage(`${nodeLevel} files not found for ${fqdn }`, module));
 		}
 		else {
 			resolve(true);
@@ -488,27 +496,24 @@ DataServices.prototype.isNodeCertsExistsAsync = function (path, nodeFiles, modul
 
 /**
  *
- * @param {String} hostname
+ * @param {String} fqdn
  * @returns {Object}
  */
-DataServices.prototype.getHostMetadataSync = function (hostname) {
-	var self = this;
-	var data = beameStore.searchItemAndParentFolderPath(hostname);
-	if (!_.isEmpty(data)) {
-		var path = data['path'];
 
-		if (!path) return false;
 
-		var metadataPath = beameUtils.makePath(path, config.metadataFileName);
-		var metadata     = self.readJSON(metadataPath);
-
-		return _.isEmpty(metadata) ? null : metadata;
-
-	}
-	else {
-		return null;
+DataServices.prototype.readObject = function (filename) {
+	if (this.isPathExists(filename)) {
+		try {
+			var file = fs.readFileSync(filename);
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
+			return file;
+		}
+		catch (error) {
+			return {};
+		}
 	}
 
+	return {};
 };
 
 /**
@@ -560,7 +565,7 @@ DataServices.prototype.scanDir = function (src) {
 	for(var i = 0; i < files.length; i++) {
 		var current = fs.lstatSync(path.join(src, files[i]));
 		if(current.isDirectory()){
-			folders.push(current);
+			folders.push(files[i]);
 		}
 	}
 	return folders;

@@ -34,7 +34,7 @@ var atomServices        = new (require('../core/AtomServices'))();
 var edgeClientServices  = new (require('../core/EdgeClientServices'))();
 var localClientServices = new (require('../core/LocalClientServices'))();
 var remoteClientServices = new (require('../core/RemoteClientServices'))();
-var dataServices 		 = new (require('../services/DataServices'))();
+var dataServices 		 = new (require('../services/DirectoryServices'))();
 var path   = require('path');
 var fs     = require('fs');
 var mkdirp = require("mkdirp");
@@ -656,7 +656,6 @@ function convertCredentialsToV2(){
 		dataServices.deleteFolder(rec.path,() => {});
 		logger.info(`copying ${rec.path} to ${newPath}`);
 	};
-	let beameStore2 = new require('../ser')
 }
 
 

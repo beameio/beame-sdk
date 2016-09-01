@@ -36,21 +36,28 @@ class Credential {
 	 * @param {String|null} [email]
 	 * @param {String|null} [local_ip]
 	 */
-	constructor(fqdn, parent_fqdn, policies, name, email, local_ip) {
+	constructor(fqdn, store) {
+		console.log('huj');
+ 		this.fqdn        = fqdn;
+		this._store = store;
+		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+		this.metadata ={};
+
+		this.loadCredentialsObject();
 
 
-		this.fqdn        = fqdn;
-		this.parent_fqdn = parent_fqdn;
-		this.name        = name;
-		this.email       = email;
-		this.localIp     = local_ip;
-//		this.permissions = policies.map(cred=> this.permissions = this.permissions | cred);
 
+//		this.parent_fqdn = parent_fqdn;
+// 		this.name        = name;
+// 		this.email       = email;
+// 		this.localIp     = local_ip;
+// //		this.permissions = policies.map(cred=> this.permissions = this.permissions | cred);
+//
+//
+// 		this.state        = config.CredentialStatus.DIR_NOTREAD;
+// 		this.dirShaStatus = "";
+// 		this.determineCertStatus();
 
-		this.state        = config.CredentialStatus.DIR_NOTREAD;
-		this.dirShaStatus = "";
-		this.determineCertStatus();
-		this.dataHelper = new BeameStoreDataServices(this.fqdn);
 	}
 
 	determineCertStatus() {
@@ -92,22 +99,21 @@ class Credential {
 		var credentials = {};
 		this.state      = this.state | config.CredentialStatus.DIR_NOTREAD;
 
-		_.map(config.certificatefiles, function (key, value) {
+		Object.keys(config.CertificateFiles).forEach((keyName, index) => {
 			try {
-				this.value = this.dataHelper.readObject(key);
-			}
-			catch (e) {
-				logger.debug("readcertdata error " + e.tostring());
+				this[keyName] = this.beameStoreServices.readObject(config.CertFileNames[keyName]);
+			}catch(e){
+				console.log(`exception ${e}`);
 			}
 		});
 
-		credentials.path = certificatesDir;
+//		credentials.path = certificatesDir;
 
 		try {
-			this.dataHelper.readObject(config.metadatafilename);
+			let filecontent = this.beameStoreServices.readMetadataSync();
 			//noinspection es6modulesdependencies,nodemodulesdependencies
-			_.map(json.parse(filecontent), function (key, value) {
-				this.value.credentials[value] = key;
+			_.map(filecontent,  (value, key) => {
+				this.metadata[key] = value;
 			});
 		} catch (e) {
 			logger.debug("readcertdata error " + e.tostring());

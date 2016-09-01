@@ -4,7 +4,7 @@
 'use strict';
 var _ = require('underscore');
 var provisionApi = new (require('../services/ProvisionApi'))();
-var dataServices = new (require('../services/DataServices'))();
+var dataServices = new (require('../services/DirectoryServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var crypto = require('../cli/crypto');
 var fs = require('fs');

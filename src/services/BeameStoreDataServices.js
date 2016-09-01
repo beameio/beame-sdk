@@ -32,23 +32,26 @@
  * @property {String|null} error
  */
 
-var os            = require('os');
-var home          = os.homedir();
-var homedir       = home;
-var config        = require('../../config/Config');
+const os            = require('os');
+const home          = os.homedir();
+const homedir       = home;
+const config        = require('../../config/Config');
 const module_name = config.AppModules.BeameEntity;
-var BeameLogger   = require('../utils/Logger');
-var logger        = new BeameLogger(module_name);
-var provisionApi  = new (require('../services/ProvisionApi'))();
-var apiActions    = require('../../config/ApiConfig.json').Actions;
-var beameUtils    = require('../utils/BeameUtils');
+const BeameLogger   = require('../utils/Logger');
+const logger        = new BeameLogger(module_name);
+const provisionApi  = new (require('../services/ProvisionApi'))();
+const apiActions    = require('../../config/ApiConfig.json').Actions;
+const beameUtils    = require('../utils/BeameUtils');
+const path 		  = require('path');
 
 class BeameStoreDataServices {
 
 
-	constructor() {
+	constructor(fqdn, store) {
 		/** @member {Object} **/
-		this._store = new (require('./BeameStoreV2'))();
+		this.directoryServices  = new (require('./DirectoryServices'))()
+		this.fqdn = fqdn;
+		this._store = store;
 	}
 
 	/**
@@ -77,7 +80,16 @@ class BeameStoreDataServices {
 
 		return result;
 	}
+	readObject(filename){
+		let p = path.join(config.localCertsDirV2, this.fqdn, filename);
+		return this.directoryServices.readObject(p);
+	}
 
+
+
+	readMetadataSync(){
+		return this.directoryServices.readMetadataSync(config.localCertsDirV2, this.fqdn);
+	}
 	/**
 	 * request fqdn
 	 * @param {RequestFqdnOptions} options
@@ -181,6 +193,8 @@ class BeameStoreDataServices {
 			}
 		);
 	}
+
+
 
 	getCerts(csr) {
 	}

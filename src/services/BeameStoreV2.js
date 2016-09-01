@@ -13,31 +13,31 @@
  */
 
 
-var async         = require('async');
-//var exec        = require('child_process').exec;
-var fs            = require('fs');
-var _             = require('underscore');
-var os            = require('os');
-var config        = require('../../config/Config');
+//const exec        = require('child_process').exec;
+const config        = require('../../config/Config');
 const module_name = config.AppModules.BeameStore;
-var logger        = new (require('../utils/Logger'))(module_name);
-var jmespath      = require('jmespath');
-var beameDirApi   = require('./BeameDirServices');
-var sprintf       = require('sprintf');
-var mkdirp        = require('mkdirp');
-var path          = require('path');
-var request       = require('sync-request');
-var url           = require('url');
-var provApi       = new (require('./ProvisionApi'))();
-var dataservices = new (require('./DataServices'))();
-var Credential = new (require('./Credential'));
+const logger        = new (require('../utils/Logger'))(module_name);
+const provApi       = new (require('./ProvisionApi'))();
+const dataservices = new (require('./DirectoryServices'))();
+const Credential = require('./Credential');
+
+
+let _store = null;
 
 class BeameStoreV2 {
 	constructor() {
-		this.credentials = [];
+		if(_store === null){
+			_store = this;
+		}
+		else{
+			return _store;
+		}
+
+		this.credentials = {};
 		dataservices.mkdirp(config.localCertsDirV2);
-		dataservices.scanDir().forEach(folderName => {
-			this.credentials.folderName = new Credential(folderName );
+		dataservices.scanDir(config.localCertsDirV2).forEach(folderName => {
+			console.log(`credential ${folderName}`)
+		 	this.credentials[folderName] = new Credential(folderName, this);
 		});
 	}
 
@@ -48,7 +48,7 @@ class BeameStoreV2 {
 	 */
 	search(fqdn) {
 		/** @type {Credential} **/
-		return {};
+		return this.credentials.fqdn;
 	};
 
 	addToStore(x509){};
@@ -57,11 +57,8 @@ class BeameStoreV2 {
 		if (parentFqdn.isPrivateKeyLocal()) {
 			let fqdn       = getHostnameFromProvision(parentFqdn, challange);
 			let credential = new Credential(fqdn);
-
-
-			//
+		//
 		}
-
 	}; // returns a new Credential object.
 
 	/**

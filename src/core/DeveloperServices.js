@@ -19,7 +19,7 @@ var devPath       = config.localCertsDir;
 new (require('../services/BeameStore'))();
 
 var provisionApi = new (require('../services/ProvisionApi'))();
-var dataServices = new (require('../services/DataServices'))();
+var dataServices = new (require('../services/DirectoryServices'))();
 var beameUtils   = require('../utils/BeameUtils');
 var apiActions   = require('../../config/ApiConfig.json').Actions.DeveloperApi;
 

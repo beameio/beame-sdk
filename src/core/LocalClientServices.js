@@ -9,7 +9,7 @@ var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 var _             = require('underscore');
 var provisionApi  = new (require('../services/ProvisionApi'))();
-var dataServices  = new (require('../services/DataServices'))();
+var dataServices  = new (require('../services/DirectoryServices'))();
 var beameUtils    = require('../utils/BeameUtils');
 var apiActions    = require('../../config/ApiConfig.json').Actions.LocalClient;
 
