@@ -17,7 +17,7 @@ var logger        = new (require('../utils/Logger'))(module_name);
 
 var beameStore = new (require('../services/BeameStore'))();
 var beameUtils = require('../utils/BeameUtils');
-
+var mkdirp = require('mkdirp');
 /** @const {String} */
 var csrSubj = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
@@ -307,6 +307,15 @@ DataServices.prototype.createDir = function (dirPath) {
 	}
 };
 
+DataServices.prototype.mkdirp = function (dirPath) {
+	try {
+		return mkdirp(path)
+	}
+	catch (e) {
+		logger.error(`could not create directory ${path}`);
+	}
+};
+
 /**
  *
  * @param {String} dirPath
@@ -521,20 +530,40 @@ DataServices.prototype.readJSON = function (dirPath) {
 	return {};
 };
 
+DataServices.prototype.copy = function(src, dest) {
+	var oldFile = fs.createReadStream(src);
+	var newFile = fs.createWriteStream(dest);
+	oldFile.pipe(newFile);
+};
+
 DataServices.prototype.copyDir = function(src, dest) {
 	mkdirp(dest);
+	src = src + path.sep;
 	var files = fs.readdirSync(src);
 	for(var i = 0; i < files.length; i++) {
 		var current = fs.lstatSync(path.join(src, files[i]));
 		if(current.isDirectory()) {
-			copyDir(path.join(src, files[i]), path.join(dest, files[i]));
+			//copyDir(path.join(src, files[i]), path.join(dest, files[i]));
+			continue;
 		} else if(current.isSymbolicLink()) {
 			var symlink = fs.readlinkSync(path.join(src, files[i]));
 			fs.symlinkSync(symlink, path.join(dest, files[i]));
 		} else {
-			copy(path.join(src, files[i]), path.join(dest, files[i]));
+			this.copy(path.join(src, files[i]), path.join(dest, files[i]));
 		}
 	}
 };
+
+DataServices.prototype.scanDir = function (src) {
+	let files = fs.readdirSync(src);
+	let folders = [];
+	for(var i = 0; i < files.length; i++) {
+		var current = fs.lstatSync(path.join(src, files[i]));
+		if(current.isDirectory()){
+			folders.push(current);
+		}
+	}
+	return folders;
+}
 
 module.exports = DataServices;

@@ -3,7 +3,7 @@
 // Beame.io Ltd, 2016.
 //
 /*jshint esversion: 6 */
-
+"use strict";
 
 var async                  = require('async');
 //var exec        = require('child_process').exec;
@@ -44,7 +44,7 @@ class Credential {
 		this.name        = name;
 		this.email       = email;
 		this.localIp     = local_ip;
-		this.permissions = policies.map(cred=> this.permissions = this.permissions | cred);
+//		this.permissions = policies.map(cred=> this.permissions = this.permissions | cred);
 
 
 		this.state        = config.CredentialStatus.DIR_NOTREAD;

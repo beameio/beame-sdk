@@ -29,13 +29,16 @@ var path          = require('path');
 var request       = require('sync-request');
 var url           = require('url');
 var provApi       = new (require('./ProvisionApi'))();
+var dataservices = new (require('./DataServices'))();
+var Credential = new (require('./Credential'));
 
-
-
-class BeameStore {
+class BeameStoreV2 {
 	constructor() {
-
-
+		this.credentials = [];
+		dataservices.mkdirp(config.localCertsDirV2);
+		dataservices.scanDir().forEach(folderName => {
+			credentials.folderName = new Credential(folderName );
+		});
 	}
 
 	/**
@@ -93,5 +96,5 @@ class BeameStore {
 	//
 	// beameStoreInstance = this;
 }
-
-module.exports = BeameStore;
+var store = new  BeameStoreV2();
+module.exports.BeameStoreV2 = BeameStoreV2;
