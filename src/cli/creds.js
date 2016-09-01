@@ -24,6 +24,7 @@ require('../../initWin');
 var x509 = require('x509');
 
 var store               = new (require("../services/BeameStore"))();
+var store2              = new (require("../services/BeameStoreV2"))();
 var config              = require('../../config/Config');
 const module_name       = config.AppModules.BeameCreds;
 var BeameLogger         = require('../utils/Logger');
@@ -646,11 +647,16 @@ function revoke(fqdn) {
 }
 function convertCredentialsToV2(){
 	let creds = store.list();
-	for(let cred of creds){
+	for (let cred of creds) {
 		let rec = store.search(cred.hostname)[0];
-		console.log(`**********************${JSON.stringify(rec.path)}********************`);
-//		mkdirp(config.localCertsDirV2);
+		let pathElements = rec.path.split(path.sep);
+		let lastElement = pathElements[pathElements.length - 1];
+		let newPath = path.join(config.localCertsDirV2, lastElement);
+		dataServices.copyDir(rec.path, newPath);
+		dataServices.deleteFolder(rec.path,() => {});
+		logger.info(`copying ${rec.path} to ${newPath}`);
 	};
+	let beameStore2 = new require('../ser')
 }
 
 

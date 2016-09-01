@@ -24,7 +24,7 @@ var remotePKsDirV1 = path.join(rootDir, 'pki');
 /** @const {String} **/
 var remoteCertsDirV1 = path.join(rootDir, 'v1', 'remote');
 
-var localCertsDirV2 = path.join(rootDir, 'v2', 'local');
+var localCertsDirV2 = path.join(rootDir, 'v2');
 
 
 /** @const {String} **/

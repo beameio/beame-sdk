@@ -37,7 +37,7 @@ class BeameStoreV2 {
 		this.credentials = [];
 		dataservices.mkdirp(config.localCertsDirV2);
 		dataservices.scanDir().forEach(folderName => {
-			credentials.folderName = new Credential(folderName );
+			this.credentials.folderName = new Credential(folderName );
 		});
 	}
 
@@ -96,5 +96,5 @@ class BeameStoreV2 {
 	//
 	// beameStoreInstance = this;
 }
-var store = new  BeameStoreV2();
-module.exports.BeameStoreV2 = BeameStoreV2;
+
+module.exports = BeameStoreV2;

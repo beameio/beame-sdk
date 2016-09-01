@@ -48,8 +48,7 @@ class BeameStoreDataServices {
 
 	constructor() {
 		/** @member {Object} **/
-		let S = require('./BeameStoreV2');
-		this._store = new S();
+		this._store = new (require('./BeameStoreV2'))();
 	}
 
 	/**
