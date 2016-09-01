@@ -189,9 +189,9 @@ function runShell(path2Script,fqdn) {
 	
 	
 	var args = [path.resolve(__dirname, path2Script ),path2Pfx,path2Pwd,'local.lfe.com',fqdn];
-	var cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -ArgumentList '-ExecutionPolicy RemoteSigned -File \"%1\"' -Verb RunAs";
+	var cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass";
 
-	console.log(`args ${args}`);
+//	console.log(`args ${args}`);
 
 	
 	exec(cmd,args, (error, stdout, stderr) => {
