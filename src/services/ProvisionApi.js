@@ -38,47 +38,47 @@ function isObject(str) {
 }
 
 function clearJSON(json) {
-	
+
 	var jsonCleaned = {};
-	
+
 	Object.keys(json).map(function (k) {
 		if (k === '$id') return;
 		if (!isObject(json[k])) {
 			jsonCleaned[k] = json[k];
 		}
-		
+
 		var jsonProp = json[k];
 		delete jsonProp['$id'];
 		jsonCleaned[k] = jsonProp;
-		
+
 	});
-	
+
 	return jsonCleaned;
 }
 
 //private helpers
 var parseProvisionResponse = function (error, response, body, type, callback) {
-	
+
 	if (!response) {
 		callback && callback(logger.formatErrorMessage("Provision Api => empty response", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
-	
+
 	if (error) {
 		callback(logger.formatErrorMessage("Provision Api response error", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
-	
+
 	/** @type {Object|null|undefined} */
 	var payload;
-	
+
 	if (body) {
 		try {
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			payload = JSON.parse(body);
-			
+
 			payload = clearJSON(payload);
-			
+
 			//delete payload['$id'];
 		}
 		catch (err) {
@@ -88,10 +88,10 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	else {
 		payload = response.statusCode == 200 ? {updateStatus: 'pass'} : "empty";
 	}
-	
-	
+
+
 	if (response.statusCode == 200) {
-		
+
 		callback && callback(null, payload);
 	}
 	else {
@@ -100,10 +100,14 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 			"status": response.statusCode,
 			"message": payload.Message || (payload.body && payload.body.message) || payload
 		}, config.MessageCodes.ApiRestError);
-		
+
+		logger.debug(`Provision error payload ${payload.toString()}`,payload);
+		logger.debug(`Provision error response ${response.toString()}`,response);
+
+
 		callback && callback(errMsg, null);
 	}
-	
+
 };
 
 /**
@@ -116,24 +120,24 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
  * @param {Function} callback
  */
 var postToProvisionApi = function (url, options, type, retries, sleep, callback) {
-	
+
 	retries--;
-	
+
 	var onApiError = function (error) {
 		logger.warn("Provision Api post error", {
 			"error": error,
 			"url": url
 		});
-		
+
 		sleep = parseInt(sleep * (Math.random() + 1.5));
-		
+
 		setTimeout(function () {
 			postToProvisionApi(url, options, type, retries, sleep, callback);
 		}, sleep);
-		
-		
+
+
 	};
-	
+
 	try {
 		if (retries == 0) {
 			callback && callback(logger.formatErrorMessage("Post to provision failed", module_name, {
@@ -164,7 +168,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 							}
 						});
 					}
-					
+
 				}
 			);
 		}
@@ -172,7 +176,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 	catch (error) {
 		onApiError(error);
 	}
-	
+
 };
 
 /**
@@ -185,23 +189,23 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
  * @param {Function} callback
  */
 var getFromProvisionApi = function (url, options, type, retries, sleep, callback) {
-	
-	
+
+
 	retries--;
-	
+
 	var onApiError = function (error) {
 		logger.warn("Provision Api get error", {
 			"error": error,
 			"url": url
 		});
-		
+
 		sleep = parseInt(sleep * (Math.random() + 1.5));
-		
+
 		setTimeout(function () {
 			getFromProvisionApi(url, options, type, retries, sleep, callback);
 		}, sleep);
 	};
-	
+
 	try {
 		if (retries == 0) {
 			callback && callback(logger.formatErrorMessage("Get from provision failed", module_name, {
@@ -232,7 +236,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 							}
 						});
 					}
-					
+
 				}
 			);
 		}
@@ -240,7 +244,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 	catch (error) {
 		onApiError(error);
 	}
-	
+
 };
 
 /**
@@ -248,10 +252,10 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
  * @constructor
  */
 var ProvApiService = function () {
-	
+
 	/** @member {String} **/
 	this.provApiEndpoint = provisionSettings.Endpoints.BaseUrl;
-	
+
 };
 
 /**
@@ -273,21 +277,21 @@ ProvApiService.prototype.setAuthData = function (authData) {
  * @param {String|null} [signature]
  */
 ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, signature) {
-	
+
 	this.options = this.options || {};
-	
+
 	var options = _.extend(this.options, {form: apiData.postData});
-	
+
 	if (signature) {
 		this.options.headers = {
 			"AuthToken": signature
 		};
 	}
-	
+
 	var apiEndpoint = this.provApiEndpoint + apiData.api;
 	logger.debug(`Api call to : ${apiEndpoint}`);
 	var _method = method || 'POST';
-	
+
 	switch (_method) {
 		case 'POST' :
 			postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
@@ -298,7 +302,7 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
 		default:
 			callback('Invalid method', null);
 			return;
-		
+
 	}
 };
 
