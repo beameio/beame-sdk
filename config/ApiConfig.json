@@ -1,117 +1,134 @@
 {
-    "Endpoints": {
-        "BaseUrl": "https://prov-staging.beameio.net"
-    },
-    "RetryAttempts": 10,
-    "Actions": {
-        "DeveloperApi": {
-            "CompleteRegistration": {
-                "endpoint": "/api/v1/auth/dev/complete"
-            },
-            "RestoreCert": {
-                "endpoint": "/api/v1/auth/dev/cert/restore"
-            },
-            "CreateDeveloper": {
-                "endpoint": "/api/v1/dev/create"
-            },
-            "GetCert": {
-                "endpoint": "/api/v1/dev/cert/get"
-            },
-            "RenewCert": {
-                "endpoint": "/api/v1/dev/cert/renew"
-            },
-            "RevokeCert": {
-                "endpoint": "/api/v1/dev/cert/revoke"
-            },
-            "UpdateProfile": {
-                "endpoint": "/api/v1/dev/profile/update"
-            },
-            "GetStats": {
-                "endpoint": "/api/v1/dev/stats"
-            },
-            "GetMetadata": {
-                "endpoint": "/api/v1/dev/meta"
-            },
-            "RegisterDeveloper": {
-                "name": "register developer",
-                "endpoint": "/api/v1/auth/dev/register"
-            },
-            "DeleteTestDevelopers": {
-                "name": "delete test developer",
-                "endpoint": "/api/v1/dev/delete"
-            }
-        },
-        "AtomApi": {
-            "CreateAtom": {
-                "endpoint": "/api/v1/atom/save"
-            },
-            "DeleteAtom": {
-                "endpoint": "/api/v1/atom/delete"
-            },
-            "UpdateAtom": {
-                "endpoint": "/api/v1/atom/update"
-            },
-            "UpdateAtomType": {
-                "endpoint": "/api/v1/atom/type/save"
-            },
-            "GetCert": {
-                "endpoint": "/api/v1/atom/cert/get"
-            },
-            "RenewCert": {
-                "endpoint": "/api/v1/atom/cert/renew"
-            },
-            "RevokeCert": {
-                "endpoint": "/api/v1/atom/cert/revoke"
-            },
-            "GetStats": {
-                "endpoint": "/api/v1/atom/stats"
-            },
-            "GetCreds": {
-                "endpoint": "/api/v1/atom/creds/get"
-            }
-        },
-        "EdgeClient": {
-            "CreateEdgeClient": {
-                "endpoint": "/api/v1/client/register"
-            },
-            "DeleteEdgeClient": {
-                "endpoint": "/api/v1/client/delete"
-            },
-            "GetCert": {
-                "endpoint": "/api/v1/client/cert/get"
-            },
-		    "GetRemoteCert": {
-                "endpoint": "/api/v1/auth/edge/cert/get"
-            },
-            "RenewCert": {
-                "endpoint": "/api/v1/client/cert/renew"
-            },
-            "RevokeCert": {
-                "endpoint": "/api/v1/client/cert/revoke"
-            },
-            "GetStats": {
-                "endpoint": "/api/v1/client/stats"
-            }
-        },
-        "LocalClient": {
-            "CreateLocalClient": {
-                "endpoint": "/api/v1/local/register"
-            },
-            "GetRemoteCert": {
-                "endpoint": "/api/v1/auth/local/cert/get"
-            },
-            "DeleteLocalClient": {
-                "endpoint": "/api/v1/local/delete"
-            },
-            "GetCert": {
-                "endpoint": "/api/v1/local/cert/get"
-            },
-            "RenewCert": {
-                "endpoint": "/api/v1/local/cert/renew"
-            },
-            "RevokeCert": {
-                "endpoint": "/api/v1/local/cert/revoke"
-            }
-        }
-    }
+  "Endpoints": {
+	"BaseUrl": "https://prov-staging.beameio.net"
+  },
+  "RetryAttempts": 10,
+  "Actions": {
+	"EntityApi": {
+	  "RegisterEntity": {
+		"endpoint": "/api/v1/node/register"
+	  },
+	  "CompleteRegistration": {
+		"endpoint": "/api/v1/node/register/complete"
+	  },
+	  "CreateEntity": {
+		"endpoint": "/api/v1/node/create"
+	  },
+	  "GetCert": {
+		"endpoint": "/api/v1/node/cert/get"
+	  },
+	  "GetMetadata": {
+		"endpoint": "/api/v1/node/get/meta"
+	  }
+	},
+	"DeveloperApi": {
+	  "CompleteRegistration": {
+		"endpoint": "/api/v1/auth/dev/complete"
+	  },
+	  "RestoreCert": {
+		"endpoint": "/api/v1/auth/dev/cert/restore"
+	  },
+	  "CreateDeveloper": {
+		"endpoint": "/api/v1/dev/create"
+	  },
+	  "GetCert": {
+		"endpoint": "/api/v1/dev/cert/get"
+	  },
+	  "RenewCert": {
+		"endpoint": "/api/v1/dev/cert/renew"
+	  },
+	  "RevokeCert": {
+		"endpoint": "/api/v1/dev/cert/revoke"
+	  },
+	  "UpdateProfile": {
+		"endpoint": "/api/v1/dev/profile/update"
+	  },
+	  "GetStats": {
+		"endpoint": "/api/v1/dev/stats"
+	  },
+	  "GetMetadata": {
+		"endpoint": "/api/v1/dev/meta"
+	  },
+	  "RegisterDeveloper": {
+		"name": "register developer",
+		"endpoint": "/api/v1/auth/dev/register"
+	  },
+	  "DeleteTestDevelopers": {
+		"name": "delete test developer",
+		"endpoint": "/api/v1/dev/delete"
+	  }
+	},
+	"AtomApi": {
+	  "CreateAtom": {
+		"endpoint": "/api/v1/atom/save"
+	  },
+	  "DeleteAtom": {
+		"endpoint": "/api/v1/atom/delete"
+	  },
+	  "UpdateAtom": {
+		"endpoint": "/api/v1/atom/update"
+	  },
+	  "UpdateAtomType": {
+		"endpoint": "/api/v1/atom/type/save"
+	  },
+	  "GetCert": {
+		"endpoint": "/api/v1/atom/cert/get"
+	  },
+	  "RenewCert": {
+		"endpoint": "/api/v1/atom/cert/renew"
+	  },
+	  "RevokeCert": {
+		"endpoint": "/api/v1/atom/cert/revoke"
+	  },
+	  "GetStats": {
+		"endpoint": "/api/v1/atom/stats"
+	  },
+	  "GetCreds": {
+		"endpoint": "/api/v1/atom/creds/get"
+	  }
+	},
+	"EdgeClient": {
+	  "CreateEdgeClient": {
+		"endpoint": "/api/v1/client/register"
+	  },
+	  "DeleteEdgeClient": {
+		"endpoint": "/api/v1/client/delete"
+	  },
+	  "GetCert": {
+		"endpoint": "/api/v1/client/cert/get"
+	  },
+	  "GetRemoteCert": {
+		"endpoint": "/api/v1/auth/edge/cert/get"
+	  },
+	  "RenewCert": {
+		"endpoint": "/api/v1/client/cert/renew"
+	  },
+	  "RevokeCert": {
+		"endpoint": "/api/v1/client/cert/revoke"
+	  },
+	  "GetStats": {
+		"endpoint": "/api/v1/client/stats"
+	  }
+	},
+	"LocalClient": {
+	  "CreateLocalClient": {
+		"endpoint": "/api/v1/local/register"
+	  },
+	  "GetRemoteCert": {
+		"endpoint": "/api/v1/auth/local/cert/get"
+	  },
+	  "DeleteLocalClient": {
+		"endpoint": "/api/v1/local/delete"
+	  },
+	  "GetCert": {
+		"endpoint": "/api/v1/local/cert/get"
+	  },
+	  "RenewCert": {
+		"endpoint": "/api/v1/local/cert/renew"
+	  },
+	  "RevokeCert": {
+		"endpoint": "/api/v1/local/cert/revoke"
+	  }
+	}
+  }
 }
