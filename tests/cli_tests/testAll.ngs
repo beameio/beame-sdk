@@ -227,7 +227,6 @@ do_test("S3 metadata files", F() {
 		echo("  Checking $url")
 		try {
 			data = ``curl -m 5 -s $url``
-			echo("DATA $data")
 			data is not Hash throws TestFail("Metadata data must be hash, not $enc")
 			data.fqdn != hostname throws TestFail("FQDN in metadata is ${data.fqdn} while expected $hostname")
 			true
