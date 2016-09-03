@@ -52,7 +52,6 @@ class BeameStoreV2 {
 
 
 			let parentNode = this.search(parent_fqdn)[0];
-			console.log(`credential ${folderName } ${parent_fqdn } parent node found ${parentNode !== null}`)
 			if(!parent_fqdn || !parentNode){
 				this.credentials[folderName] = credentials;
 				this.reassignCredentials(credentials);
@@ -67,7 +66,7 @@ class BeameStoreV2 {
 					this.credentials[folderName] = null;
 				}
 				this.reassignCredentials(credentials);
-							}
+			}
 				// there is no parent node in the store. still a to decice weather i want to request the whole tree.
 				// for now we will keep it at the top level, and as soon as parent is added to the store it will get reassigned
 			// just a top level credential or a credential we are placing on top, untill next one is added
@@ -75,21 +74,15 @@ class BeameStoreV2 {
 	}
 
 	reassignCredentials(currentNode){
-		console.log(`****************************  reassigning credentials for ${currentNode.get('FQDN')}`);
 		let credentialsWitoutParent = _.filter(this.credentials, (_item) => {
-			console.log(`${_item.get('PARENT_FQDN')} === ${currentNode.get('FQDN')}`)
 			return _item.get('PARENT_FQDN') === currentNode.get('FQDN');
 		});
-		console.log(`**************************** found records to reassign ${credentialsWitoutParent.length}`);
-		if(credentialsWitoutParent.length > 0)
-			console.log('here');
 		_.each(credentialsWitoutParent, (item, index) => {
 			currentNode.childs.push(item);
 			this.credentials[item.get("FQDN")] = null;
 			delete this.credentials[item.get("FQDN")];
 			item.father = currentNode;
 		});
-		console.log(`****************************  ENDED reassigning credentials for ${currentNode.get('FQDN')} ${Object.keys(this.credentials).length}`);
 	}
 
 	/**
@@ -97,7 +90,7 @@ class BeameStoreV2 {
 	 * @param {String} fqdn
 	 * @returns {Credential}
 	 */
-	search(fqdn, searchArray){
+	search(fqdn, searchArray, fuzzy){
 		if(!searchArray){
 			searchArray = this.credentials;
 		}
@@ -106,7 +99,6 @@ class BeameStoreV2 {
 		return [result];
 	}
 	_search(fqdn, searchArray) {
-		console.log(`searching for fqdn ${fqdn}`);
 		//console.log(`starting _search ${fqdn}`);
 		if(!searchArray){
 			searchArray = this.credentials;
@@ -116,7 +108,6 @@ class BeameStoreV2 {
 			if(!searchArray[item]) {
 				continue;
 			}
-			console.log(`COMPARING ${searchArray[item].get("FQDN")} ${fqdn}`);
 			if(searchArray[item].get("FQDN") === fqdn){
 				return searchArray[item];
 			}
@@ -130,6 +121,42 @@ class BeameStoreV2 {
 		};
 		return null;
 	};
+
+	/*list(regex, searchArray){
+		if(!searchArray){
+			searchArray = this.credentials;
+		}
+		let result = this.list(fqdn, searchArray);
+
+		return [result];
+	}*/
+
+	list(regex, searchArray) {
+		//console.log(`starting _search ${fqdn}`);
+		if(!searchArray){
+			searchArray = this.credentials;
+		}
+		let results=[] ;
+
+		for(let item in searchArray){
+			//	console.log(`comparing ${searchArray[item].get("FQDN")} ${fqdn}`);
+			if(!searchArray[item]) {
+				continue;
+			}
+			if(searchArray[item].get("FQDN").match(regex)){
+				results.push(searchArray[item]);
+			}
+			if(searchArray[item].childs) {
+				let result = this.list(regex, searchArray[item].childs);
+				if(!result){
+					continue;
+				}
+				results = results.concat(result);
+			}
+		};
+		return results;
+	};
+
 
 	addToStore(x509){};
 

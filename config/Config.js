@@ -65,13 +65,22 @@ var CertFileNames = {
  *  @enum {string}
  */
 var CertificateFiles = {
-	"PRIVATE_KEY": "private_key.pem",
-	"X509":        "x509.pem",
-	"CA":          "ca.pem",
-	"PKCS7":       "pkcs7.pem",
-	"P7B":         "p7b.cer",
-	"PKCS12":      "cert.pfx",
-	"PWD":         "pwd.txt"
+"PRIVATE_KEY"            : "private_key.pem",
+"X509"                   : "x509.pem",
+"CA"                     : "ca.pem",
+"PKCS7"                  : "pkcs7.pem",
+"P7B"                    : "p7b.cer",
+"PKCS12"                 : "cert.pfx",
+"PWD"                    : "pwd.txt"
+};
+
+var MetadataProperties = {
+  LEVEL        : "level",
+  HOSTNAME     : "hostname",
+  UID          : "uid",
+  NAME         : "name",
+  PARENT_FQDN  : "parent_fqdn",
+  EdgeHostname : "edgeHostname",
 };
 
 var CredentialStatus = {
@@ -232,5 +241,6 @@ module.exports = {
 	CredentialStatus,
 	SecurityPolicy,
 	IdentityType,
-	beameZeroLevelAuthData
+	beameZeroLevelAuthData,
+	MetadataProperties
 };

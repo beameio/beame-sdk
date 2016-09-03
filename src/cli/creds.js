@@ -18,26 +18,26 @@
  * @property {String} serial
  */
 
-var Table = require('cli-table2');
+const Table = require('cli-table2');
 
 require('../../initWin');
-var x509 = require('x509');
+const x509 = require('x509');
 
-var store               = new (require("../services/BeameStore"))();
-var store2              = new (require("../services/BeameStoreV2"))();
-var config              = require('../../config/Config');
+const store               = new (require("../services/BeameStore"))();
+const store2              = new (require("../services/BeameStoreV2"))();
+const config              = require('../../config/Config');
 const module_name       = config.AppModules.BeameCreds;
-var BeameLogger         = require('../utils/Logger');
-var logger              = new BeameLogger(module_name);
-var developerServices   = new (require('../core/DeveloperServices'))();
-var atomServices        = new (require('../core/AtomServices'))();
-var edgeClientServices  = new (require('../core/EdgeClientServices'))();
-var localClientServices = new (require('../core/LocalClientServices'))();
-var remoteClientServices = new (require('../core/RemoteClientServices'))();
-var dataServices 		 = new (require('../services/DirectoryServices'))();
-var path   = require('path');
-var fs     = require('fs');
-var mkdirp = require("mkdirp");
+const BeameLogger         = require('../utils/Logger');
+const logger              = new BeameLogger(module_name);
+const developerServices   = new (require('../core/DeveloperServices'))();
+const atomServices        = new (require('../core/AtomServices'))();
+const edgeClientServices  = new (require('../core/EdgeClientServices'))();
+const localClientServices = new (require('../core/LocalClientServices'))();
+const remoteClientServices = new (require('../core/RemoteClientServices'))();
+const dataServices 		 = new (require('../services/DirectoryServices'))();
+const path   = require('path');
+const fs     = require('fs');
+const mkdirp = require("mkdirp");
 
 module.exports = {
 	show,
@@ -45,14 +45,7 @@ module.exports = {
 	//renew,
 	//revoke,
 	shred,
-	createAtom,
-	updateAtomName,
-	updateAtomType,
-	importPKtoAtom,
-	createEdgeClient,
 	createLocalClient,
-	createRemoteClient,
-	createDeveloper,
 	exportCredentials,
 	importCredentials,
 	importNonBeameCredentials,
@@ -180,17 +173,9 @@ function isObject(str) {
  * @param {String|null} [fqdn] entity fqdn
  * @returns {Array<CredsListItem>}
  */
-function listCreds(type, fqdn) {
-	var returnValues = [];
-	if (type && !fqdn) {
-		returnValues = store.list(type);
-	}
-	if (!type && fqdn) {
-		returnValues = store.list("", fqdn);
-	}
-	if (!type && !fqdn) {
-		returnValues = store.list();
-	}
+function listCreds(fqdn) {
+	var returnValues = store2.list(fqdn);;
+
 	return returnValues;
 }
 
@@ -202,7 +187,7 @@ function listCreds(type, fqdn) {
  * @param {String|null} [fqdn] entity fqdn
  * @returns {Array.<CertListItem>}
  */
-function show(type, fqdn) {
+function show(fqdn) {
 	logger.debug(`show ${type} ${fqdn}`);
 
 	var creds = listCreds(type, fqdn);
@@ -235,18 +220,18 @@ show.toText = function (certs) {
  * @param {String|null} [fqdn] entity fqdn
  * @returns {Array.<CredsListItem>}
  */
-function list(type, fqdn) {
-	logger.debug(`list ${type} ${fqdn}`);
-	return listCreds(type, fqdn);
+function list(regex) {
+	logger.debug(`list  ${regex}`);
+	return listCreds(regex);
 }
 
 list.toText = function (creds) {
 	var table = new Table({
-		head:      ['name', 'hostname', 'level', 'parent'],
-		colWidths: [25, 55, 15, 55]
+		head:      ['name', 'parent', 'path'],
+		colWidths: [65, 55, 55]
 	});
 	creds.forEach(item => {
-		table.push([item.name, item.hostname, item.level, item.parent]);
+		table.push([item.get("FQDN"), item.get('PARENT_FQDN'), item.get('path')]);
 	});
 	return table;
 };
@@ -283,92 +268,10 @@ if (developerServices.canCreateDeveloper()) {
  * @param callback
  */
 function registerDeveloper(developerName, developerEmail, callback) {
-	developerServices.registerDeveloper(developerName, developerEmail, callback);
-}
-registerDeveloper.toText = lineToText;
-
-if (developerServices.canRegisterDeveloper()) {
-	module.exports.registerDeveloper = registerDeveloper;
+//	developerServices.registerDeveloper(developerName, developerEmail, callback);
 }
 
-/**
- * Create developer from registration email credentials
- * @public
- * @method Creds.createDeveloper
- * @param {String} developerFqdn - developer hostname(fqdn)
- * @param {String} uid           - developer Uid
- * @param {Function} callback
- */
-function createDeveloper(developerFqdn, uid, callback) {
-	logger.info(`Creating developer developerFqdn=${developerFqdn} uid=${uid}`);
-	developerServices.completeDeveloperRegistration(developerFqdn, uid, callback);
-}
-createDeveloper.toText = lineToText;
 
-/**
- * Create Atom for Developer
- * @public
- * @method Creds.createAtom
- * @param {String} developerFqdn
- * @param {String} atomName
- * @param {Function} callback
- */
-function createAtom(developerFqdn, atomName, callback) {
-	logger.info(`Creating atom ${atomName} for developer ${developerFqdn} `);
-	atomServices.createAtom(developerFqdn, atomName, callback);
-
-}
-createAtom.toText = lineToText;
-
-/**
- * Update Atom Name
- * @public
- * @method Creds.updateAtomName
- * @param {String} atomFqdn
- * @param {String} atomName
- * @param {Function} callback
- */
-function updateAtomName(atomFqdn, atomName, callback) {
-	logger.info(`Updating atom ${atomFqdn} name to ${atomName} `);
-	atomServices.updateAtom(atomFqdn, atomName, callback);
-
-}
-updateAtomName.toText = lineToText;
-
-/**
- * Update Atom Type
- * @public
- * @method Creds.updateAtomType
- * @param {String} atomFqdn
- * @param {String} atomType
- * @param {Function} callback
- */
-function updateAtomType(atomFqdn, atomType, callback) {
-	
-	if(config.AtomType[atomType] == null){
-		logger.fatal('Invalid atom type');
-	}
-	
-	logger.info(`Updating atom ${atomFqdn} to type ${atomType} `);
-	
-	atomServices.updateType(atomFqdn, config.AtomType[atomType], callback);
-
-}
-updateAtomType.toText = lineToText;
-
-/**
- * Create Edge Client for Atom
- * @public
- * @method Creds.createEdgeClient
- * @param {String} atomFqdn
- * @param {Function} callback
- */
-function createEdgeClient(atomFqdn, callback) {
-	logger.info(`Creating edge client for Atom ${atomFqdn}`);
-	edgeClientServices.createEdgeClient(atomFqdn, callback);
-
-}
-createEdgeClient.toText = lineToText;
 
 /**
  * Create Local Client under Edge Client
@@ -381,32 +284,6 @@ createEdgeClient.toText = lineToText;
 function createLocalClient(atomFqdn, edgeClientFqdn, callback) {
 	logger.info(`Creating local client for Atom ${atomFqdn}`);
 	localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, callback);
-}
-
-/**
- * Create Edge Client under Remote Atom
- * @public
- * @method Creds.createRemoteClient
- * @param {String|null} [authorizationFqdn]
- * @param {String|null} [authenticationFqdn]
- * @param {Function} callback
- * */
-function createRemoteClient(authorizationFqdn, authenticationFqdn, callback) {
-	logger.info(`Creating client for remote Atom`);
-	remoteClientServices.createEdgeClient(callback, authorizationFqdn, authenticationFqdn);
-}
-
-/**
- * Import PK to Authorization Server Atom
- * @public
- * @method Creds.importPKtoAtom
- * @param {String} PKfilePath
- * @param {String} authSrvFqdn
- * @param {Function} callback
- */
-function importPKtoAtom(PKfilePath, authSrvFqdn, callback) {
-	logger.info(`Importing PK for ${authSrvFqdn} from ${PKfilePath}`);
-	atomServices.importPKtoAtom(PKfilePath, authSrvFqdn, callback);
 }
 
 /**
@@ -568,23 +445,9 @@ function stats(fqdn, callback) {
 
 		logger.fatal(error);
 	};
-
-	switch (creds.level) {
-		case 'developer': {
-			developerServices.getStats(fqdn, cb);
-			break;
-		}
-		case 'atom': {
-			atomServices.getStats(fqdn, cb);
-			break;
-		}
-		case 'edgeclient': {
-			edgeClientServices.getStats(fqdn, cb);
-			break;
-		}
-	}
-
+	new Error('not implemented');
 }
+
 stats.toText = objectToText;
 
 /**
@@ -605,44 +468,6 @@ function revoke(fqdn) {
 
 	var creds = store.search(fqdn)[0];
 	logger.debug(`revoke creds level ${creds.level}`);
-	switch (creds.level) {
-		case 'developer': {
-			logger.fatal("Revoke for developer cert is not available");
-			break;
-		}
-		case 'atom': {
-			atomServices.revokeCert(fqdn, function (error, payload) {
-				if (error) {
-					logger.fatal(error.message, error.data, error.module);
-				}
-				logger.debug(`Revoke atom certs payload`, payload);
-				return payload;
-			});
-			break;
-		}
-		case 'edgeclient': {
-			logger.debug("Calling edge client revoke cert");
-			edgeClientServices.revokeCert(fqdn, function (error, payload) {
-				if (error) {
-					logger.fatal(error.message, error.data, error.module);
-				}
-				logger.debug(`Revoke edge client certs payload`, payload);
-				return payload;
-			});
-			break;
-		}
-		case 'localclient': {
-			logger.debug("Calling local client revoke cert");
-			edgeClientServices.revokeCert(fqdn, function (error, payload) {
-				if (error) {
-					logger.fatal(error.message, error.data, error.module);
-				}
-				logger.debug(`Revoke local client certs payload`, payload);
-				return payload;
-			});
-			break;
-		}
-	}
 
 }
 function convertCredentialsToV2(){
@@ -656,6 +481,11 @@ function convertCredentialsToV2(){
 		dataServices.deleteFolder(rec.path,() => {});
 		logger.info(`copying ${rec.path} to ${newPath}`);
 	};
+	console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);
+	let result = store2.search('sg2iaxrk9sknvmvo.v266jyyar140ozwo.v1.beameio.net');
+
+
+	
 }
 
 

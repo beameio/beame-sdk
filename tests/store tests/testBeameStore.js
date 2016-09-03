@@ -1,13 +1,7 @@
-var BeameStore = require("../../services/BeameStore");
-var jmespath = require('jmespath');
-var debug =require("debug")("TestBeameStore");
-var _ = require("underscore");
+const BeameStore = require("../../src/services/BeameStoreV2");
+const debug =require("debug")("TestBeameStore");
 
-var store = new BeameStore();
-
-var currentDevelopers = store.listCurrentDevelopers();
-var currentAtoms = store.listCurrentAtoms();
-var currentInstances = store.listCurrentEdges();
+const store = new BeameStore();
 
 
 /*

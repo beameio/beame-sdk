@@ -12,25 +12,20 @@ var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 
 var commands = {};
-_.each(['creds', 'servers', 'atomServer', 'crypto', 'system', 'pinning','tunnel'], function (cmdName) {
+_.each(['creds', /*'servers', 'atomServer', 'crypto', 'system', 'pinning','tunnel'*/], function (cmdName) {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 
 var parametersSchema = {
-	'atomFqdn':       {required: true},
-	'atomName':       {required: true},
 	'data':           {required: false},
 	'developerEmail': {required: true},
 	'developerFqdn':  {required: true},
 	'developerName':  {required: true},
-	'edgeClientFqdn': {required: true},
 	'format':         {required: false, options: ['text', 'json'], default: 'text'},
 	'fqdn':           {required: false},
 	'signature':      {required: true},
-	'atomType':       {required: true, options: ['Default','AuthenticationServer','AuthorizationServer']},
-	'type':           {required: false, options: ['developer', 'atom', 'edgeclient', 'localclient']},
+	'regex':          {required: true},
 	'uid':            {required: true},
-	'PKfilePath':	  {required: true},
 	'authSrvFqdn':	  {required: true},
 	'targetFqdn':     {required: true},
 	'file':           {required: false},
@@ -42,8 +37,6 @@ var parametersSchema = {
 	'sharedFolder':   {required: false},
 	'localIp':        {required: true},
 	'edgeFqdn':       {required: true },
-	'pinAtom': 		  {required: true, options: ['true', 'false'], default: 'true'},
-	'pinDeveloper':   {required: true, options: ['true', 'false'], default: 'true'},
 	'localPort':      {required:true}
 };
 
