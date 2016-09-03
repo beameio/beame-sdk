@@ -309,10 +309,10 @@ DataServices.prototype.createDir = function (dirPath) {
 
 DataServices.prototype.mkdirp = function (dirPath) {
 	try {
-		return mkdirp(path)
+		return mkdirp(dirPath)
 	}
 	catch (e) {
-		//logger.info(`could not create directory ${path}`);
+		logger.info(`could not create directory ${e}`);
 	}
 };
 

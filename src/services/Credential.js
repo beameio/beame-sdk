@@ -5,21 +5,16 @@
 /*jshint esversion: 6 */
 "use strict";
 
-var async                  = require('async');
-//var exec        = require('child_process').exec;
-var _                      = require('underscore');
-var os                     = require('os');
-var config                 = require('../../config/Config');
-const module_name          = config.AppModules.BeameStore;
-var logger                 = new (require('../utils/Logger'))(module_name);
-var jmespath               = require('jmespath');
-var beameDirApi            = require('./BeameDirServices');
-var sprintf                = require('sprintf');
-var mkdirp                 = require('mkdirp');
-var path                   = require('path');
-var request                = require('sync-request');
-var url                    = require('url');
-var BeameStoreDataServices = require('../services/BeameStoreDataServices');
+const  async                  = require('async');
+const  _                      = require('underscore');
+const  os                     = require('os');
+const  config                 = require('../../config/Config');
+const  module_name            = config.AppModules.BeameStore;
+const  logger                 = new (require('../utils/Logger'))(module_name);
+const  mkdirp                 = require('mkdirp');
+const  url                    = require('url');
+const  BeameStoreDataServices = require('../services/BeameStoreDataServices');
+
 
 
 /**
@@ -37,12 +32,11 @@ class Credential {
 	 * @param {String|null} [local_ip]
 	 */
 	constructor(fqdn, store) {
-		console.log('huj');
  		this.fqdn        = fqdn;
 		this._store = store;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.metadata ={};
-
+		this.childs = [];
 		this.loadCredentialsObject();
 
 
@@ -59,10 +53,10 @@ class Credential {
 // 		this.determineCertStatus();
 
 	}
-
+	get(field) {
+		return this.metadata[field.toLowerCase()];
+	}
 	determineCertStatus() {
-
-
 		if (this.dirShaStatus && this.dirShaStatus.length !== 0) {
 			//
 			// This means this is a brand new object and we dont know anything at all
@@ -89,9 +83,18 @@ class Credential {
 		}
 	}
 
+	getCredentialStatus(){
+
+
+	}
+
 
 	getFqdnName(){
 
+	}
+
+	getMetadata(){
+		
 	}
 
 
@@ -136,6 +139,10 @@ class Credential {
 
 	extractAltNames() {
 
+	}
+
+	getCertificateMetadata(){
+		
 	}
 
 	getPublicKey() {
