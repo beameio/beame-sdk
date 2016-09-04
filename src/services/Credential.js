@@ -53,6 +53,21 @@ class Credential {
 // 		this.determineCertStatus();
 
 	}
+
+	toJSON(){
+		let ret = {metadata: {} };
+		
+		for(let key in config.CertFileNames){
+			ret[key]  = this[key];
+		};
+
+		for(let key in config.MetadataProperties){
+			ret.metadata[config.MetadataProperties[key]]  = this.metadata[config.MetadataProperties[key]];
+		};
+
+		return ret;
+	}
+
 	get(field) {
 		return this.metadata[field.toLowerCase()];
 	}

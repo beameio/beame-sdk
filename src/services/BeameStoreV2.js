@@ -25,6 +25,7 @@ const _ = require('underscore');
 let _store = null;
 
 class BeameStoreV2 {
+
 	constructor() {
 		if(_store === null){
 			_store = this;
@@ -34,7 +35,11 @@ class BeameStoreV2 {
 		}
 
 		this.credentials = {};
+        this.init();
 
+	}
+	init(){
+	
 		dataservices.mkdirp(config.localCertsDirV2 + "/");
 		dataservices.scanDir(config.localCertsDirV2).forEach(folderName => {
 			let credentials;
@@ -67,10 +72,13 @@ class BeameStoreV2 {
 			// just a top level credential or a credential we are placing on top, untill next one is added
 		});
 	}
-	
+
+	toJSON(){
+		return "huj";
+	}
+
 	reassignCredentials(currentNode){
         let fqdnsWithoutParent = Object.keys(this.credentials).filter(fqdn => {
-            console.log(fqdn, this.credentials[fqdn])
             return this.credentials[fqdn].get('PARENT_FQDN') === currentNode.get('FQDN')
         });
 	    let credentialsWitoutParent = fqdnsWithoutParent.map(x => this.credentials[x]);
@@ -96,7 +104,7 @@ class BeameStoreV2 {
 		return [result];
 	}
 	_search(fqdn, searchArray) {
-		console.log(`starting _search fqdn=${fqdn} sa=`, searchArray);
+		//console.log(`starting _search fqdn=${fqdn} sa=`, searchArray);
 		for(let item in searchArray){
 		//	console.log(`comparing ${searchArray[item].get("FQDN")} ${fqdn}`);
 			if(searchArray[item].get("FQDN") === fqdn){

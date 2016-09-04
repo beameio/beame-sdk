@@ -76,11 +76,11 @@ var CertificateFiles = {
 
 var MetadataProperties = {
   LEVEL        : "level",
-  HOSTNAME     : "hostname",
+  FQDN		   : "fqdn",
   UID          : "uid",
   NAME         : "name",
   PARENT_FQDN  : "parent_fqdn",
-  EdgeHostname : "edgeHostname",
+  EDGEHOSTNAME : "edgeHostname",
 };
 
 var CredentialStatus = {

@@ -175,7 +175,7 @@ function isObject(str) {
  */
 function listCreds(fqdn) {
 	var returnValues = store2.list(fqdn);;
-
+	let result = store2.search('sg2iaxrk9sknvmvo.v266jyyar140ozwo.v1.beameio.net');
 	return returnValues;
 }
 
@@ -482,7 +482,7 @@ function convertCredentialsToV2(){
 		logger.info(`copying ${rec.path} to ${newPath}`);
 	};
 	console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);
-	let result = store2.search('sg2iaxrk9sknvmvo.v266jyyar140ozwo.v1.beameio.net');
+
 
 
 	
