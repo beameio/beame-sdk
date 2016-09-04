@@ -560,14 +560,7 @@ DataServices.prototype.copyDir = function(src, dest) {
 };
 
 DataServices.prototype.scanDir = function (src) {
-	let files = fs.readdirSync(src);
-	let folders = [];
-	for(var i = 0; i < files.length; i++) {
-		var current = fs.lstatSync(path.join(src, files[i]));
-		if(current.isDirectory()){
-			folders.push(files[i]);
-		}
-	}
+	let folders = fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());
 	return folders;
 }
 

@@ -44,11 +44,8 @@ class BeameStoreV2 {
 			}else{
 				credentials = new Credential(folderName, this);
 			}
-			let level = credentials.get(config.MetadataProperties.LEVEL);
 			let parent_fqdn = credentials.get(config.MetadataProperties.PARENT_FQDN);
-
-
-			let parentNode = this.search(parent_fqdn)[0];
+			let parentNode = parent_fqdn && this.search(parent_fqdn)[0];
 			if(!parent_fqdn || !parentNode){
 				this.credentials[folderName] = credentials;
 				this.reassignCredentials(credentials);
@@ -56,11 +53,12 @@ class BeameStoreV2 {
 				//
 				// check if credentials has parent fqdn, and if so we are moving it down.
 				//
-				parentNode.childs.push(credentials);
-				credentials.father = parentNode;
+				parentNode.children.push(credentials);
+				credentials.parent = parentNode;
 				// if it was located on the top level now we need to 0 it would, since we put it in the proper location in the tree.
 				if (this.credentials[credentials.get('FQDN')]) {
-					this.credentials[folderName] = null;
+					this.credentials[credentials.get('FQDN')]  = null;
+					delete this.credentials[item.get("FQDN")];
 				}
 				this.reassignCredentials(credentials);
 			}
@@ -69,16 +67,18 @@ class BeameStoreV2 {
 			// just a top level credential or a credential we are placing on top, untill next one is added
 		});
 	}
-
+	
 	reassignCredentials(currentNode){
-		let credentialsWitoutParent = _.filter(this.credentials, (_item) => {
-			return _item.get('PARENT_FQDN') === currentNode.get('FQDN');
-		});
-		_.each(credentialsWitoutParent, (item, index) => {
-			currentNode.childs.push(item);
-			this.credentials[item.get("FQDN")] = null;
-			delete this.credentials[item.get("FQDN")];
-			item.father = currentNode;
+        let fqdnsWithoutParent = Object.keys(this.credentials).filter(fqdn => {
+            console.log(fqdn, this.credentials[fqdn])
+            return this.credentials[fqdn].get('PARENT_FQDN') === currentNode.get('FQDN')
+        });
+	    let credentialsWitoutParent = fqdnsWithoutParent.map(x => this.credentials[x]);
+		credentialsWitoutParent.forEach(item => {
+			currentNode.children.push(item);
+			this.credentials[currentNode.get("FQDN")] = null;
+			delete this.credentials[currentNode.get("FQDN")];
+			item.parent = currentNode;
 		});
 	}
 
@@ -96,20 +96,14 @@ class BeameStoreV2 {
 		return [result];
 	}
 	_search(fqdn, searchArray) {
-		//console.log(`starting _search ${fqdn}`);
-		if(!searchArray){
-			searchArray = this.credentials;
-		}
+		console.log(`starting _search fqdn=${fqdn} sa=`, searchArray);
 		for(let item in searchArray){
 		//	console.log(`comparing ${searchArray[item].get("FQDN")} ${fqdn}`);
-			if(!searchArray[item]) {
-				continue;
-			}
 			if(searchArray[item].get("FQDN") === fqdn){
 				return searchArray[item];
 			}
-			if(searchArray[item].childs) {
-				let result = this._search(fqdn, searchArray[item].childs);
+			if(searchArray[item].children) {
+				let result = this._search(fqdn, searchArray[item].children);
 				if(!result){
 					continue;
 				}
@@ -143,8 +137,8 @@ class BeameStoreV2 {
 			if(searchArray[item].get("FQDN").match(regex)){
 				results.push(searchArray[item]);
 			}
-			if(searchArray[item].childs) {
-				let result = this.list(regex, searchArray[item].childs);
+			if(searchArray[item].children) {
+				let result = this.list(regex, searchArray[item].children);
 				if(!result){
 					continue;
 				}

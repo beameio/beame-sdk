@@ -36,7 +36,7 @@ class Credential {
 		this._store = store;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.metadata ={};
-		this.childs = [];
+		this.children = [];
 		this.loadCredentialsObject();
 
 
