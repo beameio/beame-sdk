@@ -11,11 +11,10 @@ const  os                     = require('os');
 const  config                 = require('../../config/Config');
 const  module_name            = config.AppModules.BeameStore;
 const  logger                 = new (require('../utils/Logger'))(module_name);
-const  mkdirp                 = require('mkdirp');
 const  url                    = require('url');
 const  BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const  pem 					  = require('pem');
-
+const  path 				  = require('path');
 
 
 
@@ -40,9 +39,10 @@ class Credential {
 		this.metadata ={};
 		this.children = [];
 		this.loadCredentialsObject();
-
-
-
+		pem.readCertificateInfo(path.join(this.metadata[config.MetadataProperties.PATH],
+			config.CertificateFiles.X509), (err, certData) => {
+			this.certData = certData;
+		})
 //		this.parent_fqdn = parent_fqdn;
 // 		this.name        = name;
 // 		this.email       = email;
@@ -53,7 +53,6 @@ class Credential {
 // 		this.state        = config.CredentialStatus.DIR_NOTREAD;
 // 		this.dirShaStatus = "";
 // 		this.determineCertStatus();
-
 	}
 
 	toJSON(){
@@ -66,7 +65,6 @@ class Credential {
 		for(let key in config.MetadataProperties){
 			ret.metadata[config.MetadataProperties[key]]  = this.metadata[config.MetadataProperties[key]];
 		};
-
 		return ret;
 	}
 
