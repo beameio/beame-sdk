@@ -36,9 +36,6 @@ class BeameStoreV2 {
 		this.credentials = {};
 
 		dataservices.mkdirp(config.localCertsDirV2 + "/");
-		
-
-		
 		dataservices.scanDir(config.localCertsDirV2).forEach(folderName => {
 			let credentials;
 
