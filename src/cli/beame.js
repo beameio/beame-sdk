@@ -24,7 +24,7 @@ var parametersSchema = {
 	'format':         {required: false, options: ['text', 'json'], default: 'text'},
 	'fqdn':           {required: false},
 	'signature':      {required: true},
-	'regex':          {required: true},
+	'regex':          {required: false},
 	'uid':            {required: true},
 	'authSrvFqdn':	  {required: true},
 	'targetFqdn':     {required: true},

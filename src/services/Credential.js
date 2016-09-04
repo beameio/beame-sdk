@@ -14,6 +14,8 @@ const  logger                 = new (require('../utils/Logger'))(module_name);
 const  mkdirp                 = require('mkdirp');
 const  url                    = require('url');
 const  BeameStoreDataServices = require('../services/BeameStoreDataServices');
+const  pem 					  = require('pem');
+
 
 
 
@@ -109,7 +111,7 @@ class Credential {
 	}
 
 	getMetadata(){
-		
+		return this.metadata;
 	}
 
 

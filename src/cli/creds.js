@@ -222,7 +222,7 @@ show.toText = function (certs) {
  */
 function list(regex) {
 	logger.debug(`list  ${regex}`);
-	return listCreds(regex);
+	return listCreds(regex || '.' );
 }
 
 list.toText = function (creds) {
@@ -251,40 +251,10 @@ shred.toText = lineToText;
  * @param developerEmail
  * @param callback
  */
-function createTestDeveloper(developerName, developerEmail, callback) {
-	logger.debug(`Creating test developer ${developerName} ${developerEmail}`);
-	developerServices.createDeveloper(developerName, developerEmail, callback);
-}
-createTestDeveloper.toText = lineToText;
-
-if (developerServices.canCreateDeveloper()) {
-	module.exports.createTestDeveloper = createTestDeveloper;
-}
-
-/**
- * @private
- * @param developerName
- * @param developerEmail
- * @param callback
- */
 function registerDeveloper(developerName, developerEmail, callback) {
 //	developerServices.registerDeveloper(developerName, developerEmail, callback);
 }
 
-
-
-/**
- * Create Local Client under Edge Client
- * @public
- * @method Creds.createLocalClient
- * @param {String} atomFqdn
- * @param {String} edgeClientFqdn
- * @param {Function} callback
- */
-function createLocalClient(atomFqdn, edgeClientFqdn, callback) {
-	logger.info(`Creating local client for Atom ${atomFqdn}`);
-	localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, callback);
-}
 
 /**
  * Export credentials from source fqdn to target fqdn
@@ -295,6 +265,7 @@ function createLocalClient(atomFqdn, edgeClientFqdn, callback) {
  * @param {String} file - path to file
  * @returns {{}}
  */
+
 function exportCredentials(fqdn, targetFqdn, file) {
 	var creds        = store.search(fqdn)[0];
 	var relativePath = constructRelativePathElements(creds);
