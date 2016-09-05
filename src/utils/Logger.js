@@ -23,6 +23,7 @@ var LogLevelVerbosity = {
 };
 
 var EntityLevel = {
+	"BeameEntity":"BeameEntity",
 	"Developer":"Developer",
 	"Atom" : "Atom",
 	"EdgeClient":"EdgeClient",

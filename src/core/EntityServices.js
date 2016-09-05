@@ -17,6 +17,7 @@ var fs = require('fs');
 var config = require('../../config/Config');
 const module_name = config.AppModules.BeameEntity;
 var BeameLogger = require('../utils/Logger');
+const logger_level = BeameLogger.EntityLevel.BeameEntity;
 var logger = new BeameLogger(module_name);
 var _ = require('underscore');
 var path = require('path');
@@ -28,7 +29,7 @@ var credsRootDir = config.localCertsDirV1;
 new (require('../services/BeameStore'))();
 
 var provisionApi = new (require('../services/ProvisionApi'))();
-var dataServices = new (require('../services/DataServices'))();
+var dataServices = new (require('../services/DirectoryServices'))();
 var beameUtils = require('../utils/BeameUtils');
 var apiActions = require('../../config/ApiConfig.json').Actions.EntityApi;
 
@@ -77,7 +78,12 @@ class EntityServices {
 	 */
 	registerEntity(metadata, callback) {
 		
-		provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
+		if(metadata.parent_fqdn){
+			provisionApi.setAuthData(beameUtils.getAuthToken(path.join(config.localCertsDirV1,metadata.parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+		}
+		else{
+			provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
+		}
 		
 		var postData = this._formatRegisterPostData(metadata);
 		
@@ -86,29 +92,27 @@ class EntityServices {
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
 				
-				payload.name = name;
-				payload.email = email;
-				
 				callback && callback(null, payload);
 				
 			}
 			else {
 				callback && callback(error, null);
 			}
-			
 		});
 	}
 	
-	completeEntityRegistration(fqdn, callback) {
+	completeEntityRegistration(metadata, callback) {
 		
+		var fqdn = metadata["fqdn"];
+		var parent_fqdn = metadata["parent_fqdn"];
 		
 		if (_.isEmpty(fqdn)) {
-			callback && callback(logger.formatErrorMessage("Complete developer registration => Developer fqdn required", module_name), null);
+			callback && callback(logger.formatErrorMessage("Complete entity registration => fqdn required", module_name), null);
 			return;
 		}
 		
 		
-		logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registering, fqdn);
+		logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, fqdn);
 		
 		var devDir = makeEntityDir(fqdn);
 		
@@ -130,7 +134,7 @@ class EntityServices {
 		});
 		
 		/*---------- private callbacks -------------------*/
-		function onMetadataReceived() {
+		function onMetadataReceived(meta) {
 			
 			dataServices.createCSR(devDir, fqdn).then(
 				function onCsrCreated(csr) {
@@ -142,12 +146,19 @@ class EntityServices {
 					
 					var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
 					
-					logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+					if(parent_fqdn){
+						provisionApi.setAuthData(beameUtils.getAuthToken(path.join(config.localCertsDirV1,parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+					}
+					else{
+						provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
+					}
+					
+					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 					
 					provisionApi.runRestfulAPI(apiData, function (error, payload) {
 						if (!error) {
 							
-							logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
+							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
 							
 							dataServices.saveCerts(devDir, payload, function (error) {
 								if (!error) {
@@ -202,12 +213,12 @@ class EntityServices {
 		
 		var apiData = beameUtils.getApiData(apiActions.CreateEntity.endpoint, postData, true);
 		
-		logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registering, email);
+		logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, email);
 		
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
 				
-				logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registered, payload.hostname);
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.hostname);
 				
 				var devDir = makeEntityDir(payload.fqdn);
 				
