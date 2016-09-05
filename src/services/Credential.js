@@ -25,11 +25,6 @@ class Credential {
 	/**
 	 *
 	 * @param {String|null} [fqdn]
-	 * @param {String|null} [parent_fqdn]
-	 * @param {Array.<SecurityPolicy>} [policies]
-	 * @param {String|null} [name]
-	 * @param {String|null} [email]
-	 * @param {String|null} [local_ip]
 	 */
 	constructor(fqdn, store) {
  		this.fqdn        = fqdn;
@@ -56,14 +51,14 @@ class Credential {
 
 	toJSON(){
 		let ret = {metadata: {} };
-		
+
 		for(let key in config.CertFileNames){
 			ret[key]  = this[key];
-		};
+		}
 
 		for(let key in config.MetadataProperties){
 			ret.metadata[config.MetadataProperties[key]]  = this.metadata[config.MetadataProperties[key]];
-		};
+		}
 
 		return ret;
 	}
@@ -104,12 +99,12 @@ class Credential {
 	}
 
 
-	getFqdnName(){
+	getFqdnName() {
 
 	}
 
 	getMetadata(){
-		
+
 	}
 
 
@@ -134,7 +129,7 @@ class Credential {
 				this.metadata[key] = value;
 			});
 		} catch (e) {
-			logger.debug("readcertdata error " + e.tostring());
+			logger.debug("readcertdata error " + e.toString());
 		}
 	}
 
@@ -157,7 +152,7 @@ class Credential {
 	}
 
 	getCertificateMetadata(){
-		
+
 	}
 
 	getPublicKey() {
