@@ -10,9 +10,8 @@
     "test_edge": "mocha ./tests/unit-tests/single_tests/edge_test.js",
     "test_full_flow": "mocha ./tests/unit-tests/full_flow_test.js",
     "startChat": "node ./examples/example1.js",
-    "runAtomServer": "node ./tests/serge_test/test_cli.js",
-    "postinstall": "npm config get prefix | awk '{print \"node \"$0\"/lib/node_modules/beame-sdk/tests/server_tests/initRemoteEdgeClient.js\"}' | sh"
-  },
+    "runAtomServer": "node ./tests/serge_test/test_cli.js"
+   },
   "bin": {
     "beame": "src/cli/beame.js"
   },
@@ -43,14 +42,12 @@
     "cli-table2": "0.2.0",
     "debug": "^2.2.0",
     "express": "^4.14.0",
-    "jmespath": "^0.15.0",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "network": "^0.2.1",
     "node-rsa": "^0.4.0",
     "node-uuid": "^1.4.7",
     "npm-prefix": "^1.2.0",
-    "pem": "^1.8.3",
     "request": "^2.72.0",
     "rimraf": "^2.5.3",
     "serve-index": "^1.8.0",
@@ -58,8 +55,7 @@
     "socket.io-client": "^1.4.6",
     "sprintf": "^0.1.5",
     "sync-request": "^3.0.1",
-    "underscore": "^1.8.3",
-    "x509": "^0.2.6"
+    "underscore": "^1.8.3"
   },
   "directories": {
     "test": "tests"
