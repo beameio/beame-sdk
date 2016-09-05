@@ -39,7 +39,7 @@ class BeameStoreV2 {
 
 	}
 	init(){
-	
+
 		dataservices.mkdirp(config.localCertsDirV2 + "/");
 		dataservices.scanDir(config.localCertsDirV2 + "/").forEach(folderName => {
 			let credentials;
@@ -117,7 +117,7 @@ class BeameStoreV2 {
 				}
 	 			return result;
 			}
-		};
+		}
 		return null;
 	};
 
@@ -152,7 +152,7 @@ class BeameStoreV2 {
 				}
 				results = results.concat(result);
 			}
-		};
+		}
 		return results;
 	};
 

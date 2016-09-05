@@ -11,10 +11,9 @@ const  os                     = require('os');
 const  config                 = require('../../config/Config');
 const  module_name            = config.AppModules.BeameStore;
 const  logger                 = new (require('../utils/Logger'))(module_name);
+const  mkdirp                 = require('mkdirp');
 const  url                    = require('url');
 const  BeameStoreDataServices = require('../services/BeameStoreDataServices');
-const  pem 					  = require('pem');
-const  path 				  = require('path');
 
 
 
@@ -53,6 +52,7 @@ class Credential {
 // 		this.state        = config.CredentialStatus.DIR_NOTREAD;
 // 		this.dirShaStatus = "";
 // 		this.determineCertStatus();
+
 	}
 
 	toJSON(){
@@ -65,6 +65,7 @@ class Credential {
 		for(let key in config.MetadataProperties){
 			ret.metadata[config.MetadataProperties[key]]  = this.metadata[config.MetadataProperties[key]];
 		};
+
 		return ret;
 	}
 
@@ -109,7 +110,7 @@ class Credential {
 	}
 
 	getMetadata(){
-		return this.metadata;
+		
 	}
 
 
