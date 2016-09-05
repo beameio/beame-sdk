@@ -12,7 +12,7 @@ var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 
 var commands = {};
-_.each(['creds', /*'servers', 'atomServer', 'crypto', 'system', 'pinning','tunnel'*/], function (cmdName) {
+_.each(['creds', 'crypto'/*'servers', 'atomServer', , 'system', 'pinning','tunnel'*/], function (cmdName) {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 

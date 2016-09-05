@@ -21,7 +21,6 @@
 const Table = require('cli-table2');
 
 require('../../initWin');
-const x509 = require('x509');
 
 const store               = new (require("../services/BeameStore"))();
 const store2              = new (require("../services/BeameStoreV2"))();
@@ -29,12 +28,7 @@ const config              = require('../../config/Config');
 const module_name       = config.AppModules.BeameCreds;
 const BeameLogger         = require('../utils/Logger');
 const logger              = new BeameLogger(module_name);
-const developerServices   = new (require('../core/DeveloperServices'))();
-const atomServices        = new (require('../core/AtomServices'))();
-const edgeClientServices  = new (require('../core/EdgeClientServices'))();
-const localClientServices = new (require('../core/LocalClientServices'))();
-const remoteClientServices = new (require('../core/RemoteClientServices'))();
-const dataServices 		 = new (require('../services/DirectoryServices'))();
+const directoryServices 		 = new (require('../services/DirectoryServices'))();
 const path   = require('path');
 const fs     = require('fs');
 const mkdirp = require("mkdirp");
@@ -45,7 +39,6 @@ module.exports = {
 	//renew,
 	//revoke,
 	shred,
-	createLocalClient,
 	exportCredentials,
 	importCredentials,
 	importNonBeameCredentials,
@@ -448,8 +441,20 @@ function convertCredentialsToV2(){
 		let pathElements = rec.path.split(path.sep);
 		let lastElement = pathElements[pathElements.length - 1];
 		let newPath = path.join(config.localCertsDirV2, lastElement);
-		dataServices.copyDir(rec.path, newPath);
-		dataServices.deleteFolder(rec.path,() => {});
+		directoryServices.copyDir(rec.path, newPath);
+		let metafilePath = path.join(newPath, config.metadataFileName);
+
+		if(directoryServices.doesPathExists(metafilePath)){
+			let metadata = directoryServices.readJSON(metafilePath);
+			if(metadata.hostname) {
+				metadata.fqdn = metadata.hostname;
+				delete metadata.hostname;
+			}
+			let jsonData = JSON.stringify(metadata);
+			fs.writeFileSync(path.join(metafilePath), jsonData );
+		}
+
+		directoryServices.deleteFolder(rec.path,() => {});
 		logger.info(`copying ${rec.path} to ${newPath}`);
 	};
 	console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);

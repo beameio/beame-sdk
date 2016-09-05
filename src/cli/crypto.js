@@ -18,16 +18,14 @@
  #extract public key from certificate
  openssl x509 -pubkey -noout -in ../../.beame/oxxmrzj0qlvsrt1h.v1.beameio.net/x509.pem > pubkey.pem*/
 
-var NodeRsa = require("node-rsa");
-var config = require('../../config/Config');
+const config = require('../../config/Config');
 const module_name = config.AppModules.BeameCrypto;
-var BeameLogger = require('../utils/Logger');
-var logger = new BeameLogger(module_name);
-var BeameStore = require("../services/BeameStore");
-var store = new BeameStore();
+const BeameLogger = require('../utils/Logger');
+const logger = new BeameLogger(module_name);
+const BeameStore = require("../services/BeameStoreV2");
+const store = new BeameStore();
 
 require('../../initWin');
-var x509 = require("x509");
 
 
 /**
@@ -38,11 +36,11 @@ var x509 = require("x509");
  * @returns {Array.<AesEncryptedData>}
  */
 function aesEncrypt(data) {
-	var crypto = require('crypto');
-	var sharedSecret = crypto.randomBytes(32); // should be 128 (or 256) bits
-	var initializationVector = crypto.randomBytes(16); // IV is always 16-bytes
-	var cipher = crypto.Cipheriv('aes-256-cbc', sharedSecret, initializationVector);
-	var encrypted = cipher.update(data, 'utf8', 'base64');
+	let crypto = require('crypto');
+	let sharedSecret = crypto.randomBytes(32); // should be 128 (or 256) bits
+	let initializationVector = crypto.randomBytes(16); // IV is always 16-bytes
+	let cipher = crypto.Cipheriv('aes-256-cbc', sharedSecret, initializationVector);
+	let encrypted = cipher.update(data, 'utf8', 'base64');
 	encrypted += cipher.final('base64');
 	
 	return [{AES256CBC: encrypted}, {
@@ -61,48 +59,19 @@ function aesEncrypt(data) {
  */
 function aesDecrypt(data) {
 	//data = JSON.parse(data);
-	var crypto = require('crypto');
+	let crypto = require('crypto');
 	if (!(data[1].IV && data[1].sharedCipher && data[0].AES256CBC )) {
 		return "";
 	}
-	var cipher = new Buffer(data[1].sharedCipher, "base64");
-	var IV = new Buffer(data[1].IV, "base64");
+	let cipher = new Buffer(data[1].sharedCipher, "base64");
+	let IV = new Buffer(data[1].IV, "base64");
 	
-	var decipher = crypto.createDecipheriv("aes-256-cbc", cipher, IV);
-	var dec = decipher.update(data[0].AES256CBC, 'base64', 'utf8');
+	let decipher = crypto.createDecipheriv("aes-256-cbc", cipher, IV);
+	let dec = decipher.update(data[0].AES256CBC, 'base64', 'utf8');
 	dec += decipher.final('utf8');
 	return dec;
 }
 
-function getPublicKey(cert) {
-	var xcert = x509.parseCert(cert + "");
-	if (xcert) {
-		var publicKey = xcert.publicKey;
-		var modulus = new Buffer(publicKey.n, 'hex');
-		var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
-		var midheader = new Buffer("0203", "hex");
-		var exponent = new Buffer("010001", "hex");
-		var buffer = Buffer.concat([header, modulus, midheader, exponent]);
-		var rsaKey = new NodeRsa(buffer, "public-der");
-		rsaKey.importKey(buffer, "public-der");
-		return rsaKey;
-	}
-	return {};
-}
-
-function getPublicKeyEncodedDer(cert) {
-	var xcert = x509.parseCert(cert + "");
-	if (xcert) {
-		var publicKey = xcert.publicKey;
-		var modulus = new Buffer(publicKey.n, 'hex');
-		var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
-		var midheader = new Buffer("0203", "hex");
-		var exponent = new Buffer("010001", "hex");
-		var buffer = Buffer.concat([header, modulus, midheader, exponent]);
-		return buffer;
-	}
-	return {};
-}
 /**
  * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
  * @public
@@ -111,28 +80,32 @@ function getPublicKeyEncodedDer(cert) {
  * @param {String} fqdn - entity to encrypt for
  */
 function encrypt(data, fqdn) {
-	var element = store.search(fqdn)[0];
-	if (element) {
-		var rsaKey = getPublicKey(element.X509);
-		if (rsaKey) {
-			
-			var sharedCiphered = aesEncrypt(data);
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			var symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
-			sharedCiphered[1] = "";
-			
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			return {
-				rsaCipheredKeys: rsaKey.encrypt(JSON.stringify(symmetricCipherElement), "base64", "utf8"),
-				data: sharedCiphered[0],
-				encryptedFor: fqdn
-			};
-		}
-		
-		logger.error("encrypt failure, public key not found");
-		return null;
-		
+	let credential = store.search(fqdn)[0];
+	while(!credential.publicKeyStr) {
+		process.nextTick(() => {
+			if (credential && credential.publicKeyStr) {
+				let rsaKey = credential.getPublicKeyNodeRsa();
+				if (rsaKey) {
+					let sharedCiphered = aesEncrypt(data);
+					//noinspection ES6ModulesDependencies,NodeModulesDependencies
+					let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
+					sharedCiphered[1] = "";
+
+					//noinspection ES6ModulesDependencies,NodeModulesDependencies
+					return {
+						rsaCipheredKeys: rsaKey.encrypt(JSON.stringify(symmetricCipherElement), "base64", "utf8"),
+						data: sharedCiphered[0],
+						encryptedFor: fqdn
+					};
+				}
+
+				logger.error("encrypt failure, public key not found");
+				return null;
+			}
+		});
 	}
+
+
 	
 	logger.error("encrypt failure, element not found");
 	return null;
@@ -147,21 +120,21 @@ function encrypt(data, fqdn) {
 function decrypt(data) {
 	try {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		var encryptedMessage = JSON.parse(data);
+		let encryptedMessage = JSON.parse(data);
 		if (!encryptedMessage.encryptedFor) {
 			logger.fatal("Decrypting a wrongly formatted message", data);
 		}
-		var element = store.search(encryptedMessage.encryptedFor)[0];
-		if (!element && !(element.PRIVATE_KEY)) {
+		let credential = store.search(encryptedMessage.encryptedFor)[0];
+		if (!credential  && !credential.hasPrivateKey()) {
 			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
 		}
-		var rsaKey = new NodeRsa(element.PRIVATE_KEY, "private");
+		let rsaKey = credential.getPrivateKeyNodeRsa();
 		
-		var message = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
+		let message = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		var payload = JSON.parse(JSON.parse(message));
+		let payload = JSON.parse(JSON.parse(message));
 		
-		var dechipheredPayload = aesDecrypt([
+		let dechipheredPayload = aesDecrypt([
 			encryptedMessage.data,
 			payload,
 		]);
@@ -183,42 +156,14 @@ function decrypt(data) {
  * @returns {string|Buffer|null}
  */
 function sign(data, fqdn) {
-	var element = store.search(fqdn)[0];
+	let element = store.search(fqdn)[0];
 	if (element) {
-		var rsaKey = new NodeRsa(element.PRIVATE_KEY, "private");
+		let rsaKey = element.getPrivateKeyNodeRsa();
 		logger.info(`signing using ${fqdn}`);
 		return rsaKey.sign(data, "base64", "utf8");
 	}
 	logger.error("sign data with fqdn, element not found ");
 	return null;
-}
-
-/**
- * Signs given data. You must have private key of the fqdn.
- * @public
- * @method Crypto.checkPK
- * @param {String} pk - PK to test
- * @returns {string}
- */
-function checkPK(pk) {
-	var key = new NodeRsa(pk, 'pkcs8-public-pem');
-	return(key.isPublic(true));
-}
-
-/**
- * Sign data with given private key
- * @param {String} data - data to sign
- * @param {string|buffer|object}  pk - private key
- * @returns {string|Buffer|null}
- */
-function signWithKey(data, pk) {
-	try {
-		var rsaKey = new NodeRsa(pk, "private");
-		return rsaKey.sign(data, "base64", "utf8");
-	} catch (e) {
-		logger.error("Sign with key failure", e);
-		return null;
-	}
 }
 
 /**
@@ -230,8 +175,8 @@ function signWithKey(data, pk) {
  * @param {String} signature
  */
 function checkSignature(data, fqdn, signature) {
-	var element = store.search(fqdn)[0];
-	var certBody;
+	let element = store.search(fqdn)[0];
+	let certBody;
 	
 	if (element) {
 		certBody = element.X509 + "";
@@ -240,41 +185,18 @@ function checkSignature(data, fqdn, signature) {
 		certBody = store.getRemoteCertificate(fqdn) + "";
 	}
 	
-	var rsaKey = getPublicKey(certBody);
-	var status = rsaKey.verify(data, signature, "utf8", "base64");
+	let rsaKey = getPublicKey(certBody);
+	let status = rsaKey.verify(data, signature, "utf8", "base64");
 	logger.info(`signing status is ${status} ${fqdn}`);
 	return status;
 }
 
-/**
- * Checks signature.
- * @public
- * @method Crypto.checkSignatureWithPK
- * @param {String} data - signed data
- * @param {String} PK - public key
- * @param {String} signature
- */
-function checkSignatureWithPK(data, pk, signature) {
-	if(checkPK(pk)){
-		var key = new NodeRsa(pk, 'pkcs8-public-pem');
-		var status = key.verify(data, signature, "utf8", "base64");
-		logger.info(`signature verification status is ${status}`);
-		return status;
-	}
-	else{
-		logger.error(`Invalid public key, signature not verified`);
-		return false;
-	}
-}
 
 module.exports = {
 	encrypt,
 	decrypt,
 	sign,
-	signWithKey,
-	checkPK,
 	checkSignature,
-	checkSignatureWithPK,
 	aesEncrypt,
 	aesDecrypt
 };

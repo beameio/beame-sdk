@@ -81,12 +81,16 @@ class BeameStoreDataServices {
 
 		return result;
 	}
-	readObject(filename){
-		let p = path.join(config.localCertsDirV2, this.fqdn, filename);
+	readObject(name){
+		let p = path.join(config.localCertsDirV2, this.fqdn, name);
 		return this.directoryServices.readObject(p);
 	}
 
-
+	writeObject(name, data){
+		let folderPath = path.join(config.localCertsDirV2, this.fqdn);
+		this.directoryServices.createDir(folderPath );
+		return this.directoryServices.saveFile(folderPath, name, data);
+	}
 
 	readMetadataSync(){
 		return this.directoryServices.readMetadataSync(config.localCertsDirV2, this.fqdn);
