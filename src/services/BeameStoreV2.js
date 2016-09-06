@@ -2,7 +2,7 @@
 // Created by Zeev Glozman
 // Beame.io Ltd, 2016.
 
-"use strict";
+'use strict';
 
 /**
  * S3 public metadata.json structure, should be compliant to backend EntityMetadata Class
@@ -41,7 +41,7 @@ class BeameStoreV2 {
 	init(){
 		dataservices.mkdirp(config.localCertsDirV2 + "/");
 		dataservices.scanDir(config.localCertsDirV2 + "/").forEach(folderName => {
-			let credentials = new Credential(folderName);
+			let credentials = new Credential(this);
 			credentials.initFromData(folderName);
 		 	this.addCredential(credentials, folderName);
 				// there is no parent node in the store. still a to decice weather i want to request the whole tree.

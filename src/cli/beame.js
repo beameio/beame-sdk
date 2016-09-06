@@ -23,6 +23,7 @@ var parametersSchema = {
 	'developerName':  {required: true},
 	'format':         {required: false, options: ['text', 'json'], default: 'text'},
 	'fqdn':           {required: false},
+	'signingFqdn':	  {required: false},
 	'signature':      {required: true},
 	'regex':          {required: false},
 	'uid':            {required: true},

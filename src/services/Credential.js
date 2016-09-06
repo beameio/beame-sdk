@@ -11,11 +11,10 @@ const  os                     = require('os');
 const  config                 = require('../../config/Config');
 const  module_name            = config.AppModules.BeameStore;
 const  logger                 = new (require('../utils/Logger'))(module_name);
-const  mkdirp                 = require('mkdirp');
 const  url                    = require('url');
 const  BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const  pem 					  = require('pem');
-const  NodeRsa = require("node-rsa");
+const  NodeRsa 				  = require("node-rsa");
 
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
@@ -35,58 +34,62 @@ class Credential {
 	 */
 	constructor(store) {
 		this._store = store;
-		this.metadata ={};
+		this.metadata = {};
 		this.children = [];
 	}
 
-	initFromData(fqdn){
-			this.fqdn = fqdn;
-			this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
-            this.loadCredentialsObject();
-            if(this.hasX509()) {
-                pem.readCertificateInfo(this.X509, (err, certData) => {
-                	console.log(`read cert ${certData.commonName}`)
-                    if((this.fqdn || this.get('FQDN')) !== certData.commonName){
-                        new Error(`Credentialing missmath ${this.metadata} the commonname in x509 does not match the metadata`);
-                    }
-                    this.certData = certData ? certData : err;
-                });
+	initFromData(fqdn) {
+		this.fqdn = fqdn;
+		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+		this.loadCredentialsObject();
+		if (this.hasX509()) {
+			pem.config({sync: true});
+			pem.readCertificateInfo(this.X509, (err, certData) => {
+				console.log(`read cert ${certData.commonName}`)
+				if ((this.fqdn || this.get('FQDN')) !== certData.commonName) {
+					new Error(`Credentialing missmath ${this.metadata} the commonname in x509 does not match the metadata`);
+				}
+				this.certData = certData ? certData : err;
+			});
 
-                pem.getPublicKey(this.X509, (err, publicKey) => {
-                    this.publicKeyStr = publicKey.publicKey;
-                    this.publicKeyNodeRsa  = new NodeRsa();
-                    this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
-                });
-            }
-            if(this.hasPrivateKey()) {
-                this.privateKeyNodeRsa  = new NodeRsa();
-                this.privateKeyNodeRsa.importKey(this.PRIVATE_KEY+ " ", "private");
-            }
-        }
+			pem.getPublicKey(this.X509, (err, publicKey) => {
+				this.publicKeyStr = publicKey.publicKey;
+				this.publicKeyNodeRsa = new NodeRsa();
+				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
+			});
+			pem.config({sync: false});
+		}
+		if (this.hasPrivateKey()) {
+			this.privateKeyNodeRsa = new NodeRsa();
+			this.privateKeyNodeRsa.importKey(this.PRIVATE_KEY + " ", "private");
+		}
+	}
 
 
-	initFromX509(x509){
+	initFromX509(x509) {
 		pem.readCertificateInfo(x509, (err, certData) => {
-			if(!err){
+			if (!err) {
 				this.certData = certData ? certData : err;
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this._store);
 				this.metadata.fqdn = certData.commonName;
-				this.fqdn  = certData.commonName
+				this.fqdn = certData.commonName
 				this.beameStoreServices.writeObject(config.CertificateFiles.X509, data);
 			}
 		});
 	}
 
-	toJSON(){
-		let ret = {metadata: {} };
-		
-		for(let key in config.CertFileNames){
-			ret[key]  = this[key];
-		};
+	toJSON() {
+		let ret = {metadata: {}};
 
-		for(let key in config.MetadataProperties){
-			ret.metadata[config.MetadataProperties[key]]  = this.metadata[config.MetadataProperties[key]];
-		};
+		for (let key in config.CertFileNames) {
+			ret[key] = this[key];
+		}
+		;
+
+		for (let key in config.MetadataProperties) {
+			ret.metadata[config.MetadataProperties[key]] = this.metadata[config.MetadataProperties[key]];
+		}
+		;
 		return ret;
 	}
 
@@ -121,27 +124,27 @@ class Credential {
 		}
 	}
 
-	getCredentialStatus(){
-		return this.status;	
+	getCredentialStatus() {
+		return this.status;
 	}
 
 
-	getFqdnName(){
+	getFqdnName() {
 
 	}
 
-	getMetadata(){
-		
+	getMetadata() {
+
 	}
 
 
 	loadCredentialsObject() {
-		this.state      = this.state | config.CredentialStatus.DIR_NOTREAD;
+		this.state = this.state | config.CredentialStatus.DIR_NOTREAD;
 
 		Object.keys(config.CertificateFiles).forEach((keyName, index) => {
 			try {
 				this[keyName] = this.beameStoreServices.readObject(config.CertFileNames[keyName]);
-			}catch(e){
+			} catch (e) {
 				console.log(`exception ${e}`);
 			}
 		});
@@ -151,7 +154,7 @@ class Credential {
 		try {
 			let filecontent = this.beameStoreServices.readMetadataSync();
 			//noinspection es6modulesdependencies,nodemodulesdependencies
-			_.map(filecontent,  (value, key) => {
+			_.map(filecontent, (value, key) => {
 				this.metadata[key] = value;
 			});
 		} catch (e) {
@@ -163,15 +166,15 @@ class Credential {
 		return this.PRIVATE_KEY ? true : false;
 	}
 
-	hasPublicKey(){
+	hasPublicKey() {
 		return this.publicKeyNodeRsa ? true : false;
 	}
 
 	hasX509() {
-		if(this.X509) {
+		if (this.X509) {
 			return true;
 		}
-		else{
+		else {
 			return false;
 		}
 	}
@@ -180,11 +183,11 @@ class Credential {
 		return certData.commonName;
 	}
 
-	getPublicKeyNodeRsa(){
+	getPublicKeyNodeRsa() {
 		return this.publicKeyNodeRsa;
 	}
 
-	getPrivateKeyNodeRsa(){
+	getPrivateKeyNodeRsa() {
 		return this.privateKeyNodeRsa;
 	}
 
@@ -192,7 +195,7 @@ class Credential {
 
 	}
 
-	getCertificateMetadata(){
+	getCertificateMetadata() {
 		return this.certData;
 	}
 
@@ -200,9 +203,69 @@ class Credential {
 		return publicKey;
 	}
 
-	sign() {
+	sign(data) {
+		if (this.hasPrivateKey()) {
+			var message = {
+				signedData: {
+					data: data,
+					signedby: this.fqdn,
+				}
+			}
+		}
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
+		message.signature = JSON.stringify(crypto.sign(message.signedData, fqdn));
+		return this.privateKeyNodeRsa.sign(data, "base64", "utf8");
+	}
 
+	encrypt(fqdn, data, signingFqdn){
+		let signingCredential;
+		if(signingFqdn) {
+			signingCredential = this._store.search(signingFqdn)[0];
+		}
+		let targetRsaKey = this.getPublicKeyNodeRsa();
+
+
+		if (targetRsaKey) {
+			let sharedCiphered = require('../cli/crypto').aesEncrypt(data);
+
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
+			let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
+			sharedCiphered[1] = "";
+
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
+			let messageToSign = {
+				rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement),
+				data: sharedCiphered[0],
+				encryptedFor: fqdn
+			};
+			if(signingCredential){
+				return signingCredential.sign(messageToSign);
+			}
+
+			return messageToSign;
+		}
+		logger.error("encrypt failure, public key not found");
+		return null;
+	}
+
+	decrypt(message){
+		if (!credential.hasPrivateKey()) {
+			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
+		}
+		let rsaKey = this.getPrivateKeyNodeRsa();
+
+		let decryptedMessage = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		let payload = JSON.parse(JSON.parse(decryptedMessage));
+
+		let dechipheredPayload = aesDecrypt([
+			encryptedMessage.data,
+			payload,
+		]);
+		if (!message) {
+			logger.fatal("Decrypting, No message");
+		}
+		return message;
 	}
 }
-
 module.exports = Credential;

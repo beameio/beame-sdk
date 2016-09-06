@@ -79,37 +79,15 @@ function aesDecrypt(data) {
  * @param {String} data - data to encrypt
  * @param {String} fqdn - entity to encrypt for
  */
-function encrypt(data, fqdn) {
+function encrypt(data, fqdn, signingFqdn) {
 	let credential = store.search(fqdn)[0];
-	while(!credential.publicKeyStr) {
-		process.nextTick(() => {
-			if (credential && credential.publicKeyStr) {
-				let rsaKey = credential.getPublicKeyNodeRsa();
-				if (rsaKey) {
-					let sharedCiphered = aesEncrypt(data);
-					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
-					sharedCiphered[1] = "";
-
-					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					return {
-						rsaCipheredKeys: rsaKey.encrypt(JSON.stringify(symmetricCipherElement), "base64", "utf8"),
-						data: sharedCiphered[0],
-						encryptedFor: fqdn
-					};
-				}
-
-				logger.error("encrypt failure, public key not found");
-				return null;
-			}
-		});
+	if (credential ) {
+		return credential.encrypt(fqdn, data);
 	}
-
-
-	
-	logger.error("encrypt failure, element not found");
+	logger.error("encrypt failure, public key not found");
 	return null;
 }
+
 
 /**
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
@@ -125,22 +103,9 @@ function decrypt(data) {
 			logger.fatal("Decrypting a wrongly formatted message", data);
 		}
 		let credential = store.search(encryptedMessage.encryptedFor)[0];
-		if (!credential  && !credential.hasPrivateKey()) {
-			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
-		}
-		let rsaKey = credential.getPrivateKeyNodeRsa();
-		
-		let message = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		let payload = JSON.parse(JSON.parse(message));
-		
-		let dechipheredPayload = aesDecrypt([
-			encryptedMessage.data,
-			payload,
-		]);
-		if (!message) {
-			logger.fatal("Decrypting, No message");
-		}
+		return credential.decrypt(encryptedMessage);
+
+
 	} catch (e) {
 		logger.fatal("decrypt error ", e);
 	}
@@ -158,9 +123,7 @@ function decrypt(data) {
 function sign(data, fqdn) {
 	let element = store.search(fqdn)[0];
 	if (element) {
-		let rsaKey = element.getPrivateKeyNodeRsa();
-		logger.info(`signing using ${fqdn}`);
-		return rsaKey.sign(data, "base64", "utf8");
+		return element.sign(data);
 	}
 	logger.error("sign data with fqdn, element not found ");
 	return null;
