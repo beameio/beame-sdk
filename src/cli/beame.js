@@ -40,7 +40,7 @@ var parametersSchema = {
 	'edgeFqdn':           {required: true},
 	'localPort':          {required: true},
 	'targetPort':         {required: true},
-	'targetHost':         {required: false},
+	'targetHost':         {required: false, default: 'localhost'},
 	'targetProto':        {required: false, options: ['http', 'https'], default: 'https'},
 };
 

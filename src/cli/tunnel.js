@@ -2,20 +2,52 @@
  * Created by USER on 24/08/2016.
  */
 "use strict";
-var config        = require('../../config/Config');
+const config        = require('../../config/Config');
 const module_name = config.AppModules.Tunnel;
-var BeameLogger   = require('../utils/Logger');
-var logger        = new BeameLogger(module_name);
-var ProxyClient   = require("../services/ProxyClient");
-var BeameStore    = require("../services/BeameStore");
-var beamestore    = new BeameStore();
+const BeameLogger   = require('../utils/Logger');
+const logger        = new BeameLogger(module_name);
+const ProxyClient   = require("../services/ProxyClient");
+const BeameStore    = require("../services/BeameStoreV2");
+const beamestore    = new BeameStore();
+
+/**
+ * @param {Object} certs
+ * @param {String} targetHost
+ * @param {Number} targetPort
+ * @returns {Promise}
+ */
+function startHttpsTerminatingProxy(certs, targetHost, targetPort) {
+	// certs - key, cert, ca
+	return new Promise((resolve, reject) => {
+		var httpProxy = require('http-proxy');
+		const proxy = httpProxy.createProxyServer({
+			target: {
+				host: targetHost,
+				port: targetPort
+			},
+			ssl: {
+				key:  certs.key,
+				cert: certs.cert,
+			}
+		});
+		proxy.listen(0, () => {
+			// console.log(proxy._server.address().port);
+			resolve(proxy._server.address().port);
+		});
+	});
+}
 
 /**
  * @param {String} fqdn
+ * @param {String} targetHost
  * @param {Number} targetPort
- * @param {String|null} [targetHost] => default localhost
+ * @param {String} targetProto
  */
 function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
+
+	if(targetProto != 'http' && targetProto != 'https') {
+		throw new Error("httpsTunnel: targetProto must be either http or https");
+	}
 
 	//could be edge client or routable atom
 	var server_entity = beamestore.search(fqdn);
@@ -26,8 +58,8 @@ function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
 
 	server_entity   = server_entity[0];
 
-	if(!server_entity.edgeHostname){
-		logger.fatal(`Edge hostname missing for ${fqdn}`);
+	if(!server_entity.fqdn){
+		logger.fatal(`FQDN missing for ${fqdn}`);
 	}
 
 	/** @type {typeof ServerCertificates} **/
@@ -37,10 +69,25 @@ function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
 		ca:   server_entity.CA
 	};
 
-	new ProxyClient("HTTPS", fqdn,
-		server_entity.edgeHostname, targetHost || 'localhost',
-		targetPort, {},
-		null, serverCerts);
+	if(targetProto == 'http') {
+		startHttpsTerminatingProxy(serverCerts, targetHost, targetPort)
+			.then(terminatingProxyPort => {
+				// console.log('PORT', terminatingProxyPort);
+				new ProxyClient("HTTPS", fqdn,
+					server_entity.fqdn, 'localhost',
+					terminatingProxyPort, {},
+					null, serverCerts);
+			})
+			.catch(e => {
+				throw new Error(`Error starting HTTPS terminaring proxy: ${e}`);
+			})
+	} else {
+
+		new ProxyClient("HTTPS", fqdn,
+			server_entity.fqdn, targetHost,
+			targetPort, {},
+			null, serverCerts);
+	}
 }
 
 module.exports =
