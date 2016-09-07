@@ -59,15 +59,15 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 	var srv = SNIServer.get(config.SNIServerPort, requestListener);
 	srv.addFqdn(host, serverCerts);
 
-	var edgeLocals = beamestore.searchEdgeLocals(host);
-	edgeLocals.forEach(edgeLocal => {
-		var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
-		srv.addFqdn(edgeLocalData.hostname, {
-			key:  edgeLocalData.PRIVATE_KEY,
-			cert: edgeLocalData.P7B,
-			ca:   edgeLocalData.CA
-		});
-	});
+	// var edgeLocals = beamestore.searchEdgeLocals(host);
+	// edgeLocals.forEach(edgeLocal => {
+	// 	var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
+	// 	srv.addFqdn(edgeLocalData.hostname, {
+	// 		key:  edgeLocalData.PRIVATE_KEY,
+	// 		cert: edgeLocalData.P7B,
+	// 		ca:   edgeLocalData.CA
+	// 	});
+	// });
 
 	srv.start(function () {
 		function onLocalServerCreated(data) {
