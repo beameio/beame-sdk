@@ -11,23 +11,23 @@ var BeameStore    = require("../services/BeameStore");
 var beamestore    = new BeameStore();
 
 /**
- * @param {String} edgeClientFqdn
+ * @param {String} fqdn
  * @param {Number} targetPort
  * @param {String|null} [targetHost] => default localhost
  */
-function httpsTunnel(edgeClientFqdn, targetPort, targetHost) {
+function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
 
 	//could be edge client or routable atom
-	var server_entity = beamestore.search(edgeClientFqdn);
+	var server_entity = beamestore.search(fqdn);
 
 	if (server_entity.length != 1) {
-		logger.fatal(`Could not find entity ${edgeClientFqdn}`);
+		logger.fatal(`Could not find entity ${fqdn}`);
 	}
 
 	server_entity   = server_entity[0];
 
 	if(!server_entity.edgeHostname){
-		logger.fatal(`Edge hostname missing for ${edgeClientFqdn}`);
+		logger.fatal(`Edge hostname missing for ${fqdn}`);
 	}
 
 	/** @type {typeof ServerCertificates} **/
@@ -37,7 +37,7 @@ function httpsTunnel(edgeClientFqdn, targetPort, targetHost) {
 		ca:   server_entity.CA
 	};
 
-	new ProxyClient("HTTPS", edgeClientFqdn,
+	new ProxyClient("HTTPS", fqdn,
 		server_entity.edgeHostname, targetHost || 'localhost',
 		targetPort, {},
 		null, serverCerts);
