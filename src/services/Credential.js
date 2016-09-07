@@ -235,7 +235,7 @@ class Credential {
 
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			let messageToSign = {
-				rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement),
+				rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
 				data: sharedCiphered[0],
 				encryptedFor: fqdn
 			};
@@ -249,24 +249,27 @@ class Credential {
 		return null;
 	}
 
-	decrypt(message){
-		if (!credential.hasPrivateKey()) {
+	decrypt(encryptedMessage){
+		console.log("In credentials decrypt");
+		if (!this.hasPrivateKey()) {
 			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
 
 		let decryptedMessage = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
+	 	var msr = JSON.stringify(decryptedMessage);	
+		console.log('decryptedMessage ${ msr }');
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		let payload = JSON.parse(JSON.parse(decryptedMessage));
+		let payload = JSON.parse(decryptedMessage);
 
-		let dechipheredPayload = aesDecrypt([
+		let dechipheredPayload = require('../cli/crypto').aesDecrypt([
 			encryptedMessage.data,
 			payload,
 		]);
-		if (!message) {
+		if (!dechipheredPayload) {
 			logger.fatal("Decrypting, No message");
 		}
-		return message;
+		return dechipheredPayload;
 	}
 }
 module.exports = Credential;
