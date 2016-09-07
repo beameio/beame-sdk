@@ -6,7 +6,7 @@ var fs = require('fs');
 
 var https       = require("https");
 var ProxyClient = require("./ProxyClient");
-var BeameStore  = require("./BeameStore");
+var BeameStore  = require("./BeameStoreV2");
 var SNIServer   = require("./SNIServer");
 var config      = require('../../config/Config');
 var logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
