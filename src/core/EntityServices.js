@@ -24,7 +24,7 @@ var path = require('path');
 var os = require('os');
 var home = os.homedir();
 var homedir = home;
-var credsRootDir = config.localCertsDirV1;
+var credsRootDir = config.localCertsDirV2;
 
 new (require('../services/BeameStore'))();
 
@@ -79,7 +79,7 @@ class EntityServices {
 	registerEntity(metadata, callback) {
 		
 		if(metadata.parent_fqdn){
-			provisionApi.setAuthData(beameUtils.getAuthToken(path.join(config.localCertsDirV1,metadata.parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+			provisionApi.setAuthData(beameUtils.getAuthToken(path.join(credsRootDir,metadata.parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 		}
 		else{
 			provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
@@ -147,7 +147,7 @@ class EntityServices {
 					var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
 					
 					if(parent_fqdn){
-						provisionApi.setAuthData(beameUtils.getAuthToken(path.join(config.localCertsDirV1,parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+						provisionApi.setAuthData(beameUtils.getAuthToken(path.join(credsRootDir,parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 					}
 					else{
 						provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
@@ -168,9 +168,7 @@ class EntityServices {
 												if (!callback) return;
 												
 												if (!error) {
-													dataServices.getNodeMetadataAsync(devDir, fqdn, module_name).then(function (metadata) {
-														callback(null, metadata);
-													}, callback);
+													callback(null, payload);
 												}
 												else {
 													callback(error, null);

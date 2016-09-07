@@ -138,12 +138,10 @@ DataServices.prototype.createCSR = function (dirPath, fqdn, pkName) {
  */
 DataServices.prototype.savePayload = function (dirPath, payload, keys, level, callback) {
 	var self = this;
-	var data = {
-		"level": level.toLowerCase()
-	};
+	var data = {};
 
 	for (var i = 0; i < keys.length; i++) {
-		if (payload[keys[i]]) {
+		if (payload.hasOwnProperty(keys[i])) {
 			data[keys[i]] = payload[keys[i]];
 		}
 		else {
@@ -171,7 +169,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
 	var errMsg;
 
 	var saveCert = function (responseField, targetName, callback) {
-		if (!payload[responseField]) {
+		if (!payload.hasOwnProperty(responseField)) {
 			errMsg = logger.formatErrorMessage(`${responseField} missing in API response on ${dirPath}`, module_name, null, config.MessageCodes.ApiRestError);
 			callback(errMsg, null);
 		}
