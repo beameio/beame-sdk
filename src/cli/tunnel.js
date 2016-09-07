@@ -16,7 +16,7 @@ const beamestore    = new BeameStore();
  * @param {Number} targetPort
  * @returns {Promise}
  */
-function startHttpsTerminatingProxy(certs, targetHost, targetPort) {
+function startHttpsTerminatingProxy(certs, targetHost, targetPort, targetHostName) {
 	// certs - key, cert, ca
 	return new Promise((resolve, reject) => {
 		var httpProxy = require('http-proxy');
@@ -28,6 +28,9 @@ function startHttpsTerminatingProxy(certs, targetHost, targetPort) {
 			ssl: {
 				key:  certs.key,
 				cert: certs.cert,
+			},
+			headers: {
+				host: targetHostName
 			}
 		});
 		proxy.listen(0, () => {
@@ -43,7 +46,7 @@ function startHttpsTerminatingProxy(certs, targetHost, targetPort) {
  * @param {Number} targetPort
  * @param {String} targetProto
  */
-function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
+function httpsTunnel(fqdn, targetHost, targetPort, targetProto, targetHostName) {
 
 	if(targetProto != 'http' && targetProto != 'https') {
 		throw new Error("httpsTunnel: targetProto must be either http or https");
@@ -58,8 +61,11 @@ function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
 
 	server_entity   = server_entity[0];
 
-	if(!server_entity.fqdn){
-		logger.fatal(`FQDN missing for ${fqdn}`);
+	// console.log('E', server_entity.toJSON());
+	const edgeHostname = server_entity.get('edgeHostname');
+
+	if(!edgeHostname){
+		logger.fatal(`Edge hostname missing for ${fqdn}`);
 	}
 
 	/** @type {typeof ServerCertificates} **/
@@ -69,12 +75,13 @@ function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
 		ca:   server_entity.CA
 	};
 
+	// console.log(server_entity);
 	if(targetProto == 'http') {
-		startHttpsTerminatingProxy(serverCerts, targetHost, targetPort)
+		startHttpsTerminatingProxy(serverCerts, targetHost, targetPort, targetHostName || targetHost)
 			.then(terminatingProxyPort => {
 				// console.log('PORT', terminatingProxyPort);
 				new ProxyClient("HTTPS", fqdn,
-					server_entity.fqdn, 'localhost',
+					edgeHostname, 'localhost',
 					terminatingProxyPort, {},
 					null, serverCerts);
 			})
@@ -84,7 +91,7 @@ function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
 	} else {
 
 		new ProxyClient("HTTPS", fqdn,
-			server_entity.fqdn, targetHost,
+			edgeHostname, targetHost,
 			targetPort, {},
 			null, serverCerts);
 	}

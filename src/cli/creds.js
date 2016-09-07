@@ -167,9 +167,9 @@ function isObject(str) {
  * @returns {Array<CredsListItem>}
  */
 function listCreds(fqdn) {
-	var returnValues = store2.list(fqdn);;
-	let result = store2.search('sg2iaxrk9sknvmvo.v266jyyar140ozwo.v1.beameio.net');
-	return returnValues;
+	return store2.list(fqdn);
+	//let result = store2.search('sg2iaxrk9sknvmvo.v266jyyar140ozwo.v1.beameio.net');
+	//return returnValues;
 }
 
 /**
@@ -220,11 +220,11 @@ function list(regex) {
 
 list.toText = function (creds) {
 	var table = new Table({
-		head:      ['name', 'parent', 'path'],
-		colWidths: [65, 55, 55]
+		head:      ['name', 'fqdn','parent', 'path'],
+		colWidths: [40, 65, 55, 55]
 	});
 	creds.forEach(item => {
-		table.push([item.get("FQDN"), item.get('PARENT_FQDN'), item.get('path')]);
+		table.push([item.get("Name"),item.get("FQDN"), item.get('PARENT_FQDN'), item.get('path')]);
 	});
 	return table;
 };
@@ -461,7 +461,7 @@ function convertCredentialsToV2(){
 
 
 
-	
+
 }
 
 
