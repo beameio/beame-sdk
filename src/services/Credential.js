@@ -79,17 +79,18 @@ class Credential {
 	}
 
 	toJSON() {
-		let ret = {metadata: {}};
+		let ret = {
+			metadata: {}
+		};
 
 		for (let key in config.CertFileNames) {
 			ret[key] = this[key];
 		}
-		;
 
 		for (let key in config.MetadataProperties) {
 			ret.metadata[config.MetadataProperties[key]] = this.metadata[config.MetadataProperties[key]];
 		}
-		;
+
 		return ret;
 	}
 

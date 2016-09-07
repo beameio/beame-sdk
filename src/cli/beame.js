@@ -12,33 +12,36 @@ var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 
 var commands = {};
-_.each(['creds', 'crypto'/*'servers', 'atomServer', , 'system', 'pinning','tunnel'*/], function (cmdName) {
+['creds', 'crypto'/*'servers', 'atomServer', , 'system', 'pinning'*/,'tunnel'].forEach( cmdName => {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 
 var parametersSchema = {
-	'data':           {required: false},
-	'developerEmail': {required: true},
-	'developerFqdn':  {required: true},
-	'developerName':  {required: true},
-	'format':         {required: false, options: ['text', 'json'], default: 'text'},
-	'fqdn':           {required: false},
-	'signingFqdn':	  {required: false},
-	'signature':      {required: true},
-	'regex':          {required: false},
-	'uid':            {required: true},
-	'authSrvFqdn':	  {required: true},
-	'targetFqdn':     {required: true},
-	'file':           {required: false},
-	'authorizationFqdn':{required: false},
-	'authenticationFqdn':{required: false},
-	'pk':             {required: true},
-	'requiredLevel':  {required: false, options: ['Default','AuthenticationServer','AuthorizationServer']},
-	'count':          {required: false, default: 1},
-	'sharedFolder':   {required: false},
-	'localIp':        {required: true},
-	'edgeFqdn':       {required: true },
-	'localPort':      {required:true}
+	'data':               {required: false},
+	'developerEmail':     {required: true},
+	'developerFqdn':      {required: true},
+	'developerName':      {required: true},
+	'format':             {required: false, options: ['text', 'json'], default: 'text'},
+	'fqdn':               {required: false},
+	'signingFqdn':	      {required: false},
+	'signature':          {required: true},
+	'regex':              {required: false},
+	'uid':                {required: true},
+	'authSrvFqdn':	      {required: true},
+	'targetFqdn':         {required: true},
+	'file':               {required: false},
+	'authorizationFqdn':  {required: false},
+	'authenticationFqdn': {required: false},
+	'pk':                 {required: true},
+	'requiredLevel':      {required: false, options: ['Default', 'AuthenticationServer', 'AuthorizationServer']},
+	'count':              {required: false, default: 1},
+	'sharedFolder':       {required: false},
+	'localIp':            {required: true},
+	'edgeFqdn':           {required: true},
+	'localPort':          {required: true},
+	'targetPort':         {required: true},
+	'targetHost':         {required: false},
+	'targetProto':        {required: false, options: ['http', 'https'], default: 'https'},
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -56,8 +59,8 @@ function getParamsNames(fun) {
 	var ret         = (names.length == 1 && !names[0] ? [] : names);
 	var useCallback = false;
 
-	ret             = _.filter(ret, function (x) {
-		if (x == 'callback') {
+	ret = ret.filter(paramName => {
+		if (paramName == 'callback') {
 			useCallback = true;
 			return false;
 		} else {
@@ -76,11 +79,11 @@ function main() {
 	var cmd = commands[cmdName];
 
 	if (!cmd) {
-		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + _.keys(commands));
+		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + Object.keys(commands));
 	}
 
 	if (!commands[cmdName][subCmdName]) {
-		logger.fatal("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + _.keys(commands[cmdName]));
+		logger.fatal("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + Object.keys(commands[cmdName]));
 	}
 
 	// TODO: handle boolean such as in "--fqdn --some-other-switch" or "--no-fqdn"
