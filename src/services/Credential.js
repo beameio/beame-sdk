@@ -234,7 +234,7 @@ class Credential {
 
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			let messageToSign = {
-				rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement),
+				rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
 				data: sharedCiphered[0],
 				encryptedFor: fqdn
 			};

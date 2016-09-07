@@ -96,9 +96,11 @@ function encrypt(data, fqdn, signingFqdn) {
  * @param {String} data - data to encrypt
  */
 function decrypt(data) {
+	console.log(`data ${data}`);
 	try {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let encryptedMessage = JSON.parse(data);
+		console.log(`encryptedMessage ${encryptedMessage }`);
 		if (!encryptedMessage.encryptedFor) {
 			logger.fatal("Decrypting a wrongly formatted message", data);
 		}
