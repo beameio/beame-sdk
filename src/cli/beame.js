@@ -59,8 +59,8 @@ function getParamsNames(fun) {
 	var ret         = (names.length == 1 && !names[0] ? [] : names);
 	var useCallback = false;
 
-	ret             = _.filter(ret, function (x) {
-		if (x == 'callback') {
+	ret = ret.filter(paramName => {
+		if (paramName == 'callback') {
 			useCallback = true;
 			return false;
 		} else {
@@ -79,11 +79,11 @@ function main() {
 	var cmd = commands[cmdName];
 
 	if (!cmd) {
-		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + _.keys(commands));
+		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + Object.keys(commands));
 	}
 
 	if (!commands[cmdName][subCmdName]) {
-		logger.fatal("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + _.keys(commands[cmdName]));
+		logger.fatal("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + Object.keys(commands[cmdName]));
 	}
 
 	// TODO: handle boolean such as in "--fqdn --some-other-switch" or "--no-fqdn"
