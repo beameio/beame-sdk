@@ -6,7 +6,7 @@ var fs = require('fs');
 
 var https       = require("https");
 var ProxyClient = require("./ProxyClient");
-var BeameStore  = require("./BeameStore");
+var BeameStore  = require("./BeameStoreV2");
 var SNIServer   = require("./SNIServer");
 var config      = require('../../config/Config');
 var logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
@@ -59,15 +59,15 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 	var srv = SNIServer.get(config.SNIServerPort, requestListener);
 	srv.addFqdn(host, serverCerts);
 
-	var edgeLocals = beamestore.searchEdgeLocals(host);
-	edgeLocals.forEach(edgeLocal => {
-		var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
-		srv.addFqdn(edgeLocalData.hostname, {
-			key:  edgeLocalData.PRIVATE_KEY,
-			cert: edgeLocalData.P7B,
-			ca:   edgeLocalData.CA
-		});
-	});
+	// var edgeLocals = beamestore.searchEdgeLocals(host);
+	// edgeLocals.forEach(edgeLocal => {
+	// 	var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
+	// 	srv.addFqdn(edgeLocalData.hostname, {
+	// 		key:  edgeLocalData.PRIVATE_KEY,
+	// 		cert: edgeLocalData.P7B,
+	// 		ca:   edgeLocalData.CA
+	// 	});
+	// });
 
 	srv.start(function () {
 		function onLocalServerCreated(data) {
@@ -76,26 +76,31 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 			}
 		}
 
-		//noinspection JSUnresolvedVariable
-		if (server_entity.level === "edgeclient" || server_entity.level === "remoteclient" || server_entity.level === "atom") {
+		var fqdn      = server_entity.get('FQDN'),
+		    edge_fqdn = server_entity.get('EDGE_FQDN'),
+		    local_ip  = server_entity.get('LOCAL_IP');
 
-			if (!server_entity.edgeHostname) {
-				logger.fatal('Edge server hostname required');
-			}
 
-			if (!server_entity.hostname) {
-				logger.fatal('Server hostname required');
-			}
+		if (!fqdn) {
+			logger.fatal('Edge server hostname required');
+		}
 
-			//noinspection JSUnresolvedVariable
-			new ProxyClient("HTTPS", server_entity.hostname,
-				server_entity.edgeHostname, 'localhost',
+		if (!edge_fqdn) {
+			logger.fatal('Server hostname required');
+		}
+
+		if (!local_ip) {
+			new ProxyClient("HTTPS", fqdn,
+				edge_fqdn, 'localhost',
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
 				null, serverCerts);
 		}
 		else {
 			onLocalServerCreated(null);
 		}
+		//noinspection JSUnresolvedVariable
+
+
 	});
 };
 

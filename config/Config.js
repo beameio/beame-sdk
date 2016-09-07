@@ -168,7 +168,7 @@ var MessageCodes = {
 
 var ResponseKeys = {
 	"NodeFiles":                   [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
-	"EntityMetadataKeys":          ["fqdn", "parent_fqdn","name", "email","level","local_ip"],
+	"EntityMetadataKeys":          ["fqdn", "parent_fqdn","name", "email","level","local_ip","edge_fqdn"],
 	"EntityCreateResponseKeys":    ["fqdn"],
 	"DeveloperCreateResponseKeys": ["hostname", "uid", "name", "email"],
 	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn", "edgeHostname"],
