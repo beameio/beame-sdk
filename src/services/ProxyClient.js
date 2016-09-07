@@ -28,7 +28,7 @@ var logger        = new (require('../utils/Logger'))(module_name);
  * @param {Number} targetPort
  * @param {ProxyClientOptions} options
  * @param {HttpsProxyAgent|null|undefined} [agent]
- * @param {ServerCertificates} edgeClientCerts
+ * @param {ServerCertificates|null} [edgeClientCerts]
  * @constructor
  * @class
  */
