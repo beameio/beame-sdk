@@ -76,12 +76,30 @@ var SampleBeameServer = function (instanceHostname, projectName, requestListener
 			}
 		}
 
+		var fqdn      = server_entity.get('FQDN'),
+		    edge_fqdn = server_entity.get('EDGE_FQDN'),
+		    local_ip  = server_entity.get('LOCAL_IP');
 
-			//noinspection JSUnresolvedVariable
-			new ProxyClient("HTTPS", server_entity.fqdn,
-				server_entity.edge_fqdn, 'localhost',
+
+		if (!fqdn) {
+			logger.fatal('Edge server hostname required');
+		}
+
+		if (!edge_fqdn) {
+			logger.fatal('Server hostname required');
+		}
+
+		if (!local_ip) {
+			new ProxyClient("HTTPS", fqdn,
+				edge_fqdn, 'localhost',
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
 				null, serverCerts);
+		}
+		else {
+			onLocalServerCreated(null);
+		}
+		//noinspection JSUnresolvedVariable
+
 
 	});
 };
