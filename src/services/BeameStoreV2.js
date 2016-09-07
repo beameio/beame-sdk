@@ -40,10 +40,10 @@ class BeameStoreV2 {
 
 	init(){
 		dataservices.mkdirp(config.localCertsDirV2 + "/");
-		dataservices.scanDir(config.localCertsDirV2 + "/").forEach(folderName => {
+		dataservices.scanDir(config.localCertsDirV2 + "/").forEach(fqdn => {
 			let credentials = new Credential(this);
-			credentials.initFromData(folderName);
-		 	this.addCredential(credentials, folderName);
+			credentials.initFromData(fqdn);
+		 	this.addCredential(credentials, fqdn);
 				// there is no parent node in the store. still a to decice weather i want to request the whole tree.
 				// for now we will keep it at the top level, and as soon as parent is added to the store it will get reassigned
 			// just a top level credential or a credential we are placing on top, untill next one is added
@@ -56,7 +56,7 @@ class BeameStoreV2 {
             if(!parent_fqdn || !parentNode){
                 this.credentials[credentials.get("FQDN")] = credentials;
                 this.reassignCredentials(credentials);
-            } 
+            }
 			else {
                 //
                 // check if credentials has parent fqdn, and if so we are moving it down.
@@ -83,8 +83,8 @@ class BeameStoreV2 {
 	    let credentialsWitoutParent = fqdnsWithoutParent.map(x => this.credentials[x]);
 		credentialsWitoutParent.forEach(item => {
 			currentNode.children.push(item);
-			this.credentials[currentNode.get("FQDN")] = null;
-			delete this.credentials[currentNode.get("FQDN")];
+			this.credentials[item.get("FQDN")] = null;
+			delete this.credentials[item.get("FQDN")];
 			item.parent = currentNode;
 		});
 	}
@@ -129,6 +129,12 @@ class BeameStoreV2 {
 		return [result];
 	}*/
 
+	/**
+	 *
+	 * @param regex
+	 * @param {Array} searchArray
+	 * @returns {Array}
+	 */
 	list(regex, searchArray) {
 		//console.log(`starting _search ${fqdn}`);
 		if(!searchArray){
