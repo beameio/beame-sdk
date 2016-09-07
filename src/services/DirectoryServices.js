@@ -264,7 +264,7 @@ DataServices.prototype.saveCerts = function (dirPath, payload, finalCallback) {
  * @param {String} dir
  * @returns {boolean}
  */
-DataServices.prototype.isPathExists = function (dir) {
+DataServices.prototype.doesPathExists = function (dir) {
 	try {
 		fs.accessSync(dir, fs.F_OK);
 		return true;
@@ -283,7 +283,7 @@ DataServices.prototype.isPathExists = function (dir) {
 DataServices.prototype.isNodeFilesExists = function (dirPath, nodeFiles, module) {
 	var self = this;
 	for (var i = 0; i < nodeFiles.length; i++) {
-		if (!self.isPathExists(path.join(dirPath, nodeFiles[i]))) {
+		if (!self.doesPathExists(path.join(dirPath, nodeFiles[i]))) {
 			logger.error(`cert missing on ${dirPath} for ${nodeFiles[i]}`, null, module);
 			return false;
 		}
@@ -421,7 +421,7 @@ DataServices.prototype.readMetadataSync = function (dir, fqdn) {
 	let self = this;
 	let p = beameUtils.makePath(dir,  fqdn, config.metadataFileName);
 	var metadata = this.readJSON(p);
-	metadata.path = p;
+	metadata.path = beameUtils.makePath(dir,  fqdn);
 	return metadata;
 };
 
@@ -437,7 +437,7 @@ DataServices.prototype.isHostnamePathValidAsync = function (path, module, fqdn )
 
 	return new Promise(function (resolve, reject) {
 
-		if (!self.isPathExists(path)) {//provided invalid fqdn
+		if (!self.doesPathExists(path)) {//provided invalid fqdn
 			reject(logger.formatErrorMessage(`Provided fqdn  ${fqdn } is invalid, list ./.beame to see existing fqdn s`, module));
 		}
 		else {
@@ -500,7 +500,7 @@ DataServices.prototype.isNodeCertsExistsAsync = function (path, nodeFiles, modul
 
 
 DataServices.prototype.readObject = function (filename) {
-	if (this.isPathExists(filename)) {
+	if (this.doesPathExists(filename)) {
 		try {
 			var file = fs.readFileSync(filename);
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -519,7 +519,7 @@ DataServices.prototype.readObject = function (filename) {
  * @param {String} dirPath
  */
 DataServices.prototype.readJSON = function (dirPath) {
-	if (this.isPathExists(dirPath)) {
+	if (this.doesPathExists(dirPath)) {
 		try {
 			var file = fs.readFileSync(dirPath);
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -533,10 +533,20 @@ DataServices.prototype.readJSON = function (dirPath) {
 	return {};
 };
 
-DataServices.prototype.copy = function(src, dest) {
-	var oldFile = fs.createReadStream(src);
-	var newFile = fs.createWriteStream(dest);
-	oldFile.pipe(newFile);
+DataServices.prototype.copy = function(srcFile, destFile) {
+	let BUF_LENGTH = 64 * 1024
+	let buff = new Buffer(BUF_LENGTH)
+	let fdr = fs.openSync(srcFile, 'r')
+	let fdw = fs.openSync(destFile, 'w')
+	let bytesRead = 1
+	let pos = 0
+	while (bytesRead > 0) {
+		bytesRead = fs.readSync(fdr, buff, 0, BUF_LENGTH, pos)
+		fs.writeSync(fdw, buff, 0, bytesRead)
+		pos += bytesRead
+	}
+	fs.closeSync(fdr)
+	fs.closeSync(fdw)
 };
 
 DataServices.prototype.copyDir = function(src, dest) {

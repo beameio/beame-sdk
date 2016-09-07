@@ -2,7 +2,7 @@
 // Created by Zeev Glozman
 // Beame.io Ltd, 2016.
 
-"use strict";
+'use strict';
 
 /**
  * S3 public metadata.json structure, should be compliant to backend EntityMetadata Class
@@ -36,42 +36,41 @@ class BeameStoreV2 {
 
 		this.credentials = {};
         this.init();
-
 	}
+
 	init(){
-
 		dataservices.mkdirp(config.localCertsDirV2 + "/");
-		dataservices.scanDir(config.localCertsDirV2).forEach(folderName => {
-			let credentials;
-
-		 	if(this.credentials[folderName]){
-				credentials = this.credentials[folderName];
-			}else{
-				credentials = new Credential(folderName, this);
-			}
-			let parent_fqdn = credentials.get(config.MetadataProperties.PARENT_FQDN);
-			let parentNode = parent_fqdn && this.search(parent_fqdn)[0];
-			if(!parent_fqdn || !parentNode){
-				this.credentials[folderName] = credentials;
-				this.reassignCredentials(credentials);
-			} else {
-				//
-				// check if credentials has parent fqdn, and if so we are moving it down.
-				//
-				parentNode.children.push(credentials);
-				credentials.parent = parentNode;
-				// if it was located on the top level now we need to 0 it would, since we put it in the proper location in the tree.
-				if (this.credentials[credentials.get('FQDN')]) {
-					this.credentials[credentials.get('FQDN')]  = null;
-					delete this.credentials[item.get("FQDN")];
-				}
-				this.reassignCredentials(credentials);
-			}
+		dataservices.scanDir(config.localCertsDirV2 + "/").forEach(folderName => {
+			let credentials = new Credential(this);
+			credentials.initFromData(folderName);
+		 	this.addCredential(credentials, folderName);
 				// there is no parent node in the store. still a to decice weather i want to request the whole tree.
 				// for now we will keep it at the top level, and as soon as parent is added to the store it will get reassigned
 			// just a top level credential or a credential we are placing on top, untill next one is added
 		});
 	}
+
+	addCredential(credentials){
+            let parent_fqdn = credentials.get(config.MetadataProperties.PARENT_FQDN);
+            let parentNode = parent_fqdn && this.search(parent_fqdn)[0];
+            if(!parent_fqdn || !parentNode){
+                this.credentials[credentials.get("FQDN")] = credentials;
+                this.reassignCredentials(credentials);
+            } 
+			else {
+                //
+                // check if credentials has parent fqdn, and if so we are moving it down.
+                //
+                parentNode.children.push(credentials);
+                credentials.parent = parentNode;
+                // if it was located on the top level now we need to 0 it would, since we put it in the proper location in the tree.
+                if (this.credentials[credentials.get('FQDN')]) {
+                    this.credentials[credentials.get('FQDN')]  = null;
+                    delete this.credentials[item.get("FQDN")];
+                }
+                this.reassignCredentials(credentials);
+            }
+    }
 
 	toJSON(){
 		return "huj";
@@ -157,7 +156,11 @@ class BeameStoreV2 {
 	};
 
 
-	addToStore(x509){};
+	addToStore(x509){
+		let credential = new Credential(this);
+		credential.initFromX509(x509);
+		this.addCredential(credential);
+	};
 
 	getNewCredentials(parentFqdn, challange) {
 		if (parentFqdn.isPrivateKeyLocal()) {

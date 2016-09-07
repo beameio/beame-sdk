@@ -107,7 +107,7 @@ function run() {
 		// 			assert.isNotNull(payload, error && error.message);
 		//
 		// 			//validate recovery file
-		// 			var isRecoveryCodeExists = dataServices.isPathExists(beameUtils.makePath(developerDirPath, globalConfig.CertFileNames.RECOVERY));
+		// 			var isRecoveryCodeExists = dataServices.doesPathExists(beameUtils.makePath(developerDirPath, globalConfig.CertFileNames.RECOVERY));
 		// 			assert.isTrue(isRecoveryCodeExists, 'Recovery code not found');
 		//
 		// 			done()

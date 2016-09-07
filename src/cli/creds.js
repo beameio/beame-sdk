@@ -21,7 +21,6 @@
 const Table = require('cli-table2');
 
 require('../../initWin');
-const x509 = require('x509');
 
 const store               = new (require("../services/BeameStore"))();
 const store2              = new (require("../services/BeameStoreV2"))();
@@ -29,12 +28,7 @@ const config              = require('../../config/Config');
 const module_name       = config.AppModules.BeameCreds;
 const BeameLogger         = require('../utils/Logger');
 const logger              = new BeameLogger(module_name);
-const developerServices   = new (require('../core/DeveloperServices'))();
-const atomServices        = new (require('../core/AtomServices'))();
-const edgeClientServices  = new (require('../core/EdgeClientServices'))();
-const localClientServices = new (require('../core/LocalClientServices'))();
-const remoteClientServices = new (require('../core/RemoteClientServices'))();
-const dataServices 		 = new (require('../services/DirectoryServices'))();
+const directoryServices 		 = new (require('../services/DirectoryServices'))();
 const path   = require('path');
 const fs     = require('fs');
 const mkdirp = require("mkdirp");
@@ -45,7 +39,6 @@ module.exports = {
 	//renew,
 	//revoke,
 	shred,
-	createLocalClient,
 	exportCredentials,
 	importCredentials,
 	importNonBeameCredentials,
@@ -222,7 +215,7 @@ show.toText = function (certs) {
  */
 function list(regex) {
 	logger.debug(`list  ${regex}`);
-	return listCreds(regex);
+	return listCreds(regex || '.' );
 }
 
 list.toText = function (creds) {
@@ -251,40 +244,10 @@ shred.toText = lineToText;
  * @param developerEmail
  * @param callback
  */
-function createTestDeveloper(developerName, developerEmail, callback) {
-	logger.debug(`Creating test developer ${developerName} ${developerEmail}`);
-	developerServices.createDeveloper(developerName, developerEmail, callback);
-}
-createTestDeveloper.toText = lineToText;
-
-if (developerServices.canCreateDeveloper()) {
-	module.exports.createTestDeveloper = createTestDeveloper;
-}
-
-/**
- * @private
- * @param developerName
- * @param developerEmail
- * @param callback
- */
 function registerDeveloper(developerName, developerEmail, callback) {
 //	developerServices.registerDeveloper(developerName, developerEmail, callback);
 }
 
-
-
-/**
- * Create Local Client under Edge Client
- * @public
- * @method Creds.createLocalClient
- * @param {String} atomFqdn
- * @param {String} edgeClientFqdn
- * @param {Function} callback
- */
-function createLocalClient(atomFqdn, edgeClientFqdn, callback) {
-	logger.info(`Creating local client for Atom ${atomFqdn}`);
-	localClientServices.createLocalClients(atomFqdn, edgeClientFqdn, callback);
-}
 
 /**
  * Export credentials from source fqdn to target fqdn
@@ -295,6 +258,7 @@ function createLocalClient(atomFqdn, edgeClientFqdn, callback) {
  * @param {String} file - path to file
  * @returns {{}}
  */
+
 function exportCredentials(fqdn, targetFqdn, file) {
 	var creds        = store.search(fqdn)[0];
 	var relativePath = constructRelativePathElements(creds);
@@ -477,8 +441,20 @@ function convertCredentialsToV2(){
 		let pathElements = rec.path.split(path.sep);
 		let lastElement = pathElements[pathElements.length - 1];
 		let newPath = path.join(config.localCertsDirV2, lastElement);
-		dataServices.copyDir(rec.path, newPath);
-		dataServices.deleteFolder(rec.path,() => {});
+		directoryServices.copyDir(rec.path, newPath);
+		let metafilePath = path.join(newPath, config.metadataFileName);
+
+		if(directoryServices.doesPathExists(metafilePath)){
+			let metadata = directoryServices.readJSON(metafilePath);
+			if(metadata.hostname) {
+				metadata.fqdn = metadata.hostname;
+				delete metadata.hostname;
+			}
+			let jsonData = JSON.stringify(metadata);
+			fs.writeFileSync(path.join(metafilePath), jsonData );
+		}
+
+		directoryServices.deleteFolder(rec.path,() => {});
 		logger.info(`copying ${rec.path} to ${newPath}`);
 	};
 	console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);

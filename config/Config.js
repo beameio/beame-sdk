@@ -81,6 +81,7 @@ var MetadataProperties = {
   NAME         : "name",
   PARENT_FQDN  : "parent_fqdn",
   EDGEHOSTNAME : "edgeHostname",
+	PATH		:"path"
 };
 
 var CredentialStatus = {
