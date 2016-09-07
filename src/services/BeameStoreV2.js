@@ -56,7 +56,8 @@ class BeameStoreV2 {
             if(!parent_fqdn || !parentNode){
                 this.credentials[credentials.get("FQDN")] = credentials;
                 this.reassignCredentials(credentials);
-            } else {
+            } 
+			else {
                 //
                 // check if credentials has parent fqdn, and if so we are moving it down.
                 //
@@ -69,7 +70,7 @@ class BeameStoreV2 {
                 }
                 this.reassignCredentials(credentials);
             }
-        }
+    }
 
 	toJSON(){
 		return "huj";
