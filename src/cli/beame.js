@@ -42,6 +42,7 @@ var parametersSchema = {
 	'targetPort':         {required: true},
 	'targetHost':         {required: false, default: 'localhost'},
 	'targetProto':        {required: false, options: ['http', 'https'], default: 'https'},
+	'targetHostName':     {required: false},
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

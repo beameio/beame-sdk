@@ -16,7 +16,7 @@ const beamestore    = new BeameStore();
  * @param {Number} targetPort
  * @returns {Promise}
  */
-function startHttpsTerminatingProxy(certs, targetHost, targetPort) {
+function startHttpsTerminatingProxy(certs, targetHost, targetPort, targetHostName) {
 	// certs - key, cert, ca
 	return new Promise((resolve, reject) => {
 		var httpProxy = require('http-proxy');
@@ -28,6 +28,9 @@ function startHttpsTerminatingProxy(certs, targetHost, targetPort) {
 			ssl: {
 				key:  certs.key,
 				cert: certs.cert,
+			},
+			headers: {
+				host: targetHostName
 			}
 		});
 		proxy.listen(0, () => {
@@ -43,7 +46,7 @@ function startHttpsTerminatingProxy(certs, targetHost, targetPort) {
  * @param {Number} targetPort
  * @param {String} targetProto
  */
-function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
+function httpsTunnel(fqdn, targetHost, targetPort, targetProto, targetHostName) {
 
 	if(targetProto != 'http' && targetProto != 'https') {
 		throw new Error("httpsTunnel: targetProto must be either http or https");
@@ -74,7 +77,7 @@ function httpsTunnel(fqdn, targetHost, targetPort, targetProto) {
 
 	// console.log(server_entity);
 	if(targetProto == 'http') {
-		startHttpsTerminatingProxy(serverCerts, targetHost, targetPort)
+		startHttpsTerminatingProxy(serverCerts, targetHost, targetPort, targetHostName || targetHost)
 			.then(terminatingProxyPort => {
 				// console.log('PORT', terminatingProxyPort);
 				new ProxyClient("HTTPS", fqdn,
