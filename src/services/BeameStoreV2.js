@@ -21,6 +21,7 @@ const provApi           = new (require('./ProvisionApi'))();
 const directoryServices = new (require('./DirectoryServices'))();
 const Credential        = require('./Credential');
 const _                 = require('underscore');
+const async         = require('async');
 
 let _store = null;
 
@@ -181,19 +182,55 @@ class BeameStoreV2 {
 	 * @param {String} fqdn
 	 * @returns {Promise.<S3Metadata|Object>}
 	 */
-	getRemoteMetadata(fqdn) {
-		var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
+	getRemoteCreds(fqdn) {
 
 		return new Promise(
 			(resolve, reject) => {
-				provApi.getRequest(requestPath, function (error, data) {
-					if (!error) {
-						resolve(data);
+
+				var payload = {
+					metadata:null,
+					x509:null
+				};
+
+				async.parallel(
+					[
+						function (callback) {
+							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
+							provApi.getRequest(requestPath, function (error, data) {
+								if (!error) {
+									payload.metadata = JSON.parse(data.message);
+									callback(null,data);
+								}
+								else {
+									callback(error);
+								}
+							});
+						},
+						function (callback) {
+							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
+							provApi.getRequest(requestPath, function (error, data) {
+								if (!error) {
+									payload.x509 = data.message;
+									callback(null,data);
+								}
+								else {
+									callback(error);
+								}
+							});
+						}
+
+					],
+					function (error) {
+						if (error) {
+							reject(error, null);
+							return;
+						}
+
+						resolve(payload);
+
 					}
-					else {
-						reject(error);
-					}
-				});
+				);
+
 			}
 		);
 	}
