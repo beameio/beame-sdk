@@ -77,6 +77,7 @@ class Credential {
 
 
 	initFromX509(x509, metadata) {
+		pem.config({sync: true});
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
 				this.certData           = certData ? certData : err;
@@ -91,6 +92,7 @@ class Credential {
                 this.metadata[key] = value;
             });
         }
+		pem.config({sync: false});
 	}
 
 	toJSON() {
