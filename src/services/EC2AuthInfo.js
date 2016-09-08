@@ -7,7 +7,7 @@ const URLS = {
 	sig: 'http://169.254.169.254/latest/dynamic/instance-identity/pkcs7',
 };
 
-class EC2AuthInfoCollector {
+class EC2AuthInfo {
 
 	/**
 	 * @returns {Promise.<String>}
@@ -39,5 +39,5 @@ class EC2AuthInfoCollector {
 }
 
 module.exports = {
-	EC2AuthInfoCollector
+	EC2AuthInfo
 };
