@@ -246,13 +246,14 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 };
 
 /**
- * Empty constructor
+ * Constructor
+ * @param {String|null} [baseUrl]
  * @constructor
  */
-var ProvApiService = function () {
+var ProvApiService = function (baseUrl) {
 
 	/** @member {String} **/
-	this.provApiEndpoint = provisionSettings.Endpoints.BaseUrl;
+	this.provApiEndpoint = baseUrl || provisionSettings.Endpoints.BaseUrl;
 
 };
 
