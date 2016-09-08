@@ -269,7 +269,7 @@ class BeameStoreV2 {
 							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
 							provApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
-									payload.x509 =  data;
+									payload.x509 = typeof(data) == "object" && data.hasOwnProperty("message") ? data.message : data;
 									callback(null, data);
 								}
 								else {
