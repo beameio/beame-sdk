@@ -5,12 +5,12 @@ const request = require('request');
 const URLS = {
 	doc: 'http://169.254.169.254/latest/dynamic/instance-identity/document',
 	sig: 'http://169.254.169.254/latest/dynamic/instance-identity/pkcs7',
-}
+};
 
 class EC2AuthInfoCollector {
 
 	/**
-	 * @returns {String}
+	 * @returns {Promise.<String>}
 	 */
 	getAuthInfo() {
 		var ret = {};
@@ -40,4 +40,4 @@ class EC2AuthInfoCollector {
 
 module.exports = {
 	EC2AuthInfoCollector
-}
+};
