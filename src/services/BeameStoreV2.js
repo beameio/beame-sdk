@@ -116,7 +116,7 @@ class BeameStoreV2 {
 	 * @param {String} fqdn
 	 * @returns {Credential}
 	 */
-	getCredential(fqdn){
+	getCredential(fqdn) {
 		var results = this.search(fqdn);
 		return results && results.length == 1 ? results[0] : null;
 	}
@@ -198,45 +198,42 @@ class BeameStoreV2 {
 		var self = this;
 
 		return new Promise((resolve, reject) => {
-			let parentCreds     = this._search(parentFqdn);
-			let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
+				let parentCreds     = this.getCredential(parentFqdn);
+				let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
 
-			if (parentCreds && parentPublicKey) {
-				if (parentCreds.checkSignatureToken(token)) {
-					let newCred = new Credential(self);
-					newCred.initWithFqdn(fqdn);
-					self.addCredential(parentCreds);
-					var cred =  self.getCredential(fqdn);
-					resolve(cred);
+				if (parentCreds && parentPublicKey) {
+					if (parentCreds.checkSignatureToken(token)) {
+						let newCred = new Credential(self);
+						newCred.initWithFqdn(fqdn, {parent_fqdn: parentFqdn, fqdn: fqdn});
+						self.addCredential(newCred);
+						var cred = self.getCredential(fqdn);
+						resolve(cred);
+					}
+				} else {
+					this.getRemoteCreds(parentFqdn).then(
+						/**
+						 * @param {RemoteCreds} data
+						 * @returns {*}
+						 */
+						function (data) {
+							let remoteCred = new Credential(self);
+							remoteCred.initFromX509(data.x509, data.metadata);
+							self.addCredential(remoteCred);
+
+							if (remoteCred.checkSignatureToken(token)) {
+								let newCred = new Credential(self);
+								newCred.initWithFqdn(fqdn);
+								self.addCredential(newCred);
+								var cred = self.getCredential(fqdn);
+								resolve(cred);
+							}
+
+						}).catch(function (error) {
+						reject(error);
+					});
 				}
-			} else {
-				this.getRemoteCreds(parentFqdn).then(
-					/**
-					 * @param {RemoteCreds} data
-					 * @returns {*}
-					 */
-					function (data) {
-						let remoteCred = new Credential(self);
-						remoteCred.initFromX509(data.x509, data.metadata);
-						self.addCredential(remoteCred);
-
-						if (remoteCred.checkSignatureToken(token)) {
-							let newCred = new Credential(self);
-							newCred.initWithFqdn(fqdn);
-							self.addCredential(newCred);
-							var cred =  self.getCredential(fqdn);
-							resolve(cred);
-						}
-
-					}).catch(function(error) {
-					reject(error);
-				});
-			}
 			}
 		);
-
-
-
 
 
 	}; // returns a new Credential object.
@@ -263,7 +260,7 @@ class BeameStoreV2 {
 							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
 							provApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
-									payload.metadata = typeof(data) =="object" ? data : JSON.parse( data);
+									payload.metadata = typeof(data) == "object" ? data : JSON.parse(data);
 									callback(null, data);
 								}
 								else {

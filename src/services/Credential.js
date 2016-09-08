@@ -37,16 +37,17 @@ class Credential {
 	 *
 	 */
 	constructor(store) {
-		this._store             = store;
+		this._store = store;
 
-		this.metadata           = {};
-		this.children           = [];
+		this.metadata = {};
+		this.children = [];
 	}
 
-    initWithFqdn(fqdn){
-        this.fqdn               = fqdn;
-        this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
-    }
+	initWithFqdn(fqdn, metadata) {
+		this.fqdn               = fqdn;
+		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+		this.parseMetadata(metadata);
+	}
 
 	initFromData(fqdn) {
 		this.fqdn               = fqdn;
@@ -93,12 +94,16 @@ class Credential {
 			this.publicKeyNodeRsa = new NodeRsa();
 			this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 		});
-        if(metadata){
-            _.map(metadata, (value, key) => {
-                this.metadata[key] = value;
-            });
-        }
+		this.parseMetadata(metadata);
 		pem.config({sync: false});
+	}
+
+	parseMetadata(metadata) {
+		if (!_.isEmpty(metadata)) {
+			_.map(metadata, (value, key) => {
+				this.metadata[key] = value;
+			});
+		}
 	}
 
 	toJSON() {
@@ -187,7 +192,7 @@ class Credential {
 	}
 
 
-	hasKey(key){
+	hasKey(key) {
 		return this.hasOwnProperty(key) && !_.isEmpty(this[key])
 	}
 
@@ -274,9 +279,9 @@ class Credential {
 		return status;
 	}
 
-    checkSignatureToken(token) {
-        return this.checkSignature(token.signedData, token.signedBy, token.signature)
-    }
+	checkSignatureToken(token) {
+		return this.checkSignature(token.signedData, token.signedBy, token.signature)
+	}
 
 	decrypt(encryptedMessage) {
 		console.log("In credentials decrypt");
