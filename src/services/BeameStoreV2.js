@@ -205,6 +205,7 @@ class BeameStoreV2 {
 				if (parentCreds.checkSignatureToken(token)) {
 					let newCred = new Credential(self);
 					newCred.initWithFqdn(fqdn);
+					self.addCredential(parentCreds);
 					var cred =  self.getCredential(fqdn);
 					resolve(cred);
 				}
@@ -222,7 +223,7 @@ class BeameStoreV2 {
 						if (remoteCred.checkSignatureToken(token)) {
 							let newCred = new Credential(self);
 							newCred.initWithFqdn(fqdn);
-
+							self.addCredential(newCred);
 							var cred =  self.getCredential(fqdn);
 							resolve(cred);
 						}
