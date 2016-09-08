@@ -4,7 +4,6 @@
 'use strict';
 
 var path          = require('path');
-var debug         = require("debug")("./src/services/DirectoryServices.js");
 var fs            = require('fs');
 var exec          = require('child_process').exec;
 var execFile      = require('child_process').execFile;
@@ -418,7 +417,6 @@ DataServices.prototype.getNodeMetadataAsync = function (dir, fqdn, module) {
 };
 
 DataServices.prototype.readMetadataSync = function (dir, fqdn) {
-	let self = this;
 	let p = beameUtils.makePath(dir,  fqdn, config.metadataFileName);
 	var metadata = this.readJSON(p);
 	metadata.path = beameUtils.makePath(dir,  fqdn);
@@ -494,7 +492,7 @@ DataServices.prototype.isNodeCertsExistsAsync = function (path, nodeFiles, modul
 
 /**
  *
- * @param {String} fqdn
+ * @param {String} filename
  * @returns {Object}
  */
 
@@ -502,9 +500,7 @@ DataServices.prototype.isNodeCertsExistsAsync = function (path, nodeFiles, modul
 DataServices.prototype.readObject = function (filename) {
 	if (this.doesPathExists(filename)) {
 		try {
-			var file = fs.readFileSync(filename);
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			return file;
+			return fs.readFileSync(filename);
 		}
 		catch (error) {
 			return {};
@@ -534,18 +530,19 @@ DataServices.prototype.readJSON = function (dirPath) {
 };
 
 DataServices.prototype.copy = function(srcFile, destFile) {
-	let BUF_LENGTH = 64 * 1024
-	let buff = new Buffer(BUF_LENGTH)
-	let fdr = fs.openSync(srcFile, 'r')
-	let fdw = fs.openSync(destFile, 'w')
-	let bytesRead = 1
-	let pos = 0
+	let BUF_LENGTH = 64 * 1024,
+	    buff = new Buffer(BUF_LENGTH),
+	    fdr = fs.openSync(srcFile, 'r'),
+	    fdw = fs.openSync(destFile, 'w'),
+	    bytesRead = 1,
+	    pos = 0;
+
 	while (bytesRead > 0) {
-		bytesRead = fs.readSync(fdr, buff, 0, BUF_LENGTH, pos)
-		fs.writeSync(fdw, buff, 0, bytesRead)
+		bytesRead = fs.readSync(fdr, buff, 0, BUF_LENGTH, pos);
+		fs.writeSync(fdw, buff, 0, bytesRead);
 		pos += bytesRead
 	}
-	fs.closeSync(fdr)
+	fs.closeSync(fdr);
 	fs.closeSync(fdw)
 };
 
@@ -557,7 +554,7 @@ DataServices.prototype.copyDir = function(src, dest) {
 		var current = fs.lstatSync(path.join(src, files[i]));
 		if(current.isDirectory()) {
 			//copyDir(path.join(src, files[i]), path.join(dest, files[i]));
-			continue;
+
 		} else if(current.isSymbolicLink()) {
 			var symlink = fs.readlinkSync(path.join(src, files[i]));
 			fs.symlinkSync(symlink, path.join(dest, files[i]));
@@ -568,8 +565,7 @@ DataServices.prototype.copyDir = function(src, dest) {
 };
 
 DataServices.prototype.scanDir = function (src) {
-	let folders = fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());
-	return folders;
-}
+	return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());
+};
 
 module.exports = DataServices;
