@@ -217,12 +217,12 @@ class BeameStoreV2 {
 						 */
 						function (data) {
 							let remoteCred = new Credential(self);
-							remoteCred.initFromX509(data.x509, data.metadata);
+							remoteCred.initFromX509(data.x509, {parent_fqdn: parentFqdn, fqdn: fqdn});
 							self.addCredential(remoteCred);
 
 							if (remoteCred.checkSignatureToken(token)) {
 								let newCred = new Credential(self);
-								newCred.initWithFqdn(fqdn);
+								newCred.initWithFqdn(fqdn, data.metadata);
 								self.addCredential(newCred);
 								var cred = self.getCredential(fqdn);
 								resolve(cred);
