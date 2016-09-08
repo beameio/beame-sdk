@@ -50,12 +50,7 @@ class EC2AuthInfo {
 					reject(error);
 					return;
 				}
-				if(stderr !== 'Verification successful\n') {
-					reject(`Unexpected value in stderr: ${stderr}`);
-					return;
-				}
 				resolve(true);
-				// console.log('E=%j O=%j E=%j', error, stdout, stderr)
 			});
 		});
 	}

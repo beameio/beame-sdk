@@ -16,6 +16,11 @@
 		}
 	}
 
+	F uncaught_exception_hook(e:Exception) {
+		cleanup()
+		guard false
+	}
+
 	doc_file = tmpdir / "doc"
 	sig_file = tmpdir / "sig"
 	cert_file = tmpdir / "cert"
@@ -28,14 +33,12 @@
 	$(echo -n $cert >$cert_file)
 
 
-	ok = false
-	try {
-		$(openssl smime -verify -in ${sig_file} -inform PEM -content ${doc_file} -certfile ${cert_file} -noverify)
-		ok = true
-	} catch(e) {
-		error(e.Str())
-	}
+	$(openssl smime -verify -in ${sig_file} -inform PEM -content ${doc_file} -certfile ${cert_file} -noverify)
+
+	instance_data = data.doc.parse()
+	instances = ``aws ec2 describe-instances --region ${instance_data.region} --filters "Name=instance-id,Values=${instance_data.instanceId}"``
+	assert(instances[0].State.Name == 'running', 'Instance must be running')
 
 	cleanup()
-	ok
+	true
 }
