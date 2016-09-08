@@ -257,7 +257,7 @@ class BeameStoreV2 {
 							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
 							provApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
-									payload.metadata = JSON.parse(data.message);
+									payload.metadata = JSON.parse(data.message || data);
 									callback(null, data);
 								}
 								else {
@@ -269,7 +269,7 @@ class BeameStoreV2 {
 							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
 							provApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
-									payload.x509 = data.message;
+									payload.x509 = data.message || data;
 									callback(null, data);
 								}
 								else {
