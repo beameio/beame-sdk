@@ -43,6 +43,11 @@ class Credential {
 		this.children           = [];
 	}
 
+    initWithFqdn(fqdn){
+        this.fqdn               = fqdn;
+        this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+    }
+
 	initFromData(fqdn) {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
@@ -71,7 +76,7 @@ class Credential {
 	}
 
 
-	initFromX509(x509) {
+	initFromX509(x509, metadata) {
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
 				this.certData           = certData ? certData : err;
@@ -81,6 +86,11 @@ class Credential {
 				this.beameStoreServices.writeObject(config.CertificateFiles.X509, data);
 			}
 		});
+        if(metadata){
+            _.map(metadata, (value, key) => {
+                this.metadata[key] = value;
+            });
+        }
 	}
 
 	toJSON() {
@@ -255,6 +265,10 @@ class Credential {
 		logger.info(`signing status is ${status} ${fqdn}`);
 		return status;
 	}
+
+    checkSignatureTo(token) {
+        return checkSignature(token.signedData, token.signedBy, token.signature)
+    }
 
 	decrypt(encryptedMessage) {
 		console.log("In credentials decrypt");

@@ -169,12 +169,33 @@ class BeameStoreV2 {
 		this.addCredential(credential);
 	};
 
-	getNewCredentials(parentFqdn, challange) {
-		if (parentFqdn.isPrivateKeyLocal()) {
-			let fqdn       = getHostnameFromProvision(parentFqdn, challange);
-			let credential = new Credential(fqdn);
-		//
-		}
+	getNewCredentials(fqdn, parentFqdn,  token) {
+		let parentCreds  = this._search(parentFqdn);
+        let parentPublicKey  = parentCreds && parentCreds.getPublicKeyNodeRsa();
+
+		if(parentCreds && parentPublicKey){
+            if(parentPublicKey.checkSignatureToken(token)){
+                let newCred =  new Credential(this);
+                return newCred.initWithFqdn(fqdn);
+            }
+        } else {
+            this.getRemoteCreds(parentFqdn).then(data => {
+                let remoteCred = new Credential(this);
+                remoteCred.initFromX509(data.x509, data.metadata);
+                this.addCredential(remoteCred);
+                let parentPublicKey =  remoteCred.getPublicKeyNodeRsa();
+
+                if(parentPublicKey.checkSignatureToken(token)){
+                    let newCred =  new Credential(this);
+                    return newCred.initWithFqdn(fqdn);
+                }
+
+            }).catch(e => {
+
+            });
+        }
+
+
 	}; // returns a new Credential object.
 
 	/**

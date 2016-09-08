@@ -21,7 +21,7 @@ var beamestore  = new BeameStore();
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
  */
-var SampleBeameServer = function (instanceHostname, projectName, requestListener, hostOnlineCallback) {
+var SampleBeameServer = function (instanceHostname, requestListener, hostOnlineCallback) {
 	if (!instanceHostname && !projectName) {
 		logger.error('instance hostname or project name required');
 		return;
