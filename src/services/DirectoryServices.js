@@ -132,10 +132,9 @@ DataServices.prototype.createCSR = function (dirPath, fqdn, pkName) {
  * @param {String} dirPath
  * @param {Object} payload
  * @param {Array} keys
- * @param {String} level => Developer | Atom | EdgeClient
  * @param {Function} callback
  */
-DataServices.prototype.savePayload = function (dirPath, payload, keys, level, callback) {
+DataServices.prototype.savePayload = function (dirPath, payload, keys,  callback) {
 	var self = this;
 	var data = {};
 

@@ -122,7 +122,7 @@ class EntityServices {
 			fqdn: fqdn
 		};
 
-		dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityCreateResponseKeys, module_name, function (error) {
+		dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityCreateResponseKeys,  function (error) {
 			if (!callback) return;
 
 			if (!error) {
@@ -164,7 +164,7 @@ class EntityServices {
 								if (!error) {
 									getMetadata(fqdn, devDir, function (error, payload) {
 										if (!error) {
-											dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, module_name, function (error) {
+											dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, function (error) {
 												if (!callback) return;
 
 												if (!error) {
@@ -222,7 +222,7 @@ class EntityServices {
 
 				dataServices.createDir(devDir);
 
-				dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, module_name, function (error) {
+				dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, function (error) {
 					if (!callback) return;
 
 					if (!error) {
