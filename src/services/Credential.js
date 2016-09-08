@@ -5,16 +5,24 @@
 /*jshint esversion: 6 */
 "use strict";
 
-const  async                  = require('async');
-const  _                      = require('underscore');
-const  os                     = require('os');
-const  config                 = require('../../config/Config');
-const  module_name            = config.AppModules.BeameStore;
-const  logger                 = new (require('../utils/Logger'))(module_name);
-const  url                    = require('url');
-const  BeameStoreDataServices = require('../services/BeameStoreDataServices');
-const  pem 					  = require('pem');
-const  NodeRsa 				  = require("node-rsa");
+/**
+ * signature token structure , used as AuthorizationToken in Provision
+ * @typedef {Object} SignatureToken
+ * @property {String} signedData
+ * @property {String} signedBy
+ * @property {String} signature
+ */
+
+const async                  = require('async');
+const _                      = require('underscore');
+const os                     = require('os');
+const config                 = require('../../config/Config');
+const module_name            = config.AppModules.BeameStore;
+const logger                 = new (require('../utils/Logger'))(module_name);
+const url                    = require('url');
+const BeameStoreDataServices = require('../services/BeameStoreDataServices');
+const pem                    = require('pem');
+const NodeRsa                = require("node-rsa");
 
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
@@ -33,13 +41,13 @@ class Credential {
 	 * @param {String|null} [local_ip]
 	 */
 	constructor(store) {
-		this._store = store;
+		this._store   = store;
 		this.metadata = {};
 		this.children = [];
 	}
 
 	initFromData(fqdn) {
-		this.fqdn = fqdn;
+		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.loadCredentialsObject();
 		if (this.hasX509()) {
@@ -53,7 +61,7 @@ class Credential {
 			});
 
 			pem.getPublicKey(this.X509, (err, publicKey) => {
-				this.publicKeyStr = publicKey.publicKey;
+				this.publicKeyStr     = publicKey.publicKey;
 				this.publicKeyNodeRsa = new NodeRsa();
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 			});
@@ -69,10 +77,10 @@ class Credential {
 	initFromX509(x509) {
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
-				this.certData = certData ? certData : err;
+				this.certData           = certData ? certData : err;
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this._store);
-				this.metadata.fqdn = certData.commonName;
-				this.fqdn = certData.commonName
+				this.metadata.fqdn      = certData.commonName;
+				this.fqdn               = certData.commonName
 				this.beameStoreServices.writeObject(config.CertificateFiles.X509, data);
 			}
 		});
@@ -204,21 +212,30 @@ class Credential {
 		return publicKey;
 	}
 
+	/**
+	 *
+	 * @param {String|Object} data
+	 * @returns {SignatureToken}
+	 */
 	sign(data) {
+
+		let message = {
+			signedData: data,
+			signedBy:   "",
+			signature:  ""
+		};
+
 		if (this.hasPrivateKey()) {
-			var message = {
-				signedData: data,
-                signedby: this.fqdn
-			}
+			message.signedBy = this.fqdn;
 		}
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
-        message.signature = this.privateKeyNodeRsa.sign(message.signedData, "base64", "utf8");
+		message.signature = this.privateKeyNodeRsa.sign(message.signedData, "base64", "utf8");
 		return message;
 	}
 
-	encrypt(fqdn, data, signingFqdn){
+	encrypt(fqdn, data, signingFqdn) {
 		let signingCredential;
-		if(signingFqdn) {
+		if (signingFqdn) {
 			signingCredential = this._store.search(signingFqdn)[0];
 		}
 		let targetRsaKey = this.getPublicKeyNodeRsa();
@@ -229,15 +246,15 @@ class Credential {
 
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
-			sharedCiphered[1] = "";
+			sharedCiphered[1]          = "";
 
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			let messageToSign = {
 				rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
-				data: sharedCiphered[0],
-				encryptedFor: fqdn
+				data:            sharedCiphered[0],
+				encryptedFor:    fqdn
 			};
-			if(signingCredential){
+			if (signingCredential) {
 				return signingCredential.sign(messageToSign);
 			}
 
@@ -247,25 +264,25 @@ class Credential {
 		return null;
 	}
 
-	checkSignature(data, fqdn, signature){
-        let rsaKey = this.getPublicKeyNodeRsa();
-        let status = rsaKey.verify(data, signature, "utf8", "base64");
-        logger.info(`signing status is ${status} ${fqdn}`);
-        return status;
-    }
+	checkSignature(data, fqdn, signature) {
+		let rsaKey = this.getPublicKeyNodeRsa();
+		let status = rsaKey.verify(data, signature, "utf8", "base64");
+		logger.info(`signing status is ${status} ${fqdn}`);
+		return status;
+	}
 
-	decrypt(encryptedMessage){
-	    console.log("In credentials decrypt");
-        if(encryptedMessage.signature){
-            let signingCredential = this._store.search(encryptedMessage.signedby)[0];
-            if(!signingCredential){
-                new Error("Signing credential is not found in the local store");
-            }
-            if(!signingCredential.checkSignature(encryptedMessage.signedData, encryptedMessage.signedby, encryptedMessage.signature)){
-                return null;
-            }
-            encryptedMessage = encryptedMessage.signedData;
-        }
+	decrypt(encryptedMessage) {
+		console.log("In credentials decrypt");
+		if (encryptedMessage.signature) {
+			let signingCredential = this._store.search(encryptedMessage.signedBy)[0];
+			if (!signingCredential) {
+				new Error("Signing credential is not found in the local store");
+			}
+			if (!signingCredential.checkSignature(encryptedMessage.signedData, encryptedMessage.signedBy, encryptedMessage.signature)) {
+				return null;
+			}
+			encryptedMessage = encryptedMessage.signedData;
+		}
 
 
 		if (!this.hasPrivateKey()) {
@@ -274,7 +291,7 @@ class Credential {
 		let rsaKey = this.getPrivateKeyNodeRsa();
 
 		let decryptedMessage = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys);
-	 	var msr = JSON.stringify(decryptedMessage);	
+		var msr              = JSON.stringify(decryptedMessage);
 		console.log('decryptedMessage ${ msr }');
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let payload = JSON.parse(decryptedMessage);

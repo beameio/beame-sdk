@@ -129,10 +129,11 @@ function readStdinStream(callback) {
 function decryptCreds(data) {
 	var crypto     = require('./crypto');
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
+	/** @type {SignatureToken} **/
 	var parsedData = JSON.parse(data);
 
 	//noinspection JSCheckFunctionSignatures
-	var signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedby, parsedData.signature);
+	var signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedBy, parsedData.signature);
 	if (signatureStatus === true) {
 		var creds = store.search(parsedData.signedData.encryptedFor)[0];
 
@@ -285,7 +286,7 @@ function exportCredentials(fqdn, targetFqdn, file) {
 	var message       = {
 		signedData: {
 			data:         encryptedString,
-			signedby:     fqdn,
+			signedBy:     fqdn,
 			encryptedFor: targetFqdn
 		}
 	};
