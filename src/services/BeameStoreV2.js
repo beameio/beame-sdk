@@ -192,45 +192,52 @@ class BeameStoreV2 {
 	 * @param {String} fqdn
 	 * @param {String} parentFqdn
 	 * @param {SignatureToken} token
-	 * @returns {Credential}
+	 * @returns {Promise.<Credential|null>}
 	 */
 	getNewCredentials(fqdn, parentFqdn, token) {
 		var self = this;
 
-		let parentCreds     = this._search(parentFqdn);
-		let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
+		return new Promise((resolve, reject) => {
+			let parentCreds     = this._search(parentFqdn);
+			let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
 
-		if (parentCreds && parentPublicKey) {
-			if (parentCreds.checkSignatureToken(token)) {
-				let newCred = new Credential(self);
-				newCred.initWithFqdn(fqdn);
+			if (parentCreds && parentPublicKey) {
+				if (parentCreds.checkSignatureToken(token)) {
+					let newCred = new Credential(self);
+					newCred.initWithFqdn(fqdn);
+					var cred =  self.getCredential(fqdn);
+					resolve(cred);
+				}
+			} else {
+				this.getRemoteCreds(parentFqdn).then(
+					/**
+					 * @param {RemoteCreds} data
+					 * @returns {*}
+					 */
+					function (data) {
+						let remoteCred = new Credential(self);
+						remoteCred.initFromX509(data.x509, data.metadata);
+						self.addCredential(remoteCred);
 
-				return self.getCredential(fqdn);
+						let parentPublicKey = remoteCred.getPublicKeyNodeRsa();
+
+						if (parentPublicKey.checkSignatureToken(token)) {
+							let newCred = new Credential(self);
+							newCred.initWithFqdn(fqdn);
+
+							var cred =  self.getCredential(fqdn);
+							resolve(cred);
+						}
+
+					}).catch(function(error) {
+					reject(error);
+				});
 			}
-		} else {
-			this.getRemoteCreds(parentFqdn).then(
-				/**
-				 * @param {RemoteCreds} data
-				 * @returns {*}
-				 */
-				function (data) {
-					let remoteCred = new Credential(self);
-					remoteCred.initFromX509(data.x509, data.metadata);
-					self.addCredential(remoteCred);
+			}
+		);
 
-					let parentPublicKey = remoteCred.getPublicKeyNodeRsa();
 
-					if (parentPublicKey.checkSignatureToken(token)) {
-						let newCred = new Credential(self);
-						newCred.initWithFqdn(fqdn);
 
-						return self.getCredential(fqdn);
-					}
-
-				}).catch(function(error) {
-					return null;
-			});
-		}
 
 
 	}; // returns a new Credential object.
