@@ -7,11 +7,11 @@
  */
 
 
-var path                 = require('path');
-var os                   = require('os');
-var home                 = os.homedir();
-var npmPrefix            = require('npm-prefix');
-const npmRootDir         = npmPrefix();
+var path         = require('path');
+var os           = require('os');
+var home         = os.homedir();
+var npmPrefix    = require('npm-prefix');
+const npmRootDir = npmPrefix();
 
 const AuthServerEndPoint = "https://registration-staging.beameio.net";
 
@@ -23,9 +23,9 @@ const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 /** @const {String} **/
 var rootDir                     = process.env.BEAME_DIR || path.join(home, '.beame');
-var beameMasterCredFqdn 		= process.env.BEAME_MASTER_CREDS || null;
+var beameMasterCredFqdn         = process.env.BEAME_MASTER_CREDS || null;
 /** @const {String} **/
-var localCertsDirV1 = path.join(rootDir, 'v1', 'local');
+var localCertsDirV1             = path.join(rootDir, 'v1', 'local');
 
 /** @const {String} **/
 var remotePKsDirV1 = path.join(rootDir, 'pki');
@@ -74,23 +74,23 @@ var CertFileNames = {
  *  @enum {string}
  */
 var CertificateFiles = {
-"PRIVATE_KEY"            : "private_key.pem",
-"X509"                   : "x509.pem",
-"CA"                     : "ca.pem",
-"PKCS7"                  : "pkcs7.pem",
-"P7B"                    : "p7b.cer",
-"PKCS12"                 : "cert.pfx",
-"PWD"                    : "pwd.txt"
+	"PRIVATE_KEY": "private_key.pem",
+	"X509":        "x509.pem",
+	"CA":          "ca.pem",
+	"PKCS7":       "pkcs7.pem",
+	"P7B":         "p7b.cer",
+	"PKCS12":      "cert.pfx",
+	"PWD":         "pwd.txt"
 };
 
 var MetadataProperties = {
-  LEVEL        : "level",
-  FQDN		   : "fqdn",
-  UID          : "uid",
-  NAME         : "name",
-  PARENT_FQDN  : "parent_fqdn",
-  EDGEHOSTNAME : "edgeHostname",
-	PATH		:"path"
+	LEVEL:        "level",
+	FQDN:         "fqdn",
+	UID:          "uid",
+	NAME:         "name",
+	PARENT_FQDN:  "parent_fqdn",
+	EDGEHOSTNAME: "edgeHostname",
+	PATH:         "path"
 };
 
 var CredentialStatus = {
@@ -132,7 +132,7 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
-	"BeameEntity":    "BeameEntity",
+	"BeameEntity":      "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
 	"BeameCreds":       "BeameCreds",
 	"BeameCrypto":      "BeameCrypto",
@@ -154,7 +154,8 @@ var AppModules = {
 	"SNIServer":        "SNIServer",
 	"BeameSDKlauncher": "BeameSDKlauncher",
 	"ProxyClient":      "ProxyClient",
-	"Tunnel":           "Tunnel"
+	"Tunnel":           "Tunnel",
+	"OpenSSL":          "OpenSSL"
 };
 
 /**
@@ -176,11 +177,11 @@ var MessageCodes = {
 
 
 var ResponseKeys = {
-	"NodeFiles":                   [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
-	"EntityMetadataKeys":          ["fqdn", "parent_fqdn","name", "email","level","local_ip","edge_fqdn"],
-	"EntityCreateResponseKeys":    ["fqdn"],
-	"CertificateResponseKeys":     ["x509", "pkcs7", "ca"],
-	"RevokeDevCertResponseKeys":   ["recovery_code"]
+	"NodeFiles":                 [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
+	"EntityMetadataKeys":        ["fqdn", "parent_fqdn", "name", "email", "level", "local_ip", "edge_fqdn"],
+	"EntityCreateResponseKeys":  ["fqdn"],
+	"CertificateResponseKeys":   ["x509", "pkcs7", "ca"],
+	"RevokeDevCertResponseKeys": ["recovery_code"]
 };
 
 /**

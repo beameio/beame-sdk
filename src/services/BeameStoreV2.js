@@ -14,13 +14,13 @@
 
 
 //const exec        = require('child_process').exec;
-const config        = require('../../config/Config');
-const module_name = config.AppModules.BeameStore;
-const logger        = new (require('../utils/Logger'))(module_name);
-const provApi       = new (require('./ProvisionApi'))();
-const dataservices = new (require('./DirectoryServices'))();
-const Credential = require('./Credential');
-const _ = require('underscore');
+const config            = require('../../config/Config');
+const module_name       = config.AppModules.BeameStore;
+const logger            = new (require('../utils/Logger'))(module_name);
+const provApi           = new (require('./ProvisionApi'))();
+const directoryServices = new (require('./DirectoryServices'))();
+const Credential        = require('./Credential');
+const _                 = require('underscore');
 
 let _store = null;
 
@@ -39,8 +39,8 @@ class BeameStoreV2 {
 	}
 
 	init(){
-		dataservices.mkdirp(config.localCertsDirV2 + "/");
-		dataservices.scanDir(config.localCertsDirV2 + "/").forEach(fqdn => {
+		directoryServices.mkdirp(config.localCertsDirV2 + "/");
+		directoryServices.scanDir(config.localCertsDirV2 + "/").forEach(fqdn => {
 			let credentials = new Credential(this);
 			credentials.initFromData(fqdn);
 		 	this.addCredential(credentials, fqdn);

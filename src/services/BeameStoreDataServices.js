@@ -49,11 +49,12 @@ class BeameStoreDataServices {
 
 
 	constructor(fqdn, store) {
-		/** @member {Object} **/
+
 		this.directoryServices  = new (require('./DirectoryServices'))();
 		this.fqdn = fqdn;
 		this._store = store;
 	}
+
 
 	/**
 	 *

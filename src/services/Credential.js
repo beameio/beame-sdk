@@ -23,7 +23,8 @@ const url                    = require('url');
 const BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const pem                    = require('pem');
 const NodeRsa                = require("node-rsa");
-
+const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
+const utils                  = require('../utils/BeameUtils');
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
  * @class {Object} Credential
@@ -33,27 +34,23 @@ class Credential {
 
 	/**
 	 *
-	 * @param {String|null} [fqdn]
-	 * @param {String|null} [parent_fqdn]
-	 * @param {Array.<SecurityPolicy>} [policies]
-	 * @param {String|null} [name]
-	 * @param {String|null} [email]
-	 * @param {String|null} [local_ip]
+	 *
 	 */
 	constructor(store) {
-		this._store   = store;
-		this.metadata = {};
-		this.children = [];
+		this._store             = store;
+
+		this.metadata           = {};
+		this.children           = [];
 	}
 
 	initFromData(fqdn) {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.loadCredentialsObject();
-		if (this.hasX509()) {
+		if (this.hasKey("X509")) {
 			pem.config({sync: true});
 			pem.readCertificateInfo(this.X509, (err, certData) => {
-				console.log(`read cert ${certData.commonName}`)
+				console.log(`read cert ${certData.commonName}`);
 				if ((this.fqdn || this.get('FQDN')) !== certData.commonName) {
 					new Error(`Credentialing missmath ${this.metadata} the commonname in x509 does not match the metadata`);
 				}
@@ -67,7 +64,7 @@ class Credential {
 			});
 			pem.config({sync: false});
 		}
-		if (this.hasPrivateKey()) {
+		if (this.hasKey("PRIVATE_KEY")) {
 			this.privateKeyNodeRsa = new NodeRsa();
 			this.privateKeyNodeRsa.importKey(this.PRIVATE_KEY + " ", "private");
 		}
@@ -113,7 +110,7 @@ class Credential {
 			this.credentials = this.readCertificateDir();
 
 		}
-		if (this.hasX509()) {
+		if (this.hasKey("X509")) {
 			this.state = this.state | config.CredentialStatus.CERT;
 		}
 
@@ -126,7 +123,7 @@ class Credential {
 			this.state = this.state & config.CredentialStatus.NON_BEAME_CERT;
 		}
 
-		if (this.hasPrivateKey()) {
+		if (this.hasKey("PRIVATE_KEY")) {
 			this.state = this.state & config.CredentialStatus.PRIVATE_KEY;
 		} else {
 			this.state = this.state | config.CredentialStatus.PRIVATE_KEY;
@@ -171,21 +168,9 @@ class Credential {
 		}
 	}
 
-	hasPrivateKey() {
-		return this.PRIVATE_KEY ? true : false;
-	}
 
-	hasPublicKey() {
-		return this.publicKeyNodeRsa ? true : false;
-	}
-
-	hasX509() {
-		if (this.X509) {
-			return true;
-		}
-		else {
-			return false;
-		}
+	hasKey(key){
+		return this.hasOwnProperty(key) && !_.isEmpty(this[key])
 	}
 
 	extractCommonName() {
@@ -225,7 +210,7 @@ class Credential {
 			signature:  ""
 		};
 
-		if (this.hasPrivateKey()) {
+		if (this.hasKey("PRIVATE_KEY")) {
 			message.signedBy = this.fqdn;
 		}
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
@@ -285,7 +270,7 @@ class Credential {
 		}
 
 
-		if (!this.hasPrivateKey()) {
+		if (!this.hasKey("PRIVATE_KEY")) {
 			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
@@ -304,6 +289,39 @@ class Credential {
 			logger.fatal("Decrypting, No message");
 		}
 		return dechipheredPayload;
+	}
+
+	createCSR(dirPath, fqdn, pkName) {
+		var self = this;
+		var errMsg;
+
+		var sslWrapper = OpenSSlWrapper;
+
+		return new Promise(function (resolve, reject) {
+
+			var pkFileName = pkName || config.CertFileNames.PRIVATE_KEY;
+
+			sslWrapper.createPrivateKey().then(pk=> {
+				let directoryServices = new (require('./DirectoryServices'))();
+				directoryServices.saveFile(dirPath, pkFileName, pk, function (error) {
+					var pkFile = utils.makePath(dirPath, pkFileName);
+					if (!error) {
+						sslWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+					}
+					else {
+						errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {
+							"error":  error,
+							"stderr": stderr
+						}, config.MessageCodes.OpenSSLError);
+						reject(errMsg);
+					}
+				})
+			}).catch(function (error) {
+				reject(error);
+			});
+
+
+		});
 	}
 }
 module.exports = Credential;

@@ -136,7 +136,11 @@ class EntityServices {
 		/*---------- private callbacks -------------------*/
 		function onMetadataReceived(meta) {
 
-			dataServices.createCSR(devDir, fqdn).then(
+			var store        = new (require('../../src/services/BeameStoreV2'))();
+			var creds = store.search(fqdn)[0];
+
+
+		    creds.createCSR(devDir, fqdn).then(
 				function onCsrCreated(csr) {
 
 					var postData = {
