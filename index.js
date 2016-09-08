@@ -4,6 +4,7 @@ module.exports = {
 	BaseHttpsServer: require('./src/services/BaseHttpsServer.js'),
 	BeameStore:      require('./src/services/BeameStoreV2'),
 	Logger:          require('./src/utils/Logger'),
-	ProvApi:         require('./src/services/ProvisionApi')
+	ProvApi:         require('./src/services/ProvisionApi'),
+	BeameUtils:      require('./src/utils/BeameUtils')
 }
 ;

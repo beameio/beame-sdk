@@ -40,9 +40,9 @@ var authData = {
 
 var getMetadata = function (fqdn, devDir, callback) {
 	provisionApi.setAuthData(beameUtils.getAuthToken(devDir, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
-	
+
 	var apiData = beameUtils.getApiData(apiActions.GetMetadata.endpoint, {}, false);
-	
+
 	provisionApi.runRestfulAPI(apiData, callback, 'GET');
 };
 var makeEntityDir = function (fqdn) {
@@ -52,9 +52,9 @@ var makeEntityDir = function (fqdn) {
 
 class EntityServices {
 	constructor() {
-		
+
 	}
-	
+
 	/**
 	 *
 	 * @param {String} parent_fqdn
@@ -65,66 +65,66 @@ class EntityServices {
 		metadata.parent_fqdn = parent_fqdn;
 		return new Promise(
 			(resolve, reject) => {
-				
-				this._createEntity(metadata)
-				
+
+				this._createEntity(metadata,function(){})
+
 			}
 		);
 	}
-	
+
 	/**
 	 * @param {FqdnMetadata} metadata
 	 * @param {Function} callback
 	 */
 	registerEntity(metadata, callback) {
-		
+
 		if(metadata.parent_fqdn){
 			provisionApi.setAuthData(beameUtils.getAuthToken(path.join(credsRootDir,metadata.parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 		}
 		else{
 			provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
 		}
-		
+
 		var postData = this._formatRegisterPostData(metadata);
-		
+
 		var apiData = beameUtils.getApiData(apiActions.RegisterEntity.endpoint, postData, true);
-		
+
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
-				
+
 				callback && callback(null, payload);
-				
+
 			}
 			else {
 				callback && callback(error, null);
 			}
 		});
 	}
-	
+
 	completeEntityRegistration(metadata, callback) {
-		
+
 		var fqdn = metadata["fqdn"];
 		var parent_fqdn = metadata["parent_fqdn"];
-		
+
 		if (_.isEmpty(fqdn)) {
 			callback && callback(logger.formatErrorMessage("Complete entity registration => fqdn required", module_name), null);
 			return;
 		}
-		
-		
+
+
 		logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, fqdn);
-		
+
 		var devDir = makeEntityDir(fqdn);
-		
+
 		dataServices.createDir(devDir);
-		
+
 		var payload = {
 			fqdn: fqdn
 		};
-		
+
 		dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityCreateResponseKeys, module_name, function (error) {
 			if (!callback) return;
-			
+
 			if (!error) {
 				dataServices.getNodeMetadataAsync(devDir, payload.fqdn, module_name).then(onMetadataReceived, callback);
 			}
@@ -132,41 +132,41 @@ class EntityServices {
 				callback(error, null);
 			}
 		});
-		
+
 		/*---------- private callbacks -------------------*/
 		function onMetadataReceived(meta) {
-			
+
 			dataServices.createCSR(devDir, fqdn).then(
 				function onCsrCreated(csr) {
-					
+
 					var postData = {
 						csr: csr,
 						fqdn: fqdn
 					};
-					
+
 					var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
-					
+
 					if(parent_fqdn){
 						provisionApi.setAuthData(beameUtils.getAuthToken(path.join(credsRootDir,parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 					}
 					else{
 						provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
 					}
-					
+
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
-					
+
 					provisionApi.runRestfulAPI(apiData, function (error, payload) {
 						if (!error) {
-							
+
 							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
-							
+
 							dataServices.saveCerts(devDir, payload, function (error) {
 								if (!error) {
 									getMetadata(fqdn, devDir, function (error, payload) {
 										if (!error) {
 											dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, module_name, function (error) {
 												if (!callback) return;
-												
+
 												if (!error) {
 													callback(null, payload);
 												}
@@ -190,41 +190,41 @@ class EntityServices {
 							callback(error, null);
 						}
 					});
-					
+
 				},
 				function onCsrCreationFailed(error) {
 					callback && callback(error, null);
 				});
 		}
-		
+
 	}
-	
+
 	/**
 	 * @param {FqdnMetadata} metadata
 	 * @param {Function} callback
 	 */
 	_createEntity(metadata, callback) {
-		
+
 		provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
-		
+
 		var postData = this._formatRegisterPostData(metadata);
-		
+
 		var apiData = beameUtils.getApiData(apiActions.CreateEntity.endpoint, postData, true);
-		
+
 		logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, email);
-		
+
 		provisionApi.runRestfulAPI(apiData, function (error, payload) {
 			if (!error) {
-				
+
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.hostname);
-				
+
 				var devDir = makeEntityDir(payload.fqdn);
-				
+
 				dataServices.createDir(devDir);
-				
+
 				dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, module_name, function (error) {
 					if (!callback) return;
-					
+
 					if (!error) {
 						dataServices.getNodeMetadataAsync(devDir, payload.fqdn, module_name).then(function (metadata) {
 							callback(null, metadata);
@@ -234,16 +234,16 @@ class EntityServices {
 						callback(error, null);
 					}
 				});
-				
+
 			}
 			else {
 				callback && callback(error, null);
 			}
-			
+
 		});
-		
+
 	}
-	
+
 	/**
 	 *
 	 * @param {FqdnMetadata} metadata
