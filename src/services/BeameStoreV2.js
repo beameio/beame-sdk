@@ -257,7 +257,7 @@ class BeameStoreV2 {
 							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
 							provApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
-									payload.metadata = JSON.parse( data);
+									payload.metadata = typeof(data) =="object" ? data : JSON.parse( data);
 									callback(null, data);
 								}
 								else {
