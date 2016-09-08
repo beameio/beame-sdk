@@ -266,7 +266,7 @@ class Credential {
 		return status;
 	}
 
-    checkSignatureTo(token) {
+    checkSignatureToken(token) {
         return checkSignature(token.signedData, token.signedBy, token.signature)
     }
 

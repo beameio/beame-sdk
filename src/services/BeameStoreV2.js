@@ -174,7 +174,7 @@ class BeameStoreV2 {
         let parentPublicKey  = parentCreds && parentCreds.getPublicKeyNodeRsa();
 
 		if(parentCreds && parentPublicKey){
-            if(parentPublicKey.checkSignatureToken(token)){
+            if(parentCreds.checkSignatureToken(token)){
                 let newCred =  new Credential(this);
                 return newCred.initWithFqdn(fqdn);
             }
