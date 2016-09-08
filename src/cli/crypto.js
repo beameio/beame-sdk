@@ -82,7 +82,7 @@ function aesDecrypt(data) {
 function encrypt(data, fqdn, signingFqdn) {
 	let credential = store.search(fqdn)[0];
 	if (credential ) {
-		return credential.encrypt(fqdn, data);
+		return credential.encrypt(fqdn, data, signingFqdn );
 	}
 	logger.error("encrypt failure, public key not found");
 	return null;
@@ -101,10 +101,12 @@ function decrypt(data) {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let encryptedMessage = JSON.parse(data);
 		console.log(`encryptedMessage ${encryptedMessage }`);
-		if (!encryptedMessage.encryptedFor) {
+		if (!encryptedMessage.encryptedFor && !encryptedMessage.signature )  {
 			logger.fatal("Decrypting a wrongly formatted message", data);
 		}
-		let credential = store.search(encryptedMessage.encryptedFor)[0];
+		console.log('encrypted for',  JSON.stringify(encryptedMessage));
+        let targetFqdn = encryptedMessage.encryptedFor || encryptedMessage.signedData.encryptedFor;
+		let credential = store.search(targetFqdn )[0];
 		return credential.decrypt(encryptedMessage);
 
 
@@ -141,19 +143,10 @@ function sign(data, fqdn) {
  */
 function checkSignature(data, fqdn, signature) {
 	let element = store.search(fqdn)[0];
-	let certBody;
-	
-	if (element) {
-		certBody = element.X509 + "";
-	}
-	else {
-		certBody = store.getRemoteCertificate(fqdn) + "";
-	}
-	
-	let rsaKey = getPublicKey(certBody);
-	let status = rsaKey.verify(data, signature, "utf8", "base64");
-	logger.info(`signing status is ${status} ${fqdn}`);
-	return status;
+
+    return element.checkSignature(data, fqdn, signature);
+//	let status = rsaKey.verify(data, signature, "utf8", "base64");
+//	logger.info(`signing status is ${status} ${fqdn}`);
 }
 
 

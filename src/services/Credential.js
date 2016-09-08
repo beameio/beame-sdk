@@ -207,15 +207,13 @@ class Credential {
 	sign(data) {
 		if (this.hasPrivateKey()) {
 			var message = {
-				signedData: {
-					data: data,
-					signedby: this.fqdn,
-				}
+				signedData: data,
+                signedby: this.fqdn
 			}
 		}
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
-		message.signature = JSON.stringify(crypto.sign(message.signedData, fqdn));
-		return this.privateKeyNodeRsa.sign(data, "base64", "utf8");
+        message.signature = this.privateKeyNodeRsa.sign(message.signedData, "base64", "utf8");
+		return message;
 	}
 
 	encrypt(fqdn, data, signingFqdn){
@@ -249,14 +247,33 @@ class Credential {
 		return null;
 	}
 
+	checkSignature(data, fqdn, signature){
+        let rsaKey = this.getPublicKeyNodeRsa();
+        let status = rsaKey.verify(data, signature, "utf8", "base64");
+        logger.info(`signing status is ${status} ${fqdn}`);
+        return status;
+    }
+
 	decrypt(encryptedMessage){
-		console.log("In credentials decrypt");
+	    console.log("In credentials decrypt");
+        if(encryptedMessage.signature){
+            let signingCredential = this._store.search(encryptedMessage.signedby)[0];
+            if(!signingCredential){
+                new Error("Signing credential is not found in the local store");
+            }
+            if(!signingCredential.checkSignature(encryptedMessage.signedData, encryptedMessage.signedby, encryptedMessage.signature)){
+                return null;
+            }
+            encryptedMessage = encryptedMessage.signedData;
+        }
+
+
 		if (!this.hasPrivateKey()) {
 			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
 
-		let decryptedMessage = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys) + " ";
+		let decryptedMessage = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys);
 	 	var msr = JSON.stringify(decryptedMessage);	
 		console.log('decryptedMessage ${ msr }');
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
