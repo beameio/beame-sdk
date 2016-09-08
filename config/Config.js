@@ -1,9 +1,18 @@
 'use strict';
+/**
+ * @typedef {Object} RegistrationPayload
+ * @property {String} fqdn
+ * @property {String} parent_fqdn
+ * @property {Number} level
+ */
+
+
 var path                 = require('path');
 var os                   = require('os');
 var home                 = os.homedir();
 var npmPrefix            = require('npm-prefix');
 const npmRootDir         = npmPrefix();
+
 const AuthServerEndPoint = "https://registration-staging.beameio.net";
 
 const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
@@ -170,10 +179,6 @@ var ResponseKeys = {
 	"NodeFiles":                   [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
 	"EntityMetadataKeys":          ["fqdn", "parent_fqdn","name", "email","level","local_ip","edge_fqdn"],
 	"EntityCreateResponseKeys":    ["fqdn"],
-	"DeveloperCreateResponseKeys": ["hostname", "uid", "name", "email"],
-	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn", "edgeHostname"],
-	"EdgeClientResponseKeys":      ["uid", "hostname", "edgeHostname", "parent_fqdn"],
-	"LocalClientResponseKeys":     ["uid", "hostname", "parent_fqdn", "edge_client_fqdn", "local_ip"],
 	"CertificateResponseKeys":     ["x509", "pkcs7", "ca"],
 	"RevokeDevCertResponseKeys":   ["recovery_code"]
 };
