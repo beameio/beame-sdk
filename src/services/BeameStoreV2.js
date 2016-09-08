@@ -192,7 +192,7 @@ class BeameStoreV2 {
 	 * @param {String} fqdn
 	 * @param {String} parentFqdn
 	 * @param {SignatureToken} token
-	 * @returns {Promise.<Credential|null>}
+	 * @returns {Promise.<Credential>}
 	 */
 	getNewCredentials(fqdn, parentFqdn, token) {
 		var self = this;
@@ -219,9 +219,7 @@ class BeameStoreV2 {
 						remoteCred.initFromX509(data.x509, data.metadata);
 						self.addCredential(remoteCred);
 
-						let parentPublicKey = remoteCred.getPublicKeyNodeRsa();
-
-						if (parentPublicKey.checkSignatureToken(token)) {
+						if (remoteCred.checkSignatureToken(token)) {
 							let newCred = new Credential(self);
 							newCred.initWithFqdn(fqdn);
 
