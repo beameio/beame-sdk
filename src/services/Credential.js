@@ -83,9 +83,15 @@ class Credential {
 				this.certData           = certData ? certData : err;
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this._store);
 				this.metadata.fqdn      = certData.commonName;
-				this.fqdn               = certData.commonName
-				this.beameStoreServices.writeObject(config.CertificateFiles.X509, data);
+				this.fqdn               = certData.commonName;
+
+				this.beameStoreServices.writeObject(config.CertificateFiles.X509, x509);
 			}
+		});
+		pem.getPublicKey(x509, (err, publicKey) => {
+			this.publicKeyStr     = publicKey.publicKey;
+			this.publicKeyNodeRsa = new NodeRsa();
+			this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 		});
         if(metadata){
             _.map(metadata, (value, key) => {
