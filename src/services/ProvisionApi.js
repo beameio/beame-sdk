@@ -282,7 +282,7 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
 
 	if (signature) {
 		this.options.headers = {
-			"AuthToken": signature
+			"X-BeameAuthToken": signature
 		};
 	}
 

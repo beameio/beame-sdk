@@ -3,5 +3,7 @@ module.exports = {
 	crypto:          require('./src/cli/crypto'),
 	BaseHttpsServer: require('./src/services/BaseHttpsServer.js'),
 	BeameStore:      require('./src/services/BeameStoreV2'),
-	Logger:          require('./src/utils/Logger')
-};
+	Logger:          require('./src/utils/Logger'),
+	ProvApi:         require('./src/services/ProvisionApi')
+}
+;
