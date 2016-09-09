@@ -44,7 +44,8 @@ var parametersSchema = {
 	'edgeFqdn':       {required: true },
 	'pinAtom': 		  {required: true, options: ['true', 'false'], default: 'true'},
 	'pinDeveloper':   {required: true, options: ['true', 'false'], default: 'true'},
-	'localPort':      {required:true}
+	'targetPort':     {required: true},
+	'targetHost':     {required: false, default: 'localhost'}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
