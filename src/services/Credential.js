@@ -55,15 +55,15 @@ class Credential {
 		this.loadCredentialsObject();
 		if (this.hasKey("X509")) {
 			pem.config({sync: true});
-			pem.readCertificateInfo(this.X509, (err, certData) => {
+			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
 				console.log(`read cert ${certData.commonName}`);
 				if ((this.fqdn || this.get('FQDN')) !== certData.commonName) {
-					new Error(`Credentialing missmath ${this.metadata} the commonname in x509 does not match the metadata`);
+					new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
 				this.certData = certData ? certData : err;
 			});
 
-			pem.getPublicKey(this.X509, (err, publicKey) => {
+			pem.getPublicKey(this.getKey("X509"), (err, publicKey) => {
 				this.publicKeyStr     = publicKey.publicKey;
 				this.publicKeyNodeRsa = new NodeRsa();
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
@@ -72,7 +72,7 @@ class Credential {
 		}
 		if (this.hasKey("PRIVATE_KEY")) {
 			this.privateKeyNodeRsa = new NodeRsa();
-			this.privateKeyNodeRsa.importKey(this.PRIVATE_KEY + " ", "private");
+			this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
 		}
 	}
 
@@ -112,11 +112,16 @@ class Credential {
 		};
 
 		for (let key in config.CertFileNames) {
-			ret[key] = this[key];
+			if(config.CertFileNames.hasOwnProperty(key)){
+				ret[key] = this[key];
+			}
+
 		}
 
 		for (let key in config.MetadataProperties) {
-			ret.metadata[config.MetadataProperties[key]] = this.metadata[config.MetadataProperties[key]];
+			if(config.MetadataProperties.hasOwnProperty(key)) {
+				ret.metadata[config.MetadataProperties[key]] = this.metadata[config.MetadataProperties[key]];
+			}
 		}
 
 		return ret;
@@ -170,7 +175,7 @@ class Credential {
 	loadCredentialsObject() {
 		this.state = this.state | config.CredentialStatus.DIR_NOTREAD;
 
-		Object.keys(config.CertificateFiles).forEach((keyName, index) => {
+		Object.keys(config.CertificateFiles).forEach(keyName => {
 			try {
 				this[keyName] = this.beameStoreServices.readObject(config.CertFileNames[keyName]);
 			} catch (e) {
@@ -187,13 +192,17 @@ class Credential {
 				this.metadata[key] = value;
 			});
 		} catch (e) {
-			logger.debug("readcertdata error " + e.tostring());
+			logger.debug("read cert data error " + e.toString());
 		}
 	}
 
 
 	hasKey(key) {
 		return this.hasOwnProperty(key) && !_.isEmpty(this[key])
+	}
+
+	getKey(key) {
+		return this.hasOwnProperty(key) && !_.isEmpty(this[key]) ? this[key] : null;
 	}
 
 	extractCommonName() {
