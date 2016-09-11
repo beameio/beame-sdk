@@ -51,7 +51,9 @@ class Credential {
 	initWithFqdn(fqdn, metadata) {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+
 		this.parseMetadata(metadata);
+		this.beameStoreServices.setFolder(metadata);
 	}
 
 	initFromData(fqdn) {
@@ -100,6 +102,7 @@ class Credential {
 			this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 		});
 		this.parseMetadata(metadata);
+		this.beameStoreServices.setFolder(metadata);
 		pem.config({sync: false});
 	}
 

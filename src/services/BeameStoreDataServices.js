@@ -96,6 +96,12 @@ class BeameStoreDataServices {
 	readMetadataSync(){
 		return this.directoryServices.readMetadataSync(config.localCertsDirV2, this.fqdn);
 	}
+
+	setFolder(metadata){
+		metadata.path =  path.join(config.localCertsDirV2, this.fqdn);
+		return path;
+	}
+
 	/**
 	 * request fqdn
 	 * @param {RequestFqdnOptions} options
