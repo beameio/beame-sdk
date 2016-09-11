@@ -64,7 +64,7 @@ var SampleBeameServer = function (instanceHostname, requestListener, hostOnlineC
 			}
 		}
 
-		var fqdn      = server_entity.getMetadataKey('FQDN'),
+		var fqdn      = server_entity.getKey('FQDN'),
 		    edge_fqdn = server_entity.getMetadataKey('EDGE_FQDN'),
 		    local_ip  = server_entity.getMetadataKey('LOCAL_IP');
 
