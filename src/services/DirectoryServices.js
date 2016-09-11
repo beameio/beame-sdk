@@ -222,12 +222,21 @@ DataServices.prototype.createDir = function (dirPath) {
 };
 
 DataServices.prototype.mkdirp = function (dirPath) {
-	try {
-		return mkdirp(dirPath)
-	}
-	catch (e) {
-		logger.info(`could not create directory ${e}`);
-	}
+
+	return new Promise(
+		(resolve, reject) => {
+			try {
+				mkdirp(dirPath,{},function(){
+					resolve();
+				})
+			}
+			catch (e) {
+				reject(`could not create directory ${e}`);
+			}
+		}
+	);
+
+
 };
 
 /**

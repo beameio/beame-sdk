@@ -273,7 +273,7 @@ ProvApiService.prototype.setAuthData = function (authData) {
  * @param {ApiData} apiData
  * @param {Function} callback
  * @param {String|null} [method] ==>  POST | GET
- * @param {String|null} [signature]
+ * @param {SignatureToken|null} [signature]
  */
 ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, signature) {
 

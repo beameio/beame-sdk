@@ -18,13 +18,18 @@ const _                      = require('underscore');
 const os                     = require('os');
 const config                 = require('../../config/Config');
 const module_name            = config.AppModules.BeameStore;
-const logger                 = new (require('../utils/Logger'))(module_name);
+const logger_level           = "Credential";
+const BeameLogger            = require('../utils/Logger');
+const logger                 = new BeameLogger(module_name);
 const url                    = require('url');
 const BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const pem                    = require('pem');
 const NodeRsa                = require("node-rsa");
 const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
 const utils                  = require('../utils/BeameUtils');
+var provisionApi             = new (require('../services/ProvisionApi'))();
+const apiActions             = require('../../config/ApiConfig.json').Actions.EntityApi;
+
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
  * @class {Object} Credential
@@ -112,14 +117,14 @@ class Credential {
 		};
 
 		for (let key in config.CertFileNames) {
-			if(config.CertFileNames.hasOwnProperty(key)){
+			if (config.CertFileNames.hasOwnProperty(key)) {
 				ret[key] = this[key];
 			}
 
 		}
 
 		for (let key in config.MetadataProperties) {
-			if(config.MetadataProperties.hasOwnProperty(key)) {
+			if (config.MetadataProperties.hasOwnProperty(key)) {
 				ret.metadata[config.MetadataProperties[key]] = this.metadata[config.MetadataProperties[key]];
 			}
 		}
@@ -331,15 +336,16 @@ class Credential {
 		var errMsg;
 
 		var fqdn       = this.fqdn,
-		    dirPath    = this.metadata.path,
+		    dirPath    = this.getKey("path"),
 		    pkFileName = config.CertFileNames.PRIVATE_KEY,
-		    sslWrapper = OpenSSlWrapper;
+		    sslWrapper = OpenSSlWrapper,
+		    store      = this._store;
 
 		return new Promise(function (resolve, reject) {
 
 
 			sslWrapper.createPrivateKey().then(pk=> {
-				let directoryServices = new (require('./DirectoryServices'))();
+				let directoryServices = store.directoryServices;
 				directoryServices.saveFile(dirPath, pkFileName, pk, function (error) {
 					var pkFile = utils.makePath(dirPath, pkFileName);
 					if (!error) {
@@ -347,8 +353,7 @@ class Credential {
 					}
 					else {
 						errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {
-							"error":  error,
-							"stderr": stderr
+							"error": error
 						}, config.MessageCodes.OpenSSLError);
 						reject(errMsg);
 					}
@@ -359,6 +364,62 @@ class Credential {
 
 
 		});
+	}
+
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @param {String} csr
+	 * @param {SignatureToken} authToken
+	 */
+	getCert(fqdn, csr, authToken) {
+		var self              = this;
+		var directoryServices = this._store.directoryServices;
+
+		var postData = {
+			csr:  csr,
+			fqdn: fqdn
+		};
+
+		var apiData = utils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
+
+		logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+
+		provisionApi.runRestfulAPI(apiData, function (error, payload) {
+			if (!error) {
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
+
+				// directoryServices.saveCerts(devDir, payload, function (error) {
+				// 	if (!error) {
+				// 		getMetadata(fqdn, devDir, function (error, payload) {
+				// 			if (!error) {
+				// 				directoryServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, function (error) {
+				// 					if (!callback) return;
+				//
+				// 					if (!error) {
+				// 						callback(null, payload);
+				// 					}
+				// 					else {
+				// 						callback(error, null);
+				// 					}
+				// 				});
+				// 			}
+				// 			else {
+				// 				callback(error, null);
+				// 			}
+				// 		});
+				// 	}
+				// 	else {
+				// 		callback(error, null);
+				// 	}
+				// });
+			}
+			else {
+				error.data.hostname = fqdn;
+				callback(error, null);
+			}
+		}, 'POST', JSON.stringify(authToken));
 	}
 }
 module.exports = Credential;

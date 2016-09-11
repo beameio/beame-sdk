@@ -20,20 +20,21 @@
 
 
 //const exec        = require('child_process').exec;
-const config            = require('../../config/Config');
-const module_name       = config.AppModules.BeameStore;
-const logger            = new (require('../utils/Logger'))(module_name);
-const provApi           = new (require('./ProvisionApi'))();
-const directoryServices = new (require('./DirectoryServices'))();
-const Credential        = require('./Credential');
-const _                 = require('underscore');
-const async             = require('async');
+const config      = require('../../config/Config');
+const module_name = config.AppModules.BeameStore;
+const logger      = new (require('../utils/Logger'))(module_name);
+const provApi     = new (require('./ProvisionApi'))();
+const Credential  = require('./Credential');
+const _           = require('underscore');
+const async       = require('async');
 
 let _store = null;
 
 class BeameStoreV2 {
 
 	constructor() {
+		this.directoryServices = new (require('./DirectoryServices'))();
+
 		if (_store === null) {
 			_store = this;
 		}
@@ -46,15 +47,19 @@ class BeameStoreV2 {
 	}
 
 	init() {
-		directoryServices.mkdirp(config.localCertsDirV2 + "/");
-		directoryServices.scanDir(config.localCertsDirV2 + "/").forEach(fqdn => {
-			let credentials = new Credential(this);
-			credentials.initFromData(fqdn);
-			this.addCredential(credentials, fqdn);
-			// there is no parent node in the store. still a to decice weather i want to request the whole tree.
-			// for now we will keep it at the top level, and as soon as parent is added to the store it will get reassigned
-			// just a top level credential or a credential we are placing on top, untill next one is added
+		this.directoryServices.mkdirp(config.localCertsDirV2 + "/").then(function () {
+			this.directoryServices.scanDir(config.localCertsDirV2 + "/").forEach(fqdn => {
+				let credentials = new Credential(this);
+				credentials.initFromData(fqdn);
+				this.addCredential(credentials, fqdn);
+				// there is no parent node in the store. still a to decice weather i want to request the whole tree.
+				// for now we will keep it at the top level, and as soon as parent is added to the store it will get reassigned
+				// just a top level credential or a credential we are placing on top, untill next one is added
+			});
+		}).catch(function(error){
+			logger.error(error.toString())
 		});
+
 	}
 
 	addCredential(credentials) {
@@ -201,13 +206,29 @@ class BeameStoreV2 {
 				let parentCreds     = this.getCredential(parentFqdn);
 				let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
 
-				function loadCred(metadata){
+				function loadCred(metadata) {
 					let newCred = new Credential(self);
+
 					newCred.initWithFqdn(fqdn, metadata);
+
 					self.addCredential(newCred);
+
 					newCred.loadCredentialsObject();
-					var cred = self.getCredential(fqdn);
-					resolve(cred);
+					let dirPath = newCred.metadata.path;
+
+					self.directoryServices.mkdirp(dirPath).then(function(){
+						self.directoryServices.saveFile(dirPath, config.metadataFileName, metadata, function (error) {
+							if (!error) {
+								var cred = self.getCredential(fqdn);
+								resolve(cred);
+							}
+							else {
+								reject(error);
+							}
+						});
+					}).catch(reject);
+
+
 				}
 
 
@@ -230,12 +251,10 @@ class BeameStoreV2 {
 								loadCred(data.metadata);
 							}
 
-						}).
-						catch(reject);
+						}).catch(reject);
 				}
 			}
 		);
-
 
 	}; // returns a new Credential object.
 
