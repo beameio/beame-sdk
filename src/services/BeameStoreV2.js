@@ -94,8 +94,8 @@ class BeameStoreV2 {
 		let fqdnsWithoutParent      = Object.keys(this.credentials).filter(fqdn => {
 			return this.credentials[fqdn].getMetadataKey('PARENT_FQDN') === currentNode.getKey('FQDN')
 		});
-		let credentialsWitoutParent = fqdnsWithoutParent.map(x => this.credentials[x]);
-		credentialsWitoutParent.forEach(item => {
+		let credentialsWithoutParent = fqdnsWithoutParent.map(x => this.credentials[x]);
+		credentialsWithoutParent.forEach(item => {
 			currentNode.children.push(item);
 			this.credentials[item.getMetadataKey("FQDN")] = null;
 			delete this.credentials[item.getMetadataKey("FQDN")];
