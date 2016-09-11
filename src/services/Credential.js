@@ -64,7 +64,7 @@ class Credential {
 			pem.readCertificateInfo(this.getKey(config.CertificateFiles.X509), (err, certData) => {
 				console.log(`read cert ${certData.commonName}`);
 				if ((this.fqdn || this.getKey('FQDN') !== certData.commonName)) {
-					new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
+					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
 				this.certData = certData ? certData : err;
 			});
@@ -145,7 +145,7 @@ class Credential {
 			this.credentials = this.readCertificateDir();
 
 		}
-		if (this.hasKey(config.CertificateFiles.X509)) {
+		if (this.hasKey("X509")) {
 			this.state = this.state | config.CredentialStatus.CERT;
 		}
 
@@ -158,7 +158,7 @@ class Credential {
 			this.state = this.state & config.CredentialStatus.NON_BEAME_CERT;
 		}
 
-		if (this.hasKey(config.CertificateFiles.PRIVATE_KEY)) {
+		if (this.hasKey("PRIVATE_KEY")) {
 			this.state = this.state & config.CredentialStatus.PRIVATE_KEY;
 		} else {
 			this.state = this.state | config.CredentialStatus.PRIVATE_KEY;
@@ -226,16 +226,8 @@ class Credential {
 		return this.privateKeyNodeRsa;
 	}
 
-	extractAltNames() {
-
-	}
-
 	getCertificateMetadata() {
 		return this.certData;
-	}
-
-	getPublicKey() {
-		return publicKey;
 	}
 
 	/**

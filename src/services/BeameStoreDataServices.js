@@ -104,10 +104,8 @@ class BeameStoreDataServices {
 	 */
 	setFolder(cred) {
 		if (!_.isEmpty(cred) && cred.hasOwnProperty("metadata")) {
-			cred.metadata["path"] = path.join(config.localCertsDirV2, this.fqdn);
+			cred.metadata.path = path.join(config.localCertsDirV2, this.fqdn);
 		}
-
-
 	}
 
 	/**
