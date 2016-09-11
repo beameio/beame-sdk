@@ -134,10 +134,6 @@ class Credential {
 		return ret;
 	}
 
-	getMetadataKey(field) {
-		return this.metadata.hasOwnProperty(field.toLowerCase()) ? this.metadata[field.toLowerCase()] : null;
-	}
-
 	determineCertStatus() {
 		if (this.dirShaStatus && this.dirShaStatus.length !== 0) {
 			//
@@ -170,15 +166,6 @@ class Credential {
 	}
 
 
-	getFqdnName() {
-
-	}
-
-	getMetadata() {
-
-	}
-
-
 	loadCredentialsObject() {
 		this.state = this.state | config.CredentialStatus.DIR_NOTREAD;
 
@@ -203,6 +190,9 @@ class Credential {
 		}
 	}
 
+	getMetadataKey(field) {
+		return this.metadata.hasOwnProperty(field.toLowerCase()) ? this.metadata[field.toLowerCase()] : null;
+	}
 
 	hasKey(key) {
 		//key = key.toLowerCase();
