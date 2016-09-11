@@ -192,7 +192,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 	retries--;
 
 	var onApiError = function (error) {
-		logger.warn("Provision Api get error", {
+		logger.warn("Provision Api getMetadataKey error", {
 			"error": error,
 			"url": url
 		});

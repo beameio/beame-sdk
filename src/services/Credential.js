@@ -51,9 +51,8 @@ class Credential {
 	initWithFqdn(fqdn, metadata) {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
-
 		this.parseMetadata(metadata);
-		this.beameStoreServices.setFolder(metadata);
+		this.beameStoreServices.setFolder(this);
 	}
 
 	initFromData(fqdn) {
@@ -64,7 +63,7 @@ class Credential {
 			pem.config({sync: true});
 			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
 				console.log(`read cert ${certData.commonName}`);
-				if ((this.fqdn || this.get('FQDN')) !== certData.commonName) {
+				if ((this.fqdn || this.getMetadataKey('FQDN')) !== certData.commonName) {
 					new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
 				this.certData = certData ? certData : err;
@@ -102,7 +101,7 @@ class Credential {
 			this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 		});
 		this.parseMetadata(metadata);
-		this.beameStoreServices.setFolder(metadata);
+		this.beameStoreServices.setFolder(this);
 		pem.config({sync: false});
 	}
 
@@ -135,8 +134,8 @@ class Credential {
 		return ret;
 	}
 
-	get(field) {
-		return this.metadata[field.toLowerCase()];
+	getMetadataKey(field) {
+		return this.metadata.hasOwnProperty(field) ? this.metadata[field.toLowerCase()] : null;
 	}
 
 	determineCertStatus() {
@@ -339,7 +338,7 @@ class Credential {
 		var errMsg;
 
 		var fqdn       = this.fqdn,
-		    dirPath    = this.getKey("path"),
+		    dirPath    = this.getMetadataKey("path"),
 		    pkFileName = config.CertFileNames.PRIVATE_KEY,
 		    sslWrapper = OpenSSlWrapper,
 		    store      = this._store;

@@ -199,7 +199,7 @@ module.exports = {
 
 						sleep = parseInt(sleep * (Math.random() + 1.5));
 
-						logger.warn("Retry to get lb instance", {
+						logger.warn("Retry to getMetadataKey lb instance", {
 							"sleep":   sleep,
 							"retries": retries
 						});

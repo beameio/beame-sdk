@@ -33,26 +33,26 @@
  * @property {String|null} error
  */
 
-const os            = require('os');
-const home          = os.homedir();
-const homedir       = home;
-const config        = require('../../config/Config');
-const module_name = config.AppModules.BeameEntity;
-const BeameLogger   = require('../utils/Logger');
-const logger        = new BeameLogger(module_name);
-const provisionApi  = new (require('../services/ProvisionApi'))();
-const apiActions    = require('../../config/ApiConfig.json').Actions;
-const beameUtils    = require('../utils/BeameUtils');
-const path 		  = require('path');
-
+const os           = require('os');
+const home         = os.homedir();
+const homedir      = home;
+const config       = require('../../config/Config');
+const module_name  = config.AppModules.BeameEntity;
+const BeameLogger  = require('../utils/Logger');
+const logger       = new BeameLogger(module_name);
+const provisionApi = new (require('../services/ProvisionApi'))();
+const apiActions   = require('../../config/ApiConfig.json').Actions;
+const beameUtils   = require('../utils/BeameUtils');
+const path         = require('path');
+const _            = require('underscore');
 class BeameStoreDataServices {
 
 
 	constructor(fqdn, store) {
 
-		this.directoryServices  = new (require('./DirectoryServices'))();
-		this.fqdn = fqdn;
-		this._store = store;
+		this.directoryServices = new (require('./DirectoryServices'))();
+		this.fqdn              = fqdn;
+		this._store            = store;
 	}
 
 
@@ -82,24 +82,32 @@ class BeameStoreDataServices {
 
 		return result;
 	}
-	readObject(name){
+
+	readObject(name) {
 		let p = path.join(config.localCertsDirV2, this.fqdn, name);
 		return this.directoryServices.readObject(p);
 	}
 
-	writeObject(name, data){
+	writeObject(name, data) {
 		let folderPath = path.join(config.localCertsDirV2, this.fqdn);
-		this.directoryServices.createDir(folderPath );
+		this.directoryServices.createDir(folderPath);
 		return this.directoryServices.saveFile(folderPath, name, data);
 	}
 
-	readMetadataSync(){
+	readMetadataSync() {
 		return this.directoryServices.readMetadataSync(config.localCertsDirV2, this.fqdn);
 	}
 
-	setFolder(metadata){
-		metadata.path =  path.join(config.localCertsDirV2, this.fqdn);
-		return path;
+	/**
+	 *
+	 * @param {Credential} cred
+	 */
+	setFolder(cred) {
+		if (!_.isEmpty(cred) && cred.hasOwnProperty("metadata")) {
+			cred.metadata["path"] = path.join(config.localCertsDirV2, this.fqdn);
+		}
+
+
 	}
 
 	/**
@@ -121,7 +129,7 @@ class BeameStoreDataServices {
 				// We can use the local credentials to issue the request.
 				//
 				//
-				return this._getFqdnWithLocalParentFqdn(parentCredentials,options.metadata);
+				return this._getFqdnWithLocalParentFqdn(parentCredentials, options.metadata);
 			}
 
 		}
@@ -139,10 +147,9 @@ class BeameStoreDataServices {
 	 * @returns {Promise.<string>}
 	 * @private
 	 */
-	_getFqdnWithLocalParentFqdn(parentCredentials,metadata) {
+	_getFqdnWithLocalParentFqdn(parentCredentials, metadata) {
 		return new Promise(
 			(resolve, reject) => {
-
 
 
 			}
@@ -205,7 +212,6 @@ class BeameStoreDataServices {
 			}
 		);
 	}
-
 
 
 	getCerts(csr) {

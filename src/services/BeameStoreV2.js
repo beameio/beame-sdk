@@ -53,7 +53,7 @@ class BeameStoreV2 {
 				credentials.initFromData(fqdn);
 				this.addCredential(credentials, fqdn);
 				// there is no parent node in the store. still a to decice weather i want to request the whole tree.
-				// for now we will keep it at the top level, and as soon as parent is added to the store it will get reassigned
+				// for now we will keep it at the top level, and as soon as parent is added to the store it will getMetadataKey reassigned
 				// just a top level credential or a credential we are placing on top, untill next one is added
 			});
 		}).catch(function(error){
@@ -63,10 +63,10 @@ class BeameStoreV2 {
 	}
 
 	addCredential(credentials) {
-		let parent_fqdn = credentials.get(config.MetadataProperties.PARENT_FQDN);
+		let parent_fqdn = credentials.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
 		let parentNode  = parent_fqdn && this.search(parent_fqdn)[0];
 		if (!parent_fqdn || !parentNode) {
-			this.credentials[credentials.get("FQDN")] = credentials;
+			this.credentials[credentials.getMetadataKey("FQDN")] = credentials;
 			this.reassignCredentials(credentials);
 		}
 		else {
@@ -76,9 +76,9 @@ class BeameStoreV2 {
 			parentNode.children.push(credentials);
 			credentials.parent = parentNode;
 			// if it was located on the top level now we need to 0 it would, since we put it in the proper location in the tree.
-			if (this.credentials[credentials.get('FQDN')]) {
-				this.credentials[credentials.get('FQDN')] = null;
-				delete this.credentials[item.get("FQDN")];
+			if (this.credentials[credentials.getMetadataKey('FQDN')]) {
+				this.credentials[credentials.getMetadataKey('FQDN')] = null;
+				delete this.credentials[credentials.getMetadataKey("FQDN")];
 			}
 			this.reassignCredentials(credentials);
 		}
@@ -90,13 +90,13 @@ class BeameStoreV2 {
 
 	reassignCredentials(currentNode) {
 		let fqdnsWithoutParent      = Object.keys(this.credentials).filter(fqdn => {
-			return this.credentials[fqdn].get('PARENT_FQDN') === currentNode.get('FQDN')
+			return this.credentials[fqdn].getMetadataKey('PARENT_FQDN') === currentNode.getMetadataKey('FQDN')
 		});
 		let credentialsWitoutParent = fqdnsWithoutParent.map(x => this.credentials[x]);
 		credentialsWitoutParent.forEach(item => {
 			currentNode.children.push(item);
-			this.credentials[item.get("FQDN")] = null;
-			delete this.credentials[item.get("FQDN")];
+			this.credentials[item.getMetadataKey("FQDN")] = null;
+			delete this.credentials[item.getMetadataKey("FQDN")];
 			item.parent = currentNode;
 		});
 	}
@@ -126,19 +126,28 @@ class BeameStoreV2 {
 		return results && results.length == 1 ? results[0] : null;
 	}
 
+	/**
+	 *
+	 * @param fqdn
+	 * @param {Array.<Credential>} searchArray
+	 * @returns {*}
+	 * @private
+	 */
 	_search(fqdn, searchArray) {
 		//console.log(`starting _search fqdn=${fqdn} sa=`, searchArray);
 		for (let item in searchArray) {
-			//	console.log(`comparing ${searchArray[item].get("FQDN")} ${fqdn}`);
-			if (searchArray[item].get("FQDN") === fqdn) {
-				return searchArray[item];
-			}
-			if (searchArray[item].children) {
-				let result = this._search(fqdn, searchArray[item].children);
-				if (!result) {
-					continue;
+			if(searchArray.hasOwnProperty(item)){
+				//	console.log(`comparing ${searchArray[item].getMetadataKey("FQDN")} ${fqdn}`);
+				if (searchArray[item].getMetadataKey("FQDN") === fqdn) {
+					return searchArray[item];
 				}
-				return result;
+				if (searchArray[item].children) {
+					let result = this._search(fqdn, searchArray[item].children);
+					if (!result) {
+						continue;
+					}
+					return result;
+				}
 			}
 		}
 		return null;
@@ -167,11 +176,11 @@ class BeameStoreV2 {
 		let results = [];
 
 		for (let item in searchArray) {
-			//	console.log(`comparing ${searchArray[item].get("FQDN")} ${fqdn}`);
+			//	console.log(`comparing ${searchArray[item].getMetadataKey("FQDN")} ${fqdn}`);
 			if (!searchArray[item]) {
 				continue;
 			}
-			if (searchArray[item].get("FQDN").match(regex)) {
+			if (searchArray[item].getMetadataKey("FQDN").match(regex)) {
 				results.push(searchArray[item]);
 			}
 			if (searchArray[item].children) {
@@ -213,7 +222,6 @@ class BeameStoreV2 {
 
 					self.addCredential(newCred);
 
-					newCred.loadCredentialsObject();
 					let dirPath = newCred.metadata.path;
 
 					self.directoryServices.mkdirp(dirPath).then(function(){

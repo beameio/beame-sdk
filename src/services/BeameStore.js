@@ -317,7 +317,7 @@ BeameStore.prototype.importCredentials = function (data) {
 };
 
 BeameStore.prototype.shredCredentials = function (fqdn, callback) {
-	// XXX: Fix callback to get (err, data) instead of (data)
+	// XXX: Fix callback to getMetadataKey (err, data) instead of (data)
 	// XXX: Fix exit code
 	var item = this.search(fqdn)[0];
 	if (!item) {
