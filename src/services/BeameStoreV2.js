@@ -51,9 +51,9 @@ class BeameStoreV2 {
 		this.directoryServices.createDir(config.localCertsDirV2);
 
 		this.directoryServices.scanDir(config.localCertsDirV2).forEach(fqdn => {
-			let credentials = new Credential(this);
-			credentials.initFromData(fqdn);
-			this.addCredential(credentials);
+			let cred = new Credential(this);
+			cred.initFromData(fqdn);
+			this.addCredential(cred);
 			// there is no parent node in the store. still a to decice weather i want to request the whole tree.
 			// for now we will keep it at the top level, and as soon as parent is added to the store it will getMetadataKey reassigned
 			// just a top level credential or a credential we are placing on top, untill next one is added
@@ -64,42 +64,32 @@ class BeameStoreV2 {
 
 	addCredential(credential) {
 		let parent_fqdn = credential.getMetadataKey(config.MetadataProperties.PARENT_FQDN),
-			fqdn = credential.getKey('FQDN');
+			fqdn = credential.fqdn;
+
+		if (this.credentials[fqdn]) {
+			throw new Error(`Credentials for fqdn ${fqdn} are already present`);
+		}
 
 		let parentNode  = parent_fqdn && this.getCredential(parent_fqdn);
-		if (!parent_fqdn || !parentNode) {
-			this.credentials[fqdn] = credential;
-			this.reassignCredentials(credential);
-		}
-		else {
-			//
-			// check if credentials has parent fqdn, and if so we are moving it down.
-			//
+		if (parentNode) {
 			parentNode.children.push(credential);
 			credential.parent = parentNode;
-			// if it was located on the top level now we need to 0 it would, since we put it in the proper location in the tree.
-			if (this.credentials[fqdn]) {
-				this.credentials[fqdn] = null;
-				delete this.credentials[fqdn];
-			}
-			this.reassignCredentials(credential);
 		}
+		else {
+			this.credentials[fqdn] = credential;
+		}
+		this.adoptChildren(credential);
 	}
 
-	// toJSON() {
-	// 	return "huj";
-	// }
-
-	reassignCredentials(currentNode) {
-		let fqdnsWithoutParent      = Object.keys(this.credentials).filter(fqdn => {
-			return this.credentials[fqdn].getMetadataKey('PARENT_FQDN') === currentNode.getKey('FQDN')
-		});
-		let credentialsWithoutParent = fqdnsWithoutParent.map(x => this.credentials[x]);
-		credentialsWithoutParent.forEach(item => {
-			currentNode.children.push(item);
-			this.credentials[item.getMetadataKey("FQDN")] = null;
-			delete this.credentials[item.getMetadataKey("FQDN")];
-			item.parent = currentNode;
+	adoptChildren(currentNode) {
+		let children = Object.keys(this.credentials).filter(fqdn => {
+			return this.credentials[fqdn].getMetadataKey('PARENT_FQDN') === currentNode.fqdn
+		}).map(x => this.credentials[x]);
+		children.forEach(child => {
+			currentNode.children.push(child);
+			this.credentials[child.fqdn] = null;
+			delete this.credentials[child.fqdn];
+			child.parent = currentNode;
 		});
 	}
 
