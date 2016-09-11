@@ -191,7 +191,7 @@ class Credential {
 	}
 
 	getMetadataKey(field) {
-		return this.metadata.hasOwnProperty(field.toLowerCase()) ? this.metadata[field.toLowerCase()] : null;
+		return this.metadata.hasOwnProperty(field.toLowerCase()) || this.metadata.hasOwnProperty(field) ? (this.metadata[field.toLowerCase()] || this.metadata[field]) : null;
 	}
 
 	hasKey(key) {
