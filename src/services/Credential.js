@@ -318,14 +318,16 @@ class Credential {
 		return dechipheredPayload;
 	}
 
-	createCSR(dirPath, fqdn, pkName) {
+	createCSR() {
 		var errMsg;
 
-		var sslWrapper = OpenSSlWrapper;
+		var fqdn       = this.fqdn,
+		    dirPath    = this.metadata.path,
+		    pkFileName = config.CertFileNames.PRIVATE_KEY,
+		    sslWrapper = OpenSSlWrapper;
 
 		return new Promise(function (resolve, reject) {
 
-			var pkFileName = pkName || config.CertFileNames.PRIVATE_KEY;
 
 			sslWrapper.createPrivateKey().then(pk=> {
 				let directoryServices = new (require('./DirectoryServices'))();

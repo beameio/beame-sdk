@@ -140,7 +140,7 @@ class EntityServices {
 			var creds = store.search(fqdn)[0];
 
 
-		    creds.createCSR(devDir, fqdn).then(
+		    creds.createCSR().then(
 				function onCsrCreated(csr) {
 
 					var postData = {
