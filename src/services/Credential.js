@@ -63,7 +63,7 @@ class Credential {
 			pem.config({sync: true});
 			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
 				console.log(`read cert ${certData.commonName}`);
-				if ((this.fqdn || this.getKey('FQDN') !== certData.commonName)) {
+				if ((this.fqdn || this.getKey('FQDN')) !== certData.commonName) {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
 				this.certData = certData ? certData : err;
