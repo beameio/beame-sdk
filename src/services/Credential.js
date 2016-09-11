@@ -59,9 +59,9 @@ class Credential {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.loadCredentialsObject();
-		if (this.hasKey("X509")) {
+		if (this.hasKey(config.CertificateFiles.X509)) {
 			pem.config({sync: true});
-			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
+			pem.readCertificateInfo(this.getKey(config.CertificateFiles.X509), (err, certData) => {
 				console.log(`read cert ${certData.commonName}`);
 				if ((this.fqdn || this.getKey('FQDN') !== certData.commonName)) {
 					new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
@@ -69,16 +69,16 @@ class Credential {
 				this.certData = certData ? certData : err;
 			});
 
-			pem.getPublicKey(this.getKey("X509"), (err, publicKey) => {
+			pem.getPublicKey(this.getKey(config.CertificateFiles.X509), (err, publicKey) => {
 				this.publicKeyStr     = publicKey.publicKey;
 				this.publicKeyNodeRsa = new NodeRsa();
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 			});
 			pem.config({sync: false});
 		}
-		if (this.hasKey("PRIVATE_KEY")) {
+		if (this.hasKey(config.CertificateFiles.PRIVATE_KEY)) {
 			this.privateKeyNodeRsa = new NodeRsa();
-			this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
+			this.privateKeyNodeRsa.importKey(this.getKey(config.CertificateFiles.PRIVATE_KEY) + " ", "private");
 		}
 	}
 
@@ -145,7 +145,7 @@ class Credential {
 			this.credentials = this.readCertificateDir();
 
 		}
-		if (this.hasKey("X509")) {
+		if (this.hasKey(config.CertificateFiles.X509)) {
 			this.state = this.state | config.CredentialStatus.CERT;
 		}
 
@@ -158,7 +158,7 @@ class Credential {
 			this.state = this.state & config.CredentialStatus.NON_BEAME_CERT;
 		}
 
-		if (this.hasKey("PRIVATE_KEY")) {
+		if (this.hasKey(config.CertificateFiles.PRIVATE_KEY)) {
 			this.state = this.state & config.CredentialStatus.PRIVATE_KEY;
 		} else {
 			this.state = this.state | config.CredentialStatus.PRIVATE_KEY;
@@ -205,13 +205,13 @@ class Credential {
 
 
 	hasKey(key) {
-		key = key.toLowerCase();
-		return this.hasOwnProperty(key) && !_.isEmpty(this[key])
+		//key = key.toLowerCase();
+		return (this.hasOwnProperty(key) && !_.isEmpty(this[key])) || (this.hasOwnProperty(key.toLowerCase()) && !_.isEmpty(this[key.toLowerCase()]))
 	}
 
 	getKey(key) {
-		key = key.toLowerCase();
-		return this.hasOwnProperty(key) && !_.isEmpty(this[key]) ? this[key] : null;
+		//key = key.toLowerCase();
+		return this.hasKey(key) ? (this[key] || this[key.toLowerCase()]) : null;
 	}
 
 	extractCommonName() {
@@ -251,7 +251,7 @@ class Credential {
 			signature:  ""
 		};
 
-		if (this.hasKey("PRIVATE_KEY")) {
+		if (this.hasKey(config.CertificateFiles.PRIVATE_KEY)) {
 			message.signedBy = this.fqdn;
 		}
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
@@ -315,7 +315,7 @@ class Credential {
 		}
 
 
-		if (!this.hasKey("PRIVATE_KEY")) {
+		if (!this.hasKey(config.CertificateFiles.PRIVATE_KEY)) {
 			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
