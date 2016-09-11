@@ -9,11 +9,11 @@ const store = new BeameStore();
 
 let credentials = store.list();
 
-
-let crypted = crypto.encrypt("aksljlksadjklsadljk", credentials[0].fqdn);
+``
+let crypted = crypto.encrypt("aksljlksadjklsadljk", credentials[1].fqdn);
 let decrtped = crypto.decrypt(JSON.stringify(crypted ));;
-let cryptedAndsigned = crypto.encrypt("aksljlksadjklsadljk", credentials[0].fqdn, credentials[1].fqdn);
+let cryptedAndsigned = crypto.encrypt("aksljlksadjklsadljk", credentials[1].fqdn, credentials[1].fqdn);
 let output =  crypto.decrypt(JSON.stringify(cryptedAndsigned));
-let signature  = crypto.sign('asdasdasdasdasasasdsadsadsadasd', credentials[0].fqdn);
-let result = crypto.checkSignature(signature.signedData, credentials[0].fqdn, signature.signature);
+let signature  = crypto.sign('asdasdasdasdasasasdsadsadsadasd', credentials[1].fqdn);
+let result = crypto.checkSignature(signature.signedData, credentials[1].fqdn, signature.signature);
 console.log('check signature status ',   result );
