@@ -201,13 +201,19 @@ class BeameStoreV2 {
 				let parentCreds     = this.getCredential(parentFqdn);
 				let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
 
+				function loadCred(metadata){
+					let newCred = new Credential(self);
+					newCred.initWithFqdn(fqdn, metadata);
+					self.addCredential(newCred);
+					newCred.loadCredentialsObject();
+					var cred = self.getCredential(fqdn);
+					resolve(cred);
+				}
+
+
 				if (parentCreds && parentPublicKey) {
 					if (parentCreds.checkSignatureToken(token)) {
-						let newCred = new Credential(self);
-						newCred.initWithFqdn(fqdn, {parent_fqdn: parentFqdn, fqdn: fqdn});
-						self.addCredential(newCred);
-						var cred = self.getCredential(fqdn);
-						resolve(cred);
+						loadCred({parent_fqdn: parentFqdn, fqdn: fqdn});
 					}
 				} else {
 					this.getRemoteCreds(parentFqdn).then(
@@ -221,16 +227,11 @@ class BeameStoreV2 {
 							self.addCredential(remoteCred);
 
 							if (remoteCred.checkSignatureToken(token)) {
-								let newCred = new Credential(self);
-								newCred.initWithFqdn(fqdn, data.metadata);
-								self.addCredential(newCred);
-								var cred = self.getCredential(fqdn);
-								resolve(cred);
+								loadCred(data.metadata);
 							}
 
-						}).catch(function (error) {
-						reject(error);
-					});
+						}).
+						catch(reject);
 				}
 			}
 		);

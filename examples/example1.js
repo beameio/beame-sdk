@@ -1,6 +1,6 @@
 "use strict";
 
-var beameSDK = require("../index.js"); 
+var beameSDK = require("../index.js");
 var express = require('express');
 var appExpress = express();
 // This require is only cause the example is inside the beame-sdk repository, you will be using require('beame-sdk');
@@ -22,9 +22,9 @@ if(argv.sharedFolder){
 }
 
 var runTestBeameServer = function(hostname){
-    beameSDK.BaseHttpsServer.SampleBeameServer(hostname, null, appExpress, function (data, app) {
+    beameSDK.BaseHttpsServer.SampleBeameServer(hostname, appExpress, function (data, app) {
 		appExpress.use(express.static(__dirname + '/public'));
-		
+
 		var serveIndex = require('serve-index');
 
 		console.log('Server started on https://'+hostname + " this is a publically accessible address");
