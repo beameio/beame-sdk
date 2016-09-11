@@ -59,9 +59,9 @@ class Credential {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.loadCredentialsObject();
-		if (this.hasKey(config.CertificateFiles.X509)) {
+		if (this.hasKey("X509")) {
 			pem.config({sync: true});
-			pem.readCertificateInfo(this.getKey(config.CertificateFiles.X509), (err, certData) => {
+			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
 				console.log(`read cert ${certData.commonName}`);
 				if ((this.fqdn || this.getKey('FQDN') !== certData.commonName)) {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
@@ -69,16 +69,16 @@ class Credential {
 				this.certData = certData ? certData : err;
 			});
 
-			pem.getPublicKey(this.getKey(config.CertificateFiles.X509), (err, publicKey) => {
+			pem.getPublicKey(this.getKey("X509"), (err, publicKey) => {
 				this.publicKeyStr     = publicKey.publicKey;
 				this.publicKeyNodeRsa = new NodeRsa();
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 			});
 			pem.config({sync: false});
 		}
-		if (this.hasKey(config.CertificateFiles.PRIVATE_KEY)) {
+		if (this.hasKey("PRIVATE_KEY")) {
 			this.privateKeyNodeRsa = new NodeRsa();
-			this.privateKeyNodeRsa.importKey(this.getKey(config.CertificateFiles.PRIVATE_KEY) + " ", "private");
+			this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
 		}
 	}
 
@@ -233,7 +233,7 @@ class Credential {
 			signature:  ""
 		};
 
-		if (this.hasKey(config.CertificateFiles.PRIVATE_KEY)) {
+		if (this.hasKey("PRIVATE_KEY")) {
 			message.signedBy = this.fqdn;
 		}
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
@@ -297,7 +297,7 @@ class Credential {
 		}
 
 
-		if (!this.hasKey(config.CertificateFiles.PRIVATE_KEY)) {
+		if (!this.hasKey("PRIVATE_KEY")) {
 			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
