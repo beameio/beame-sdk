@@ -48,16 +48,16 @@ class BeameStoreV2 {
 
 	init() {
 
-		this.directoryServices.createDir(config.localCertsDirV2 + "/");
+		this.directoryServices.createDir(config.localCertsDirV2);
 
-			this.directoryServices.scanDir(config.localCertsDirV2 + "/").forEach(fqdn => {
-				let credentials = new Credential(this);
-				credentials.initFromData(fqdn);
-				this.addCredential(credentials);
-				// there is no parent node in the store. still a to decice weather i want to request the whole tree.
-				// for now we will keep it at the top level, and as soon as parent is added to the store it will getMetadataKey reassigned
-				// just a top level credential or a credential we are placing on top, untill next one is added
-			});
+		this.directoryServices.scanDir(config.localCertsDirV2).forEach(fqdn => {
+			let credentials = new Credential(this);
+			credentials.initFromData(fqdn);
+			this.addCredential(credentials);
+			// there is no parent node in the store. still a to decice weather i want to request the whole tree.
+			// for now we will keep it at the top level, and as soon as parent is added to the store it will getMetadataKey reassigned
+			// just a top level credential or a credential we are placing on top, untill next one is added
+		});
 
 
 	}
@@ -177,16 +177,22 @@ class BeameStoreV2 {
 		}
 		let results = [];
 
-		for (let item in searchArray) {
+		for (let k in searchArray) {
+			let creds = searchArray[k];
 			//	console.log(`comparing ${searchArray[item].getMetadataKey("FQDN")} ${fqdn}`);
-			if (!searchArray[item]) {
+			if (!creds) {
+				// WHY CAN THIS HAPPEN?
 				continue;
 			}
-			if (searchArray[item].getMetadataKey("FQDN").match(regex)) {
-				results.push(searchArray[item]);
+			if (!creds.fqdn) {
+				continue;
 			}
-			if (searchArray[item].children) {
-				let result = this.list(regex, searchArray[item].children);
+			if (creds.fqdn.match(regex)) {
+				results.push(creds);
+			}
+			if (creds.children) {
+				// WHY DO WE NEED THIS?
+				let result = this.list(regex, creds.children);
 				if (!result) {
 					continue;
 				}

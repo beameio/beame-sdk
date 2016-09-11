@@ -225,7 +225,7 @@ list.toText = function (creds) {
 		colWidths: [40, 65, 55, 55]
 	});
 	creds.forEach(item => {
-		table.push([item.get("Name"),item.get("FQDN"), item.get('PARENT_FQDN'), item.get('path')]);
+		table.push([item.getKey("Name"),item.getKey("FQDN"), item.getKey('PARENT_FQDN'), item.getKey('path')]);
 	});
 	return table;
 };
