@@ -3,7 +3,7 @@
 /** @namespace BaseHttpsServer */
 
 var fs = require('fs');
-
+const _         = require('underscore');
 var https       = require("https");
 var ProxyClient = require("./ProxyClient");
 var BeameStore  = require("./BeameStoreV2");
@@ -17,38 +17,26 @@ var beamestore  = new BeameStore();
  * @public
  * @method BaseHttpsServer.SampleBeameServer
  * @param {String|null} [instanceHostname] - fqdn of the HTTPS server. You must have private key of the entity.
- * @param {String|null} [projectName] - name of environment variable to get fqdn from.
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
  */
 var SampleBeameServer = function (instanceHostname, requestListener, hostOnlineCallback) {
-	if (!instanceHostname && !projectName) {
+	if (!instanceHostname) {
 		logger.error('instance hostname or project name required');
 		return;
 	}
 
 
-	var host;
-	if (instanceHostname == null) {
-		var varName = projectName;
-		host        = process.env[varName];
-		if (host == undefined) {
-			logger.error("Error: environment variable <" + varName + "> undefined, store project hostname in environment and rerun");
-			return;
-		}
-	}
-	else {
-		host = instanceHostname;
-	}
+	var fqdn = instanceHostname;
 
 	//could be edge client or routable atom
-	var server_entity = beamestore.search(host);
+	var server_entity = beamestore.getCredential(fqdn);
 
-	if (server_entity.length != 1) {
-		logger.error("Could not find certificate for " + host);
+	if (server_entity == null || _.isEmpty(server_entity)) {
+		logger.error("Could not find certificate for " + fqdn);
 		return;
 	}
-	server_entity   = server_entity[0];
+
 	/** @type {ServerCertificates} **/
 	var serverCerts = {
 		key:  server_entity.PRIVATE_KEY,
@@ -57,7 +45,7 @@ var SampleBeameServer = function (instanceHostname, requestListener, hostOnlineC
 	};
 
 	var srv = SNIServer.get(config.SNIServerPort, requestListener);
-	srv.addFqdn(host, serverCerts);
+	srv.addFqdn(fqdn, serverCerts);
 
 	// var edgeLocals = beamestore.searchEdgeLocals(host);
 	// edgeLocals.forEach(edgeLocal => {
@@ -98,8 +86,6 @@ var SampleBeameServer = function (instanceHostname, requestListener, hostOnlineC
 		else {
 			onLocalServerCreated(null);
 		}
-		//noinspection JSUnresolvedVariable
-
 
 	});
 };

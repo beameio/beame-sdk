@@ -319,7 +319,6 @@ class Credential {
 	}
 
 	createCSR(dirPath, fqdn, pkName) {
-		var self = this;
 		var errMsg;
 
 		var sslWrapper = OpenSSlWrapper;
