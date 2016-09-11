@@ -130,7 +130,7 @@ class BeameStoreV2 {
 		for (let item in searchArray) {
 			if(searchArray.hasOwnProperty(item)){
 				//	console.log(`comparing ${searchArray[item].getMetadataKey("FQDN")} ${fqdn}`);
-				if (searchArray[item].getMetadataKey("FQDN") === fqdn) {
+				if (searchArray[item].fqdn === fqdn) {
 					return searchArray[item];
 				}
 				if (searchArray[item].children) {
