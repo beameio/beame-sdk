@@ -18,7 +18,6 @@ var mkdirp     = require('mkdirp');
 /** @const {String} */
 
 
-
 /**
  *
  * @constructor
@@ -286,8 +285,9 @@ class DataServices {
 		return metadata;
 	}
 
-	writeMetadataSync(dir, metadata) {
-		this.saveFile(dir, config.metadataFileName, beameUtils.stringify(metadata));
+	writeMetadataSync(dir, fqdn, metadata) {
+		let dirPath = beameUtils.makePath(dir, fqdn);
+		this.saveFile(dirPath, config.metadataFileName, beameUtils.stringify(metadata));
 	}
 
 	/**

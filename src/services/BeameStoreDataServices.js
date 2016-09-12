@@ -67,7 +67,7 @@ class BeameStoreDataServices {
 	}
 
 	writeMetadataSync(metadata){
-		return this.directoryServices.writeMetadataSync(this._certsDir, this.fqdn, metadata);
+		return this.directoryServices.writeMetadataSync( this._certsDir, this.fqdn, metadata);
 	}
 
 	/**
