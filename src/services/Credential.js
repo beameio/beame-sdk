@@ -12,22 +12,22 @@
  * @property {String} signedBy
  * @property {String} signature
  */
+const pem     = require('pem');
+const NodeRsa = require("node-rsa");
+const async   = require('async');
+const _       = require('underscore');
+const os      = require('os');
+const url     = require('url');
 
-const async                  = require('async');
-const _                      = require('underscore');
-const os                     = require('os');
 const config                 = require('../../config/Config');
 const module_name            = config.AppModules.BeameStore;
 const logger_level           = "Credential";
 const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger(module_name);
-const url                    = require('url');
 const BeameStoreDataServices = require('../services/BeameStoreDataServices');
-const pem                    = require('pem');
-const NodeRsa                = require("node-rsa");
 const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
 const utils                  = require('../utils/BeameUtils');
-var provisionApi             = new (require('../services/ProvisionApi'))();
+const provisionApi           = new (require('../services/ProvisionApi'))();
 const apiActions             = require('../../config/ApiConfig.json').Actions.EntityApi;
 
 /**
@@ -113,6 +113,7 @@ class Credential {
 		}
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	toJSON() {
 		let ret = {
 			metadata: {}
@@ -134,6 +135,7 @@ class Credential {
 		return ret;
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	determineCertStatus() {
 		if (this.dirShaStatus && this.dirShaStatus.length !== 0) {
 			//
@@ -161,6 +163,7 @@ class Credential {
 		}
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	getCredentialStatus() {
 		return this.status;
 	}
@@ -214,10 +217,6 @@ class Credential {
 
 	getPrivateKeyNodeRsa() {
 		return this.privateKeyNodeRsa;
-	}
-
-	getCertificateMetadata() {
-		return this.certData;
 	}
 
 	/**
@@ -324,18 +323,17 @@ class Credential {
 		var fqdn       = this.fqdn,
 		    dirPath    = this.getMetadataKey("path"),
 		    pkFileName = config.CertFileNames.PRIVATE_KEY,
-		    sslWrapper = OpenSSlWrapper,
 		    store      = this._store;
 
 		return new Promise(function (resolve, reject) {
 
 
-			sslWrapper.createPrivateKey().then(pk=> {
+			OpenSSlWrapper.createPrivateKey().then(pk=> {
 				let directoryServices = store.directoryServices;
 				directoryServices.saveFile(dirPath, pkFileName, pk, function (error) {
 					var pkFile = utils.makePath(dirPath, pkFileName);
 					if (!error) {
-						sslWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+						OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
 					}
 					else {
 						errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {
@@ -352,60 +350,135 @@ class Credential {
 		});
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {String} fqdn
 	 * @param {String} csr
 	 * @param {SignatureToken} authToken
 	 */
-	getCert(fqdn, csr, authToken) {
-		var self              = this;
-		var directoryServices = this._store.directoryServices;
+	getCert(csr, authToken) {
+		let fqdn              = this.fqdn,
+		    self              = this,
+		    dirPath           = this.getMetadataKey("path"),
+		    directoryServices = this._store.directoryServices;
 
-		var postData = {
-			csr:  csr,
-			fqdn: fqdn
-		};
 
-		var apiData = utils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
+		return new Promise((resolve, reject) => {
+				var postData = {
+					csr:  csr,
+					fqdn: fqdn
+				};
 
-		logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+				var apiData = utils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
 
-		provisionApi.runRestfulAPI(apiData, function (error, payload) {
-			if (!error) {
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				provisionApi.runRestfulAPI(apiData, (error, payload) => {
+					if (!error) {
 
-				// directoryServices.saveCerts(devDir, payload, function (error) {
-				// 	if (!error) {
-				// 		getMetadata(fqdn, devDir, function (error, payload) {
-				// 			if (!error) {
-				// 				directoryServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, function (error) {
-				// 					if (!callback) return;
-				//
-				// 					if (!error) {
-				// 						callback(null, payload);
-				// 					}
-				// 					else {
-				// 						callback(error, null);
-				// 					}
-				// 				});
-				// 			}
-				// 			else {
-				// 				callback(error, null);
-				// 			}
-				// 		});
-				// 	}
-				// 	else {
-				// 		callback(error, null);
-				// 	}
-				// });
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
+
+						directoryServices.saveCerts(dirPath, payload).then(function(){
+
+							async.parallel(
+								[
+									function (callback) {
+
+										OpenSSlWrapper.createP7BCert(dirPath).then(p7b=>{
+											directoryServices.saveFileAsync(utils.makePath( dirPath,config.CertFileNames.P7B),p7b, (error,data) => {
+												if(!error){
+													callback(null,data)
+												}
+												else{
+													callback(error,null)
+												}
+											})
+										}).catch(function(error){
+											callback(error,null);
+										});
+
+									},
+									function (callback) {
+
+										OpenSSlWrapper.createPfxCert(dirPath).then(pwd=>{
+											directoryServices.saveFileAsync(utils.makePath( dirPath,config.CertFileNames.PWD),pwd, (error,data) => {
+												if(!error){
+													callback(null,data)
+												}
+												else{
+													callback(error,null)
+												}
+											})
+										}).catch(function(error){
+											callback(error,null);
+										});
+									}
+								],
+								function (error) {
+									if (error) {
+										reject(error);
+										return;
+									}
+
+									self.updateMetadata().then(resolve).catch(reject);
+								}
+							);
+
+
+						}).catch(reject);
+					}
+					else {
+						reject(error);
+					}
+				}, 'POST', JSON.stringify(authToken));
 			}
-			else {
-				error.data.hostname = fqdn;
-				callback(error, null);
+		);
+	}
+
+	updateMetadata() {
+		let fqdn              = this.fqdn,
+		    self              = this,
+		    dirPath           = this.getMetadataKey("path"),
+		    directoryServices = this._store.directoryServices;
+
+		return new Promise((resolve, reject) => {
+				self.getMetadata(fqdn, dirPath).then(payload => {
+					directoryServices.savePayload(dirPath, payload, config.ResponseKeys.EntityMetadataKeys, function (error) {
+						if (!error) {
+							resolve(payload);
+						}
+						else {
+							reject(error);
+						}
+					});
+
+				}).catch(reject);
 			}
-		}, 'POST', JSON.stringify(authToken));
+		);
+	}
+
+	getMetadata() {
+		let dirPath = this.getMetadataKey("path");
+
+		return new Promise((resolve, reject) => {
+				provisionApi.setAuthData(utils.getAuthToken(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+
+				var apiData = utils.getApiData(apiActions.GetMetadata.endpoint, {}, false);
+
+				provisionApi.runRestfulAPI(apiData, function (error, metadata) {
+					if (!error) {
+						resolve(metadata);
+					}
+					else {
+						reject(error);
+					}
+				}, 'GET');
+			}
+		);
+
+
 	}
 }
 module.exports = Credential;

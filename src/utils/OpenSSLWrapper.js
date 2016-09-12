@@ -2,7 +2,7 @@
  * Created by zenit1 on 08/09/2016.
  */
 "use strict";
-
+const path     = require('path');
 const exec     = require('child_process').exec;
 const execFile = require('child_process').execFile;
 
@@ -14,9 +14,6 @@ var csrSubj       = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development
 
 
 class OpenSSLWrapper {
-	constructor() {
-
-	}
 
 	createPrivateKey() {
 		return new Promise((resolve, reject) => {
@@ -71,7 +68,6 @@ class OpenSSLWrapper {
 						else {
 							resolve(stdout);
 						}
-
 					});
 			}
 			catch (error) {
@@ -80,6 +76,64 @@ class OpenSSLWrapper {
 			}
 		});
 	}
+
+	createP7BCert(dirPath) {
+		let action = "openssl",
+		    args   = ["pkcs7", "-print_certs", "-in", path.join(dirPath, config.CertFileNames.PKCS7)];
+
+		return new Promise((resolve, reject) => {
+				try {
+					execFile(action, args, function (error, stdout) {
+						if (!error) {
+							resolve(stdout);
+						}
+						else {
+							reject(error);
+						}
+					});
+				}
+				catch (e) {
+					reject(e.toString());
+				}
+			}
+		);
+	}
+
+	createPfxCert(dirPath) {
+		let pwd    = OpenSSLWrapper._randomPassword(),
+		    action = "openssl",
+		    args   = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.X509), "-certfile", path.join(dirPath, config.CertFileNames.CA), "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath, config.CertFileNames.PKCS12)];
+
+		return new Promise((resolve, reject) => {
+				try {
+					execFile(action, args, function (error) {
+						if (error) {
+							reject(error);
+							return;
+						}
+						resolve(pwd);
+					});
+				}
+				catch (e) {
+					reject(e);
+				}
+			}
+		);
+
+	}
+
+	static _randomPassword(length) {
+		var len   = length || 16;
+		var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
+		var pass  = "";
+		for (var x = 0; x < len; x++) {
+			var i = Math.floor(Math.random() * chars.length);
+			pass += chars.charAt(i);
+		}
+
+		return pass;
+	}
+
 }
 
 
