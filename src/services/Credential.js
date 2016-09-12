@@ -59,9 +59,7 @@ class Credential {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.loadCredentialsObject();
-		console.log('PT0', fqdn);
 		if (this.hasKey("X509")) {
-			console.log('PT1');
 			pem.config({sync: true});
 			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
 				console.log(`read cert ${certData.commonName}`);
@@ -71,9 +69,7 @@ class Credential {
 				this.certData = certData ? certData : err;
 			});
 
-			console.log('getKey', this.getKey('X509'));
 			pem.getPublicKey(this.getKey("X509"), (err, publicKey) => {
-				console.log('PT2');
 				this.publicKeyStr     = publicKey.publicKey;
 				this.publicKeyNodeRsa = new NodeRsa();
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
