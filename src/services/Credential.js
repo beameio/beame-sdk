@@ -380,39 +380,39 @@ class Credential {
 
 						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
 
-						directoryServices.saveCerts(dirPath, payload).then(function(){
+						directoryServices.saveCerts(dirPath, payload).then(function () {
 
 							async.parallel(
 								[
 									function (callback) {
 
-										OpenSSlWrapper.createP7BCert(dirPath).then(p7b=>{
-											directoryServices.saveFileAsync(utils.makePath( dirPath,config.CertFileNames.P7B),p7b, (error,data) => {
-												if(!error){
-													callback(null,data)
+										OpenSSlWrapper.createP7BCert(dirPath).then(p7b=> {
+											directoryServices.saveFileAsync(utils.makePath(dirPath, config.CertFileNames.P7B), p7b, (error, data) => {
+												if (!error) {
+													callback(null, data)
 												}
-												else{
-													callback(error,null)
+												else {
+													callback(error, null)
 												}
 											})
-										}).catch(function(error){
-											callback(error,null);
+										}).catch(function (error) {
+											callback(error, null);
 										});
 
 									},
 									function (callback) {
 
-										OpenSSlWrapper.createPfxCert(dirPath).then(pwd=>{
-											directoryServices.saveFileAsync(utils.makePath( dirPath,config.CertFileNames.PWD),pwd, (error,data) => {
-												if(!error){
-													callback(null,data)
+										OpenSSlWrapper.createPfxCert(dirPath).then(pwd=> {
+											directoryServices.saveFileAsync(utils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
+												if (!error) {
+													callback(null, data)
 												}
-												else{
-													callback(error,null)
+												else {
+													callback(error, null)
 												}
 											})
-										}).catch(function(error){
-											callback(error,null);
+										}).catch(function (error) {
+											callback(error, null);
 										});
 									}
 								],
@@ -422,7 +422,14 @@ class Credential {
 										return;
 									}
 
-									self.updateMetadata().then(resolve).catch(reject);
+									self.updateMetadata().then(metadata => {
+
+										//reload credential
+										self.initFromData(metadata.fqdn);
+
+										//RETURN from here metadata
+										resolve(metadata)
+									}).catch(reject);
 								}
 							);
 
