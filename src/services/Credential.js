@@ -62,10 +62,10 @@ class Credential {
 		if (this.hasKey("X509")) {
 			pem.config({sync: true});
 			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
-				if ((this.fqdn || this.getKey('FQDN')) !== certData.commonName) {
+				if (this.fqdn !== certData.commonName) {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
-				this.certData = certData ? certData : err;
+				this.certData = err ? null : certData;
 			});
 
 			pem.getPublicKey(this.getKey("X509"), (err, publicKey) => {
@@ -86,7 +86,7 @@ class Credential {
 		pem.config({sync: true});
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
-				this.certData           = certData ? certData : err;
+				this.certData = err ? null : certData;
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this._store);
 				this.metadata.fqdn      = certData.commonName;
 				this.fqdn               = certData.commonName;
@@ -134,39 +134,6 @@ class Credential {
 		return ret;
 	}
 
-	//noinspection JSUnusedGlobalSymbols
-	determineCertStatus() {
-		if (this.dirShaStatus && this.dirShaStatus.length !== 0) {
-			//
-			// This means this is a brand new object and we dont know anything at all
-			this.credentials = this.readCertificateDir();
-
-		}
-		if (this.hasKey("X509")) {
-			this.state = this.state | config.CredentialStatus.CERT;
-		}
-
-		if (this.state & config.CredentialStatus.CERT && this.extractCommonName().indexOf("beameio.net")) {
-			this.state = this.state | config.CredentialStatus.BEAME_ISSUED_CERT;
-			this.state = this.state & config.CredentialStatus.NON_BEAME_CERT;
-		} else {
-
-			this.state = this.state | config.CredentialStatus.BEAME_ISSUED_CERT;
-			this.state = this.state & config.CredentialStatus.NON_BEAME_CERT;
-		}
-
-		if (this.hasKey("PRIVATE_KEY")) {
-			this.state = this.state & config.CredentialStatus.PRIVATE_KEY;
-		} else {
-			this.state = this.state | config.CredentialStatus.PRIVATE_KEY;
-		}
-	}
-
-	//noinspection JSUnusedGlobalSymbols
-	getCredentialStatus() {
-		return this.status;
-	}
-
 
 	loadCredentialsObject() {
 		this.state = this.state | config.CredentialStatus.DIR_NOTREAD;
@@ -206,8 +173,9 @@ class Credential {
 		return this.hasKey(key) ? (this[key] || this[key.toLowerCase()]) : null;
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	extractCommonName() {
-		return certData.commonName;
+		return this.certData ? this.certData.commonName : null;
 	}
 
 	getPublicKeyNodeRsa() {
@@ -300,7 +268,6 @@ class Credential {
 		let rsaKey = this.getPrivateKeyNodeRsa();
 
 		let decryptedMessage = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys);
-		var msr              = JSON.stringify(decryptedMessage);
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let payload = JSON.parse(decryptedMessage);
 
@@ -350,7 +317,6 @@ class Credential {
 	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
-	 * @param {String} fqdn
 	 * @param {String} csr
 	 * @param {SignatureToken} authToken
 	 */
