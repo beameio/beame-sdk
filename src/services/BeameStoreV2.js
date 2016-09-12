@@ -56,9 +56,26 @@ class BeameStoreV2 {
 			// for now we will keep it at the top level, and as soon as parent is added to the store it will getMetadataKey reassigned
 			// just a top level credential or a credential we are placing on top, untill next one is added
 		});
+	}
 
+	fetch(fqdn){
+		if(fqdn.indexOf('beameio.net') > 0){
+			this.getRemoteCreds(parentFqdn).then(
+					/**
+					 * @param {RemoteCreds} data
+					 * @returns {*}
+					 */
+					function (data) {
+						let remoteCred = new Credential(self);
+						remoteCred.initFromX509(data.x509, data.metadata);
+						self.addCredential(remoteCred);
+						remoteCred.saveCredentialsObject();
+					}
+			}).catch(reject);
+		}
 
 	}
+
 
 	addCredential(credential) {
 		let parent_fqdn = credential.getMetadataKey(config.MetadataProperties.PARENT_FQDN),

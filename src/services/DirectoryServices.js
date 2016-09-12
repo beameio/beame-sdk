@@ -303,6 +303,10 @@ class DataServices {
 		return metadata;
 	}
 
+	writeMetadataSync(dir, fqdn, metadata) {
+		this.saveFile(dir, config.metadataFileName, JSON.stringify(data, null, 2));
+	}
+
 	/**
 	 *
 	 * @param {String} path

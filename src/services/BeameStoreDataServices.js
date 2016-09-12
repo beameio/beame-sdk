@@ -50,11 +50,10 @@ const _            = require('underscore');
 class BeameStoreDataServices {
 
 
-	constructor(fqdn, store) {
+	constructor(fqdn) {
 
 		this.directoryServices = new (require('./DirectoryServices'))();
 		this.fqdn              = fqdn;
-		this._store            = store;
 	}
 
 	readObject(name) {
@@ -72,6 +71,10 @@ class BeameStoreDataServices {
 		return this.directoryServices.readMetadataSync(config.localCertsDirV2, this.fqdn);
 	}
 
+	writeMetadataSync(metadata){
+		return this.directoryServices.writeMetadataSync(config.localCertsDirV2, this.fqdn, metadata);
+	}
+
 	/**
 	 *
 	 * @param {Credential} cred
@@ -81,38 +84,6 @@ class BeameStoreDataServices {
 			cred.metadata.path = path.join(config.localCertsDirV2, this.fqdn);
 		}
 	}
-
-	/**
-	 * request fqdn
-	 * @param {RequestFqdnOptions} options
-	 * @returns {*}
-	 */
-	getFqdn(options) {
-
-		if (options.useBeameAuthData === true) {
-
-			return this._getZeroLevelFqdnWithBeamePermissions(options.metadata);
-		}
-
-		if (options.parentFqdn) {
-			var parentCredentials = this._store.search(options.parentFqdn)[0];
-			if (parentCredentials.hasPrivateKey() === true) {
-				//
-				// We can use the local credentials to issue the request.
-				//
-				//
-				return this._getFqdnWithLocalParentFqdn(parentCredentials, options.metadata);
-			}
-
-		}
-
-		if (options.token && options.token.authenticationUrl) {
-			return this._getFqdnNameWithAuthorizationToken(options.token);
-		}
-	}
-
-
-
 }
 
 
