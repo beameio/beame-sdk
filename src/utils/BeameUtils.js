@@ -77,6 +77,7 @@ var AwsRegions = [
  * @property {boolean} answerExpected => if response data expecting from provision
  */
 
+//noinspection JSUnusedGlobalSymbols
 /**
  * @typedef {Object} EdgeShortData
  * @property {String} endpoint
@@ -328,5 +329,9 @@ module.exports = {
 
 			addresses.length > 0 ? resolve(addresses) : reject('Local interfaces not found');
 		});
+	},
+
+	isAmazon: function () {
+		return process.env.NODE_ENV ? true : false;
 	}
 };
