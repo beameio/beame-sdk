@@ -33,20 +33,20 @@
  * @property {String|null} error
  */
 
-const config       = require('../../config/Config');
-const module_name  = config.AppModules.BeameEntity;
-const BeameLogger  = require('../utils/Logger');
-const logger       = new BeameLogger(module_name);
-const beameUtils   = require('../utils/BeameUtils');
-const path         = require('path');
-const _            = require('underscore');
+const config      = require('../../config/Config');
+const module_name = config.AppModules.BeameEntity;
+const BeameLogger = require('../utils/Logger');
+const logger      = new BeameLogger(module_name);
+const beameUtils  = require('../utils/BeameUtils');
+const path        = require('path');
+const _           = require('underscore');
 
 
 class BeameStoreDataServices {
 
 
 	constructor(fqdn) {
-		this._certsDir = config.localCertsDirV2;
+		this._certsDir         = config.localCertsDirV2;
 		this.directoryServices = new (require('./DirectoryServices'))();
 		this.fqdn              = fqdn;
 	}
@@ -58,7 +58,7 @@ class BeameStoreDataServices {
 
 	writeObject(name, data) {
 		let folderPath = path.join(this._certsDir, this.fqdn);
-		this.directoryServices.createDir(folderPath);
+		this._createDir();
 		return this.directoryServices.saveFile(folderPath, name, data);
 	}
 
@@ -66,8 +66,13 @@ class BeameStoreDataServices {
 		return this.directoryServices.readMetadataSync(this._certsDir, this.fqdn);
 	}
 
-	writeMetadataSync(metadata){
-		return this.directoryServices.writeMetadataSync( this._certsDir, this.fqdn, metadata);
+	writeMetadataSync(metadata) {
+		this._createDir();
+		return this.directoryServices.writeMetadataSync(this._certsDir, this.fqdn, metadata);
+	}
+
+	_createDir() {
+		this.directoryServices.createDir(beameUtils.makePath(this._certsDir, this.fqdn));
 	}
 
 	/**
