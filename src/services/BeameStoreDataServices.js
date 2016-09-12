@@ -45,6 +45,8 @@ const apiActions   = require('../../config/ApiConfig.json').Actions;
 const beameUtils   = require('../utils/BeameUtils');
 const path         = require('path');
 const _            = require('underscore');
+
+
 class BeameStoreDataServices {
 
 
@@ -53,34 +55,6 @@ class BeameStoreDataServices {
 		this.directoryServices = new (require('./DirectoryServices'))();
 		this.fqdn              = fqdn;
 		this._store            = store;
-	}
-
-
-	/**
-	 *
-	 * @param {FqdnMetadata} metadata
-	 * @returns {ValidationResult}
-	 * @private
-	 */
-	static _validateZeroLevelMetadata(metadata) {
-
-		/** @type {ValidationResult} **/
-		var result = {
-			"isValid": true,
-			"error":   null
-		};
-
-		if (!metadata.email) {
-			result.error = 'Email required';
-			return result;
-		}
-
-		if (!metadata.name) {
-			result.error = 'Name required';
-			return result;
-		}
-
-		return result;
 	}
 
 	readObject(name) {
@@ -137,83 +111,6 @@ class BeameStoreDataServices {
 		}
 	}
 
-
-	/**
-	 *
-	 * @param {Credential} parentCredentials
-	 * @param {FqdnMetadata} metadata
-	 * @returns {Promise.<string>}
-	 * @private
-	 */
-	_getFqdnWithLocalParentFqdn(parentCredentials, metadata) {
-		return new Promise(
-			(resolve, reject) => {
-
-
-			}
-		);
-	}
-
-	/**
-	 *
-	 * @param {FqdnMetadata} metadata
-	 * @returns {Promise.<string>}
-	 * @private
-	 */
-	_getZeroLevelFqdnWithBeamePermissions(metadata) {
-		return new Promise(
-			(resolve, reject) => {
-				//validate input
-				var validationResult = this._validateZeroLevelMetadata(metadata);
-				if (!validationResult.isValid) {
-					reject(validationResult.error);
-					return;
-				}
-
-				//do post to provision
-				provisionApi.setAuthData(beameUtils.getAuthToken(homedir, config.beameZeroLevelAuthData.PK_PATH, config.beameZeroLevelAuthData.CERT_PATH));
-
-				var postData = {
-					name:  metadata.name,
-					email: metadata.email
-				};
-
-				var apiData = beameUtils.getApiData(apiActions.DeveloperApi.CreateDeveloper.endpoint, postData, true);
-
-				logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registering, email);
-
-				provisionApi.runRestfulAPI(apiData, function (error, payload) {
-					if (!error) {
-
-						logger.printStandardEvent(BeameLogger.EntityLevel.Developer, BeameLogger.StandardFlowEvent.Registered, payload.hostname);
-
-						resolve(payload.hostname);
-					}
-					else {
-						reject(error);
-					}
-
-				});
-			}
-		);
-	}
-
-	/**
-	 *
-	 * @param {BeameAuthorizationToken} authToken
-	 * @private
-	 */
-	_getFqdnNameWithAuthorizationToken(authToken) {
-		return new Promise(
-			(resolve, reject) => {
-
-			}
-		);
-	}
-
-
-	getCerts(csr) {
-	}
 
 
 }

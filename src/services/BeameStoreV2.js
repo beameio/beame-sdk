@@ -223,7 +223,7 @@ class BeameStoreV2 {
 					let dirPath = newCred.metadata.path;
 
 					self.directoryServices.mkdirp(dirPath).then(function(){
-						self.directoryServices.saveFile(dirPath, config.metadataFileName, metadata, function (error) {
+						self.directoryServices.saveFile(dirPath, config.metadataFileName,  JSON.stringify(metadata, null, 2), function (error) {
 							if (!error) {
 								var cred = self.getCredential(fqdn);
 								resolve(cred);
