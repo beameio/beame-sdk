@@ -66,10 +66,10 @@ class BeameStoreV2 {
 						/**
 						 * @param {RemoteCreds} data
 						 */
-						function (data) {
+						 data => {
 							let remoteCred = new Credential(this);
 							remoteCred.initFromX509(data.x509, data.metadata);
-							self.addCredential(remoteCred);
+							this.addCredential(remoteCred);
 							remoteCred.saveCredentialsObject();
 							resolve()
 						}
@@ -258,7 +258,7 @@ class BeameStoreV2 {
 						 * @param {RemoteCreds} data
 						 * @returns {*}
 						 */
-						function (data) {
+						data => {
 							let remoteCred = new Credential(self);
 							remoteCred.initFromX509(data.x509, {parent_fqdn: parentFqdn, fqdn: fqdn});
 							self.addCredential(remoteCred);
