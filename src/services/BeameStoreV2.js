@@ -1,4 +1,3 @@
-//
 // Created by Zeev Glozman
 // Beame.io Ltd, 2016.
 

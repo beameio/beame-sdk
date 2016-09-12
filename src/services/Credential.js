@@ -64,7 +64,6 @@ class Credential {
 			console.log('PT1');
 			pem.config({sync: true});
 			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
-				console.log(`read cert ${certData.commonName}`);
 				if ((this.fqdn || this.getKey('FQDN')) !== certData.commonName) {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
@@ -287,7 +286,6 @@ class Credential {
 	}
 
 	decrypt(encryptedMessage) {
-		console.log("In credentials decrypt");
 		if (encryptedMessage.signature) {
 			let signingCredential = this._store.search(encryptedMessage.signedBy)[0];
 			if (!signingCredential) {
@@ -307,7 +305,6 @@ class Credential {
 
 		let decryptedMessage = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys);
 		var msr              = JSON.stringify(decryptedMessage);
-		console.log('decryptedMessage ${ msr }');
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let payload = JSON.parse(decryptedMessage);
 

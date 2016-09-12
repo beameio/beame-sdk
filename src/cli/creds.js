@@ -46,6 +46,16 @@ module.exports = {
 	convertCredentialsToV2
 };
 
+function createWithToken(token, fqdn, authSrvFqdn) {
+
+
+	//
+	///
+
+	//1. get fqdn from authoriztion server (token)
+	//2.
+
+}
 
 /** private helpers and services **/
 
