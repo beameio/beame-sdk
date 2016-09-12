@@ -32,7 +32,6 @@ class EC2AuthInfo {
 					if(outstandingRequestsCount == 0) {
 						ret.sig = `-----BEGIN PKCS7-----\n${ret.sig}\n-----END PKCS7-----\n`;
 						resolve(JSON.stringify(ret));
-						return;
 					}
 				})
 			}
@@ -56,6 +55,4 @@ class EC2AuthInfo {
 	}
 }
 
-module.exports = {
-	EC2AuthInfo
-};
+module.exports = EC2AuthInfo;

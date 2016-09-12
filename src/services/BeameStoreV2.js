@@ -18,14 +18,13 @@
  */
 
 
-//const exec        = require('child_process').exec;
 const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameStore;
 const logger      = new (require('../utils/Logger'))(module_name);
 const provApi     = new (require('./ProvisionApi'))();
 const Credential  = require('./Credential');
-//const _           = require('underscore');
 const async       = require('async');
+const utils         = require('../utils/BeameUtils');
 
 let _store = null;
 
@@ -189,15 +188,17 @@ class BeameStoreV2 {
 			}
 		}
 		return results;
-	};
+	}
 
 
+	//noinspection JSUnusedGlobalSymbols
 	addToStore(x509) {
 		let credential = new Credential(this);
 		credential.initFromX509(x509);
 		this.addCredential(credential);
-	};
+	}
 
+	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {String} fqdn
@@ -222,7 +223,7 @@ class BeameStoreV2 {
 					let dirPath = newCred.metadata.path;
 
 					self.directoryServices.mkdirp(dirPath).then(function(){
-						self.directoryServices.saveFile(dirPath, config.metadataFileName,  JSON.stringify(metadata, null, 2), function (error) {
+						self.directoryServices.saveFile(dirPath, config.metadataFileName,  utils.stringify(metadata), function (error) {
 							if (!error) {
 								var cred = self.getCredential(fqdn);
 								resolve(cred);
@@ -232,8 +233,6 @@ class BeameStoreV2 {
 							}
 						});
 					}).catch(reject);
-
-
 				}
 
 
@@ -270,8 +269,7 @@ class BeameStoreV2 {
 	 */
 	getRemoteCreds(fqdn) {
 
-		return new Promise(
-			(resolve, reject) => {
+		return new Promise((resolve, reject) => {
 
 				/** @type {RemoteCreds} */
 				var payload = {

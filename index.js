@@ -6,6 +6,7 @@ module.exports = {
 	Logger:            require('./src/utils/Logger'),
 	ProvApi:           require('./src/services/ProvisionApi'),
 	BeameUtils:        require('./src/utils/BeameUtils'),
-	DirectoryServices: require('./src/services/DirectoryServices')
-}
-;
+	DirectoryServices: require('./src/services/DirectoryServices'),
+	EC2AuthInfo:       require('./src/services/EC2AuthInfo')
+};
+
