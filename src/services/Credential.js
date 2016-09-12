@@ -243,32 +243,32 @@ class Credential {
 	encrypt(fqdn, data, signingFqdn) {
 		let signingCredential;
 		if (signingFqdn) {
-			signingCredential = this._store.search(signingFqdn)[0];
+			signingCredential = this._store.getCredential(signingFqdn);
 		}
 		let targetRsaKey = this.getPublicKeyNodeRsa();
 
-
-		if (targetRsaKey) {
-			let sharedCiphered = require('../cli/crypto').aesEncrypt(data);
-
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
-			sharedCiphered[1]          = "";
-
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			let messageToSign = {
-				rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
-				data:            sharedCiphered[0],
-				encryptedFor:    fqdn
-			};
-			if (signingCredential) {
-				return signingCredential.sign(messageToSign);
-			}
-
-			return messageToSign;
+		if (!targetRsaKey) {
+			throw new Error("encrypt failure, public key not found");
 		}
-		logger.error("encrypt failure, public key not found");
-		return null;
+
+
+		let sharedCiphered = require('../cli/crypto').aesEncrypt(data);
+
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
+		sharedCiphered[1]          = "";
+
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		let encryptedUnsignedMessage = {
+			rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
+			data:            sharedCiphered[0],
+			encryptedFor:    fqdn
+		};
+		if (signingCredential) {
+			return signingCredential.sign(encryptedUnsignedMessage);
+		}
+
+		return encryptedUnsignedMessage;
 	}
 
 	checkSignature(data, fqdn, signature) {

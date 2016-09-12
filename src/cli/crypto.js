@@ -80,12 +80,11 @@ function aesDecrypt(data) {
  * @param {String} fqdn - entity to encrypt for
  */
 function encrypt(data, fqdn, signingFqdn) {
-	let credential = store.search(fqdn)[0];
-	if (credential ) {
-		return credential.encrypt(fqdn, data, signingFqdn );
+	let targetCredential = store.getCredential(fqdn);
+	if (!targetCredential) {
+		throw new Error(`Could not find target credentail (public key to encrypt for)`);
 	}
-	logger.error("encrypt failure, public key not found");
-	return null;
+	return targetCredential.encrypt(fqdn, data, signingFqdn);
 }
 
 
@@ -96,15 +95,12 @@ function encrypt(data, fqdn, signingFqdn) {
  * @param {String} data - data to encrypt
  */
 function decrypt(data) {
-	console.log(`data ${data}`);
 	try {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let encryptedMessage = JSON.parse(data);
-		console.log(`encryptedMessage ${encryptedMessage }`);
 		if (!encryptedMessage.encryptedFor && !encryptedMessage.signature )  {
 			logger.fatal("Decrypting a wrongly formatted message", data);
 		}
-		console.log('encrypted for',  JSON.stringify(encryptedMessage));
         let targetFqdn = encryptedMessage.encryptedFor || encryptedMessage.signedData.encryptedFor;
 		let credential = store.search(targetFqdn )[0];
 		return credential.decrypt(encryptedMessage);
