@@ -140,7 +140,7 @@ class Credential {
 		}
 
 		Object.keys(config.CertificateFiles).forEach(keyName => {
-			this.beameStoreServices.writeObject(config.CertFileNames[keyName], this[keyName]);
+			this[keyName] && this.beameStoreServices.writeObject(config.CertFileNames[keyName], this[keyName]);
 		});
 
 		try {
@@ -463,4 +463,5 @@ class Credential {
 
 	}
 }
+
 module.exports = Credential;

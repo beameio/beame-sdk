@@ -286,8 +286,8 @@ class DataServices {
 		return metadata;
 	}
 
-	writeMetadataSync(dir, fqdn, metadata) {
-		this.saveFile(dir, config.metadataFileName, beameUtils.stringify(data));
+	writeMetadataSync(dir, metadata) {
+		this.saveFile(dir, config.metadataFileName, beameUtils.stringify(metadata));
 	}
 
 	/**
