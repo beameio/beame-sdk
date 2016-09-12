@@ -10,11 +10,11 @@
 
 /*### sign the data in testFIle with a key
  openssl rsautl -sign -in ./test -inkey ../../.beame/oxxmrzj0qlvsrt1h.v1.beameio.net/private_key.pem -out sig
- 
+
  #decrypt and verify
- 
+
  openssl rsautl -verify -inkey mykey.pub -in sig -pubin
- 
+
  #extract public key from certificate
  openssl x509 -pubkey -noout -in ../../.beame/oxxmrzj0qlvsrt1h.v1.beameio.net/x509.pem > pubkey.pem*/
 
@@ -42,19 +42,19 @@ function aesEncrypt(data) {
 	let cipher = crypto.Cipheriv('aes-256-cbc', sharedSecret, initializationVector);
 	let encrypted = cipher.update(data, 'utf8', 'base64');
 	encrypted += cipher.final('base64');
-	
+
 	return [{AES256CBC: encrypted}, {
 		IV: initializationVector.toString('base64'),
 		sharedCipher: sharedSecret.toString('base64')
 	}];
-	
+
 }
 
 /**
  * Decrypts given data
  * @public
  * @method Crypto.aesDecrypt
- * @param {AesEncryptedData} data - data to encrypt
+ * @param {Array} data - data to encrypt
  * @returns {String} data - decrypted plaintext
  */
 function aesDecrypt(data) {
@@ -65,7 +65,7 @@ function aesDecrypt(data) {
 	}
 	let cipher = new Buffer(data[1].sharedCipher, "base64");
 	let IV = new Buffer(data[1].IV, "base64");
-	
+
 	let decipher = crypto.createDecipheriv("aes-256-cbc", cipher, IV);
 	let dec = decipher.update(data[0].AES256CBC, 'base64', 'utf8');
 	dec += decipher.final('utf8');
