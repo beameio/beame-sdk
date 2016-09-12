@@ -24,7 +24,7 @@ const logger      = new (require('../utils/Logger'))(module_name);
 const provApi     = new (require('./ProvisionApi'))();
 const Credential  = require('./Credential');
 const async       = require('async');
-const utils         = require('../utils/BeameUtils');
+const utils       = require('../utils/BeameUtils');
 
 let _store = null;
 
@@ -58,34 +58,37 @@ class BeameStoreV2 {
 		});
 	}
 
-	fetch(fqdn){
-		if(fqdn.indexOf('beameio.net') > 0){
-			this.getRemoteCreds(parentFqdn).then(
-					/**
-					 * @param {RemoteCreds} data
-					 * @returns {*}
-					 */
-					function (data) {
-						let remoteCred = new Credential(self);
-						remoteCred.initFromX509(data.x509, data.metadata);
-						self.addCredential(remoteCred);
-						remoteCred.saveCredentialsObject();
-					}
-			}).catch(reject);
-		}
-
+	//noinspection JSUnusedGlobalSymbols
+	fetch(fqdn) {
+		return new Promise((resolve, reject) => {
+				if (fqdn.indexOf('beameio.net') > 0) {
+					this.getRemoteCreds(fqdn).then(
+						/**
+						 * @param {RemoteCreds} data
+						 */
+						function (data) {
+							let remoteCred = new Credential(this);
+							remoteCred.initFromX509(data.x509, data.metadata);
+							self.addCredential(remoteCred);
+							remoteCred.saveCredentialsObject();
+							resolve()
+						}
+					).catch(reject);
+				}
+			}
+		);
 	}
 
 
 	addCredential(credential) {
 		let parent_fqdn = credential.getMetadataKey(config.MetadataProperties.PARENT_FQDN),
-			fqdn = credential.fqdn;
+		    fqdn        = credential.fqdn;
 
 		if (this.credentials[fqdn]) {
 			throw new Error(`Credentials for fqdn ${fqdn} are already present`);
 		}
 
-		let parentNode  = parent_fqdn && this.getCredential(parent_fqdn);
+		let parentNode = parent_fqdn && this.getCredential(parent_fqdn);
 		if (parentNode) {
 			parentNode.children.push(credential);
 			credential.parent = parentNode;
@@ -143,7 +146,7 @@ class BeameStoreV2 {
 	_search(fqdn, searchArray) {
 		//console.log(`starting _search fqdn=${fqdn} sa=`, searchArray);
 		for (let item in searchArray) {
-			if(searchArray.hasOwnProperty(item)){
+			if (searchArray.hasOwnProperty(item)) {
 				//	console.log(`comparing ${searchArray[item].getMetadataKey("FQDN")} ${fqdn}`);
 				if (searchArray[item].fqdn === fqdn) {
 					return searchArray[item];
@@ -237,21 +240,13 @@ class BeameStoreV2 {
 
 					self.addCredential(newCred);
 
-					let dirPath = newCred.metadata.path;
+					newCred.saveCredentialsObject();
 
-					self.directoryServices.mkdirp(dirPath).then(function(){
-						self.directoryServices.saveFile(dirPath, config.metadataFileName,  utils.stringify(metadata), function (error) {
-							if (!error) {
-								var cred = self.getCredential(fqdn);
-								resolve(cred);
-							}
-							else {
-								reject(error);
-							}
-						});
-					}).catch(reject);
+					var cred = self.getCredential(fqdn);
+
+					cred ? resolve(cred) : reject(`Credential not loaded`);
+
 				}
-
 
 				if (parentCreds && parentPublicKey) {
 					if (parentCreds.checkSignatureToken(token)) {

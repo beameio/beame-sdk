@@ -50,7 +50,7 @@ class Credential {
 
 	initWithFqdn(fqdn, metadata) {
 		this.fqdn               = fqdn;
-		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store		this.parseMetadata(metadata);
+		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store	,this.parseMetadata(metadata));
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
 	}
@@ -80,7 +80,7 @@ class Credential {
 			this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
 		}
 	}
-	
+
 
 	initFromX509(x509, metadata) {
 		pem.config({sync: true});
@@ -138,11 +138,11 @@ class Credential {
 		if(!this || !this.metadata  || !this.metadata.path){
 			return;
 		}
-			
+
 		Object.keys(config.CertificateFiles).forEach(keyName => {
 			this.beameStoreServices.writeObject(config.CertFileNames[keyName], this[keyName]);
 		});
-		
+
 		try {
 			this.beameStoreServices.writeMetadataSync(this.metadata);
 			//noinspection encies,nodemodulesdependencies

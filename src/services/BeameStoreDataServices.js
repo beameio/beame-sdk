@@ -33,15 +33,10 @@
  * @property {String|null} error
  */
 
-const os           = require('os');
-const home         = os.homedir();
-const homedir      = home;
 const config       = require('../../config/Config');
 const module_name  = config.AppModules.BeameEntity;
 const BeameLogger  = require('../utils/Logger');
 const logger       = new BeameLogger(module_name);
-const provisionApi = new (require('../services/ProvisionApi'))();
-const apiActions   = require('../../config/ApiConfig.json').Actions;
 const beameUtils   = require('../utils/BeameUtils');
 const path         = require('path');
 const _            = require('underscore');
@@ -51,28 +46,28 @@ class BeameStoreDataServices {
 
 
 	constructor(fqdn) {
-
+		this._certsDir = config.localCertsDirV2;
 		this.directoryServices = new (require('./DirectoryServices'))();
 		this.fqdn              = fqdn;
 	}
 
 	readObject(name) {
-		let p = path.join(config.localCertsDirV2, this.fqdn, name);
+		let p = path.join(this._certsDir, this.fqdn, name);
 		return this.directoryServices.readObject(p);
 	}
 
 	writeObject(name, data) {
-		let folderPath = path.join(config.localCertsDirV2, this.fqdn);
+		let folderPath = path.join(this._certsDir, this.fqdn);
 		this.directoryServices.createDir(folderPath);
 		return this.directoryServices.saveFile(folderPath, name, data);
 	}
 
 	readMetadataSync() {
-		return this.directoryServices.readMetadataSync(config.localCertsDirV2, this.fqdn);
+		return this.directoryServices.readMetadataSync(this._certsDir, this.fqdn);
 	}
 
 	writeMetadataSync(metadata){
-		return this.directoryServices.writeMetadataSync(config.localCertsDirV2, this.fqdn, metadata);
+		return this.directoryServices.writeMetadataSync(this._certsDir, this.fqdn, metadata);
 	}
 
 	/**
@@ -81,7 +76,7 @@ class BeameStoreDataServices {
 	 */
 	setFolder(cred) {
 		if (!_.isEmpty(cred) && cred.hasOwnProperty("metadata")) {
-			cred.metadata.path = path.join(config.localCertsDirV2, this.fqdn);
+			cred.metadata.path = path.join(this._certsDir, this.fqdn);
 		}
 	}
 }

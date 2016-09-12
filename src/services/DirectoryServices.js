@@ -5,8 +5,6 @@
 
 var path          = require('path');
 var fs            = require('fs');
-var exec          = require('child_process').exec;
-var execFile      = require('child_process').execFile;
 var async         = require('async');
 var rimraf        = require('rimraf');
 var _             = require('underscore');
@@ -20,18 +18,6 @@ var mkdirp     = require('mkdirp');
 /** @const {String} */
 
 
-/**------------------------ private methods ---------------------**/
-function randomPassword(length) {
-	var len   = length || 16;
-	var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
-	var pass  = "";
-	for (var x = 0; x < len; x++) {
-		var i = Math.floor(Math.random() * chars.length);
-		pass += chars.charAt(i);
-	}
-
-	return pass;
-}
 
 /**
  *
@@ -66,14 +52,13 @@ class DataServices {
 		}
 
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		self.saveFile(dirPath, config.metadataFileName, JSON.stringify(data, null, 2), callback);
+		self.saveFile(dirPath, config.metadataFileName, beameUtils.stringify(data), callback);
 	}
 
 	/**
 	 *
 	 * @param {String} dirPath
 	 * @param {OrderPemResponse} payload
-	 * @param finalCallback
 	 */
 	saveCerts(dirPath, payload) {
 		let self = this,
@@ -189,8 +174,6 @@ class DataServices {
 				}
 			}
 		);
-
-
 	}
 
 	/**
@@ -304,7 +287,7 @@ class DataServices {
 	}
 
 	writeMetadataSync(dir, fqdn, metadata) {
-		this.saveFile(dir, config.metadataFileName, JSON.stringify(data, null, 2));
+		this.saveFile(dir, config.metadataFileName, beameUtils.stringify(data));
 	}
 
 	/**
