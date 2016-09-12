@@ -9,7 +9,6 @@ const store = new BeameStore();
 
 let credentials = store.list();
 
-``
 let crypted = crypto.encrypt("aksljlksadjklsadljk", credentials[1].fqdn);
 let decrtped = crypto.decrypt(JSON.stringify(crypted ));;
 let cryptedAndsigned = crypto.encrypt("aksljlksadjklsadljk", credentials[1].fqdn, credentials[1].fqdn);

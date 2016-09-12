@@ -59,7 +59,9 @@ class Credential {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.loadCredentialsObject();
+		console.log('PT0', fqdn);
 		if (this.hasKey("X509")) {
+			console.log('PT1');
 			pem.config({sync: true});
 			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
 				console.log(`read cert ${certData.commonName}`);
@@ -69,7 +71,9 @@ class Credential {
 				this.certData = certData ? certData : err;
 			});
 
+			console.log('getKey', this.getKey('X509'));
 			pem.getPublicKey(this.getKey("X509"), (err, publicKey) => {
+				console.log('PT2');
 				this.publicKeyStr     = publicKey.publicKey;
 				this.publicKeyNodeRsa = new NodeRsa();
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
@@ -243,32 +247,32 @@ class Credential {
 	encrypt(fqdn, data, signingFqdn) {
 		let signingCredential;
 		if (signingFqdn) {
-			signingCredential = this._store.search(signingFqdn)[0];
+			signingCredential = this._store.getCredential(signingFqdn);
 		}
 		let targetRsaKey = this.getPublicKeyNodeRsa();
 
-
-		if (targetRsaKey) {
-			let sharedCiphered = require('../cli/crypto').aesEncrypt(data);
-
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
-			sharedCiphered[1]          = "";
-
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			let messageToSign = {
-				rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
-				data:            sharedCiphered[0],
-				encryptedFor:    fqdn
-			};
-			if (signingCredential) {
-				return signingCredential.sign(messageToSign);
-			}
-
-			return messageToSign;
+		if (!targetRsaKey) {
+			throw new Error("encrypt failure, public key not found");
 		}
-		logger.error("encrypt failure, public key not found");
-		return null;
+
+
+		let sharedCiphered = require('../cli/crypto').aesEncrypt(data);
+
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
+		sharedCiphered[1]          = "";
+
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		let encryptedUnsignedMessage = {
+			rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
+			data:            sharedCiphered[0],
+			encryptedFor:    fqdn
+		};
+		if (signingCredential) {
+			return signingCredential.sign(encryptedUnsignedMessage);
+		}
+
+		return encryptedUnsignedMessage;
 	}
 
 	checkSignature(data, fqdn, signature) {

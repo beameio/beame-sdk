@@ -80,12 +80,11 @@ function aesDecrypt(data) {
  * @param {String} fqdn - entity to encrypt for
  */
 function encrypt(data, fqdn, signingFqdn) {
-	let credential = store.search(fqdn)[0];
-	if (credential ) {
-		return credential.encrypt(fqdn, data, signingFqdn );
+	let targetCredential = store.getCredential(fqdn);
+	if (!targetCredential) {
+		throw new Error(`Could not find target credentail (public key to encrypt for)`);
 	}
-	logger.error("encrypt failure, public key not found");
-	return null;
+	return targetCredential.encrypt(fqdn, data, signingFqdn);
 }
 
 
