@@ -141,6 +141,10 @@ class BeameLogger {
 			case LogLevel.Fatal:
 				console.error(`${prefix} ${message}`);
 
+				if (level === LogLevel.Debug && !_.isEmpty(data)) {
+					console.warn(`${prefix} ${formatJSON(data)}`);
+				}
+
 				if (level === LogLevel.Fatal) process.exit(1);
 				break;
 			default:
