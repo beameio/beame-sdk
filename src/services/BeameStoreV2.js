@@ -71,7 +71,7 @@ class BeameStoreV2 {
 							remoteCred.initFromX509(data.x509, data.metadata);
 							this.addCredential(remoteCred);
 							remoteCred.saveCredentialsObject();
-							resolve()
+							resolve(remoteCred)
 						}
 					).catch(reject);
 				}

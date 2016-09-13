@@ -310,10 +310,18 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
  * @param {String} url
  * @param {Object} postData
  * @param {Function} callback
+ * @param {SignatureToken|null} [authToken]
  */
-ProvApiService.prototype.postRequest = function (url, postData, callback) {
+ProvApiService.prototype.postRequest = function (url, postData, callback,authToken) {
 	var options = _.extend(this.options || {}, {"form": postData});
 	options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+
+	if (authToken) {
+		options.headers = {
+			"X-BeameAuthToken": authToken
+		};
+	}
+
 	postToProvisionApi(url, options, "custom_post", provisionSettings.RetryAttempts, 1000, callback);
 };
 

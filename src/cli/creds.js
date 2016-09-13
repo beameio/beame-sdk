@@ -173,7 +173,6 @@ function isObject(str) {
 /**
  * Return list of credentials
  * @private
- * @param {'developer'|'atom'|'edgeclient'|'localclient'|null} [type] creds type
  * @param {String|null} [fqdn] entity fqdn
  * @returns {Array<CredsListItem>}
  */
@@ -187,7 +186,6 @@ function listCreds(fqdn) {
  * Return list of certificate properties
  * @public
  * @method Creds.show
- * @param {'developer'|'atom'|'edgeclient'|'localclient'|null} [type] creds type
  * @param {String|null} [fqdn] entity fqdn
  * @returns {Array.<CertListItem>}
  */
@@ -220,7 +218,6 @@ show.toText = function (certs) {
  * Return list of credentials
  * @public
  * @method Creds.list
- * @param {'developer'|'atom'|'edgeclient'|'localclient'|null} [type] creds type
  * @param {String|null} [fqdn] entity fqdn
  * @returns {Array.<CredsListItem>}
  */
@@ -467,7 +464,7 @@ function convertCredentialsToV2(){
 
 		directoryServices.deleteFolder(rec.path,() => {});
 		logger.info(`copying ${rec.path} to ${newPath}`);
-	};
+	}
 	console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);
 
 

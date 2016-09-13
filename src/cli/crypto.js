@@ -118,7 +118,7 @@ function decrypt(data) {
  * @method Crypto.sign
  * @param {String} data - data to sign
  * @param {String} fqdn - sign as this entity
- * @returns {string|Buffer|null}
+ * @returns {SignatureToken|null}
  */
 function sign(data, fqdn) {
 	let element = store.search(fqdn)[0];
