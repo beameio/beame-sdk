@@ -1,9 +1,11 @@
 "use strict";
 
-var provisionSettings = require('../../config/ApiConfig.json');
-var config = require('../../config/Config');
+const provisionSettings = require('../../config/ApiConfig.json');
+const config = require('../../config/Config');
 const module_name = config.AppModules.ProvisionApi;
-var logger = new (require('../utils/Logger'))(module_name);
+const logger = new (require('../utils/Logger'))(module_name);
+const beameUtils = require('../utils/BeameUtils');
+
 /**
  * @typedef {Object} CertSettings
  * @property {String} appCertPath
@@ -65,6 +67,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 
 	if (error) {
+		logger.error(`parse response error ${isObject(error) ? beameUtils.stringify(error) : error.toString()} for type ${type}`,error,module_name);
 		callback(logger.formatErrorMessage("Provision Api response error", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
@@ -96,7 +99,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		var errMsg = logger.formatErrorMessage(payload.Message || (payload.body && payload.body.message) || "Provision Api response error", module_name, {
+		var errMsg = logger.formatErrorMessage(payload.Message || payload.message || (payload.body && payload.body.message) || "Provision Api response error", module_name, {
 			"status": response.statusCode,
 			"message": payload.Message || (payload.body && payload.body.message) || payload
 		}, config.MessageCodes.ApiRestError);
