@@ -47,12 +47,13 @@ var getMetadata = function (fqdn, devDir, callback) {
 };
 var makeEntityDir = function (fqdn) {
 	return beameUtils.makePath(credsRootDir, fqdn + '/');
-};
+}
 
 
 class EntityServices {
 	constructor() {
-
+		this.store                    = new (require('../services/BeameStoreV2'))();
+		this.cred                     = null;
 	}
 
 	/**
@@ -78,128 +79,177 @@ class EntityServices {
 	 */
 	registerEntity(metadata, callback) {
 
-		if(metadata.parent_fqdn){
-			provisionApi.setAuthData(beameUtils.getAuthToken(path.join(credsRootDir,metadata.parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
-		}
-		else{
-			provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
-		}
+		// if(metadata.parent_fqdn){
+		// 	provisionApi.setAuthData(beameUtils.getAuthToken(path.join(credsRootDir,metadata.parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+		// }
+		// else{
+		// 	provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
+		// }
+		//
+		// var postData = this._formatRegisterPostData(metadata);
+		//
+		// var apiData = beameUtils.getApiData(apiActions.RegisterEntity.endpoint, postData, true);
+		//
+		// provisionApi.runRestfulAPI(apiData, function (error, payload) {
+		// 	if (!error) {
+		//
+		// 		callback && callback(null, payload);
+		//
+		// 	}
+		// 	else {
+		// 		callback && callback(error, null);
+		// 	}
+		// });
+			var self = this;
+		var crypto       = require('../../src/cli/crypto');
 
-		var postData = this._formatRegisterPostData(metadata);
+		var authServerUri = 'https://bqnp2d2beqol13qn.h40d7vrwir2oxlnn.v1.d.beameio.net/node/auth/register';
+		var sign = crypto.sign('huy', 'h40d7vrwir2oxlnn.mpk3nobb568nycf5.v1.d.beameio.net');
 
-		var apiData = beameUtils.getApiData(apiActions.RegisterEntity.endpoint, postData, true);
+		provisionApi.postRequest(authServerUri, {
+			name: 'Load Balancer'
+		}, self.completeEntityRegistration.bind(self),JSON.stringify(sign));
 
-		provisionApi.runRestfulAPI(apiData, function (error, payload) {
-			if (!error) {
 
-				callback && callback(null, payload);
-
-			}
-			else {
-				callback && callback(error, null);
-			}
-		});
 	}
 
-	completeEntityRegistration(metadata, callback) {
+	completeEntityRegistration(error, payload) {
 
-		var fqdn = metadata["fqdn"];
-		var parent_fqdn = metadata["parent_fqdn"];
 
-		if (_.isEmpty(fqdn)) {
-			callback && callback(logger.formatErrorMessage("Complete entity registration => fqdn required", module_name), null);
+		var self = this;
+
+		if (error) {
+			logger.error('SSL Proxy not registered', error);
 			return;
 		}
 
-
-		logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, fqdn);
-
-		var devDir = makeEntityDir(fqdn);
-
-		dataServices.createDir(devDir);
-
-		var payload = {
-			fqdn: fqdn
-		};
-
-		dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityCreateResponseKeys,  function (error) {
-			if (!callback) return;
-
-			if (!error) {
-				dataServices.getNodeMetadataAsync(devDir, payload.fqdn, module_name).then(onMetadataReceived, callback);
-			}
-			else {
-				callback(error, null);
-			}
-		});
-
-		/*---------- private callbacks -------------------*/
-		function onMetadataReceived(meta) {
-
-			var store        = new (require('../../src/services/BeameStoreV2'))();
-			var creds = store.search(fqdn)[0];
-
-
-		    creds.createCSR().then(
-				function onCsrCreated(csr) {
-
-					var postData = {
-						csr: csr,
-						fqdn: fqdn
-					};
-
-					var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
-
-					if(parent_fqdn){
-						provisionApi.setAuthData(beameUtils.getAuthToken(path.join(credsRootDir,parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
-					}
-					else{
-						provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
-					}
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
-
-					provisionApi.runRestfulAPI(apiData, function (error, payload) {
-						if (!error) {
-
-							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
-
-							dataServices.saveCerts(devDir, payload, function (error) {
-								if (!error) {
-									getMetadata(fqdn, devDir, function (error, payload) {
-										if (!error) {
-											dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, function (error) {
-												if (!callback) return;
-
-												if (!error) {
-													callback(null, payload);
-												}
-												else {
-													callback(error, null);
-												}
-											});
-										}
-										else {
-											callback(error, null);
-										}
-									});
-								}
-								else {
-									callback(error, null);
-								}
-							});
-						}
-						else {
-							error.data.hostname = fqdn;
-							callback(error, null);
-						}
-					});
-
-				},
-				function onCsrCreationFailed(error) {
-					callback && callback(error, null);
-				});
+		if (!payload) {
+			logger.error('!!!!!!!!!!!!!!!!!!!!!!SSL Proxy data is empty', payload);
+			return;
 		}
+
+		function onError(error) {
+			logger.fatal(error);
+		}
+
+		self.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, payload.sign).then(
+			/**
+			 *
+			 * @param {Credential} cred
+			 */
+			cred => {
+				cred.createCSR().then(
+					function onCsrReceived(csr) {
+						cred.getCert(csr, payload.sign).then(metadata => {
+							self.metadata = metadata;
+							//noinspection NodeModulesDependencies,ES6ModulesDependencies
+							dataServices.saveFile(config.rootDir, config.metadataFileName, beameUtils.stringify(metadata), (error) => {
+								if (error) {
+									logger.error(error);
+								}
+
+							});
+						}).catch(onError);
+					}).catch(onError);
+			}).catch(onError);
+
+		// var fqdn = metadata["fqdn"];
+		// var parent_fqdn = metadata["parent_fqdn"];
+		//
+		// if (_.isEmpty(fqdn)) {
+		// 	callback && callback(logger.formatErrorMessage("Complete entity registration => fqdn required", module_name), null);
+		// 	return;
+		// }
+		//
+		//
+		// logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, fqdn);
+		//
+		// var devDir = makeEntityDir(fqdn);
+		//
+		// dataServices.createDir(devDir);
+		//
+		// var payload = {
+		// 	fqdn: fqdn
+		// };
+		//
+		// dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityCreateResponseKeys,  function (error) {
+		// 	if (!callback) return;
+		//
+		// 	if (!error) {
+		// 		dataServices.getNodeMetadataAsync(devDir, payload.fqdn, module_name).then(onMetadataReceived, callback);
+		// 	}
+		// 	else {
+		// 		callback(error, null);
+		// 	}
+		// });
+		//
+		// /*---------- private callbacks -------------------*/
+		// function onMetadataReceived(meta) {
+		//
+		// 	var store        = new (require('../../src/services/BeameStoreV2'))();
+		// 	var creds = store.search(fqdn)[0];
+		//
+		//
+		//     creds.createCSR().then(
+		// 		function onCsrCreated(csr) {
+		//
+		// 			var postData = {
+		// 				csr: csr,
+		// 				fqdn: fqdn
+		// 			};
+		//
+		// 			var apiData = beameUtils.getApiData(apiActions.CompleteRegistration.endpoint, postData, true);
+		//
+		// 			if(parent_fqdn){
+		// 				provisionApi.setAuthData(beameUtils.getAuthToken(path.join(credsRootDir,parent_fqdn), config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+		// 			}
+		// 			else{
+		// 				provisionApi.setAuthData(beameUtils.getAuthToken(homedir, authData.PK_PATH, authData.CERT_PATH));
+		// 			}
+		//
+		// 			logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+		//
+		// 			provisionApi.runRestfulAPI(apiData, function (error, payload) {
+		// 				if (!error) {
+		//
+		// 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
+		//
+		// 					dataServices.saveCerts(devDir, payload, function (error) {
+		// 						if (!error) {
+		// 							getMetadata(fqdn, devDir, function (error, payload) {
+		// 								if (!error) {
+		// 									dataServices.savePayload(devDir, payload, config.ResponseKeys.EntityMetadataKeys, function (error) {
+		// 										if (!callback) return;
+		//
+		// 										if (!error) {
+		// 											callback(null, payload);
+		// 										}
+		// 										else {
+		// 											callback(error, null);
+		// 										}
+		// 									});
+		// 								}
+		// 								else {
+		// 									callback(error, null);
+		// 								}
+		// 							});
+		// 						}
+		// 						else {
+		// 							callback(error, null);
+		// 						}
+		// 					});
+		// 				}
+		// 				else {
+		// 					error.data.hostname = fqdn;
+		// 					callback(error, null);
+		// 				}
+		// 			});
+		//
+		// 		},
+		// 		function onCsrCreationFailed(error) {
+		// 			callback && callback(error, null);
+		// 		});
+		// }
 
 	}
 
