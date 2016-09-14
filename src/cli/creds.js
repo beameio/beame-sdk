@@ -25,10 +25,12 @@ require('../../initWin');
 const store               = new (require("../services/BeameStore"))();
 const store2              = new (require("../services/BeameStoreV2"))();
 const config              = require('../../config/Config');
-const module_name       = config.AppModules.BeameCreds;
+const module_name         = config.AppModules.BeameCreds;
 const BeameLogger         = require('../utils/Logger');
 const logger              = new BeameLogger(module_name);
-const directoryServices 		 = new (require('../services/DirectoryServices'))();
+const directoryServices   = new (require('../services/DirectoryServices'))();
+const provisionApi        = new (require('../services/ProvisionApi'))();
+
 const path   = require('path');
 const fs     = require('fs');
 const mkdirp = require("mkdirp");
@@ -36,6 +38,7 @@ const mkdirp = require("mkdirp");
 module.exports = {
 	show,
 	list,
+	createWithToken,
 	//renew,
 	//revoke,
 	shred,
@@ -46,16 +49,26 @@ module.exports = {
 	convertCredentialsToV2
 };
 
-function createWithToken(token, fqdn, authSrvFqdn) {
+function createWithToken(authToken, authSrvFqdn, name, callback) {
 
+	// 1. get fqdn from authoriztion server (authToken)
+	// 2.
 
-	//
-	///
+	var metadata = {};
 
-	//1. get fqdn from authoriztion server (token)
-	//2.
+	if (name) {
+		metadata.name = name;
+	}
 
+	provisionApi.postRequest(
+		(authSrvFqdn || config.authServerURL) + '/node/auth/register',
+		metadata,
+		callback,
+		authToken
+	);
 }
+
+createWithToken.toText = lineToText;
 
 /** private helpers and services **/
 

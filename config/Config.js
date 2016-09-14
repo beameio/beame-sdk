@@ -37,6 +37,9 @@ var localCertsDirV2 = path.join(rootDir, 'v2');
 /** @const {String} **/
 var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
 
+/** @const {String} **/
+var authServerURL = "https://bqnp2d2beqol13qn.h40d7vrwir2oxlnn.v1.d.beameio.net";
+
 var beameZeroLevelAuthData = {
 	"PK_PATH":   "/authData/pk.pem",
 	"CERT_PATH": "/authData/x509.pem"
@@ -245,5 +248,6 @@ module.exports = {
 	SecurityPolicy,
 	IdentityType,
 	beameZeroLevelAuthData,
-	MetadataProperties
+	MetadataProperties,
+	authServerURL,
 };
