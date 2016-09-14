@@ -30,6 +30,9 @@ const BeameLogger         = require('../utils/Logger');
 const logger              = new BeameLogger(module_name);
 const directoryServices   = new (require('../services/DirectoryServices'))();
 const provisionApi        = new (require('../services/ProvisionApi'))();
+const dataServices        = new (require('../services/DirectoryServices'))();
+const beameUtils          = require('../utils/BeameUtils');
+
 
 const path   = require('path');
 const fs     = require('fs');
@@ -63,9 +66,37 @@ function createWithToken(authToken, authSrvFqdn, name, callback) {
 	provisionApi.postRequest(
 		(authSrvFqdn || config.authServerURL) + '/node/auth/register',
 		metadata,
-		callback,
+		fqdnResponseReady,
 		authToken
 	);
+
+	function fqdnResponseReady(error, payload) {
+		if(error) {
+			callback(error, null);
+			return;
+		}
+		console.log('fqdnResponseReady %j', payload);
+
+		store2.getNewCredentials(payload.fqdn, payload.parent_fqdn, payload.sign).then(
+			cred => {
+				cred.createCSR().then(
+					csr => {
+						cred.getCert(csr, payload.sign).then(metadata => {
+							//noinspection NodeModulesDependencies,ES6ModulesDependencies
+							dataServices.saveFile(config.rootDir, config.metadataFileName, beameUtils.stringify(metadata), (error) => {
+								if (error) {
+									logger.error(error);
+									onError(error);
+								}
+							});
+						}).catch(onError);
+					}).catch(onError);
+			}).catch(onError);
+
+		function onError(e) {
+			callback(e, null);
+		}
+	}
 }
 
 createWithToken.toText = lineToText;
