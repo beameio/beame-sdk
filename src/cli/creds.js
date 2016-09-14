@@ -190,29 +190,16 @@ function listCreds(fqdn) {
  * @returns {Array.<CertListItem>}
  */
 function show(fqdn) {
-	logger.debug(`show ${type} ${fqdn}`);
 
-	var creds = listCreds(type, fqdn);
-	return creds.map(cert => store.search(cert.hostname)[0]).filter(item => item.X509).map(item => {
-		var data      = x509.parseCert(item.X509 + "");
-		data['level'] = item.level;
-		return data;
-	});
+	var creds = store2.getCredential(fqdn);
+	if (!creds) {
+		throw new Error(`show: fqdn ${fqdn} was not found`);
+	}
 
+	return creds.metadata;
 }
 
-show.toText = function (certs) {
-	var table = new Table({
-		head:      ["level", "hostname", "print", "serial"],
-		colWidths: [15, 80, 65, 30]
-	});
-
-	certs.forEach(xcert => {
-		//noinspection JSUnresolvedVariable
-		table.push([xcert.level, xcert.subject.commonName, xcert.fingerPrint, xcert.serial]);
-	});
-	return table;
-};
+show.toText = lineToText;
 
 /**
  * Return list of credentials
