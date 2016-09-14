@@ -17,8 +17,6 @@ const AuthServerEndPoint = "https://registration-staging.beameio.net";
 
 const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 
-const AuthorizationAtomFqdn     = "hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net";
-const AuthenticationAtomFqdn    = "jaclmjhdflzibbm1.w3ndpqy0sxf9zpjy.v1.beameio.net";
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 /** @const {String} **/
@@ -239,8 +237,6 @@ module.exports = {
 	AtomServerRequests,
 	SNIServerPort,
 	AuthServerEndPoint,
-	AuthorizationAtomFqdn,
-	AuthenticationAtomFqdn,
 	PKsFileName,
 	CertEndpoint,
 	InitFirstRemoteEdgeClient,
