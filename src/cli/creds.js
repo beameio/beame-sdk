@@ -268,16 +268,16 @@ show.toText = lineToText;
  */
 function list(regex) {
 	logger.debug(`list  ${regex}`);
-	return listCreds(regex || '.');
+	return listCreds(regex || '.' );
 }
 
 list.toText = function (creds) {
 	var table = new Table({
-		head:      ['name', 'fqdn', 'parent', 'path'],
-		colWidths: [40, 65, 55, 55]
+		head:      ['name', 'fqdn', 'parent', 'priv/k'],
+		colWidths: [40, 65, 55, 10]
 	});
 	creds.forEach(item => {
-		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN'), item.getMetadataKey('path')]);
+		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN'), item.getKey('PRIVATE_KEY') ? 'Y' : 'N']);
 	});
 	return table;
 };
@@ -513,6 +513,8 @@ function convertCredentialsToV2() {
 		logger.info(`copying ${rec.path} to ${newPath}`);
 	}
 	console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);
+
+
 
 
 }
