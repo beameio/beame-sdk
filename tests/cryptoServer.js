@@ -32,8 +32,7 @@ const handlers = {
 		peerPubKeyDerBase64 = data.key;
 
 		var targetCreds = new Credential();
-		targetCreds.publicKeyNodeRsa = new NodeRsa();
-		targetCreds.publicKeyNodeRsa.importKey('-----BEGIN PUBLIC KEY-----\n' + peerPubKeyDerBase64 + '-----END PUBLIC KEY-----\n', "pkcs8-public-pem");
+		targetCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
 
 		var encryptedPubKey = targetCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', creds.getPublicKeyDER64());
 		console.log(encryptedPubKey);

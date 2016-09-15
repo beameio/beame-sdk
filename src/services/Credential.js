@@ -105,6 +105,12 @@ class Credential {
 		pem.config({sync: false});
 	}
 
+	initFromPubKeyDer64(pubKeyDerBase64) {
+		var targetCreds = new Credential();
+		this.publicKeyNodeRsa = new NodeRsa();
+		this.publicKeyNodeRsa.importKey('-----BEGIN PUBLIC KEY-----\n' + pubKeyDerBase64 + '-----END PUBLIC KEY-----\n', "pkcs8-public-pem");
+	}
+
 	//endregion
 
 	//region Save/load services
