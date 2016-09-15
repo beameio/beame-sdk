@@ -34,11 +34,11 @@ const handlers = {
 		var targetCreds = new Credential();
 		targetCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
 
-		var encryptedPubKey = targetCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', creds.getPublicKeyDER64());
-		console.log(encryptedPubKey);
+		var encryptedKey = targetCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', creds.getPublicKeyDER64());
+		console.log(encryptedKey);
 		// io.emit('event', {type: 'key', payload: {key: creds.getPublicKeyDER64()}});
 
-		return {type: 'keyResponse', payload: {encryptedKey: encryptedPubKey}};
+		return {type: 'keyResponse', payload: {encryptedKey}};
 	}
 }
 

@@ -21,6 +21,8 @@ const handlers = {
 	keyResponse(data) {
 		console.log('KEY RESPONSE PAYLOAD %j', data);
 		peerPubKeyDerBase64 = data.key;
+		var decrypted = creds.decrypt(data.encryptedKey);
+		console.log('keyResponse decrypted %j', decrypted);
 		return {type: 'unknown', payload: 'not-yet'};
 	}
 }
