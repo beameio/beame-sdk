@@ -1,8 +1,12 @@
 "use strict";
 
-const io		= require('socket.io')();
-const tunnel    = require('../src/cli/tunnel');
-const fqdn		= process.argv[2];
+const io            = require('socket.io')();
+const NodeRsa       = require("node-rsa");
+
+const store2        = new (require("../src/services/BeameStoreV2"))();
+const tunnel        = require('../src/cli/tunnel');
+const fqdn          = process.argv[2];
+const Credential    = require('../src/services/Credential');
 
 // SOCKET_MSG_TYPES[] = { @"key", @"signkey",@"data",@"symdata",@"symdatawithiv",@"cert"};
 
@@ -26,6 +30,16 @@ const handlers = {
 	key(data) {
 		console.log('KEY PAYLOAD %j', data);
 		peerPubKeyDerBase64 = data.key;
+
+		var targetCreds = new Credential();
+		targetCreds.publicKeyNodeRsa = new NodeRsa();
+		targetCreds.publicKeyNodeRsa.importKey('-----BEGIN PUBLIC KEY-----\n' + peerPubKeyDerBase64 + '-----END PUBLIC KEY-----\n', "pkcs8-public-pem");
+
+		var encryptedPubKey = targetCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', creds.getPublicKeyDER64());
+		console.log(encryptedPubKey);
+		// io.emit('event', {type: 'key', payload: {key: creds.getPublicKeyDER64()}});
+
+		return {type: 'keyResponse', payload: {encryptedKey: encryptedPubKey}};
 	}
 }
 
@@ -45,5 +59,6 @@ io.on('connection', client => {
 		}
 		result = handlers[data.type](data.payload);
 		console.log('SocketIO result: %j', result);
+		client.emit('event', result);
 	});
 });

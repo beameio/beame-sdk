@@ -317,7 +317,7 @@ class Credential {
 	}
 
 	checkSignatureToken(token) {
-		return this.checkSignature(token.signedData, token.signedBy, token.signature)
+		return this.checkSignature(token.signedData, token.signedBy, token.signature);
 	}
 
 	decrypt(encryptedMessage) {
