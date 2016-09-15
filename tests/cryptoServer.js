@@ -25,20 +25,27 @@ console.log(`Using local port ${io.httpServer.address().port}`);
 // tunnel.httpsTunnel(fqdn, '127.0.0.1', io.httpServer.address().port, 'http');
 
 var peerPubKeyDerBase64 = null;
+var sharedSecret = null;
 
 const handlers = {
 	key(data) {
 		console.log('KEY PAYLOAD %j', data);
 		peerPubKeyDerBase64 = data.key;
 
-		var targetCreds = new Credential();
-		targetCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
+		var peerCreds = new Credential();
+		peerCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
 
-		var encryptedKey = targetCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', creds.getPublicKeyDER64());
+		var encryptedKey = peerCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', creds.getPublicKeyDER64());
 		console.log(encryptedKey);
 		// io.emit('event', {type: 'key', payload: {key: creds.getPublicKeyDER64()}});
 
 		return {type: 'keyResponse', payload: {encryptedKey}};
+	},
+	aesKey(data) {
+		// XXX continue here.
+		// Getting sharedSecret wrong. Probably encoding issues because it starts correctly.
+		sharedSecret = new Buffer(creds.decrypt(data.encryptedSharedSecret, 'utf-8'));
+		console.log('sharedSecret %j', sharedSecret);
 	}
 }
 
