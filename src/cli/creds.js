@@ -259,11 +259,11 @@ function list(regex) {
 
 list.toText = function (creds) {
 	var table = new Table({
-		head:      ['name', 'fqdn', 'parent'],
-		colWidths: [40, 65, 55]
+		head:      ['name', 'fqdn', 'parent', 'priv/k'],
+		colWidths: [40, 65, 55, 10]
 	});
 	creds.forEach(item => {
-		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN')]);
+		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN'), item.getKey('PRIVATE_KEY') ? 'Y' : 'N']);
 	});
 	return table;
 };
