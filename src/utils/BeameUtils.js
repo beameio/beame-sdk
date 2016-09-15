@@ -82,7 +82,6 @@ var AwsRegions = [
  * @typedef {Object} EdgeShortData
  * @property {String} endpoint
  * @property {String} region
- * @property {String} zone
  * @property {String} publicIp
  */
 
@@ -189,7 +188,6 @@ module.exports = {
 						var edge   = {
 							endpoint: data.instanceData.endpoint,
 							region:   region,
-							zone:     data.instanceData.avlZone,
 							publicIp: data.instanceData.publicipv4
 						};
 
@@ -217,10 +215,11 @@ module.exports = {
 	/**
 	 *
 	 * @param {Object} obj
+	 * @param {Boolean|null} [format]
 	 */
-	stringify: function (obj) {
+	stringify: function (obj,format) {
 		//noinspection NodeModulesDependencies,ES6ModulesDependencies
-		return JSON.stringify(obj, null, 2);
+		return format  ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
 	},
 
 	/**
@@ -333,5 +332,9 @@ module.exports = {
 
 	isAmazon: function () {
 		return process.env.NODE_ENV ? true : false;
+	},
+
+	formatError: function (error) {
+		return typeof error == "object" ? this.stringify(error) : error.toString();
 	}
 };

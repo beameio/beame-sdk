@@ -272,6 +272,13 @@ ProvApiService.prototype.setAuthData = function (authData) {
 	};
 };
 
+ProvApiService.prototype.setClientCerts = function (pk,cert) {
+	this.options = {
+		key: pk,
+		cert: cert
+	};
+};
+
 /**
  *
  * @param {ApiData} apiData

@@ -35,10 +35,10 @@ var localCertsDirV2 = path.join(rootDir, 'v2');
 
 
 /** @const {String} **/
-var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
+var authServerURL = "https://bqnp2d2beqol13qn.h40d7vrwir2oxlnn.v1.d.beameio.net";
 
 /** @const {String} **/
-var authServerURL = "https://bqnp2d2beqol13qn.h40d7vrwir2oxlnn.v1.d.beameio.net";
+var loadBalancerURL = "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";
 
 var beameZeroLevelAuthData = {
 	"PK_PATH":   "/authData/pk.pem",

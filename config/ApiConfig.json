@@ -20,6 +20,11 @@
             "GetMetadata": {
                 "endpoint": "/api/v1/node/get/meta"
             }
+        },
+        "AuthServerApi": {
+            "RegisterEntity": {
+                "endpoint": "/node/auth/register"
+            }
         }
     }
 }

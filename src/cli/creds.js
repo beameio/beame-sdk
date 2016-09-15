@@ -22,16 +22,14 @@ const Table = require('cli-table2');
 
 require('../../initWin');
 
-const store               = new (require("../services/BeameStore"))();
-const store2              = new (require("../services/BeameStoreV2"))();
-const config              = require('../../config/Config');
-const module_name         = config.AppModules.BeameCreds;
-const BeameLogger         = require('../utils/Logger');
-const logger              = new BeameLogger(module_name);
-const directoryServices   = new (require('../services/DirectoryServices'))();
-const provisionApi        = new (require('../services/ProvisionApi'))();
-const dataServices        = new (require('../services/DirectoryServices'))();
-const beameUtils          = require('../utils/BeameUtils');
+const store             = new (require("../services/BeameStore"))();
+const store2            = new (require("../services/BeameStoreV2"))();
+const config            = require('../../config/Config');
+const module_name       = config.AppModules.BeameCreds;
+const BeameLogger       = require('../utils/Logger');
+const logger            = new BeameLogger(module_name);
+const directoryServices = new (require('../services/DirectoryServices'))();
+const beameUtils        = require('../utils/BeameUtils');
 
 
 const path   = require('path');
@@ -41,7 +39,9 @@ const mkdirp = require("mkdirp");
 module.exports = {
 	show,
 	list,
+	signAndCreate,
 	createWithToken,
+	createWithLocalCreds,
 	//renew,
 	//revoke,
 	shred,
@@ -52,54 +52,68 @@ module.exports = {
 	convertCredentialsToV2
 };
 
-function createWithToken(authToken, authSrvFqdn, name, callback) {
+/**
+ *
+ * @param {SignatureToken} authToken
+ * @param {String|null} [authSrvFqdn]
+ * @param {String|null} [name]
+ * @param {String|null} [email]
+ * @param {String|null} [local_ip]
+ * @param {Function} callback
+ */
+function createWithToken(authToken, authSrvFqdn, name, email, local_ip, callback) {
+	var cred = new (require('../services/Credential'))(store2);
 
-	// 1. get fqdn from authoriztion server (authToken)
-	// 2.
+	cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email, local_ip).then(metadata=> {
+		callback && callback(null, metadata)
+	}).catch(error=> {
+		callback && callback(error, null)
+	})
 
-	var metadata = {};
+}
+createWithToken.toText = lineToText;
 
-	if (name) {
-		metadata.name = name;
-	}
+/**
+ *
+ * @param {String} parent_fqdn
+ * @param {String|null} [name]
+ * @param {String|null} [email]
+ * @param {String|null} [local_ip]
+ * @param {Function} callback
+ */
+function createWithLocalCreds(parent_fqdn, name, email, local_ip, callback) {
+	var cred = new (require('../services/Credential'))(store2);
 
-	provisionApi.postRequest(
-		(authSrvFqdn || config.authServerURL) + '/node/auth/register',
-		metadata,
-		fqdnResponseReady,
-		authToken
-	);
+	cred.createEntityWithLocalCreds(parent_fqdn, name, email, local_ip).then(metadata=> {
+		callback && callback(null, metadata)
+	}).catch(error=> {
+		callback && callback(error, null)
+	})
 
-	function fqdnResponseReady(error, payload) {
-		if(error) {
-			callback(error, null);
-			return;
-		}
-		console.log('fqdnResponseReady %j', payload);
+}
+createWithLocalCreds.toText = lineToText;
 
-		store2.getNewCredentials(payload.fqdn, payload.parent_fqdn, payload.sign).then(
-			cred => {
-				cred.createCSR().then(
-					csr => {
-						cred.getCert(csr, payload.sign).then(metadata => {
-							//noinspection NodeModulesDependencies,ES6ModulesDependencies
-							dataServices.saveFile(config.rootDir, config.metadataFileName, beameUtils.stringify(metadata), (error) => {
-								if (error) {
-									logger.error(error);
-									onError(error);
-								}
-							});
-						}).catch(onError);
-					}).catch(onError);
-			}).catch(onError);
+/**
+ *
+ * @param {String} signWithFqdn
+ * @param {Object|String|null} [dataToSign]
+ * @param {String|null} [authSrvFqdn]
+ * @param {String|null} [name]
+ * @param {String|null} [email]
+ * @param {String|null} [local_ip]
+ * @param {Function} callback
+ */
+function signAndCreate(signWithFqdn, dataToSign, authSrvFqdn, name, email, local_ip, callback) {
+	var cred = new (require('../services/Credential'))(store2);
 
-		function onError(e) {
-			callback(e, null);
-		}
-	}
+	cred.signWithFqdn(signWithFqdn, dataToSign).then(authToken=> {
+		createWithToken(authToken, authSrvFqdn, name, email, local_ip, callback);
+	}).catch(error=> {
+		callback && callback(error, null)
+	})
 }
 
-createWithToken.toText = lineToText;
+signAndCreate.toText = lineToText;
 
 /** private helpers and services **/
 
@@ -254,12 +268,12 @@ show.toText = lineToText;
  */
 function list(regex) {
 	logger.debug(`list  ${regex}`);
-	return listCreds(regex || '.' );
+	return listCreds(regex || '.');
 }
 
 list.toText = function (creds) {
 	var table = new Table({
-		head:      ['name', 'fqdn','parent', 'path'],
+		head:      ['name', 'fqdn', 'parent', 'path'],
 		colWidths: [40, 65, 55, 55]
 	});
 	creds.forEach(item => {
@@ -392,7 +406,7 @@ function importNonBeameCredentials(fqdn) {
 			var cert = conn.getPeerCertificate(true);
 			conn.end();
 
-			var bas64Str   = new Buffer(cert.raw, "hex").toString("base64");
+			var bas64Str = new Buffer(cert.raw, "hex").toString("base64");
 
 			var certBody = "-----BEGIN CERTIFICATE-----\r\n";
 
@@ -473,32 +487,32 @@ function revoke(fqdn) {
 	logger.debug(`revoke creds level ${creds.level}`);
 
 }
-function convertCredentialsToV2(){
+
+function convertCredentialsToV2() {
 	let creds = store.list();
 	for (let cred of creds) {
-		let rec = store.search(cred.hostname)[0];
+		let rec          = store.search(cred.hostname)[0];
 		let pathElements = rec.path.split(path.sep);
-		let lastElement = pathElements[pathElements.length - 1];
-		let newPath = path.join(config.localCertsDirV2, lastElement);
+		let lastElement  = pathElements[pathElements.length - 1];
+		let newPath      = path.join(config.localCertsDirV2, lastElement);
 		directoryServices.copyDir(rec.path, newPath);
 		let metafilePath = path.join(newPath, config.metadataFileName);
 
-		if(directoryServices.doesPathExists(metafilePath)){
+		if (directoryServices.doesPathExists(metafilePath)) {
 			let metadata = directoryServices.readJSON(metafilePath);
-			if(metadata.hostname) {
+			if (metadata.hostname) {
 				metadata.fqdn = metadata.hostname;
 				delete metadata.hostname;
 			}
 			let jsonData = JSON.stringify(metadata);
-			fs.writeFileSync(path.join(metafilePath), jsonData );
+			fs.writeFileSync(path.join(metafilePath), jsonData);
 		}
 
-		directoryServices.deleteFolder(rec.path,() => {});
+		directoryServices.deleteFolder(rec.path, () => {
+		});
 		logger.info(`copying ${rec.path} to ${newPath}`);
 	}
 	console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);
-
-
 
 
 }

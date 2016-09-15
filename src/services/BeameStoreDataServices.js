@@ -59,7 +59,7 @@ class BeameStoreDataServices {
 	writeObject(name, data) {
 		let folderPath = path.join(this._certsDir, this.fqdn);
 		this._createDir();
-		return this.directoryServices.saveFile(folderPath, name, data);
+		this.directoryServices.saveFile(folderPath, name, data);
 	}
 
 	readMetadataSync() {
@@ -68,7 +68,7 @@ class BeameStoreDataServices {
 
 	writeMetadataSync(metadata) {
 		this._createDir();
-		return this.directoryServices.writeMetadataSync(this._certsDir, this.fqdn, metadata);
+		this.directoryServices.writeMetadataSync(this._certsDir, this.fqdn, metadata);
 	}
 
 	_createDir() {
