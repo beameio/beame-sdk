@@ -201,6 +201,12 @@ class Credential {
 		return this.publicKeyNodeRsa;
 	}
 
+	getPublicKeyDER64() {
+		const pubKeyLines = this.publicKeyStr.split('\n');
+		const pubKeyDerBase64 = pubKeyLines.slice(1, pubKeyLines.length-1).join('\n');
+		return pubKeyDerBase64;
+	}
+
 	getPrivateKeyNodeRsa() {
 		return this.privateKeyNodeRsa;
 	}

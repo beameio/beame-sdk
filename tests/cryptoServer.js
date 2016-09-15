@@ -10,6 +10,8 @@ if(!fqdn) {
 	throw new Error('Must supply command line positional parameter fqdn');
 }
 
+const creds = store2.getCredential(fqdn);
+
 console.log("Starting crypto functions SocketIO server");
 io.listen(65000);
 
@@ -18,12 +20,12 @@ console.log(`Using local port ${io.httpServer.address().port}`);
 // console.log(`Will create beame tunnel using fqdn ${fqdn} to forward traffic to local SocketIO server`);
 // tunnel.httpsTunnel(fqdn, '127.0.0.1', io.httpServer.address().port, 'http');
 
-var peerPubKey = null;
+var peerPubKeyDerBase64 = null;
 
 const handlers = {
 	key(data) {
 		console.log('KEY PAYLOAD %j', data);
-		peerPubKey = data.key;
+		peerPubKeyDerBase64 = data.key;
 	}
 }
 
