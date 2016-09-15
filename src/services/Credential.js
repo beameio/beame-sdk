@@ -397,21 +397,19 @@ class Credential {
 										return;
 									}
 
-									self.updateMetadata().then(metadata => {
+									//reload credential
+									self.initFromData(fqdn);
 
-										//reload credential
-										self.initFromData(metadata.fqdn);
+									resolve();
 
-										//RETURN from here metadata
-										resolve(metadata)
-									}).catch(reject);
 								}
 							);
 
 
 						}).catch(reject);
 					}
-					else {
+					else
+						{
 						reject(error);
 					}
 				}, 'POST', JSON.stringify(authToken));
@@ -419,6 +417,7 @@ class Credential {
 		);
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	updateMetadata() {
 		let fqdn              = this.fqdn,
 		    self              = this,
