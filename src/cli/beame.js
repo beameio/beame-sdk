@@ -170,7 +170,7 @@ function usage() {
 			var params = paramsNames.map(function (paramName) {
 				var ret = '--' + paramName;
 				if (!parametersSchema[paramName])
-					logger.fatal(`Internal coding error: missing ${paramName} in parametersSchema`);
+					throw new Error(`Internal coding error: missing ${paramName} in parametersSchema`);
 				if (parametersSchema[paramName].options) {
 					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
 				} else {
