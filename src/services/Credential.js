@@ -471,7 +471,7 @@ class Credential {
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						metadata,
 						fqdnResponseReady.bind(this),
-						utils.stringify(authToken, false)
+					    utils.isObject(authToken) ? utils.stringify(authToken, false) : authToken
 					);
 				}
 

@@ -217,9 +217,9 @@ module.exports = {
 	 * @param {Object} obj
 	 * @param {Boolean|null} [format]
 	 */
-	stringify: function (obj,format) {
+	stringify: function (obj, format) {
 		//noinspection NodeModulesDependencies,ES6ModulesDependencies
-		return format  ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
+		return format ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
 	},
 
 	/**
@@ -336,5 +336,14 @@ module.exports = {
 
 	formatError: function (error) {
 		return typeof error == "object" ? this.stringify(error) : error.toString();
+	},
+
+	isObject: function (str) {
+		try {
+			return typeof str === 'object';
+		} catch (e) {
+			return false;
+		}
 	}
+
 };

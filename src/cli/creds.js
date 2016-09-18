@@ -139,7 +139,7 @@ function lineToText(line) {
 function objectToText(line) {
 	var line2 = {};
 	Object.keys(line).forEach(k => {
-		if (isObject(line[k])) {
+		if (beameUtils.isObject(line[k])) {
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			line2[k] = JSON.stringify(line[k]);
 		}
@@ -212,18 +212,6 @@ function decryptCreds(data) {
 	}
 }
 
-/**
- * @private
- * @param str
- * @returns {boolean}
- */
-function isObject(str) {
-	try {
-		return typeof str === 'object';
-	} catch (e) {
-		return false;
-	}
-}
 
 /** public methods **/
 
