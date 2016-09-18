@@ -37,9 +37,9 @@ require('../../initWin');
  */
 function aesEncrypt(data) {
 	let crypto = require('crypto');
-	let sharedSecret = crypto.randomBytes(32); // should be 128 (or 256) bits
+	let sharedSecret = crypto.randomBytes(16); // should be 128 (or 256) bits
 	let initializationVector = crypto.randomBytes(16); // IV is always 16-bytes
-	let cipher = crypto.Cipheriv('aes-256-cbc', sharedSecret, initializationVector);
+	let cipher = crypto.Cipheriv('AES-128-CBC', sharedSecret, initializationVector);
 	let encrypted = cipher.update(data, 'utf8', 'base64');
 	encrypted += cipher.final('base64');
 
