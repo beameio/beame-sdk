@@ -66,7 +66,7 @@ function aesDecrypt(data) {
 	let cipher = new Buffer(data[1].sharedCipher, "base64");
 	let IV = new Buffer(data[1].IV, "base64");
 
-	let decipher = crypto.createDecipheriv("aes-256-cbc", cipher, IV);
+	let decipher = crypto.createDecipheriv("aes-128-cbc", cipher, IV);
 	let dec = decipher.update(data[0].AES256CBC, 'base64', 'utf8');
 	dec += decipher.final('utf8');
 	return dec;
