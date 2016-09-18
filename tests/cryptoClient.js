@@ -35,7 +35,7 @@ const handlers = {
 
 		return {type: 'aesKey', payload: {encryptedSharedSecret}};
 	}
-}
+};
 
 io.on('event', data => {
 	var result;

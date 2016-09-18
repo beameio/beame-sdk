@@ -166,7 +166,7 @@ function usage() {
 			var params = paramsNames.map(function (paramName) {
 				var ret = '--' + paramName;
 				if (!parametersSchema[paramName])
-					logger.fatal("Missing " + paramName);
+					logger.fatal(`Internal coding error: missing ${paramName} in parametersSchema`);
 				if (parametersSchema[paramName].options) {
 					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
 				} else {
@@ -178,7 +178,7 @@ function usage() {
 				return ret;
 			});
 			console.log('  ' + myname + ' ' + cmdName + ' ' + subCmdName + ' ' + params.join(' '));
-		})
+		});
 	});
 	console.log("");
 	console.log("Registration URL: https://registration.beameio.net/");
