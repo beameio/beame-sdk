@@ -35,7 +35,7 @@ var parametersSchema = {
 	'requiredLevel':      {required: false, options: ['Default', 'AuthenticationServer', 'AuthorizationServer']},
 	'count':              {required: false, default: 1},
 	'sharedFolder':       {required: false},
-	'localIp':            {required: true},
+	'localIp':            {required: false},
 	'edgeFqdn':           {required: true},
 	'localPort':          {required: true},
 	'targetPort':         {required: true},
