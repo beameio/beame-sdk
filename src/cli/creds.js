@@ -58,13 +58,13 @@ module.exports = {
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
- * @param {String|null} [local_ip]
+ * @param {String|null} [localIp]
  * @param {Function} callback
  */
-function createWithToken(authToken, authSrvFqdn, name, email, local_ip, callback) {
+function createWithToken(authToken, authSrvFqdn, name, email, localIp, callback) {
 	var cred = new (require('../services/Credential'))(store2);
 
-	cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email, local_ip).then(metadata=> {
+	cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email, localIp).then(metadata=> {
 		callback && callback(null, metadata)
 	}).catch(error=> {
 		callback && callback(error, null)
@@ -78,13 +78,13 @@ createWithToken.toText = lineToText;
  * @param {String} parent_fqdn
  * @param {String|null} [name]
  * @param {String|null} [email]
- * @param {String|null} [local_ip]
+ * @param {String|null} [localIp]
  * @param {Function} callback
  */
-function createWithLocalCreds(parent_fqdn, name, email, local_ip, callback) {
+function createWithLocalCreds(parent_fqdn, name, email, localIp, callback) {
 	var cred = new (require('../services/Credential'))(store2);
 
-	cred.createEntityWithLocalCreds(parent_fqdn, name, email, local_ip).then(metadata=> {
+	cred.createEntityWithLocalCreds(parent_fqdn, name, email, localIp).then(metadata=> {
 		callback && callback(null, metadata)
 	}).catch(error=> {
 		callback && callback(error, null)
@@ -100,19 +100,18 @@ createWithLocalCreds.toText = lineToText;
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
- * @param {String|null} [local_ip]
+ * @param {String|null} [localIp]
  * @param {Function} callback
  */
-function signAndCreate(signWithFqdn, dataToSign, authSrvFqdn, name, email, local_ip, callback) {
+function signAndCreate(signWithFqdn, dataToSign, authSrvFqdn, name, email, localIp, callback) {
 	var cred = new (require('../services/Credential'))(store2);
 
 	cred.signWithFqdn(signWithFqdn, dataToSign).then(authToken=> {
-		createWithToken(authToken, authSrvFqdn, name, email, local_ip, callback);
+		createWithToken(authToken, authSrvFqdn, name, email, localIp, callback);
 	}).catch(error=> {
 		callback && callback(error, null)
 	})
 }
-
 signAndCreate.toText = lineToText;
 
 /** private helpers and services **/
