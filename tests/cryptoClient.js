@@ -16,9 +16,9 @@ const creds     = store2.getCredential(fqdn);
 
 // exampleSocket.send(JSON.stringify({'type':'key','payload':arrayBufferToBase64String(keyPair.publicKey)}));
 // exampleSocket.send(JSON.stringify({'type':'key','payload':{'key':arrayBufferToBase64String(keyPair.publicKey), 'token': {'signedData':'key','signedBy':'signedBy','signature':'signature'}}}));
-io.emit('event', {type: 'key', payload: {key: creds.getPublicKeyDER64()}});
+io.emit('event', {type: 'key', payload: {data: creds.getPublicKeyDER64()}});
 
-var sharedSecret = crypto.randomBytes(32);
+var sharedSecret = crypto.randomBytes(16);
 var peerPubKeyDerBase64 = null;
 
 const handlers = {
@@ -30,7 +30,7 @@ const handlers = {
 		var peerCreds = new Credential();
 		peerCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
 
-		var encryptedSharedSecret = peerCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', sharedSecret);
+		var encryptedSharedSecret = peerCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', sharedSecret.toString('base64'));
 		console.log('sharedSecret %j encryptedSharedSecret %j', sharedSecret, encryptedSharedSecret);
 
 		return {type: 'aesKey', payload: {encryptedSharedSecret}};

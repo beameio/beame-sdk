@@ -28,9 +28,9 @@ var peerPubKeyDerBase64 = null;
 var sharedSecret = null;
 
 const handlers = {
-	key(data) {
-		console.log('KEY PAYLOAD %j', data);
-		peerPubKeyDerBase64 = data.key;
+	key(payload) {
+		console.log('KEY PAYLOAD %j', payload);
+		peerPubKeyDerBase64 = payload.data;
 
 		var peerCreds = new Credential();
 		peerCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
@@ -41,10 +41,10 @@ const handlers = {
 
 		return {type: 'keyResponse', payload: {encryptedKey}};
 	},
-	aesKey(data) {
+	aesKey(payload) {
 		// XXX continue here.
 		// Getting sharedSecret wrong. Probably encoding issues because it starts correctly.
-		sharedSecret = new Buffer(creds.decrypt(data.encryptedSharedSecret, 'utf-8'));
+		sharedSecret = new Buffer(creds.decrypt(payload.encryptedSharedSecret), 'base64');
 		console.log('sharedSecret %j', sharedSecret);
 	}
 }
