@@ -47,7 +47,7 @@ module.exports = {
 	shred,
 	exportCredentials,
 	importCredentials,
-	importNonBeameCredentials,
+	importLiveCredentials,
 	stats,
 	convertCredentialsToV2
 };
@@ -62,7 +62,7 @@ module.exports = {
  * @param {Function} callback
  */
 function createWithToken(authToken, authSrvFqdn, name, email, localIp, callback) {
-	var cred = new (require('../services/Credential'))(store2);
+	let cred = new (require('../services/Credential'))(store2);
 
 	cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email, localIp).then(metadata=> {
 		callback && callback(null, metadata)
@@ -82,7 +82,7 @@ createWithToken.toText = lineToText;
  * @param {Function} callback
  */
 function createWithLocalCreds(parent_fqdn, name, email, localIp, callback) {
-	var cred = new (require('../services/Credential'))(store2);
+	let cred = new (require('../services/Credential'))(store2);
 
 	cred.createEntityWithLocalCreds(parent_fqdn, name, email, localIp).then(metadata=> {
 		callback && callback(null, metadata)
@@ -104,7 +104,7 @@ createWithLocalCreds.toText = lineToText;
  * @param {Function} callback
  */
 function signAndCreate(signWithFqdn, dataToSign, authSrvFqdn, name, email, localIp, callback) {
-	var cred = new (require('../services/Credential'))(store2);
+	let cred = new (require('../services/Credential'))(store2);
 
 	cred.signWithFqdn(signWithFqdn, dataToSign).then(authToken=> {
 		createWithToken(authToken, authSrvFqdn, name, email, localIp, callback);
@@ -122,7 +122,7 @@ signAndCreate.toText = lineToText;
  * @returns {*}
  */
 function lineToText(line) {
-	var table = new Table();
+	let table = new Table();
 	for (let k in line) {
 		//noinspection JSUnfilteredForInLoop
 		table.push({[k]: line[k].toString()});
@@ -137,7 +137,7 @@ function lineToText(line) {
  * @returns {string}
  */
 function objectToText(line) {
-	var line2 = {};
+	let line2 = {};
 	Object.keys(line).forEach(k => {
 		if (beameUtils.isObject(line[k])) {
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -157,8 +157,8 @@ function objectToText(line) {
  * @returns {Array}
  */
 function constructRelativePathElements(item) {
-	var items  = [];
-	var upShot = item;
+	let items  = [];
+	let upShot = item;
 	items.push(upShot.hostname);
 	while (upShot.parent_fqdn) {
 		upShot = store.search(upShot.parent_fqdn)[0];
@@ -172,7 +172,7 @@ function constructRelativePathElements(item) {
  * @param {Function} callback
  */
 function readStdinStream(callback) {
-	var stdin       = process.stdin,
+	let stdin       = process.stdin,
 	    //stdout = process.stdout,
 	    inputChunks = [];
 
@@ -194,15 +194,15 @@ function readStdinStream(callback) {
  * @returns {*}
  */
 function decryptCreds(data) {
-	var crypto     = require('./crypto');
+	let crypto     = require('./crypto');
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	/** @type {SignatureToken} **/
-	var parsedData = JSON.parse(data);
+	let parsedData = JSON.parse(data);
 
 	//noinspection JSCheckFunctionSignatures
-	var signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedBy, parsedData.signature);
+	let signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedBy, parsedData.signature);
 	if (signatureStatus === true) {
-		var creds = store.search(parsedData.signedData.encryptedFor)[0];
+		let creds = store.search(parsedData.signedData.encryptedFor)[0];
 
 		if (!creds) {
 			logger.fatal(`Private key for ${parsedData.signedData.encryptedFor} is not found`);
@@ -236,7 +236,7 @@ function listCreds(fqdn) {
  */
 function show(fqdn) {
 
-	var creds = store2.getCredential(fqdn);
+	let creds = store2.getCredential(fqdn);
 	if (!creds) {
 		throw new Error(`show: fqdn ${fqdn} was not found`);
 	}
@@ -259,7 +259,7 @@ function list(regex) {
 }
 
 list.toText = function (creds) {
-	var table = new Table({
+	let table = new Table({
 		head:      ['name', 'fqdn', 'parent', 'priv/k'],
 		colWidths: [40, 65, 55, 10]
 	});
@@ -273,20 +273,12 @@ function shred(fqdn, callback) {
 	if (!fqdn) {
 		logger.fatal("FQDN is required in shred");
 	}
-	store.shredCredentials(fqdn, callback);
+	store2.shredCredentials(fqdn,() =>{
+		return 'fqdn has been erased from store';
+	});
 }
 
 shred.toText = lineToText;
-
-/**
- * @private
- * @param developerName
- * @param developerEmail
- * @param callback
- */
-function registerDeveloper(developerName, developerEmail, callback) {
-//	developerServices.registerDeveloper(developerName, developerEmail, callback);
-}
 
 
 /**
@@ -299,46 +291,33 @@ function registerDeveloper(developerName, developerEmail, callback) {
  * @returns {{}}
  */
 
-function exportCredentials(fqdn, targetFqdn, file) {
-	var creds        = store.search(fqdn)[0];
-	var relativePath = constructRelativePathElements(creds);
-
-	creds.edgeclient      = {};
-	creds.atom            = {};
-	creds['relativePath'] = relativePath;
-	creds.path            = creds.path.replace(config.localCertsDir, "");
-
-	//noinspection ES6ModulesDependencies,NodeModulesDependencies
-	var jsonString = JSON.stringify(creds);
-	if (!jsonString) {
-		logger.fatal(`Credentials for exporting ${fqdn} credentials are not found`);
-	}
-	var crypto = require('./crypto');
-	var encryptedString;
-	try {
-		encryptedString = crypto.encrypt(jsonString, targetFqdn);
-	} catch (e) {
-		logger.error(`Could not encrypt with error `, e);
-		return {};
-	}
-
-	var message       = {
-		signedData: {
-			data:         encryptedString,
-			signedBy:     fqdn,
-			encryptedFor: targetFqdn
+function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
+	let creds        = store2.getCredential(fqdn);
+	if(creds && targetFqdn){
+		let jsonCredentialObject = JSON.stringify(creds);
+		if (!jsonCredentialObject) {
+			logger.fatal(`Credentials for exporting ${fqdn} credentials are not found`);
+			return;
 		}
-	};
-	//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
-	message.signature = JSON.stringify(crypto.sign(message.signedData, fqdn));
-	if (!file) {
 
-	}
-	else {
-		var p = path.resolve(file);
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		fs.writeFileSync(p, JSON.stringify(message));
-		return p;
+		let crypto = require('./crypto');
+		let encryptedString;
+		try {
+			encryptedString = crypto.encrypt(jsonCredentialObject, targetFqdn, signingFqdn);
+		} catch (e) {
+			logger.error(`Could not encrypt with error `, e);
+			return {};
+		}
+
+		if (!file) {
+			console.log(JSON.stringify(encryptedString));
+		}
+		else {
+			let p = path.resolve(file);
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
+			fs.writeFileSync(p, JSON.stringify(encryptedString));
+			return p;
+		}
 	}
 }
 
@@ -350,29 +329,30 @@ function exportCredentials(fqdn, targetFqdn, file) {
  * @param {String|null} [file] - path to file with encrypted credentials
  * @returns {boolean}
  */
-function importCredentials(data, file) {
-	var decryptedCreds;
+function importCredentials(file) {
+	let data           = JSON.parse(fs.readFileSync(path.resolve(file)) + "");
+	let crypto = require('./crypto');
+	let encryptedCredentials;
 
-	if (!data && !file) {
-		// XXX: to test
-		readStdinStream(function (data) {
-			decryptedCreds = decryptCreds(data);
-			store.importCredentials(decryptedCreds);
-		});
-	} else {
-		if (file) {
-			data           = fs.readFileSync(path.resolve(file)) + "";
-			decryptedCreds = decryptCreds(data);
-			if (!decryptedCreds || decryptedCreds == -1) {
-				logger.error("No decrypted creds");
-				return false;
-			}
-			return store.importCredentials(decryptedCreds);
-		} else {
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			decryptedCreds = decryptCreds(JSON.parse(data));
-			return store.importCredentials(decryptedCreds);
+	if(data.signature ){
+		let sigStatus = crypto.checkSignature(data.signedData, data.signedBy, data.signature);
+		console.log(`Signature status is ${sigStatus}`);
+		if(!sigStatus){
+			logger.fatal(`Import credentials signature missmatch ${data.signedBy}, ${data.signature}`);
 		}
+		encryptedCredentials = data.signedData;
+	}else{
+		encryptedCredentials = data;
+	}
+	let decrtypedCreds = crypto.decrypt(JSON.stringify(encryptedCredentials));
+
+	if(decrtypedCreds && decrtypedCreds.length){
+		let parsedCreds = JSON.parse(decrtypedCreds);
+
+		let importedCredential = new (require('../services/Credential.js'))(store2);
+		importedCredential.initFromObject(parsedCreds);
+		importedCredential.saveCredentialsObject();
+		return `Succesfully imported credentials ${importedCredential.fqdn}`;
 	}
 }
 
@@ -382,36 +362,31 @@ function importCredentials(data, file) {
  * @method Creds.importNonBeameCredentials
  * @param {String} fqdn
  */
-function importNonBeameCredentials(fqdn) {
-	var tls = require('tls');
+function importLiveCredentials(fqdn) {
+	let tls = require('tls');
 	try {
-
-		var conn = tls.connect(443, fqdn, {host: fqdn});
-
-		var onSecureConnected = function () {
+		let ciphers = tls.getCiphers().filter(cipher => {
+			if(cipher.indexOf('ec') >= 0){
+				return false;
+			}
+			return true;
+		});
+		let allowedCiphers = ciphers.join(':').toUpperCase();
+		let conn = tls.connect(443, fqdn, {host: fqdn, ciphers:allowedCiphers});
+		let onSecureConnected = function () {
 			//noinspection JSUnresolvedFunction
-			var cert = conn.getPeerCertificate(true);
+			let cert = conn.getPeerCertificate(true);
 			conn.end();
-
-			var bas64Str = new Buffer(cert.raw, "hex").toString("base64");
-
-			var certBody = "-----BEGIN CERTIFICATE-----\r\n";
-
+			let bas64Str = new Buffer(cert.raw, "hex").toString("base64");
+			let certBody = "-----BEGIN CERTIFICATE-----\r\n";
 			certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
-
 			certBody += "-----END CERTIFICATE-----";
-
-			var remoteCertPath = path.join(config.remoteCertsDir, fqdn, 'x509.pem');
-
-			mkdirp(path.parse(remoteCertPath).dir);
-
-			fs.writeFileSync(remoteCertPath, certBody);
+			let credentials = store2.addToStore(certBody);
+//			credentials.saveCredentialsObject();
 		};
 
 		conn.on('error', function (error) {
-
-			var msg = error && error.message || error.toString();
-
+			let msg = error && error.message || error.toString();
 			logger.fatal(msg);
 		});
 
@@ -436,13 +411,13 @@ function stats(fqdn, callback) {
 		logger.fatal("FQDN is required in shred");
 	}
 
-	var creds = store.search(fqdn)[0];
+	let creds = store.search(fqdn)[0];
 
 	if (!creds) {
 		logger.fatal("FQDN not found");
 	}
 
-	var cb = function (error, payload) {
+	let cb = function (error, payload) {
 		if (!error) {
 			return callback(null, payload);
 		}
@@ -470,7 +445,7 @@ function renew(type, fqdn) {
  */
 function revoke(fqdn) {
 
-	var creds = store.search(fqdn)[0];
+	let creds = store.search(fqdn)[0];
 	logger.debug(`revoke creds level ${creds.level}`);
 
 }
