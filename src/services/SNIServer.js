@@ -23,6 +23,7 @@ class SNIServer {
 	//noinspection JSUnusedGlobalSymbols
 	start(callback) {
 		if (this.started) {
+			callback();
 			return;
 		}
 		this.server = https.createServer({

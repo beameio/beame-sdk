@@ -20,7 +20,7 @@ var beamestore  = new BeameStore();
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
  */
-var SampleBeameServer = function (instanceHostname, requestListener, hostOnlineCallback) {
+function SampleBeameServer(instanceHostname, requestListener, hostOnlineCallback) {
 	if (!instanceHostname) {
 		logger.error('instance hostname or project name required');
 		return;
@@ -44,8 +44,8 @@ var SampleBeameServer = function (instanceHostname, requestListener, hostOnlineC
 		ca:   server_entity.CA
 	};
 
-	var srv = SNIServer.get(config.SNIServerPort, requestListener);
-	srv.addFqdn(fqdn, serverCerts);
+	var srv = SNIServer.get(config.SNIServerPort);
+	srv.addFqdn(fqdn, serverCerts, requestListener);
 
 	// var edgeLocals = beamestore.searchEdgeLocals(host);
 	// edgeLocals.forEach(edgeLocal => {
