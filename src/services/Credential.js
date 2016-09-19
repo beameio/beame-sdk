@@ -208,8 +208,7 @@ class Credential {
 
 	getPublicKeyDER64() {
 		const pubKeyLines = this.publicKeyStr.split('\n');
-		const pubKeyDerBase64 = pubKeyLines.slice(1, pubKeyLines.length-1).join('\n');
-		return pubKeyDerBase64;
+		return pubKeyLines.slice(1, pubKeyLines.length-1).join('\n');
 	}
 
 	getPrivateKeyNodeRsa() {
@@ -469,7 +468,7 @@ class Credential {
 
 					provisionApi.postRequest(
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
-						metadata,
+						Credential.formatRegisterPostData(metadata),
 						fqdnResponseReady.bind(this),
 					    utils.isObject(authToken) ? utils.stringify(authToken, false) : authToken
 					);
@@ -648,8 +647,7 @@ class Credential {
 	//noinspection JSUnusedGlobalSymbols
 	updateMetadata() {
 		let fqdn              = this.fqdn,
-		    dirPath           = this.getMetadataKey("path"),
-		    directoryServices = this._store.directoryServices;
+		    dirPath           = this.getMetadataKey("path");
 
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn, dirPath).then(payload => {
@@ -689,7 +687,7 @@ class Credential {
 			name:        metadata.name,
 			email:       metadata.email,
 			parent_fqdn: metadata.parent_fqdn,
-			edgeFqdn:    metadata.edge_fqdn,
+			edge_fqdn:   metadata.edge_fqdn,
 			ip:          metadata.local_ip
 		};
 	}
