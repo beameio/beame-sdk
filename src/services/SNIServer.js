@@ -1,10 +1,12 @@
 'use strict';
 
-var https   = require('https');
-var tls     = require('tls');
-var config  = require('../../config/Config');
-var logger  = new (require('../utils/Logger'))(config.AppModules.SNIServer);
-var servers = {};
+const https   = require('https');
+const tls     = require('tls');
+const config  = require('../../config/Config');
+const logger  = new (require('../utils/Logger'))(config.AppModules.SNIServer);
+const servers = {};
+
+const portRegex = /:.*/;
 
 class SNIServer {
 
@@ -13,7 +15,7 @@ class SNIServer {
 	constructor(port, requestListener) {
 		this.port            = port;
 		this.hosts           = {};
-		this.requestListener = requestListener;
+		this.requestListener = requestListener || this.requestHandler.bind(this);
 		this.server          = null;
 		this.started         = false;
 	}
@@ -24,14 +26,14 @@ class SNIServer {
 			return;
 		}
 		this.server = https.createServer({
-			SNICallback: this.SNICallback.bind(this),
+			SNICallback: this.SNICallback.bind(this)
 		}, this.requestListener);
 
 		this.server.listen(this.port, callback);
 
 		for (let host in this.hosts) {
 			//noinspection JSUnfilteredForInLoop
-			logger.info(`starting server on ${host}`)
+			logger.info(`starting server on ${host}`);
 		}
 
 		this.started = true;
@@ -45,17 +47,35 @@ class SNIServer {
 		return this.server.address().port;
 	};
 
-	addFqdn(fqdn, certs) {
-		if (this.hosts[fqdn]) {
-			return;
+	addFqdn(fqdn, certs, listener) {
+		if (!this.hosts[fqdn]) {
+			this.hosts[fqdn] = {};
 		}
-		this.hosts[fqdn] = {certs};
+		this.hosts[fqdn].certs = certs;
+		if(listener) {
+			this.addListener(fqdn, listener);
+		}
+	}
+
+	requestHandler(req, res) {
+		var host = req.headers.host.replace(portRegex, '');
+		if(!this.hosts[host]) {
+			return null;
+		}
+		return this.hosts[host].listener(req, res);
+	}
+
+	addListener(fqdn, listener) {
+		if (!this.hosts[fqdn]) {
+			this.hosts[fqdn] = {};
+		}
+		this.hosts[fqdn].listener = listener;
 	}
 
 	getSecureContext(servername) {
 		if (!this.hosts[servername]) {
 			logger.error(`SNIServer.getSecureContext: Host ${servername} is unknown`);
-			return;
+			return null;
 		}
 		if (!this.hosts[servername].secureContext) {
 			this.hosts[servername].secureContext = tls.createSecureContext(this.hosts[servername].certs);
