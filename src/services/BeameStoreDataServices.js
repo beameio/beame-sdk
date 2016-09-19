@@ -74,6 +74,9 @@ class BeameStoreDataServices {
 	_createDir() {
 		this.directoryServices.createDir(beameUtils.makePath(this._certsDir, this.fqdn));
 	}
+	deleteDir(callback) {
+		this.directoryServices.deleteFolder(beameUtils.makePath(this._certsDir, this.fqdn), callback);
+	}
 
 	/**
 	 *
