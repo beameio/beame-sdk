@@ -163,6 +163,14 @@ class BeameStoreV2 {
 		return null;
 	};
 
+	shredCredentials(fqdn, callback) {
+		// XXX: Fix callback to getMetadataKey (err, data) instead of (data)
+		// XXX: Fix exit code
+		let item = this.getCredential(fqdn);
+		if(item) {
+			item.shred(callback);
+		}
+	}
 	/*list(regex, searchArray){
 	 if(!searchArray){
 	 searchArray = this.credentials;
@@ -216,6 +224,7 @@ class BeameStoreV2 {
 		let credential = new Credential(this);
 		credential.initFromX509(x509);
 		this.addCredential(credential);
+		return credential;
 	}
 
 	//noinspection JSUnusedGlobalSymbols

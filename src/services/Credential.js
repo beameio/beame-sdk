@@ -61,27 +61,37 @@ class Credential {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
 		this.loadCredentialsObject();
-		if (this.hasKey("X509")) {
-			pem.config({sync: true});
-			pem.readCertificateInfo(this.getKey("X509"), (err, certData) => {
-				if (this.fqdn !== certData.commonName) {
-					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
-				}
-				this.certData = err ? null : certData;
-			});
-
-			pem.getPublicKey(this.getKey("X509"), (err, publicKey) => {
-				this.publicKeyStr     = publicKey.publicKey;
-				this.publicKeyNodeRsa = new NodeRsa();
-				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
-			});
-			pem.config({sync: false});
-		}
-		if (this.hasKey("PRIVATE_KEY")) {
-			this.privateKeyNodeRsa = new NodeRsa();
-			this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
-		}
+		this.initCryptoKeys();
 	}
+
+	initCryptoKeys(){
+            if (this.hasKey("X509")) {
+                pem.config({sync: true});
+                pem.readCertificateInfo(this.getKey("X509")+"", (err, certData) => {
+                    if (this.fqdn && this.fqdn !== certData.commonName) {
+                        throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
+                    }
+                    this.certData = err ? null : certData;
+					this.fqdn = this.extractCommonName();
+					this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+                });
+
+                pem.getPublicKey(this.getKey("X509") + "", (err, publicKey) => {
+                    this.publicKeyStr     = publicKey.publicKey;
+                    this.publicKeyNodeRsa = new NodeRsa();
+                    try {
+                        this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
+                    }catch(e){
+                        console.log(`could not import services ${this.publicKeyStr}`)
+                    }
+                });
+                pem.config({sync: false});
+            }
+            if (this.hasKey("PRIVATE_KEY")) {
+                this.privateKeyNodeRsa = new NodeRsa();
+                this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
+            }
+        }
 
 	initFromX509(x509, metadata) {
 		pem.config({sync: true});
@@ -98,7 +108,9 @@ class Credential {
 		pem.getPublicKey(x509, (err, publicKey) => {
 			this.publicKeyStr     = publicKey.publicKey;
 			this.publicKeyNodeRsa = new NodeRsa();
-			this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
+			try {
+				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
+			}catch(e) { console.log(`Error could not import ${this.publicKeyStr}`)}
 		});
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
@@ -113,6 +125,33 @@ class Credential {
 	//endregion
 
 	//region Save/load services
+
+	initFromObject(importCred){
+		if (!importCred || !importCred.metadata) {
+			return;
+		}
+
+		for (let key in config.CertFileNames) {
+			if (config.CertFileNames.hasOwnProperty(key) && importCred.hasOwnProperty(key)) {
+				this[key] = new Buffer(importCred[key]).toString();
+			}
+
+		}
+
+		for (let key in config.MetadataProperties) {
+			if (config.MetadataProperties.hasOwnProperty(key) && importCred.metadata.hasOwnProperty(key)) {
+				this.metadata[config.MetadataProperties[key]] = new Buffer(importCred[config.MetadataProperties[key]]).toString('utf8');
+			}
+		}
+		this.initCryptoKeys();
+		this.beameStoreServices.setFolder(this);
+	}
+
+	shred(callback){
+		this.beameStoreServices.deleteDir(callback);
+	}
+
+
 	saveCredentialsObject() {
 		if (!this || !this.metadata || !this.metadata.path) {
 			return;
