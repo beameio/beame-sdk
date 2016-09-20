@@ -50,7 +50,7 @@
     "node-rsa": "^0.4.0",
     "node-uuid": "^1.4.7",
     "npm-prefix": "^1.2.0",
-    "pem": "git+ssh://git@github.com/beameio/pem.git",
+    "pem": "https://github.com/beameio/pem",
     "request": "^2.72.0",
     "rimraf": "^2.5.3",
     "serve-index": "^1.8.0",

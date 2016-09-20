@@ -334,16 +334,29 @@ module.exports = {
 		return process.env.NODE_ENV ? true : false;
 	},
 
-	formatError: function (error) {
-		return typeof error == "object" ? this.stringify(error) : error.toString();
-	},
-
 	isObject: function (str) {
 		try {
 			return typeof str === 'object';
 		} catch (e) {
 			return false;
 		}
+	},
+
+	timeStamp() {
+		function pad(n) {
+			return n < 10 ? "0" + n : n
+		}
+
+		var d     = new Date(),
+		    dash  = "-",
+		    colon = ":";
+
+		return d.getFullYear() + dash +
+			pad(d.getMonth() + 1) + dash +
+			pad(d.getDate()) + " " +
+			pad(d.getHours()) + colon +
+			pad(d.getMinutes()) + colon +
+			pad(d.getSeconds())
 	}
 
 };

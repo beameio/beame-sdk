@@ -3,10 +3,11 @@
  */
 "use strict";
 
-var _    = require('underscore');
-var util = require('util');
+const _          = require('underscore');
+const util       = require('util');
+const beameUtils = require('./BeameUtils');
 
-var LogLevel = {
+const LogLevel = {
 	"Info":  "INFO",
 	"Debug": "DEBUG",
 	"Warn":  "WARN",
@@ -14,7 +15,7 @@ var LogLevel = {
 	"Fatal": "FATAL"
 };
 
-var LogLevelVerbosity = {
+const LogLevelVerbosity = {
 	"INFO":  0,
 	"DEBUG": 4,
 	"WARN":  3,
@@ -22,19 +23,19 @@ var LogLevelVerbosity = {
 	"FATAL": 1
 };
 
-var EntityLevel = {
-	"BeameEntity":"BeameEntity",
-	"Developer":"Developer",
-	"Atom" : "Atom",
-	"EdgeClient":"EdgeClient",
-	"LocalClient" : "LocalClient"
+const EntityLevel = {
+	"BeameEntity": "BeameEntity",
+	"Developer":   "Developer",
+	"Atom":        "Atom",
+	"EdgeClient":  "EdgeClient",
+	"LocalClient": "LocalClient"
 };
 
-var StandardFlowEvent = {
-	"Registering" : "Registering",
-	"Registered" : "Registered",
-	"RequestingCerts" : "RequestingCerts",
-	"ReceivedCerts" : "ReceivedCerts"
+const StandardFlowEvent = {
+	"Registering":     "Registering",
+	"Registered":      "Registered",
+	"RequestingCerts": "RequestingCerts",
+	"ReceivedCerts":   "ReceivedCerts"
 };
 /**
  * @typedef {Object} LoggerMessage
@@ -50,22 +51,6 @@ var StandardFlowEvent = {
  * @type {String}
  */
 
-function timeStamp() {
-	function pad(n) {
-		return n < 10 ? "0" + n : n
-	}
-
-	var d     = new Date(),
-	    dash  = "-",
-	    colon = ":";
-
-	return d.getFullYear() + dash +
-		pad(d.getMonth() + 1) + dash +
-		pad(d.getDate()) + " " +
-		pad(d.getHours()) + colon +
-		pad(d.getMinutes()) + colon +
-		pad(d.getSeconds())
-}
 
 var formatJSON = function (data) {
 	return util.inspect(data, {
@@ -75,7 +60,7 @@ var formatJSON = function (data) {
 };
 
 var formatPrefix = function (module, level) {
-	return `[${timeStamp()}] [${module}] ${level}:`;
+	return `[${beameUtils.timeStamp()}] [${module}] ${level}:`;
 };
 
 
@@ -90,6 +75,16 @@ class BeameLogger {
 		this.currentLogLevel = process.env.BEAME_LOG_LEVEL || LogLevel.Error;
 	}
 
+	//noinspection JSUnusedGlobalSymbols
+	/**
+	 *
+	 * @param {Object|String} error
+	 * @returns {*|string|String}
+	 */
+	static formatError(error) {
+		return typeof error == "object" ? beameUtils.stringify(error) : error.toString();
+	}
+
 	/**
 	 *
 	 * @param {String} message
@@ -98,12 +93,12 @@ class BeameLogger {
 	 * @param {String|null|undefined} [error_code]
 	 * @returns {typeof LoggerMessage}
 	 */
-	formatErrorMessage(message, module, data,error_code) {
+	formatErrorMessage(message, module, data, error_code) {
 		return {
-			message,
+			        message,
 			module: module || this.module,
-			data,
-			code:error_code
+			        data,
+			code:   error_code
 		}
 	}
 
@@ -158,10 +153,10 @@ class BeameLogger {
 	 * @param {String} event
 	 * @param {String} fqdn
 	 */
-	printStandardEvent(entity, event, fqdn){
+	printStandardEvent(entity, event, fqdn) {
 
 		var message;
-		switch (event){
+		switch (event) {
 			case StandardFlowEvent.Registering:
 				message = `Registering ${entity.toLowerCase()} ${fqdn} ...`;
 				break;
@@ -175,7 +170,8 @@ class BeameLogger {
 				message = `${entity} ${fqdn} certificates received, saving to disk ...`;
 				break;
 
-			default: return;
+			default:
+				return;
 		}
 
 
@@ -232,8 +228,8 @@ class BeameLogger {
 	error(message, data, module) {
 		/** @type {typeof LoggerMessage} **/
 		var log = {
-			message,
-			data,
+			        message,
+			        data,
 			module: module || this.module
 		};
 
@@ -261,11 +257,11 @@ class BeameLogger {
 		return LogLevel
 	}
 
-	static get EntityLevel(){
+	static get EntityLevel() {
 		return EntityLevel
 	}
 
-	static get StandardFlowEvent(){
+	static get StandardFlowEvent() {
 		return StandardFlowEvent
 	}
 }
