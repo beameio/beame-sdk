@@ -7,6 +7,7 @@ module.exports = {
 	ProvApi:           require('./src/services/ProvisionApi'),
 	BeameUtils:        require('./src/utils/BeameUtils'),
 	CommonUtils:       require('./src/utils/CommonUtils'),
+	AuthToken:         require('./src/services/AuthToken'),
 	DirectoryServices: require('./src/services/DirectoryServices'),
 	EC2AuthInfo:       require('./src/services/EC2AuthInfo')
 };
