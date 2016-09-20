@@ -7,7 +7,7 @@ class CommonUtils {
 
 	static timeStamp() {
 		function pad(n) {
-			return n < 10 ? "0" + n : n
+			return n < 10 ? "0" + n : n;
 		}
 
 		let d     = new Date(),
@@ -19,7 +19,7 @@ class CommonUtils {
 			pad(d.getDate()) + " " +
 			pad(d.getHours()) + colon +
 			pad(d.getMinutes()) + colon +
-			pad(d.getSeconds())
+			pad(d.getSeconds());
 	}
 
 	static stringify(obj, format) {
