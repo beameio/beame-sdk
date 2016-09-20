@@ -352,6 +352,7 @@ class Credential {
 		return encryptedUnsignedMessage;
 	}
 
+	// TODO: Phase out this method. Use checkSignatureToken instead.
 	checkSignature(data, fqdn, signature) {
 		let rsaKey = this.getPublicKeyNodeRsa();
 		let status = rsaKey.verify(data, signature, "utf8", "base64");
