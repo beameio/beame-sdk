@@ -23,7 +23,6 @@ const pem     = require('pem');
 const NodeRsa = require("node-rsa");
 const async   = require('async');
 const _       = require('underscore');
-const os      = require('os');
 const url     = require('url');
 
 const config                 = require('../../config/Config');
@@ -285,7 +284,7 @@ class Credential {
 			message.signature = this.privateKeyNodeRsa.sign(message.signedData, "base64", "utf8");
 			return message;
 		} catch (e) {
-			logger.error(`sign failed with ${utils.formatError(e)}`);
+			logger.error(`sign failed with ${BeameLogger.formatError(e)}`);
 			return null;
 		}
 	}
