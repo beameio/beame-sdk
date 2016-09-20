@@ -7,6 +7,7 @@ const store2        = new (require("../src/services/BeameStoreV2"))();
 const tunnel        = require('../src/cli/tunnel');
 const fqdn          = process.argv[2];
 const Credential    = require('../src/services/Credential');
+const crypto        = require('../src/cli/crypto');
 
 // SOCKET_MSG_TYPES[] = { @"key", @"signkey",@"data",@"symdata",@"symdatawithiv",@"cert"};
 
@@ -45,7 +46,13 @@ const handlers = {
 		// XXX continue here.
 		// Getting sharedSecret wrong. Probably encoding issues because it starts correctly.
 		sharedSecret = new Buffer(creds.decrypt(payload.encryptedSharedSecret), 'base64');
-		console.log('sharedSecret %j', sharedSecret);
+		// console.log('sharedSecret %j', sharedSecret);
+
+		var peerCreds = new Credential();
+		peerCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
+		var encrypted = crypto.aesEncrypt('abc123', sharedSecret);
+
+		return {'type': 'encryptedMessage', payload: {data: encrypted[1].IV + encrypted[0].AES256CBC}};
 	}
 }
 
