@@ -156,7 +156,8 @@ var AppModules = {
 	"BeameSDKlauncher": "BeameSDKlauncher",
 	"ProxyClient":      "ProxyClient",
 	"Tunnel":           "Tunnel",
-	"OpenSSL":          "OpenSSL"
+	"OpenSSL":          "OpenSSL",
+	"AuthToken" : "AuthToken"
 };
 
 /**

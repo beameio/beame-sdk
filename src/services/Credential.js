@@ -6,6 +6,13 @@
 "use strict";
 
 /**
+ * @typedef {Object} SignedData
+ * @property {Number} created_at
+ * @property {Number} valid_till
+ * @property {Object|String|null} data
+ */
+
+/**
  * signature token structure , used as AuthorizationToken in Provision
  * @typedef {Object} SignatureToken
  * @property {String} signedData

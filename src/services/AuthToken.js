@@ -1,5 +1,10 @@
 'use strict';
 
+const config                 = require('../../config/Config');
+const module_name            = config.AppModules.AuthToken;
+const BeameLogger            = require('../utils/Logger');
+const logger                 = new BeameLogger(module_name);
+const CommonUtils = require('../utils/CommonUtils');
 const BeameStore = require('./BeameStoreV2');
 const Credential = require('./Credential');
 
@@ -7,76 +12,88 @@ const timeFuzz = 5;
 
 class AuthToken {
 
-	// ttl - in seconds
+	/**
+	 * @param {Object|String} data
+	 * @param {Credential}signingCreds
+	 * @param {Number} ttl => seconds
+	 * @returns {string | null}
+	 */
 	static create(data, signingCreds, ttl) {
-		return new Promise((resolve, reject) => {
+
+		try {
 			if(!(signingCreds instanceof Credential)) {
-				reject('signingCreds must be present and must be instance of Credential');
-				return;
+				logger.warn('signingCreds must be present and must be instance of Credential');
+				return null;
 			}
+
 			const now = Date.now();
+			/** @type {SignedData} */
 			const token = {
 				created_at: Math.round(now / 1000),
 				valid_till: Math.round(now / 1000) + (ttl || 10),
 				data: data || null
 			};
-			var ret = JSON.stringify(token);
-			if(signingCreds) {
-				ret = JSON.stringify(signingCreds.sign(ret));
-			}
-			resolve(ret);
-		});
+
+			return CommonUtils.stringify(signingCreds ? signingCreds.sign(token) : token,false);
+
+		}
+		catch (error) {
+			logger.error(BeameLogger.formatError(error));
+		}
+
 	}
 
-
+	/**
+	 *
+	 * @param {SignatureToken} authToken
+	 * @returns {SignedData|null}
+	 */
 	static validate(authToken) {
-		return new Promise((resolve, reject) => {
-			try {
-				authToken = JSON.parse(authToken);
-			} catch(e) {
-				reject('Could not decode authToken JSON. authToken must be a valid JSON');
-				return;
-			}
-			if(!authToken.signedData) { reject('authToken has no .signedData'); return; }
-			if(!authToken.signedBy)   { reject('authToken has no .signedBy'); return; }
-			if(!authToken.signature)  { reject('authToken has no .signature'); return; }
+		try {
+			authToken = JSON.parse(authToken);
+		} catch(e) {
+			logger.warn('Could not decode authToken JSON. authToken must be a valid JSON');
+			return null;
+		}
+		if(!authToken.signedData) { logger.warn('authToken has no .signedData'); return null; }
+		if(!authToken.signedBy)   { logger.warn('authToken has no .signedBy'); return null; }
+		if(!authToken.signature)  { logger.warn('authToken has no .signature'); return null; }
 
-			const store = new BeameStore();
-			const signerCreds = store.getCredential(authToken.signedBy);
+		const store = new BeameStore();
+		const signerCreds = store.getCredential(authToken.signedBy);
 
-			if(!signerCreds) {
-				reject(`Signer (${authToken.signedBy}) credentials were not found`);
-				return;
-			}
+		if(!signerCreds) {
+			logger.warn(`Signer (${authToken.signedBy}) credentials were not found`);
+			return null;
+		}
 
-			const signatureStatus = signerCreds.checkSignatureToken(authToken);
-			if(!signatureStatus) {
-				reject(`Bad signature`);
-				return;
-			}
+		const signatureStatus = signerCreds.checkSignatureToken(authToken);
+		if(!signatureStatus) {
+			logger.warn(`Bad signature`);
+			return null;
+		}
 
-			var signedData;
-			try {
-				signedData = JSON.parse(authToken.signedData);
-			} catch(e) {
-				reject('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
-				return;
-			}
+		var signedData;
+		try {
+			signedData = JSON.parse(authToken.signedData);
+		} catch(e) {
+			logger.warn('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
+			return null;
+		}
 
-			const now = Math.round(Date.now() / 1000);
+		const now = Math.round(Date.now() / 1000);
 
-			if(signedData.created_at > now + timeFuzz) {
-				reject(`authToken.signedData.created_at is in future - invalid token or incorrect clock`);
-				return;
-			}
+		if(signedData.created_at > now + timeFuzz) {
+			logger.warn(`authToken.signedData.created_at is in future - invalid token or incorrect clock`);
+			return null;
+		}
 
-			if(signedData.valid_till < now - timeFuzz) {
-				reject(`authToken.signedData.valid_till is in the past - token expired`);
-				return;
-			}
+		if(signedData.valid_till < now - timeFuzz) {
+			logger.warn(`authToken.signedData.valid_till is in the past - token expired`);
+			return null;
+		}
 
-			resolve(signedData.data);
-		});
+		return signedData.data;
 	}
 
 }
