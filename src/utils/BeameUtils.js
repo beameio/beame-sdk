@@ -7,11 +7,12 @@ var request       = require('request');
 var _             = require('underscore');
 var network       = require('network');
 var os            = require('os');
-var beameStore    = new (require('../services/BeameStoreV2'))();
+var beameStore    = new (require('../services/BeameStore'))();
 var config        = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
 var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
+const CommonUtils = require('../utils/CommonUtils');
 /**
  * @typedef {Object} AwsRegion
  * @property {String} Name
@@ -219,7 +220,7 @@ module.exports = {
 	 */
 	stringify: function (obj, format) {
 		//noinspection NodeModulesDependencies,ES6ModulesDependencies
-		return format ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
+		return CommonUtils.stringify(obj, format);
 	},
 
 	/**
@@ -340,23 +341,7 @@ module.exports = {
 		} catch (e) {
 			return false;
 		}
-	},
-
-	timeStamp() {
-		function pad(n) {
-			return n < 10 ? "0" + n : n
-		}
-
-		var d     = new Date(),
-		    dash  = "-",
-		    colon = ":";
-
-		return d.getFullYear() + dash +
-			pad(d.getMonth() + 1) + dash +
-			pad(d.getDate()) + " " +
-			pad(d.getHours()) + colon +
-			pad(d.getMinutes()) + colon +
-			pad(d.getSeconds())
 	}
+
 
 };

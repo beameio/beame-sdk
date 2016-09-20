@@ -3,11 +3,10 @@
  */
 "use strict";
 
-const _          = require('underscore');
-const util       = require('util');
-const beameUtils = require('./BeameUtils');
-
-const LogLevel = {
+const _           = require('underscore');
+const util        = require('util');
+const CommonUtils = require('../utils/CommonUtils');
+const LogLevel    = {
 	"Info":  "INFO",
 	"Debug": "DEBUG",
 	"Warn":  "WARN",
@@ -60,7 +59,7 @@ var formatJSON = function (data) {
 };
 
 var formatPrefix = function (module, level) {
-	return `[${beameUtils.timeStamp()}] [${module}] ${level}:`;
+	return `[${CommonUtils.timeStamp()}] [${module}] ${level}:`;
 };
 
 
@@ -82,7 +81,7 @@ class BeameLogger {
 	 * @returns {*|string|String}
 	 */
 	static formatError(error) {
-		return typeof error == "object" ? beameUtils.stringify(error) : error.toString();
+		return typeof error == "object" ? CommonUtils.stringify(error) : error.toString();
 	}
 
 	/**

@@ -20,7 +20,8 @@
 
 const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameStore;
-const logger      = new (require('../utils/Logger'))(module_name);
+const BeameLogger = require('../utils/Logger');
+const logger      = new BeameLogger(module_name);
 const provApi     = new (require('./ProvisionApi'))();
 const Credential  = require('./Credential');
 const async       = require('async');
@@ -328,6 +329,7 @@ class BeameStoreV2 {
 					],
 					function (error) {
 						if (error) {
+							logger.error(`Get remote creds error ${BeameLogger.formatError(error)}`);
 							reject(error, null);
 							return;
 						}
