@@ -31,17 +31,13 @@ class CommonUtils {
 	static randomBytes(len){
 		const crypto = require('crypto');
 
-		return new Promise((resolve, reject) => {
 			crypto.randomBytes(len || 256, (error, buf) => {
 				if (error) {
-					reject(error);
-					return;
+					return null;
 				}
-				//console.log(`${buf.length} bytes of random data: ${buf.toString('hex')}`);
 
 				return buf.toString('hex');
 
-			});
 			}
 		);
 
