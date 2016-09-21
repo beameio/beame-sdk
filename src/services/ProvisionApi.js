@@ -316,8 +316,9 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
  * @param {Object} postData
  * @param {Function} callback
  * @param {String|null} [authToken]
+ * @param {Number|null} [retries]
  */
-ProvApiService.prototype.postRequest = function (url, postData, callback, authToken) {
+ProvApiService.prototype.postRequest = function (url, postData, callback, authToken, retries) {
 	var options     = _.extend(this.options || {}, {"form": postData});
 	options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
 
@@ -327,7 +328,7 @@ ProvApiService.prototype.postRequest = function (url, postData, callback, authTo
 		};
 	}
 
-	postToProvisionApi(url, options, "custom_post", provisionSettings.RetryAttempts, 1000, callback);
+	postToProvisionApi(url, options, "custom_post", retries || provisionSettings.RetryAttempts, 1000, callback);
 };
 
 ProvApiService.prototype.getRequest = function (url, callback) {

@@ -520,7 +520,8 @@ class Credential {
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
 						fqdnResponseReady.bind(this),
-						authToken
+						authToken,
+						2
 					);
 				}
 
@@ -608,13 +609,18 @@ class Credential {
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
 
+				var sign = CommonUtils.parse(payload.sign);
 
+				if(!sign){
+					reject('Invalid authorization token');
+					return;
+				}
 
-				this._store.getNewCredentials(payload.fqdn, payload.parent_fqdn, payload.sign).then(
+				this._store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
 					cred => {
 						cred.createCSR().then(
 							csr => {
-								cred.getCert(csr, payload.sign).then(function () {
+								cred.getCert(csr, sign).then(function () {
 									cred.updateMetadata().then(resolve).catch(error=> {
 										logger.error(error);
 										resolve(metadata);

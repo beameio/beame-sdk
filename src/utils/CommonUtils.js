@@ -33,7 +33,7 @@ class CommonUtils {
 			return typeof obj == "object" ? obj : JSON.parse(obj);
 		}
 		catch (error) {
-			return null
+			return null;
 		}
 
 	}

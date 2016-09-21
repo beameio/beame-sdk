@@ -44,6 +44,7 @@ class AuthToken {
 
 	}
 
+
 	/**
 	 *
 	 * @param {SignatureToken|String} token
