@@ -45,8 +45,8 @@ function BeameServer(instanceHostname, requestListener, hostOnlineCallback) {
 		ca:   server_entity.CA
 	};
 
-	let srv = SNIServer.get(config.SNIServerPort, requestListener);
-	srv.addFqdn(fqdn, serverCerts);
+	let srv = SNIServer.get(config.SNIServerPort);
+	srv.addFqdn(fqdn, serverCerts, requestListener);
 
 	srv.start(function () {
 		function onLocalServerCreated(data) {
