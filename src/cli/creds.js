@@ -61,6 +61,8 @@ module.exports = {
  * @param {Function} callback
  */
 function createWithToken(authToken, authSrvFqdn, name, email, localIp, callback) {
+	const store2            = new (require("../services/BeameStoreV2"))();
+
 	let cred = new (require('../services/Credential'))(store2);
 
 	cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email, localIp).then(metadata=> {
@@ -81,6 +83,8 @@ createWithToken.toText = lineToText;
  * @param {Function} callback
  */
 function createWithLocalCreds(parent_fqdn, name, email, localIp, callback) {
+	const store2            = new (require("../services/BeameStoreV2"))();
+
 	let cred = new (require('../services/Credential'))(store2);
 
 	cred.createEntityWithLocalCreds(parent_fqdn, name, email, localIp).then(metadata=> {
@@ -103,6 +107,8 @@ createWithLocalCreds.toText = lineToText;
  * @param {Function} callback
  */
 function signAndCreate(signWithFqdn, dataToSign, authSrvFqdn, name, email, localIp, callback) {
+	const store2            = new (require("../services/BeameStoreV2"))();
+
 	let cred = new (require('../services/Credential'))(store2);
 
 	cred.signWithFqdn(signWithFqdn, dataToSign).then(authToken=> {

@@ -47,54 +47,63 @@ class AuthToken {
 	/**
 	 *
 	 * @param {SignatureToken|String} token
-	 * @returns {SignedData|null}
+	 * @returns {SignatureToken|null}
 	 */
 	static validate(token) {
 		/** @type {SignatureToken} */
 		let authToken = CommonUtils.parse(token);
 
-		if(!authToken){
+		if (!authToken) {
 			logger.warn('Could not decode authToken JSON. authToken must be a valid JSON');
 			return null;
 		}
 
-		if(!authToken.signedData) { logger.warn('authToken has no .signedData'); return null; }
-		if(!authToken.signedBy)   { logger.warn('authToken has no .signedBy'); return null; }
-		if(!authToken.signature)  { logger.warn('authToken has no .signature'); return null; }
+		if (!authToken.signedData) {
+			logger.warn('authToken has no .signedData');
+			return null;
+		}
+		if (!authToken.signedBy) {
+			logger.warn('authToken has no .signedBy');
+			return null;
+		}
+		if (!authToken.signature) {
+			logger.warn('authToken has no .signature');
+			return null;
+		}
 
-		const store = new BeameStore();
+		const store       = new BeameStore();
 		const signerCreds = store.getCredential(authToken.signedBy);
 
-		if(!signerCreds) {
+		if (!signerCreds) {
 			logger.warn(`Signer (${authToken.signedBy}) credentials were not found`);
 			return null;
 		}
 
 		const signatureStatus = signerCreds.checkSignatureToken(authToken);
-		if(!signatureStatus) {
+		if (!signatureStatus) {
 			logger.warn(`Bad signature`);
 			return null;
 		}
 
 		var signedData = CommonUtils.parse(authToken.signedData);
-		if(!signedData){
+		if (!signedData) {
 			logger.warn('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
 			return null;
 		}
 
 		const now = Math.round(Date.now() / 1000);
 
-		if(signedData.created_at > now + timeFuzz) {
+		if (signedData.created_at > now + timeFuzz) {
 			logger.warn(`authToken.signedData.created_at is in future - invalid token or incorrect clock`);
 			return null;
 		}
 
-		if(signedData.valid_till < now - timeFuzz) {
+		if (signedData.valid_till < now - timeFuzz) {
 			logger.warn(`authToken.signedData.valid_till is in the past - token expired`);
 			return null;
 		}
 
-		return signedData.data;
+		return authToken;
 	}
 
 }

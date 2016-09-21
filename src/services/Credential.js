@@ -32,7 +32,7 @@ const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger(module_name);
 const BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
-const beameUtils                  = require('../utils/BeameUtils');
+const beameUtils             = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
 const provisionApi           = new (require('../services/ProvisionApi'))();
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
@@ -430,7 +430,7 @@ class Credential {
 					return;
 				}
 
-			beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
+				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
 					if (!error) {
 						onEdgeServerSelected.call(this, payload);
 					}
@@ -494,7 +494,7 @@ class Credential {
 					return;
 				}
 
-			beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
+				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
 					if (!error) {
 						onEdgeServerSelected.call(this, payload);
 					}
@@ -607,6 +607,9 @@ class Credential {
 
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
+
+
+
 				this._store.getNewCredentials(payload.fqdn, payload.parent_fqdn, payload.sign).then(
 					cred => {
 						cred.createCSR().then(
