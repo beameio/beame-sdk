@@ -278,7 +278,7 @@ ProvApiService.prototype.setClientCerts = function (pk, cert) {
  * @param {ApiData} apiData
  * @param {Function} callback
  * @param {String|null} [method] ==>  POST | GET
- * @param {SignatureToken|null} [signature]
+ * @param {String|null} [signature]
  */
 ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, signature) {
 
@@ -315,7 +315,7 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
  * @param {String} url
  * @param {Object} postData
  * @param {Function} callback
- * @param {SignatureToken|null} [authToken]
+ * @param {String|null} [authToken]
  */
 ProvApiService.prototype.postRequest = function (url, postData, callback, authToken) {
 	var options     = _.extend(this.options || {}, {"form": postData});

@@ -55,7 +55,7 @@ module.exports = {
 
 /**
  *
- * @param {SignatureToken} authToken
+ * @param {String} authToken
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]

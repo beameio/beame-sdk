@@ -34,6 +34,7 @@ const BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
 const utils                  = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
+const AuthToken            = require('./AuthToken');
 const provisionApi           = new (require('../services/ProvisionApi'))();
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
@@ -296,7 +297,7 @@ class Credential {
 	 *
 	 * @param {String} signWithFqdn
 	 * @param {String|null} [dataToSign]
-	 * @returns {Promise.<SignatureToken|null>}
+	 * @returns {Promise.<String|null>}
 	 */
 	signWithFqdn(signWithFqdn, dataToSign) {
 		return new Promise((resolve, reject) => {
@@ -317,7 +318,7 @@ class Credential {
 					return;
 				}
 
-				let authToken = signCred.sign(utils.stringify(dataToSign || Date.now()));
+				let authToken = AuthToken.create(dataToSign || Date.now(),signCred,60*5);
 
 				if (!authToken) {
 					reject(`Sign data failure, please see logs`);
@@ -478,7 +479,7 @@ class Credential {
 
 	/**
 	 *
-	 * @param {SignatureToken} authToken
+	 * @param {String} authToken
 	 * @param {String|null} [authSrvFqdn]
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
@@ -519,7 +520,7 @@ class Credential {
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
 						fqdnResponseReady.bind(this),
-						CommonUtils.isObject(authToken) ? CommonUtils.stringify(authToken, false) : authToken
+						authToken
 					);
 				}
 
