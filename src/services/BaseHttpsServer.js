@@ -2,15 +2,13 @@
 
 /** @namespace BaseHttpsServer */
 
-var fs = require('fs');
+const fs = require('fs');
 const _         = require('underscore');
-var https       = require("https");
-var ProxyClient = require("./ProxyClient");
-var BeameStore  = require("./BeameStoreV2");
-var SNIServer   = require("./SNIServer");
-var config      = require('../../config/Config');
-var logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
-var beamestore  = new BeameStore();
+const https       = require("https");
+const ProxyClient = require("./ProxyClient");
+const SNIServer   = require("./SNIServer");
+const config      = require('../../config/Config');
+const logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
 
 /**
  * Starts sample HTTPS server. Either instanceHostname or projectName must be specified.
@@ -20,17 +18,21 @@ var beamestore  = new BeameStore();
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
  */
-function SampleBeameServer(instanceHostname, requestListener, hostOnlineCallback) {
+let BeameServer = function (instanceHostname, requestListener, hostOnlineCallback) {
+	
+	const BeameStore  = require("./BeameStoreV2");
+	const beamestore  = new BeameStore();
+
 	if (!instanceHostname) {
 		logger.error('instance hostname or project name required');
 		return;
 	}
 
 
-	var fqdn = instanceHostname;
+	let fqdn = instanceHostname;
 
 	//could be edge client or routable atom
-	var server_entity = beamestore.getCredential(fqdn);
+	let server_entity = beamestore.getCredential(fqdn);
 
 	if (server_entity == null || _.isEmpty(server_entity)) {
 		logger.error("Could not find certificate for " + fqdn);
@@ -38,24 +40,14 @@ function SampleBeameServer(instanceHostname, requestListener, hostOnlineCallback
 	}
 
 	/** @type {ServerCertificates} **/
-	var serverCerts = {
+	let serverCerts = {
 		key:  server_entity.PRIVATE_KEY,
 		cert: server_entity.P7B,
 		ca:   server_entity.CA
 	};
 
-	var srv = SNIServer.get(config.SNIServerPort);
-	srv.addFqdn(fqdn, serverCerts, requestListener);
-
-	// var edgeLocals = beamestore.searchEdgeLocals(host);
-	// edgeLocals.forEach(edgeLocal => {
-	// 	var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
-	// 	srv.addFqdn(edgeLocalData.hostname, {
-	// 		key:  edgeLocalData.PRIVATE_KEY,
-	// 		cert: edgeLocalData.P7B,
-	// 		ca:   edgeLocalData.CA
-	// 	});
-	// });
+	let srv = SNIServer.get(config.SNIServerPort, requestListener);
+	srv.addFqdn(fqdn, serverCerts);
 
 	srv.start(function () {
 		function onLocalServerCreated(data) {
@@ -64,10 +56,9 @@ function SampleBeameServer(instanceHostname, requestListener, hostOnlineCallback
 			}
 		}
 
-		var fqdn      = server_entity.getKey('FQDN'),
-		    edge_fqdn = server_entity.getMetadataKey('EDGE_FQDN'),
-		    local_ip  = server_entity.getMetadataKey('LOCAL_IP');
-
+		let fqdn      = server_entity.getKey('FQDN'),
+		    local_ip  = server_entity.getMetadataKey('LOCAL_IP'),
+            edge_fqdn =  server_entity.getMetadataKey('EDGE_FQDN');
 
 		if (!fqdn) {
 			logger.fatal('Edge server hostname required');
@@ -90,4 +81,4 @@ function SampleBeameServer(instanceHostname, requestListener, hostOnlineCallback
 	});
 };
 
-module.exports = {SampleBeameServer: SampleBeameServer};
+module.exports = BeameServer;

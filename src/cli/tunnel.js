@@ -87,7 +87,7 @@ function httpsTunnel(fqdn, targetHost, targetPort, targetProto, targetHostName) 
 			})
 			.catch(e => {
 				throw new Error(`Error starting HTTPS terminaring proxy: ${e}`);
-			})
+			});
 	} else {
 
 		new ProxyClient("HTTPS", fqdn,

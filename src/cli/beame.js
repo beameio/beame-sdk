@@ -12,7 +12,7 @@ var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 
 var commands = {};
-['creds', 'crypto'/*'servers', 'atomServer', , 'system', 'pinning'*/,'tunnel'].forEach( cmdName => {
+['creds', 'crypto','servers', 'system', /*'pinning'*/,'tunnel'].forEach( cmdName => {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 
@@ -36,13 +36,12 @@ var parametersSchema = {
 	'count':              {required: false, default: 1},
 	'sharedFolder':       {required: false},
 	'localIp':            {required: false},
-	'edgeFqdn':           {required: true},
 	'localPort':          {required: true},
 	'targetPort':         {required: true},
 	'targetHost':         {required: false, default: 'localhost'},
 	'targetProto':        {required: false, options: ['http', 'https'], default: 'https'},
 	'targetHostName':     {required: false},
-
+	'sharedSecret':		  {required: false},
 	// createWithToken
 	'signWithFqdn':	      {required: false},
 	'parent_fqdn':	      {required: false},
@@ -50,7 +49,7 @@ var parametersSchema = {
 	'authSrvFqdn':	      {required: false},
 	'authToken':          {required: true},
 	'name':               {required: false},
-	'email':              {required: false}
+	'email':               {required: false},
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -169,8 +168,10 @@ function usage() {
 			}
 			var params = paramsNames.map(function (paramName) {
 				var ret = '--' + paramName;
-				if (!parametersSchema[paramName])
+				if (!parametersSchema[paramName]) {
+					console.log(`Internal coding error: missing ${paramName} in parametersSchema`);
 					throw new Error(`Internal coding error: missing ${paramName} in parametersSchema`);
+				}
 				if (parametersSchema[paramName].options) {
 					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
 				} else {

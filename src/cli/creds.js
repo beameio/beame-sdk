@@ -22,8 +22,6 @@ const Table = require('cli-table2');
 
 require('../../initWin');
 
-const store             = new (require("../services/BeameStore"))();
-const store2            = new (require("../services/BeameStoreV2"))();
 const config            = require('../../config/Config');
 const module_name       = config.AppModules.BeameCreds;
 const BeameLogger       = require('../utils/Logger');
@@ -152,22 +150,6 @@ function objectToText(line) {
 	return lineToText(line2);
 }
 
-/**
- * @private
- * @param item
- * @returns {Array}
- */
-function constructRelativePathElements(item) {
-	let items  = [];
-	let upShot = item;
-	items.push(upShot.hostname);
-	while (upShot.parent_fqdn) {
-		upShot = store.search(upShot.parent_fqdn)[0];
-		items.unshift(upShot.hostname);
-	}
-	return items;
-}
-
 //noinspection JSUnusedLocalSymbols
 /**
  * @private
@@ -226,8 +208,6 @@ function decryptCreds(data) {
  */
 function listCreds(fqdn) {
 	return store2.list(fqdn);
-	//let result = store2.search('sg2iaxrk9sknvmvo.v266jyyar140ozwo.v1.beameio.net');
-	//return returnValues;
 }
 
 /**
@@ -238,12 +218,10 @@ function listCreds(fqdn) {
  * @returns {Array.<CertListItem>}
  */
 function show(fqdn) {
-
 	let creds = store2.getCredential(fqdn);
 	if (!creds) {
 		throw new Error(`show: fqdn ${fqdn} was not found`);
 	}
-
 	return creds.metadata;
 }
 
@@ -295,6 +273,8 @@ shred.toText = lineToText;
  */
 
 function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
+	const store2            = new (require("../services/BeameStoreV2"))();
+
 	let creds        = store2.getCredential(fqdn);
 	if(creds && targetFqdn){
 		let jsonCredentialObject = JSON.stringify(creds);
@@ -333,6 +313,7 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
  * @returns {boolean}
  */
 function importCredentials(file) {
+	const store2            = new (require("../services/BeameStoreV2"))();
 	let data           = JSON.parse(fs.readFileSync(path.resolve(file)) + "");
 	let crypto = require('./crypto');
 	let encryptedCredentials;
@@ -414,7 +395,7 @@ function stats(fqdn, callback) {
 		logger.fatal("FQDN is required in shred");
 	}
 
-	let creds = store.search(fqdn)[0];
+	let creds = store2.getCredential(fqdn);
 
 	if (!creds) {
 		logger.fatal("FQDN not found");
@@ -448,7 +429,7 @@ function renew(type, fqdn) {
  */
 function revoke(fqdn) {
 
-	let creds = store.search(fqdn)[0];
+	let creds = store2.getCredential(fqdn);
 	logger.debug(`revoke creds level ${creds.level}`);
 
 }
