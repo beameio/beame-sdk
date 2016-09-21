@@ -2,8 +2,8 @@
 
 /** @namespace BaseHttpsServer */
 
-const fs = require('fs');
-const _         = require('underscore');
+const fs          = require('fs');
+const _           = require('underscore');
 const https       = require("https");
 const ProxyClient = require("./ProxyClient");
 const SNIServer   = require("./SNIServer");
@@ -18,10 +18,9 @@ const logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttps
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
  */
-let BeameServer = function (instanceHostname, requestListener, hostOnlineCallback) {
-	
-	const BeameStore  = require("./BeameStoreV2");
-	const beamestore  = new BeameStore();
+function BeameServer(instanceHostname, requestListener, hostOnlineCallback) {
+
+	const beamestore = new (require("./BeameStoreV2"))();
 
 	if (!instanceHostname) {
 		logger.error('instance hostname or project name required');
@@ -58,7 +57,7 @@ let BeameServer = function (instanceHostname, requestListener, hostOnlineCallbac
 
 		let fqdn      = server_entity.getKey('FQDN'),
 		    local_ip  = server_entity.getMetadataKey('LOCAL_IP'),
-            edge_fqdn =  server_entity.getMetadataKey('EDGE_FQDN');
+		    edge_fqdn = server_entity.getMetadataKey('EDGE_FQDN');
 
 		if (!fqdn) {
 			logger.fatal('Edge server hostname required');
@@ -79,6 +78,6 @@ let BeameServer = function (instanceHostname, requestListener, hostOnlineCallbac
 		}
 
 	});
-};
+}
 
 module.exports = BeameServer;
