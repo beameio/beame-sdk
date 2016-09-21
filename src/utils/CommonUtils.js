@@ -27,11 +27,22 @@ class CommonUtils {
 		return format ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
 	}
 
+	static parse(obj) {
+		try {
+			//noinspection NodeModulesDependencies,ES6ModulesDependencies
+			return typeof obj == "object" ? obj : JSON.parse(obj);
+		}
+		catch (error) {
+			return obj
+		}
+
+	}
+
 	//noinspection JSUnusedGlobalSymbols
-	static randomBytes(len){
+	static randomBytes(len) {
 		const crypto = require('crypto');
 
-			crypto.randomBytes(len || 256, (error, buf) => {
+		crypto.randomBytes(len || 256, (error, buf) => {
 				if (error) {
 					return null;
 				}
@@ -42,7 +53,7 @@ class CommonUtils {
 		);
 
 
-}
+	}
 }
 
 module.exports = CommonUtils;
