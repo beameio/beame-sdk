@@ -32,9 +32,8 @@ const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger(module_name);
 const BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
-const utils                  = require('../utils/BeameUtils');
+const beameUtils                  = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
-const AuthToken            = require('./AuthToken');
 const provisionApi           = new (require('../services/ProvisionApi'))();
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
@@ -317,8 +316,9 @@ class Credential {
 					reject(`Credential ${signWithFqdn} hasn't private key for signing`);
 					return;
 				}
+				const AuthToken = require('./AuthToken');
 
-				let authToken = AuthToken.create(dataToSign || Date.now(),signCred,60*5);
+				let authToken = AuthToken.create(dataToSign || Date.now(), signCred, 60 * 5);
 
 				if (!authToken) {
 					reject(`Sign data failure, please see logs`);
@@ -430,7 +430,7 @@ class Credential {
 					return;
 				}
 
-				utils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
+			beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
 					if (!error) {
 						onEdgeServerSelected.call(this, payload);
 					}
@@ -452,7 +452,7 @@ class Credential {
 					};
 
 					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = utils.getApiData(apiEntityActions.RegisterEntity.endpoint, postData);
+					    apiData  = beameUtils.getApiData(apiEntityActions.RegisterEntity.endpoint, postData);
 
 					provisionApi.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
 
@@ -494,7 +494,7 @@ class Credential {
 					return;
 				}
 
-				utils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
+			beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
 					if (!error) {
 						onEdgeServerSelected.call(this, payload);
 					}
@@ -558,7 +558,7 @@ class Credential {
 			OpenSSlWrapper.createPrivateKey().then(pk=> {
 				let directoryServices = store.directoryServices;
 				directoryServices.saveFile(dirPath, pkFileName, pk, function (error) {
-					var pkFile = utils.makePath(dirPath, pkFileName);
+					var pkFile = beameUtils.makePath(dirPath, pkFileName);
 					if (!error) {
 						OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
 					}
@@ -593,7 +593,7 @@ class Credential {
 					fqdn: fqdn
 				};
 
-				var apiData = utils.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData, true);
+				var apiData = beameUtils.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData, true);
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
@@ -644,7 +644,7 @@ class Credential {
 								function (callback) {
 
 									OpenSSlWrapper.createP7BCert(dirPath).then(p7b=> {
-										directoryServices.saveFileAsync(utils.makePath(dirPath, config.CertFileNames.P7B), p7b, (error, data) => {
+										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.P7B), p7b, (error, data) => {
 											if (!error) {
 												callback(null, data)
 											}
@@ -660,7 +660,7 @@ class Credential {
 								function (callback) {
 
 									OpenSSlWrapper.createPfxCert(dirPath).then(pwd=> {
-										directoryServices.saveFileAsync(utils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
+										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
 											if (!error) {
 												callback(null, data)
 											}
@@ -714,9 +714,10 @@ class Credential {
 		let dirPath = this.getMetadataKey("path");
 
 		return new Promise((resolve, reject) => {
-				provisionApi.setAuthData(utils.getAuthToken(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
-				var apiData = utils.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
+				provisionApi.setAuthData(beameUtils.getAuthToken(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+
+				var apiData = beameUtils.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
 
 				provisionApi.runRestfulAPI(apiData, function (error, metadata) {
 					if (!error) {
