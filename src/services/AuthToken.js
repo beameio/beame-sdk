@@ -39,6 +39,7 @@ class AuthToken {
 		}
 		catch (error) {
 			logger.error(BeameLogger.formatError(error));
+			return null
 		}
 
 	}
