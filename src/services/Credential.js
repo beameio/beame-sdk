@@ -33,6 +33,7 @@ const logger                 = new BeameLogger(module_name);
 const BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
 const utils                  = require('../utils/BeameUtils');
+const CommonUtils            = require('../utils/CommonUtils');
 const provisionApi           = new (require('../services/ProvisionApi'))();
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
@@ -70,34 +71,34 @@ class Credential {
 		this.initCryptoKeys();
 	}
 
-	initCryptoKeys(){
-            if (this.hasKey("X509")) {
-                pem.config({sync: true});
-                pem.readCertificateInfo(this.getKey("X509")+"", (err, certData) => {
-                    if (this.fqdn && this.fqdn !== certData.commonName) {
-                        throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
-                    }
-                    this.certData = err ? null : certData;
-					this.fqdn = this.extractCommonName();
-					this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
-                });
+	initCryptoKeys() {
+		if (this.hasKey("X509")) {
+			pem.config({sync: true});
+			pem.readCertificateInfo(this.getKey("X509") + "", (err, certData) => {
+				if (this.fqdn && this.fqdn !== certData.commonName) {
+					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
+				}
+				this.certData           = err ? null : certData;
+				this.fqdn               = this.extractCommonName();
+				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+			});
 
-                pem.getPublicKey(this.getKey("X509") + "", (err, publicKey) => {
-                    this.publicKeyStr     = publicKey.publicKey;
-                    this.publicKeyNodeRsa = new NodeRsa();
-                    try {
-                        this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
-                    }catch(e){
-                        console.log(`could not import services ${this.publicKeyStr}`)
-                    }
-                });
-                pem.config({sync: false});
-            }
-            if (this.hasKey("PRIVATE_KEY")) {
-                this.privateKeyNodeRsa = new NodeRsa();
-                this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
-            }
-        }
+			pem.getPublicKey(this.getKey("X509") + "", (err, publicKey) => {
+				this.publicKeyStr     = publicKey.publicKey;
+				this.publicKeyNodeRsa = new NodeRsa();
+				try {
+					this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
+				} catch (e) {
+					console.log(`could not import services ${this.publicKeyStr}`)
+				}
+			});
+			pem.config({sync: false});
+		}
+		if (this.hasKey("PRIVATE_KEY")) {
+			this.privateKeyNodeRsa = new NodeRsa();
+			this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
+		}
+	}
 
 	initFromX509(x509, metadata) {
 		pem.config({sync: true});
@@ -116,7 +117,9 @@ class Credential {
 			this.publicKeyNodeRsa = new NodeRsa();
 			try {
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
-			}catch(e) { console.log(`Error could not import ${this.publicKeyStr}`)}
+			} catch (e) {
+				console.log(`Error could not import ${this.publicKeyStr}`)
+			}
 		});
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
@@ -132,7 +135,7 @@ class Credential {
 
 	//region Save/load services
 
-	initFromObject(importCred){
+	initFromObject(importCred) {
 		if (!importCred || !importCred.metadata) {
 			return;
 		}
@@ -153,7 +156,7 @@ class Credential {
 		this.beameStoreServices.setFolder(this);
 	}
 
-	shred(callback){
+	shred(callback) {
 		this.beameStoreServices.deleteDir(callback);
 	}
 
@@ -253,7 +256,7 @@ class Credential {
 
 	getPublicKeyDER64() {
 		const pubKeyLines = this.publicKeyStr.split('\n');
-		return pubKeyLines.slice(1, pubKeyLines.length-1).join('\n');
+		return pubKeyLines.slice(1, pubKeyLines.length - 1).join('\n');
 	}
 
 	getPrivateKeyNodeRsa() {
@@ -516,7 +519,7 @@ class Credential {
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
 						fqdnResponseReady.bind(this),
-					    utils.isObject(authToken) ? utils.stringify(authToken, false) : authToken
+						CommonUtils.isObject(authToken) ? CommonUtils.stringify(authToken, false) : authToken
 					);
 				}
 
@@ -692,8 +695,8 @@ class Credential {
 
 	//noinspection JSUnusedGlobalSymbols
 	updateMetadata() {
-		let fqdn              = this.fqdn,
-		    dirPath           = this.getMetadataKey("path");
+		let fqdn    = this.fqdn,
+		    dirPath = this.getMetadataKey("path");
 
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn, dirPath).then(payload => {

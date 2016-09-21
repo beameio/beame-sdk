@@ -45,16 +45,18 @@ class AuthToken {
 
 	/**
 	 *
-	 * @param {SignatureToken} authToken
+	 * @param {SignatureToken|String} token
 	 * @returns {SignedData|null}
 	 */
-	static validate(authToken) {
-		try {
-			authToken = JSON.parse(authToken);
-		} catch(e) {
+	static validate(token) {
+		/** @type {SignatureToken} */
+		let authToken = CommonUtils.parse(token);
+
+		if(!authToken){
 			logger.warn('Could not decode authToken JSON. authToken must be a valid JSON');
 			return null;
 		}
+
 		if(!authToken.signedData) { logger.warn('authToken has no .signedData'); return null; }
 		if(!authToken.signedBy)   { logger.warn('authToken has no .signedBy'); return null; }
 		if(!authToken.signature)  { logger.warn('authToken has no .signature'); return null; }
@@ -73,10 +75,8 @@ class AuthToken {
 			return null;
 		}
 
-		var signedData;
-		try {
-			signedData = JSON.parse(authToken.signedData);
-		} catch(e) {
+		var signedData = CommonUtils.parse(authToken.signedData);
+		if(!signedData){
 			logger.warn('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
 			return null;
 		}

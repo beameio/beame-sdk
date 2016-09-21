@@ -333,15 +333,5 @@ module.exports = {
 
 	isAmazon: function () {
 		return process.env.NODE_ENV ? true : false;
-	},
-
-	isObject: function (str) {
-		try {
-			return typeof str === 'object';
-		} catch (e) {
-			return false;
-		}
 	}
-
-
 };

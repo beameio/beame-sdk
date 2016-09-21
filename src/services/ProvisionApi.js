@@ -1,11 +1,12 @@
 "use strict";
 
 const provisionSettings = require('../../config/ApiConfig.json');
-const config = require('../../config/Config');
-const module_name = config.AppModules.ProvisionApi;
-const logger = new (require('../utils/Logger'))(module_name);
-const beameUtils = require('../utils/BeameUtils');
-
+const config            = require('../../config/Config');
+const module_name       = config.AppModules.ProvisionApi;
+const BeameLogger       = require('../utils/Logger');
+const logger            = new BeameLogger(module_name);
+const beameUtils        = require('../utils/BeameUtils');
+const CommonUtils       = require('../utils/CommonUtils');
 /**
  * @typedef {Object} CertSettings
  * @property {String} appCertPath
@@ -27,17 +28,10 @@ const beameUtils = require('../utils/BeameUtils');
  */
 
 
-var _ = require('underscore');
+var _       = require('underscore');
 var request = require('request');
-var fs = require('fs');
+var fs      = require('fs');
 
-function isObject(str) {
-	try {
-		return typeof str === 'object';
-	} catch (e) {
-		return false;
-	}
-}
 
 function clearJSON(json) {
 
@@ -45,7 +39,7 @@ function clearJSON(json) {
 
 	Object.keys(json).map(function (k) {
 		if (k === '$id') return;
-		if (!isObject(json[k])) {
+		if (!CommonUtils.isObject(json[k])) {
 			jsonCleaned[k] = json[k];
 		}
 
@@ -67,7 +61,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 
 	if (error) {
-		logger.error(`parse response error ${isObject(error) ? beameUtils.stringify(error) : error.toString()} for type ${type}`,error,module_name);
+		logger.error(`parse response error ${BeameLogger.formatError(error)} for type ${type}`, error, module_name);
 		callback(logger.formatErrorMessage("Provision Api response error", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
@@ -99,13 +93,13 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		var msg = payload.Message || payload.message || (payload.body && payload.body.message);
+		var msg    = payload.Message || payload.message || (payload.body && payload.body.message);
 		var errMsg = logger.formatErrorMessage(msg || "Provision Api response error", module_name, {
-			"status": response.statusCode,
+			"status":  response.statusCode,
 			"message": msg || payload
 		}, config.MessageCodes.ApiRestError);
 
-		logger.error(errMsg.message,payload,module_name);
+		logger.error(errMsg.message, payload, module_name);
 
 		callback && callback(errMsg, null);
 	}
@@ -128,7 +122,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 	var onApiError = function (error) {
 		logger.warn("Provision Api post error", {
 			"error": error,
-			"url": url
+			"url":   url
 		});
 
 		sleep = parseInt(sleep * (Math.random() + 1.5));
@@ -164,7 +158,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 								if (_.isEmpty(error.data)) {
 									error.data = {};
 								}
-								error.data.url = url;
+								error.data.url      = url;
 								error.data.postData = options.form;
 								callback(error, null);
 							}
@@ -198,7 +192,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 	var onApiError = function (error) {
 		logger.warn("Provision Api getMetadataKey error", {
 			"error": error,
-			"url": url
+			"url":   url
 		});
 
 		sleep = parseInt(sleep * (Math.random() + 1.5));
@@ -232,7 +226,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 								if (_.isEmpty(error.data)) {
 									error.data = {};
 								}
-								error.data.url = url;
+								error.data.url      = url;
 								error.data.postData = options.form;
 								callback(error, null);
 							}
@@ -267,14 +261,14 @@ var ProvApiService = function (baseUrl) {
  */
 ProvApiService.prototype.setAuthData = function (authData) {
 	this.options = {
-		key: fs.readFileSync(authData.pk),
+		key:  fs.readFileSync(authData.pk),
 		cert: fs.readFileSync(authData.x509)
 	};
 };
 
-ProvApiService.prototype.setClientCerts = function (pk,cert) {
+ProvApiService.prototype.setClientCerts = function (pk, cert) {
 	this.options = {
-		key: pk,
+		key:  pk,
 		cert: cert
 	};
 };
@@ -323,8 +317,8 @@ ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, si
  * @param {Function} callback
  * @param {SignatureToken|null} [authToken]
  */
-ProvApiService.prototype.postRequest = function (url, postData, callback,authToken) {
-	var options = _.extend(this.options || {}, {"form": postData});
+ProvApiService.prototype.postRequest = function (url, postData, callback, authToken) {
+	var options     = _.extend(this.options || {}, {"form": postData});
 	options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
 
 	if (authToken) {
@@ -337,7 +331,7 @@ ProvApiService.prototype.postRequest = function (url, postData, callback,authTok
 };
 
 ProvApiService.prototype.getRequest = function (url, callback) {
-	getFromProvisionApi(url, {},  "custom_get", provisionSettings.RetryAttempts, 1000, callback);
+	getFromProvisionApi(url, {}, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
 };
 
 

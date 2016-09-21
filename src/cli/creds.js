@@ -30,6 +30,7 @@ const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger(module_name);
 const directoryServices = new (require('../services/DirectoryServices'))();
 const beameUtils        = require('../utils/BeameUtils');
+const CommonUtils            = require('../utils/CommonUtils');
 
 
 const path   = require('path');
@@ -139,7 +140,7 @@ function lineToText(line) {
 function objectToText(line) {
 	let line2 = {};
 	Object.keys(line).forEach(k => {
-		if (beameUtils.isObject(line[k])) {
+		if (CommonUtils.isObject(line[k])) {
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			line2[k] = JSON.stringify(line[k]);
 		}
@@ -167,6 +168,7 @@ function constructRelativePathElements(item) {
 	return items;
 }
 
+//noinspection JSUnusedLocalSymbols
 /**
  * @private
  * @param {Function} callback
@@ -188,6 +190,7 @@ function readStdinStream(callback) {
 	});
 }
 
+//noinspection JSUnusedLocalSymbols
 /**
  * @private
  * @param {String} data
@@ -250,7 +253,7 @@ show.toText = lineToText;
  * Return list of credentials
  * @public
  * @method Creds.list
- * @param {String|null} [fqdn] entity fqdn
+ * @param {String|null} [regex] entity fqdn
  * @returns {Array.<CredsListItem>}
  */
 function list(regex) {

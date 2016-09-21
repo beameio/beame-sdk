@@ -33,7 +33,7 @@ class CommonUtils {
 			return typeof obj == "object" ? obj : JSON.parse(obj);
 		}
 		catch (error) {
-			return obj
+			return null
 		}
 
 	}
@@ -46,13 +46,18 @@ class CommonUtils {
 				if (error) {
 					return null;
 				}
-
 				return buf.toString('hex');
-
 			}
 		);
 
+	}
 
+	static isObject(obj) {
+		try {
+			return typeof obj === 'object';
+		} catch (e) {
+			return false;
+		}
 	}
 }
 
