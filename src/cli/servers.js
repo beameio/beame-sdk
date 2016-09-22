@@ -69,21 +69,22 @@ function runDemoServer(fqdn, sharedFolder) {
 
 function runLogginServer(fqdn) {
 
-	new beameSDK.BaseHttpsServer.SampleBeameServer(fqdn,  null, function (data, app) {
+	new beameSDK.BeameServer(fqdn, (req, resp) =>{
+		resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});
+		resp.end('hello world\n');
+		console.log("On beame server request", {
+			fqdn: fqdn,
+			method: req.method,
+			url: req.url,
+			headers: req.headers
+		});
+	},  (data, app) => {
 		logger.info(`Server started on ${fqdn}`);
 		logger.debug("BeameServer callback got data", data);
-		app.on("request", function (req, resp) {
-			resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});
-			resp.end('hello world\n');
-			logger.debug("On beame server request", {
-				fqdn: fqdn,
-				method: req.method,
-				url: req.url,
-				headers: req.headers
-			});
-		});
 
-		var socketio = require('socket.io')(app);
+
+
+		/*var socketio = require('socket.io')(app);
 		//noinspection JSUnresolvedFunction
 		socketio.set('transports', ['websocket']);
 
@@ -94,11 +95,12 @@ function runLogginServer(fqdn) {
 			socket.on('ipong', function () {
 				socket.emit('iping', {hello: 'world'});
 			});
-		});
+		});*/
 	});
 }
 
 module.exports = {
 
-	runDemoServer	
+	runDemoServer,
+	runLogginServer
 };
