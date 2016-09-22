@@ -3,7 +3,7 @@ _The Beame SDK allows you to establish a HTTPS session between two machines with
 
 [Click to Get Started Now!](https://registration.beameio.net/)
 
-## Common Uses for Beame SDK Network Infrastructure 
+## Common Uses for Beame SDK Network Infrastructure
 
 See the example folder to copy-paste and try it for yourself!
 
