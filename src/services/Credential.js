@@ -506,7 +506,7 @@ class Credential {
 
 				function onEdgeServerSelected(edge) {
 
-					let authServerFqdn = authSrvFqdn || config.authServerURL;
+					let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || config.authServerURL;
 
 					metadata = {
 						name,

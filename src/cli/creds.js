@@ -106,7 +106,7 @@ createWithLocalCreds.toText = lineToText;
  * @param {String|null} [localIp]
  * @param {Function} callback
  */
-function signAndCreate(signWithFqdn, dataToSign, authSrvFqdn, name, email, localIp, callback) {
+function signAndCreate(signWithFqdn,  authSrvFqdn, dataToSign, name, email, localIp, callback) {
 	const store2            = new (require("../services/BeameStoreV2"))();
 
 	let cred = new (require('../services/Credential'))(store2);
