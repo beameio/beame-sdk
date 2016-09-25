@@ -57,15 +57,14 @@ module.exports = {
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
- * @param {String|null} [localIp]
  * @param {Function} callback
  */
-function createWithToken(authToken, authSrvFqdn, name, email, localIp, callback) {
+function createWithToken(authToken, authSrvFqdn, name, email, callback) {
 	const store2            = new (require("../services/BeameStoreV2"))();
 
 	let cred = new (require('../services/Credential'))(store2);
 
-	cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email, localIp).then(metadata=> {
+	cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email).then(metadata=> {
 		callback && callback(null, metadata)
 	}).catch(error=> {
 		callback && callback(error, null)
@@ -79,15 +78,14 @@ createWithToken.toText = lineToText;
  * @param {String} parent_fqdn
  * @param {String|null} [name]
  * @param {String|null} [email]
- * @param {String|null} [localIp]
  * @param {Function} callback
  */
-function createWithLocalCreds(parent_fqdn, name, email, localIp, callback) {
+function createWithLocalCreds(parent_fqdn, name, email, callback) {
 	const store2            = new (require("../services/BeameStoreV2"))();
 
 	let cred = new (require('../services/Credential'))(store2);
 
-	cred.createEntityWithLocalCreds(parent_fqdn, name, email, localIp).then(metadata=> {
+	cred.createEntityWithLocalCreds(parent_fqdn, name, email).then(metadata=> {
 		callback && callback(null, metadata)
 	}).catch(error=> {
 		callback && callback(error, null)
@@ -103,16 +101,15 @@ createWithLocalCreds.toText = lineToText;
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
- * @param {String|null} [localIp]
  * @param {Function} callback
  */
-function signAndCreate(signWithFqdn,  authSrvFqdn, dataToSign, name, email, localIp, callback) {
+function signAndCreate(signWithFqdn,  authSrvFqdn, dataToSign, name, email, callback) {
 	const store2            = new (require("../services/BeameStoreV2"))();
 
 	let cred = new (require('../services/Credential'))(store2);
 
 	cred.signWithFqdn(signWithFqdn, dataToSign).then(authToken=> {
-		createWithToken(authToken, authSrvFqdn, name, email, localIp, callback);
+		createWithToken(authToken, authSrvFqdn, name, email, callback);
 	}).catch(error=> {
 		callback && callback(error, null)
 	})
@@ -213,6 +210,7 @@ function decryptCreds(data) {
  * @returns {Array<CredsListItem>}
  */
 function listCreds(fqdn) {
+	const store2            = new (require("../services/BeameStoreV2"))();
 	return store2.list(fqdn);
 }
 
@@ -224,6 +222,7 @@ function listCreds(fqdn) {
  * @returns {Array.<CertListItem>}
  */
 function show(fqdn) {
+	const store2            = new (require("../services/BeameStoreV2"))();
 	let creds = store2.getCredential(fqdn);
 	if (!creds) {
 		throw new Error(`show: fqdn ${fqdn} was not found`);
@@ -257,6 +256,7 @@ list.toText = function (creds) {
 };
 
 function shred(fqdn, callback) {
+	const store2            = new (require("../services/BeameStoreV2"))();
 	if (!fqdn) {
 		logger.fatal("FQDN is required in shred");
 	}
@@ -274,6 +274,7 @@ shred.toText = lineToText;
  * @method Creds.exportCredentials
  * @param {String} fqdn - fqdn of credentials to export
  * @param {String} targetFqdn - fqdn of the entity to encrypt for
+ * @param {String} signingFqdn
  * @param {String} file - path to file
  * @returns {{}}
  */
@@ -397,6 +398,8 @@ function importLiveCredentials(fqdn) {
  * @param {Function} callback
  */
 function stats(fqdn, callback) {
+	const store2            = new (require("../services/BeameStoreV2"))();
+
 	if (!fqdn) {
 		logger.fatal("FQDN is required in shred");
 	}

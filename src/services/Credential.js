@@ -160,7 +160,6 @@ class Credential {
 		this.beameStoreServices.deleteDir(callback);
 	}
 
-
 	saveCredentialsObject() {
 		if (!this || !this.metadata || !this.metadata.path) {
 			return;
@@ -414,9 +413,8 @@ class Credential {
 	 * @param {String} parent_fqdn => required
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
-	 * @param {String|null} [local_ip]
 	 */
-	createEntityWithLocalCreds(parent_fqdn, name, email, local_ip) {
+	createEntityWithLocalCreds(parent_fqdn, name, email) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -447,7 +445,6 @@ class Credential {
 						parent_fqdn,
 						name,
 						email,
-						local_ip,
 						edge_fqdn: edge.endpoint
 					};
 
@@ -483,9 +480,8 @@ class Credential {
 	 * @param {String|null} [authSrvFqdn]
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
-	 * @param {String|null} [local_ip]
 	 */
-	createEntityWithAuthServer(authToken, authSrvFqdn, name, email, local_ip) {
+	createEntityWithAuthServer(authToken, authSrvFqdn, name, email) {
 		return new Promise((resolve, reject) => {
 				var metadata;
 
@@ -511,7 +507,6 @@ class Credential {
 					metadata = {
 						name,
 						email,
-						local_ip,
 						edge_fqdn: edge.endpoint
 					};
 
@@ -521,7 +516,7 @@ class Credential {
 						Credential.formatRegisterPostData(metadata),
 						fqdnResponseReady.bind(this),
 					 	authToken,
-						2
+						5
 					);
 				}
 
@@ -625,8 +620,8 @@ class Credential {
 										logger.error(error);
 										resolve(metadata);
 									})
-								}).catch(onError);
-							}).catch(onError);
+								})
+							})
 					}).catch(onError);
 
 				function onError(e) {
@@ -747,8 +742,7 @@ class Credential {
 			name:        metadata.name,
 			email:       metadata.email,
 			parent_fqdn: metadata.parent_fqdn,
-			edge_fqdn:   metadata.edge_fqdn,
-			ip:          metadata.local_ip
+			edge_fqdn:   metadata.edge_fqdn
 		};
 	}
 

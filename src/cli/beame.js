@@ -5,7 +5,7 @@
 var argv = require('minimist')(process.argv.slice(2));
 var _    = require('underscore');
 
-var BeameStore    = require("../services/BeameStore");
+var BeameStore    = require("../services/BeameStoreV2");
 var config        = require('../../config/Config');
 const module_name = config.AppModules.BeameSDKCli;
 var BeameLogger   = require('../utils/Logger');

@@ -1,73 +1,72 @@
 {
-  "name": "beame-sdk",
-  "version": "1.1.18",
-  "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
-  "main": "index.js",
-  "engine": "node >= 4.4.0",
-  "scripts": {
-    "test_developer": "mocha ./tests/unit-tests/single_tests/developer_test.js",
-    "test_atom": "mocha ./tests/unit-tests/single_tests/atom_test.js",
-    "test_edge": "mocha ./tests/unit-tests/single_tests/edge_test.js",
-    "test_full_flow": "mocha ./tests/unit-tests/full_flow_test.js",
-    "startChat": "node ./examples/example1.js",
-    "runAtomServer": "node ./tests/serge_test/test_cli.js"
-  },
-  "bin": {
-    "beame": "src/cli/beame.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:beameio/beame-sdk.git"
-  },
-  "keywords": [
-    "beame",
-    "SSL cert",
-    "x509",
-    "localhost",
-    "proxy tunnel",
-    "ssl tunnel",
-    "self signed ",
-    "CA",
-    "signing",
-    "crypto"
-  ],
-  "author": "beame.io",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/beameio/beame-sdk/issues"
-  },
-  "homepage": "https://github.com/beameio/beame-sdk#readme",
-  "dependencies": {
-    "async": "^2.0.0-rc.6",
-    "cli-table2": "0.2.0",
-    "debug": "^2.2.0",
-    "express": "^4.14.0",
-    "http-proxy": "^1.14.0",
-    "jmespath": "^0.15.0",
-    "minimist": "^1.2.0",
-    "mkdirp": "^0.5.1",
-    "network": "^0.2.1",
-    "node-rsa": "^0.4.0",
-    "node-uuid": "^1.4.7",
-    "npm-prefix": "^1.2.0",
-    "pem": "https://github.com/beameio/pem",
-    "request": "^2.72.0",
-    "rimraf": "^2.5.3",
-    "serve-index": "^1.8.0",
-    "socket.io": "^1.4.8",
-    "socket.io-client": "^1.4.6",
-    "sprintf": "^0.1.5",
-    "sync-request": "^3.0.1",
-    "underscore": "^1.8.3"
-  },
-  "directories": {
-    "test": "tests"
-  },
-  "devDependencies": {
-    "chai": "^3.5.0",
-    "gulp": "^3.9.1",
-    "gulp-jsdoc3": "^0.3.0",
-    "jsdoc": "^3.4.0",
-    "mocha": "^2.5.3"
-  }
+    "name": "beame-sdk",
+    "version": "1.1.18",
+    "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
+    "main": "index.js",
+    "engine": "node >= 4.4.0",
+    "scripts": {
+        "test_local_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_local_creds.js",
+        "test_sign_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_signature.js",
+        "test_auth_token_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_auth_token.js",
+        "test_auth_token": "mocha ./tests/unit_tests/single_tests/create_auth_token.js",
+        "startChat": "node ./examples/example1.js"
+    },
+    "bin": {
+        "beame": "src/cli/beame.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:beameio/beame-sdk.git"
+    },
+    "keywords": [
+        "beame",
+        "SSL cert",
+        "x509",
+        "localhost",
+        "proxy tunnel",
+        "ssl tunnel",
+        "self signed ",
+        "CA",
+        "signing",
+        "crypto"
+    ],
+    "author": "beame.io",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/beameio/beame-sdk/issues"
+    },
+    "homepage": "https://github.com/beameio/beame-sdk#readme",
+    "dependencies": {
+        "async": "^2.0.0-rc.6",
+        "cli-table2": "0.2.0",
+        "debug": "^2.2.0",
+        "express": "^4.14.0",
+        "http-proxy": "^1.14.0",
+        "jmespath": "^0.15.0",
+        "minimist": "^1.2.0",
+        "mkdirp": "^0.5.1",
+        "network": "^0.2.1",
+        "node-rsa": "^0.4.0",
+        "node-uuid": "^1.4.7",
+        "npm-prefix": "^1.2.0",
+        "pem": "https://github.com/beameio/pem",
+        "request": "^2.72.0",
+        "rimraf": "^2.5.3",
+        "serve-index": "^1.8.0",
+        "socket.io": "^1.4.8",
+        "socket.io-client": "^1.4.6",
+        "sprintf": "^0.1.5",
+        "sync-request": "^3.0.1",
+        "underscore": "^1.8.3"
+    },
+    "directories": {
+        "test": "tests"
+    },
+    "devDependencies": {
+        "chai": "^3.5.0",
+        "gulp": "^3.9.1",
+        "gulp-jsdoc3": "^0.3.0",
+        "jsdoc": "^3.4.0",
+        "mocha": "^2.5.3"
+    }
 }

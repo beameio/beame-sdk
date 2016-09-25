@@ -13,7 +13,6 @@ var home         = os.homedir();
 var npmPrefix    = require('npm-prefix');
 const npmRootDir = npmPrefix();
 
-const AuthServerEndPoint = "https://registration-staging.beameio.net";
 
 const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 
@@ -21,29 +20,22 @@ const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 /** @const {String} **/
 var rootDir                     = process.env.BEAME_DIR || path.join(home, '.beame');
-var beameMasterCredFqdn         = process.env.BEAME_MASTER_CREDS || null;
-/** @const {String} **/
-var localCertsDirV1             = path.join(rootDir, 'v1', 'local');
+
 
 /** @const {String} **/
 var remotePKsDirV1 = path.join(rootDir, 'pki');
 
-/** @const {String} **/
-var remoteCertsDirV1 = path.join(rootDir, 'v1', 'remote');
 
 var localCertsDirV2 = path.join(rootDir, 'v2');
 
 
 /** @const {String} **/
-var authServerURL = "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
+const authServerURL = "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
 
 /** @const {String} **/
-var loadBalancerURL = "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";
+const loadBalancerURL = "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";
 
-var beameZeroLevelAuthData = {
-	"PK_PATH":   "/authData/pk.pem",
-	"CERT_PATH": "/authData/x509.pem"
-};
+const beameDevAuthServerFqdn = "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";
@@ -85,38 +77,15 @@ var CertificateFiles = {
 };
 
 var MetadataProperties = {
-	LEVEL:        "level",
-	FQDN:         "fqdn",
-	UID:          "uid",
-	NAME:         "name",
-	PARENT_FQDN:  "parent_fqdn",
-	EDGEHOSTNAME: "edgeHostname",
-	PATH:         "path"
+	LEVEL:       "level",
+	FQDN:        "fqdn",
+	UID:         "uid",
+	NAME:        "name",
+	PARENT_FQDN: "parent_fqdn",
+	EDGE_FQDN:   "edge_fqdn",
+	PATH:        "path"
 };
 
-var CredentialStatus = {
-	PRIVATE_KEY:       1 << 1,
-	CERT:              1 << 2,
-	BEAME_ISSUED_CERT: 1 << 3,
-	NON_BEAME_CERT:    1 << 4,
-	EMPTY_DIR:         1 << 5,
-	DIR_NOTREAD:       1 << 6
-};
-
-var SecurityPolicy = {
-	Basic:           1 << 0,
-	CanHasChildren:  1 << 1,
-	CanAuthorize:    1 << 2,
-	CanAuthenticate: 1 << 3,
-	CanAttachPolicy: 1 << 4
-};
-
-/** @enum {String} **/
-var IdentityType       = {
-	"Developer":  "Developer",
-	"Atom":       "Atom",
-	"EdgeClient": "EdgeClient"
-};
 /**
  * Certificate response fields
  *  @enum {string}
@@ -142,12 +111,6 @@ var AppModules = {
 	"BeameStore":       "BeameStore",
 	"BeameSystem":      "BeameSystem",
 	"BeameDirServices": "BeameDirServices",
-	"Developer":        "Developer",
-	"Atom":             "Atom",
-	"AtomAgent":        "AtomAgent",
-	"EdgeClient":       "EdgeClient",
-	"RemoteClient":     "RemoteClient",
-	"LocalClient":      "LocalClient",
 	"ProvisionApi":     "ProvisionApi",
 	"DataServices":     "DataServices",
 	"UnitTest":         "UnitTest",
@@ -157,7 +120,7 @@ var AppModules = {
 	"ProxyClient":      "ProxyClient",
 	"Tunnel":           "Tunnel",
 	"OpenSSL":          "OpenSSL",
-	"AuthToken" : "AuthToken"
+	"AuthToken":        "AuthToken"
 };
 
 /**
@@ -197,37 +160,16 @@ var TimeUnits = {
 	"Day":    "d"
 };
 
-/**
- * Atom type values
- *  @enum {number}
- */
-var AtomType = {
-	"Default":              0,
-	"AuthenticationServer": 1,
-	"AuthorizationServer":  2
-};
-
-/**
- * Atom request types
- *  @enum {string}
- */
-var AtomServerRequests = {
-	"GetHost":                 "getHost",
-	"GetHostsForLocalClients": "GetHostsForLocalClients",
-	"AuthorizeToken":          "authorizeToken",
-	"SignAuthToken":           "signAuthToken"
-};
 
 var SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
 	rootDir,
 	npmRootDir,
-	localCertsDirV1,
 	localCertsDirV2,
-	remoteCertsDirV1,
 	remotePKsDirV1,
 	loadBalancerURL,
+	beameDevAuthServerFqdn,
 	metadataFileName,
 	s3MetadataFileName,
 	CertFileNames,
@@ -237,18 +179,11 @@ module.exports = {
 	MessageCodes,
 	ResponseKeys,
 	TimeUnits,
-	AtomType,
-	AtomServerRequests,
 	SNIServerPort,
-	AuthServerEndPoint,
 	PKsFileName,
 	CertEndpoint,
 	InitFirstRemoteEdgeClient,
 	PinAtomPKbyDefault,
-	CredentialStatus,
-	SecurityPolicy,
-	IdentityType,
-	beameZeroLevelAuthData,
 	MetadataProperties,
 	authServerURL,
 };

@@ -45,6 +45,7 @@ class BeameStoreV2 {
 		this.init();
 	}
 
+
 	init() {
 
 		this.directoryServices.createDir(config.localCertsDirV2);
@@ -53,9 +54,6 @@ class BeameStoreV2 {
 			let cred = new Credential(this);
 			cred.initFromData(fqdn);
 			this.addCredential(cred);
-			// there is no parent node in the store. still a to decice weather i want to request the whole tree.
-			// for now we will keep it at the top level, and as soon as parent is added to the store it will getMetadataKey reassigned
-			// just a top level credential or a credential we are placing on top, untill next one is added
 		});
 	}
 
