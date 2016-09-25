@@ -520,7 +520,7 @@ class Credential {
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
 						fqdnResponseReady.bind(this),
-						authToken,
+					 	authToken,
 						2
 					);
 				}

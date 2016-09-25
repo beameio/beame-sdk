@@ -7,7 +7,7 @@ var request       = require('request');
 var _             = require('underscore');
 var network       = require('network');
 var os            = require('os');
-var beameStore    = new (require('../services/BeameStore'))();
+//var beameStore    = new (require('../services/BeameStore'))();
 var config        = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
 var BeameLogger   = require('../utils/Logger');
@@ -105,7 +105,6 @@ module.exports = {
 		}
 	},
 
-
 	/**
 	 * @param {String} endpoint
 	 * @param {Object} postData
@@ -118,21 +117,6 @@ module.exports = {
 			postData:       postData,
 			answerExpected: answerExpected || true
 		};
-	},
-
-
-	getRegionName: function (hostname) {
-
-		if (!hostname) return "Unknown";
-
-		for (var i = 0; i < AwsRegions.length; i++) {
-			var region = AwsRegions[i];
-			if (hostname.lastIndexOf(region.Code) >= 0) {
-				return region.Name;
-			}
-		}
-
-		return "Unknown";
 	},
 
 	/**
@@ -164,7 +148,6 @@ module.exports = {
 	 */
 	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
 		var self          = this;
-		var getRegionName = self.getRegionName;
 		var get           = self.httpGet;
 		var selectBest    = self.selectBestProxy;
 
@@ -182,13 +165,11 @@ module.exports = {
 				 */
 				function (error, data) {
 					if (data) {
-						//noinspection JSUnresolvedVariable
-						var region = getRegionName(data.instanceData.endpoint);
+
 						//noinspection JSUnresolvedVariable
 						/** @type {EdgeShortData} edge **/
 						var edge   = {
 							endpoint: data.instanceData.endpoint,
-							region:   region,
 							publicIp: data.instanceData.publicipv4
 						};
 
@@ -237,65 +218,8 @@ module.exports = {
 
 	//validation services
 
-	deleteHostCerts: function (fqdn, callback) {
-		beameStore.shredCredentials(fqdn, callback || function () {
-			});
-	},
-
-	/**
-	 * @param hostname
-	 * @returns {Promise.<ItemAndParentFolderPath>}
-	 */
-	findHostPathAndParentAsync: function (hostname) {
-
-		return new Promise(function (resolve, reject) {
-			var data = beameStore.searchItemAndParentFolderPath(hostname);
-
-			if (!_.isEmpty(data)) {
-				resolve(data);
-			}
-			else {
-				reject('Not found');
-			}
-		});
-	},
-
-	/**
-	 *
-	 * @param {String} hostname
-	 * @returns {String|null|undefined}
-	 */
-	findHostPathSync: function (hostname) {
-
-		var data = beameStore.searchItemAndParentFolderPath(hostname);
-
-		if (!_.isEmpty(data)) {
-			return data["path"];
-		}
-		else {
-			return null;
-		}
-
-	},
-
 	/** ---------- Validation  shared services **/
-	/**
-	 *
-	 * @param {Function} callback
-	 * @param {Object} error
-	 */
-	onValidationError: function (callback, error) {
-		callback && callback(error, null);
-	},
 
-	/**
-	 *
-	 * @param {Function} callback
-	 * @param {String|null|undefined} [message]
-	 */
-	onSearchFailed: function (callback, message) {
-		callback && callback(message, null);
-	},
 
 	/** local network**/
 	getLocalActiveInterface: function (callback) {
