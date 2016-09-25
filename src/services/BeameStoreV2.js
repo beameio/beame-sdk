@@ -181,8 +181,8 @@ class BeameStoreV2 {
 
 	/**
 	 *
-	 * @param regex
-	 * @param {Array} searchArray
+	 * @param {String} regex
+	 * @param {Array|null} [searchArray]
 	 * @returns {Array}
 	 */
 	list(regex, searchArray) {

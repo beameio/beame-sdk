@@ -1,12 +1,12 @@
 'use strict';
 
-const config                 = require('../../config/Config');
-const module_name            = config.AppModules.AuthToken;
-const BeameLogger            = require('../utils/Logger');
-const logger                 = new BeameLogger(module_name);
+const config      = require('../../config/Config');
+const module_name = config.AppModules.AuthToken;
+const BeameLogger = require('../utils/Logger');
+const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
-const BeameStore = require('./BeameStoreV2');
-const Credential = require('./Credential');
+const BeameStore  = require('./BeameStoreV2');
+const Credential  = require('./Credential');
 
 const timeFuzz = 5;
 
@@ -21,20 +21,20 @@ class AuthToken {
 	static create(data, signingCreds, ttl) {
 
 		try {
-			if(!(signingCreds instanceof Credential)) {
+			if (!(signingCreds instanceof Credential)) {
 				logger.warn('signingCreds must be present and must be instance of Credential');
 				return null;
 			}
 
-			const now = Date.now();
+			const now   = Date.now();
 			/** @type {SignedData} */
 			const token = {
 				created_at: Math.round(now / 1000),
 				valid_till: Math.round(now / 1000) + (ttl || 10),
-				data: data || null
+				data:       data || null
 			};
 
-			return CommonUtils.stringify(signingCreds ? signingCreds.sign(token) : token,false);
+			return CommonUtils.stringify(signingCreds ? signingCreds.sign(token) : token, false);
 
 		}
 		catch (error) {

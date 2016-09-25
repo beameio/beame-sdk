@@ -26,9 +26,9 @@ const config            = require('../../config/Config');
 const module_name       = config.AppModules.BeameCreds;
 const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger(module_name);
-const directoryServices = new (require('../services/DirectoryServices'))();
-const beameUtils        = require('../utils/BeameUtils');
-const CommonUtils            = require('../utils/CommonUtils');
+// const directoryServices = new (require('../services/DirectoryServices'))();
+// const beameUtils        = require('../utils/BeameUtils');
+const CommonUtils       = require('../utils/CommonUtils');
 
 
 const path   = require('path');
@@ -41,14 +41,10 @@ module.exports = {
 	signAndCreate,
 	createWithToken,
 	createWithLocalCreds,
-	//renew,
-	//revoke,
 	shred,
 	exportCredentials,
 	importCredentials,
-	importLiveCredentials,
-	stats,
-	convertCredentialsToV2
+	importLiveCredentials
 };
 
 /**
@@ -60,7 +56,7 @@ module.exports = {
  * @param {Function} callback
  */
 function createWithToken(authToken, authSrvFqdn, name, email, callback) {
-	const store2            = new (require("../services/BeameStoreV2"))();
+	const store2 = new (require("../services/BeameStoreV2"))();
 
 	let cred = new (require('../services/Credential'))(store2);
 
@@ -81,7 +77,7 @@ createWithToken.toText = lineToText;
  * @param {Function} callback
  */
 function createWithLocalCreds(parent_fqdn, name, email, callback) {
-	const store2            = new (require("../services/BeameStoreV2"))();
+	const store2 = new (require("../services/BeameStoreV2"))();
 
 	let cred = new (require('../services/Credential'))(store2);
 
@@ -103,8 +99,8 @@ createWithLocalCreds.toText = lineToText;
  * @param {String|null} [email]
  * @param {Function} callback
  */
-function signAndCreate(signWithFqdn,  authSrvFqdn, dataToSign, name, email, callback) {
-	const store2            = new (require("../services/BeameStoreV2"))();
+function signAndCreate(signWithFqdn, authSrvFqdn, dataToSign, name, email, callback) {
+	const store2 = new (require("../services/BeameStoreV2"))();
 
 	let cred = new (require('../services/Credential'))(store2);
 
@@ -133,6 +129,7 @@ function lineToText(line) {
 	return table;
 }
 
+//noinspection JSUnusedLocalSymbols
 /**
  * @private
  * @param line
@@ -182,6 +179,7 @@ function readStdinStream(callback) {
  * @returns {*}
  */
 function decryptCreds(data) {
+	const store2 = new (require("../services/BeameStoreV2"))();
 	let crypto     = require('./crypto');
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	/** @type {SignatureToken} **/
@@ -190,7 +188,7 @@ function decryptCreds(data) {
 	//noinspection JSCheckFunctionSignatures
 	let signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedBy, parsedData.signature);
 	if (signatureStatus === true) {
-		let creds = store.search(parsedData.signedData.encryptedFor)[0];
+		let creds = store2.getCredential(parsedData.signedData.encryptedFor);
 
 		if (!creds) {
 			logger.fatal(`Private key for ${parsedData.signedData.encryptedFor} is not found`);
@@ -210,7 +208,7 @@ function decryptCreds(data) {
  * @returns {Array<CredsListItem>}
  */
 function listCreds(fqdn) {
-	const store2            = new (require("../services/BeameStoreV2"))();
+	const store2 = new (require("../services/BeameStoreV2"))();
 	return store2.list(fqdn);
 }
 
@@ -222,8 +220,8 @@ function listCreds(fqdn) {
  * @returns {Array.<CertListItem>}
  */
 function show(fqdn) {
-	const store2            = new (require("../services/BeameStoreV2"))();
-	let creds = store2.getCredential(fqdn);
+	const store2 = new (require("../services/BeameStoreV2"))();
+	let creds    = store2.getCredential(fqdn);
 	if (!creds) {
 		throw new Error(`show: fqdn ${fqdn} was not found`);
 	}
@@ -241,7 +239,7 @@ show.toText = lineToText;
  */
 function list(regex) {
 	logger.debug(`list  ${regex}`);
-	return listCreds(regex || '.' );
+	return listCreds(regex || '.');
 }
 
 list.toText = function (creds) {
@@ -255,12 +253,12 @@ list.toText = function (creds) {
 	return table;
 };
 
-function shred(fqdn, callback) {
-	const store2            = new (require("../services/BeameStoreV2"))();
+function shred(fqdn) {
+	const store2 = new (require("../services/BeameStoreV2"))();
 	if (!fqdn) {
 		logger.fatal("FQDN is required in shred");
 	}
-	store2.shredCredentials(fqdn,() =>{
+	store2.shredCredentials(fqdn, () => {
 		return 'fqdn has been erased from store';
 	});
 }
@@ -276,18 +274,18 @@ shred.toText = lineToText;
  * @param {String} targetFqdn - fqdn of the entity to encrypt for
  * @param {String} signingFqdn
  * @param {String} file - path to file
- * @returns {{}}
+ * @returns {String|null}
  */
 
 function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
-	const store2            = new (require("../services/BeameStoreV2"))();
+	const store2 = new (require("../services/BeameStoreV2"))();
 
-	let creds        = store2.getCredential(fqdn);
-	if(creds && targetFqdn){
+	let creds = store2.getCredential(fqdn);
+	if (creds && targetFqdn) {
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let jsonCredentialObject = JSON.stringify(creds);
 		if (!jsonCredentialObject) {
 			logger.fatal(`Credentials for exporting ${fqdn} credentials are not found`);
-			return;
 		}
 
 		let crypto = require('./crypto');
@@ -296,10 +294,11 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
 			encryptedString = crypto.encrypt(jsonCredentialObject, targetFqdn, signingFqdn);
 		} catch (e) {
 			logger.error(`Could not encrypt with error `, e);
-			return {};
+			return null;
 		}
 
 		if (!file) {
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			console.log(JSON.stringify(encryptedString));
 		}
 		else {
@@ -315,35 +314,37 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
  * Import credentials exported with exportCredentials method
  * @public
  * @method Creds.importCredentials
- * @param {String|null} [data] - encrypted credentials in string format
  * @param {String|null} [file] - path to file with encrypted credentials
- * @returns {boolean}
+ * @returns {String}
  */
 function importCredentials(file) {
-	const store2            = new (require("../services/BeameStoreV2"))();
-	let data           = JSON.parse(fs.readFileSync(path.resolve(file)) + "");
-	let crypto = require('./crypto');
+	const store2 = new (require("../services/BeameStoreV2"))();
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
+	let data     = JSON.parse(fs.readFileSync(path.resolve(file)) + "");
+	let crypto   = require('./crypto');
 	let encryptedCredentials;
 
-	if(data.signature ){
+	if (data.signature) {
 		let sigStatus = crypto.checkSignature(data.signedData, data.signedBy, data.signature);
 		console.log(`Signature status is ${sigStatus}`);
-		if(!sigStatus){
+		if (!sigStatus) {
 			logger.fatal(`Import credentials signature missmatch ${data.signedBy}, ${data.signature}`);
 		}
 		encryptedCredentials = data.signedData;
-	}else{
+	} else {
 		encryptedCredentials = data;
 	}
+	//noinspection ES6ModulesDependencies,NodeModulesDependencies
 	let decrtypedCreds = crypto.decrypt(JSON.stringify(encryptedCredentials));
 
-	if(decrtypedCreds && decrtypedCreds.length){
+	if (decrtypedCreds && decrtypedCreds.length) {
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let parsedCreds = JSON.parse(decrtypedCreds);
 
 		let importedCredential = new (require('../services/Credential.js'))(store2);
 		importedCredential.initFromObject(parsedCreds);
 		importedCredential.saveCredentialsObject();
-		return `Succesfully imported credentials ${importedCredential.fqdn}`;
+		return `Successfully imported credentials ${importedCredential.fqdn}`;
 	}
 }
 
@@ -354,26 +355,25 @@ function importCredentials(file) {
  * @param {String} fqdn
  */
 function importLiveCredentials(fqdn) {
+	const store2 = new (require("../services/BeameStoreV2"))();
 	let tls = require('tls');
 	try {
-		let ciphers = tls.getCiphers().filter(cipher => {
-			if(cipher.indexOf('ec') >= 0){
-				return false;
-			}
-			return true;
+		let ciphers           = tls.getCiphers().filter(cipher => {
+			return cipher.indexOf('ec') < 0;
+
 		});
-		let allowedCiphers = ciphers.join(':').toUpperCase();
-		let conn = tls.connect(443, fqdn, {host: fqdn, ciphers:allowedCiphers});
+		let allowedCiphers    = ciphers.join(':').toUpperCase();
+		let conn              = tls.connect(443, fqdn, {host: fqdn, ciphers: allowedCiphers});
 		let onSecureConnected = function () {
 			//noinspection JSUnresolvedFunction
 			let cert = conn.getPeerCertificate(true);
 			conn.end();
-			let bas64Str = new Buffer(cert.raw, "hex").toString("base64");
-			let certBody = "-----BEGIN CERTIFICATE-----\r\n";
+			let bas64Str    = new Buffer(cert.raw, "hex").toString("base64");
+			let certBody    = "-----BEGIN CERTIFICATE-----\r\n";
 			certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
 			certBody += "-----END CERTIFICATE-----";
 			let credentials = store2.addToStore(certBody);
-//			credentials.saveCredentialsObject();
+			credentials.saveCredentialsObject();
 		};
 
 		conn.on('error', function (error) {
@@ -387,90 +387,6 @@ function importLiveCredentials(fqdn) {
 	catch (e) {
 		logger.fatal(e.toString());
 	}
-
-}
-
-/**
- * Return stats by entity fqdn
- * @public
- * @method Creds.stats
- * @param {String} fqdn
- * @param {Function} callback
- */
-function stats(fqdn, callback) {
-	const store2            = new (require("../services/BeameStoreV2"))();
-
-	if (!fqdn) {
-		logger.fatal("FQDN is required in shred");
-	}
-
-	let creds = store2.getCredential(fqdn);
-
-	if (!creds) {
-		logger.fatal("FQDN not found");
-	}
-
-	let cb = function (error, payload) {
-		if (!error) {
-			return callback(null, payload);
-		}
-
-		logger.fatal(error);
-	};
-	new Error('not implemented');
-}
-
-stats.toText = objectToText;
-
-/**
- * @private
- * @param type
- * @param fqdn
- */
-function renew(type, fqdn) {
-	logger.debug(`renew ${type} ${fqdn}`);
-
-}
-
-/**
- * @private
- * @param fqdn
- */
-function revoke(fqdn) {
-
-	let creds = store2.getCredential(fqdn);
-	logger.debug(`revoke creds level ${creds.level}`);
-
-}
-
-function convertCredentialsToV2() {
-	let creds = store.list();
-	for (let cred of creds) {
-		let rec          = store.search(cred.hostname)[0];
-		let pathElements = rec.path.split(path.sep);
-		let lastElement  = pathElements[pathElements.length - 1];
-		let newPath      = path.join(config.localCertsDirV2, lastElement);
-		directoryServices.copyDir(rec.path, newPath);
-		let metafilePath = path.join(newPath, config.metadataFileName);
-
-		if (directoryServices.doesPathExists(metafilePath)) {
-			let metadata = directoryServices.readJSON(metafilePath);
-			if (metadata.hostname) {
-				metadata.fqdn = metadata.hostname;
-				delete metadata.hostname;
-			}
-			let jsonData = JSON.stringify(metadata);
-			fs.writeFileSync(path.join(metafilePath), jsonData);
-		}
-
-		directoryServices.deleteFolder(rec.path, () => {
-		});
-		logger.info(`copying ${rec.path} to ${newPath}`);
-	}
-	console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);
-
-
-
 
 }
 
