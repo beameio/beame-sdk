@@ -11,8 +11,7 @@ const config      = require('../../config/Config');
 const module_name = config.AppModules.DataServices;
 const logger      = new (require('../utils/Logger'))(module_name);
 const CommonUtils = require('../utils/CommonUtils');
-const beameUtils  = require('../utils/BeameUtils');
-const mkdirp      = require('mkdirp');
+const BeameUtils  = require('../utils/BeameUtils');
 /** @const {String} */
 
 
@@ -76,14 +75,14 @@ class DataServices {
 	}
 
 	static readMetadataSync(dir, fqdn) {
-		let p         = beameUtils.makePath(dir, fqdn, config.metadataFileName);
+		let p         = BeameUtils.makePath(dir, fqdn, config.metadataFileName);
 		var metadata  = DataServices.readJSON(p);
-		metadata.path = beameUtils.makePath(dir, fqdn);
+		metadata.path = BeameUtils.makePath(dir, fqdn);
 		return metadata;
 	}
 
 	static writeMetadataSync(dir, fqdn, metadata) {
-		let dirPath = beameUtils.makePath(dir, fqdn);
+		let dirPath = BeameUtils.makePath(dir, fqdn);
 		DataServices.saveFile(dirPath, config.metadataFileName, CommonUtils.stringify(metadata, false));
 	}
 
