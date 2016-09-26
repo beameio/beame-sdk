@@ -34,11 +34,11 @@ const BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
 const beameUtils             = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
-const ProvisionApi = require('../services/ProvisionApi');
+const ProvisionApi           = require('../services/ProvisionApi');
 const provisionApi           = new ProvisionApi();
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
-const DirectoryServices = require('./DirectoryServices');
+const DirectoryServices      = require('./DirectoryServices');
 
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
@@ -172,7 +172,7 @@ class Credential {
 		});
 
 		try {
-			DirectoryServices.writeMetadataSync(this.metadata);
+			this.beameStoreServices.writeMetadataSync(this.metadata);
 			//noinspection encies,nodemodulesdependencies
 		} catch (e) {
 			logger.debug("read cert data error " + e.toString());
@@ -517,7 +517,7 @@ class Credential {
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
 						fqdnResponseReady.bind(this),
-					 	authToken,
+						authToken,
 						5
 					);
 				}
@@ -552,15 +552,13 @@ class Credential {
 
 
 			OpenSSlWrapper.createPrivateKey().then(pk=> {
-				DirectoryServices.saveFile(dirPath, pkFileName, pk, function (error) {
-					var pkFile = beameUtils.makePath(dirPath, pkFileName);
+				DirectoryServices.saveFile(dirPath, pkFileName, pk, error => {
 					if (!error) {
+						let pkFile = beameUtils.makePath(dirPath, pkFileName);
 						OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
 					}
 					else {
-						errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {
-							"error": error
-						}, config.MessageCodes.OpenSSLError);
+						errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
 						reject(errMsg);
 					}
 				})
@@ -620,8 +618,35 @@ class Credential {
 		);
 	}
 
-	updateMetadata(name,email){
+	updateMetadata(name, email) {
+		return new Promise((resolve, reject) => {
+				let postData = {
+					    fqdn: this.fqdn,
+					          name,
+					          email
+				    },
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData);
 
+				provisionApi.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				provisionApi.runRestfulAPI(apiData, (error, payload) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+					//set signature to consistent call of new credentials
+					this.signWithFqdn(parent_fqdn, payload.fqdn).then(authToken=> {
+						payload.sign = authToken;
+
+						this._requestCerts(payload, metadata).then(resolve).catch(reject);
+					}).catch(reject);
+
+				});
+			}
+		);
 	}
 
 	_requestCerts(payload, metadata) {
@@ -629,7 +654,7 @@ class Credential {
 
 				var sign = CommonUtils.parse(payload.sign);
 
-				if(!sign){
+				if (!sign) {
 					reject('Invalid authorization token');
 					return;
 				}
@@ -728,7 +753,7 @@ class Credential {
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn, dirPath).then(payload => {
 
-					DirectoryServices.writeMetadataSync(payload);
+					this.beameStoreServices.writeMetadataSync(payload);
 					resolve(payload);
 
 				}).catch(reject);
