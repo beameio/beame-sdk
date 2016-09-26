@@ -115,26 +115,11 @@ class BeameStoreV2 {
 	/**
 	 *
 	 * @param {String} fqdn
-	 * @param {Array.<Credential>} [searchArray]
-	 * @returns {Array.<Credential>}
-	 */
-	search(fqdn, searchArray) {
-		if (!searchArray) {
-			searchArray = this.credentials;
-		}
-		let result = this._search(fqdn, searchArray);
-
-		return [result];
-	}
-
-	/**
-	 *
-	 * @param {String} fqdn
 	 * @returns {Credential}
 	 */
 	getCredential(fqdn) {
-		var results = this.search(fqdn);
-		return results && results.length == 1 ? results[0] : null;
+		var results = BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn, 1);
+		return results.length == 1 ? results[0] : null;
 	}
 
 	/**
@@ -144,25 +129,9 @@ class BeameStoreV2 {
 	 * @returns {*}
 	 * @private
 	 */
-	_search(fqdn, searchArray) {
-		//console.log(`starting _search fqdn=${fqdn} sa=`, searchArray);
-		for (let item in searchArray) {
-			if (searchArray.hasOwnProperty(item)) {
-				//	console.log(`comparing ${searchArray[item].getMetadataKey("FQDN")} ${fqdn}`);
-				if (searchArray[item].fqdn === fqdn) {
-					return searchArray[item];
-				}
-				if (searchArray[item].children) {
-					let result = this._search(fqdn, searchArray[item].children);
-					if (!result) {
-						continue;
-					}
-					return result;
-				}
-			}
-		}
-		return null;
-	};
+	search(fqdn) {
+		return BeameUtils.findInTree({children: this.credentials}, cred => fqdn == fqdn);
+	}
 
 	shredCredentials(fqdn, callback) {
 		// XXX: Fix callback to getMetadataKey (err, data) instead of (data)
@@ -179,7 +148,6 @@ class BeameStoreV2 {
 	 * @returns {Array}
 	 */
 	list(regex) {
-
 		return BeameUtils.findInTree(
 			{children: this.credentials},
 			cred => cred.fqdn && cred.fqdn.match(regex)
