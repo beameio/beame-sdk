@@ -34,6 +34,47 @@ const CommonUtils = require('../utils/CommonUtils');
  * @property {String} publicIp
  */
 
+/**
+ *
+ * @param node
+ * @param predicate
+ * @returns {Object}
+ * @private
+ */
+function findInTree(node, predicate, limit) {
+
+	if(limit <= 0) {
+		return [];
+	}
+
+	var result = [];
+
+	function allFoundException() {}
+
+	function matchFound(x) {
+		result.push(x);
+		if(result.length >= limit) {
+			throw new allFoundException();
+		}
+	}
+
+	function kern(node) {
+		if(predicate(node)) {
+			matchFound(node);
+		}
+		node.children.forEach(kern);
+	}
+
+	try {
+		kern(node, predicate);
+	} catch(e) {
+		if(!(e instanceof allFoundException)) {
+			throw e;
+		}
+	}
+
+	return result;
+}
 
 module.exports = {
 
@@ -169,5 +210,7 @@ module.exports = {
 
 	isAmazon: function () {
 		return process.env.NODE_ENV ? true : false;
-	}
+	},
+
+	findInTree
 };
