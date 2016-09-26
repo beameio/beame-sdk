@@ -88,7 +88,7 @@ class DataServices {
 	 * @param {String} dir
 	 * @returns {boolean}
 	 */
-	doesPathExists(dir) {
+	static doesPathExists(dir) {
 		try {
 			fs.accessSync(dir, fs.F_OK);
 			return true;
@@ -102,7 +102,7 @@ class DataServices {
 	 * create directory for supplied path
 	 * @param {String} dirPath
 	 */
-	createDir(dirPath) {
+	static createDir(dirPath) {
 		try {
 			fs.accessSync(dirPath, fs.F_OK);
 		}
@@ -118,7 +118,7 @@ class DataServices {
 	 * @param {Object} data
 	 * @param {Function|null} [cb]
 	 */
-	saveFile(dirPath, fileName, data, cb) {
+	static saveFile(dirPath, fileName, data, cb) {
 		try {
 			fs.writeFileSync(path.join(dirPath, fileName), data);
 			cb && cb(null, true);
@@ -134,7 +134,7 @@ class DataServices {
 	 * @param {String} dirPath
 	 * @param {Function} callback
 	 */
-	deleteFolder(dirPath, callback) {
+	static deleteFolder(dirPath, callback) {
 		rimraf(dirPath, callback);
 	}
 
@@ -206,41 +206,6 @@ class DataServices {
 		}
 
 		return {};
-	}
-
-	copy(srcFile, destFile) {
-		let BUF_LENGTH = 64 * 1024,
-		    buff       = new Buffer(BUF_LENGTH),
-		    fdr        = fs.openSync(srcFile, 'r'),
-		    fdw        = fs.openSync(destFile, 'w'),
-		    bytesRead  = 1,
-		    pos        = 0;
-
-		while (bytesRead > 0) {
-			bytesRead = fs.readSync(fdr, buff, 0, BUF_LENGTH, pos);
-			fs.writeSync(fdw, buff, 0, bytesRead);
-			pos += bytesRead
-		}
-		fs.closeSync(fdr);
-		fs.closeSync(fdw)
-	}
-
-	copyDir(src, dest) {
-		mkdirp(dest);
-		src       = src + path.sep;
-		var files = fs.readdirSync(src);
-		for (var i = 0; i < files.length; i++) {
-			var current = fs.lstatSync(path.join(src, files[i]));
-			if (current.isDirectory()) {
-				//copyDir(path.join(src, files[i]), path.join(dest, files[i]));
-
-			} else if (current.isSymbolicLink()) {
-				var symlink = fs.readlinkSync(path.join(src, files[i]));
-				fs.symlinkSync(symlink, path.join(dest, files[i]));
-			} else {
-				this.copy(path.join(src, files[i]), path.join(dest, files[i]));
-			}
-		}
 	}
 
 	scanDir(src) {

@@ -18,23 +18,23 @@
  */
 
 
-const config       = require('../../config/Config');
-const module_name  = config.AppModules.BeameStore;
-const BeameLogger  = require('../utils/Logger');
-const logger       = new BeameLogger(module_name);
-const ProvisionApi = require('./ProvisionApi');
-const Credential   = require('./Credential');
-const async        = require('async');
-const utils        = require('../utils/BeameUtils');
-const CommonUtils  = require('../utils/CommonUtils');
-
+const config            = require('../../config/Config');
+const module_name       = config.AppModules.BeameStore;
+const BeameLogger       = require('../utils/Logger');
+const logger            = new BeameLogger(module_name);
+const ProvisionApi      = require('./ProvisionApi');
+const Credential        = require('./Credential');
+const async             = require('async');
+const utils             = require('../utils/BeameUtils');
+const CommonUtils       = require('../utils/CommonUtils');
+const DirectoryServices = require('./DirectoryServices');
 
 let _store = null;
 
 class BeameStoreV2 {
 
 	constructor() {
-		this.directoryServices = new (require('./DirectoryServices'))();
+		this.directoryServices = new DirectoryServices();
 
 		if (_store === null) {
 			_store = this;
@@ -50,7 +50,7 @@ class BeameStoreV2 {
 
 	init() {
 
-		this.directoryServices.createDir(config.localCertsDirV2);
+		DirectoryServices.createDir(config.localCertsDirV2);
 
 		this.directoryServices.scanDir(config.localCertsDirV2).forEach(fqdn => {
 			let cred = new Credential(this);

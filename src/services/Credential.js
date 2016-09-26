@@ -38,6 +38,7 @@ const ProvisionApi = require('../services/ProvisionApi');
 const provisionApi           = new ProvisionApi();
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
+const DirectoryServices = require('./DirectoryServices');
 
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
@@ -546,15 +547,13 @@ class Credential {
 
 		var fqdn       = this.fqdn,
 		    dirPath    = this.getMetadataKey("path"),
-		    pkFileName = config.CertFileNames.PRIVATE_KEY,
-		    store      = this._store;
+		    pkFileName = config.CertFileNames.PRIVATE_KEY;
 
 		return new Promise(function (resolve, reject) {
 
 
 			OpenSSlWrapper.createPrivateKey().then(pk=> {
-				let directoryServices = store.directoryServices;
-				directoryServices.saveFile(dirPath, pkFileName, pk, function (error) {
+				DirectoryServices.saveFile(dirPath, pkFileName, pk, function (error) {
 					var pkFile = beameUtils.makePath(dirPath, pkFileName);
 					if (!error) {
 						OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
@@ -699,7 +698,6 @@ class Credential {
 		);
 	}
 
-	//noinspection JSUnusedGlobalSymbols
 	updateMetadata() {
 		let fqdn    = this.fqdn,
 		    dirPath = this.getMetadataKey("path");
