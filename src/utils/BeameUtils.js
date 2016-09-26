@@ -38,14 +38,11 @@ const CommonUtils = require('../utils/CommonUtils');
  *
  * @param node
  * @param predicate
+ * @param limit
  * @returns {Object}
  * @private
  */
 function findInTree(node, predicate, limit) {
-
-	if(limit <= 0) {
-		return [];
-	}
 
 	var result = [];
 
@@ -53,7 +50,7 @@ function findInTree(node, predicate, limit) {
 
 	function matchFound(x) {
 		result.push(x);
-		if(result.length >= limit) {
+		if(limit && result.length >= limit) {
 			throw new allFoundException();
 		}
 	}
