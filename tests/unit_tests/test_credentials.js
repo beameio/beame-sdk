@@ -171,7 +171,7 @@ function createWithAuthToken(name) {
 
 function createAuthToken(){
 	console.log(`env signed fqdn is ${process.env.signed_fqdn}`);
-	let fqdn = process.env.signed_fqdn || config.BeameConfig.beameDevAuthServerFqdn;
+	let fqdn = process.env.signed_fqdn || config.BeameConfig.beameDevCredsFqdn;
 
 	let cred;
 

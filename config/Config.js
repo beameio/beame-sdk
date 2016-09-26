@@ -35,7 +35,7 @@ const authServerURL = "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.ne
 /** @const {String} **/
 const loadBalancerURL = "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";
 
-const beameDevAuthServerFqdn = "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
+const beameDevCredsFqdn = "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";
@@ -169,7 +169,7 @@ module.exports = {
 	localCertsDirV2,
 	remotePKsDirV1,
 	loadBalancerURL,
-	beameDevAuthServerFqdn,
+	beameDevCredsFqdn,
 	metadataFileName,
 	s3MetadataFileName,
 	CertFileNames,
