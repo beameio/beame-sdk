@@ -82,6 +82,7 @@ function findInTree(node, predicate, limit) {
 	return result;
 }
 
+//noinspection JSUnusedGlobalSymbols
 module.exports = {
 
 	makePath: path.join,
