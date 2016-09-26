@@ -629,7 +629,6 @@ class Credential {
 				}
 
 				let postData = {
-					    fqdn,
 					    name,
 					    email
 				    },
