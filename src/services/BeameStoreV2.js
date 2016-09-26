@@ -130,7 +130,7 @@ class BeameStoreV2 {
 	 * @private
 	 */
 	search(fqdn) {
-		return BeameUtils.findInTree({children: this.credentials}, cred => fqdn == fqdn);
+		return BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn);
 	}
 
 	shredCredentials(fqdn, callback) {
