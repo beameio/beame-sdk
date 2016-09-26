@@ -18,14 +18,16 @@
  */
 
 
-const config      = require('../../config/Config');
-const module_name = config.AppModules.BeameStore;
-const BeameLogger = require('../utils/Logger');
-const logger      = new BeameLogger(module_name);
-const provApi     = new (require('./ProvisionApi'))();
-const Credential  = require('./Credential');
-const async       = require('async');
-const utils       = require('../utils/BeameUtils');
+const config       = require('../../config/Config');
+const module_name  = config.AppModules.BeameStore;
+const BeameLogger  = require('../utils/Logger');
+const logger       = new BeameLogger(module_name);
+const ProvisionApi = require('./ProvisionApi');
+const Credential   = require('./Credential');
+const async        = require('async');
+const utils        = require('../utils/BeameUtils');
+const CommonUtils  = require('../utils/CommonUtils');
+
 
 let _store = null;
 
@@ -65,7 +67,7 @@ class BeameStoreV2 {
 						/**
 						 * @param {RemoteCreds} data
 						 */
-						 data => {
+						data => {
 							let remoteCred = new Credential(this);
 							remoteCred.initFromX509(data.x509, data.metadata);
 							this.addCredential(remoteCred);
@@ -166,10 +168,11 @@ class BeameStoreV2 {
 		// XXX: Fix callback to getMetadataKey (err, data) instead of (data)
 		// XXX: Fix exit code
 		let item = this.getCredential(fqdn);
-		if(item) {
+		if (item) {
 			item.shred(callback);
 		}
 	}
+
 	/*list(regex, searchArray){
 	 if(!searchArray){
 	 searchArray = this.credentials;
@@ -301,9 +304,9 @@ class BeameStoreV2 {
 					[
 						function (callback) {
 							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
-							provApi.getRequest(requestPath, function (error, data) {
+							ProvisionApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
-									payload.metadata = typeof(data) == "object" ? data : JSON.parse(data);
+									payload.metadata = typeof(data) == "object" ? data : CommonUtils.parse(data);
 									callback(null, data);
 								}
 								else {
@@ -313,7 +316,7 @@ class BeameStoreV2 {
 						},
 						function (callback) {
 							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
-							provApi.getRequest(requestPath, function (error, data) {
+							ProvisionApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
 									payload.x509 = typeof(data) == "object" && data.hasOwnProperty("message") ? data.message : data;
 									callback(null, data);
@@ -341,14 +344,6 @@ class BeameStoreV2 {
 		);
 	}
 
-
-	// if (beameStoreInstance) {
-	// 	return beameStoreInstance;
-	// }
-	//
-	// this.ensureFreshBeameStore();
-	//
-	// beameStoreInstance = this;
 }
 
 module.exports = BeameStoreV2;

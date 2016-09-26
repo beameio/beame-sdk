@@ -2,68 +2,16 @@
  * Created by zenit1 on 03/07/2016.
  */
 'use strict';
-var path          = require('path');
-var request       = require('request');
-var _             = require('underscore');
-var network       = require('network');
-var os            = require('os');
-//var beameStore    = new (require('../services/BeameStore'))();
-var config        = require('../../config/Config');
+const path        = require('path');
+const request     = require('request');
+const network     = require('network');
+const os          = require('os');
+const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
-var BeameLogger   = require('../utils/Logger');
-var logger        = new BeameLogger(module_name);
+const BeameLogger = require('../utils/Logger');
+const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
-/**
- * @typedef {Object} AwsRegion
- * @property {String} Name
- * @property {String} Code
- */
 
-/**
- * @type {AwsRegion[]}
- */
-var AwsRegions = [
-	{
-		"Name": "EU (Ireland)",
-		"Code": "eu-west-1"
-	},
-	{
-		"Name": "Asia Pacific (Singapore)",
-		"Code": "ap-southeast-1"
-	},
-	{
-		"Name": "Asia Pacific (Sydney)",
-		"Code": "ap-southeast-2"
-	},
-	{
-		"Name": "EU (Frankfurt)",
-		"Code": "eu-central-1"
-	},
-	{
-		"Name": "Asia Pacific (Seoul)",
-		"Code": "ap-northeast-2"
-	},
-	{
-		"Name": "Asia Pacific (Tokyo)",
-		"Code": "ap-northeast-1"
-	},
-	{
-		"Name": "US East (N. Virginia)",
-		"Code": "us-east-1"
-	},
-	{
-		"Name": "South America (S?o Paulo)",
-		"Code": "sa-east-1"
-	},
-	{
-		"Name": "US West (N. California)",
-		"Code": "us-west-1"
-	},
-	{
-		"Name": "US West (Oregon)",
-		"Code": "us-west-2"
-	}
-];
 
 /**
  * @typedef {Object} AuthData
@@ -93,33 +41,6 @@ module.exports = {
 
 
 	/**
-	 * @param {String} baseDir
-	 * @param {String} path2Pk
-	 * @param {String} path2X509
-	 * @returns {typeof AuthData}
-	 */
-	getAuthToken: function (baseDir, path2Pk, path2X509) {
-		return {
-			pk:   path.join(baseDir, path2Pk),
-			x509: path.join(baseDir, path2X509)
-		}
-	},
-
-	/**
-	 * @param {String} endpoint
-	 * @param {Object} postData
-	 * @param {boolean} [answerExpected]
-	 * @returns {typeof ApiData}
-	 */
-	getApiData: function (endpoint, postData, answerExpected) {
-		return {
-			api:            endpoint,
-			postData:       postData,
-			answerExpected: answerExpected || true
-		};
-	},
-
-	/**
 	 *
 	 * @param {String} url
 	 * @param {Function|null} callback
@@ -147,9 +68,9 @@ module.exports = {
 	 * @param {Function} callback
 	 */
 	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
-		var self          = this;
-		var get           = self.httpGet;
-		var selectBest    = self.selectBestProxy;
+		var self       = this;
+		var get        = self.httpGet;
+		var selectBest = self.selectBestProxy;
 
 		if (retries == 0) {
 			callback && callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
@@ -168,7 +89,7 @@ module.exports = {
 
 						//noinspection JSUnresolvedVariable
 						/** @type {EdgeShortData} edge **/
-						var edge   = {
+						var edge = {
 							endpoint: data.instanceData.endpoint,
 							publicIp: data.instanceData.publicipv4
 						};
@@ -194,15 +115,6 @@ module.exports = {
 
 	},
 
-	/**
-	 *
-	 * @param {Object} obj
-	 * @param {Boolean|null} [format]
-	 */
-	stringify: function (obj, format) {
-		//noinspection NodeModulesDependencies,ES6ModulesDependencies
-		return CommonUtils.stringify(obj, format);
-	},
 
 	/**
 	 *

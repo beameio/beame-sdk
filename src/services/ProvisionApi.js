@@ -1,11 +1,11 @@
 "use strict";
+const path = require('path');
 
 const provisionSettings = require('../../config/ApiConfig.json');
 const config            = require('../../config/Config');
 const module_name       = config.AppModules.ProvisionApi;
 const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger(module_name);
-const beameUtils        = require('../utils/BeameUtils');
 const CommonUtils       = require('../utils/CommonUtils');
 /**
  * @typedef {Object} CertSettings
@@ -248,92 +248,120 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
  * @param {String|null} [baseUrl]
  * @constructor
  */
-var ProvApiService = function (baseUrl) {
+class ProvApiService {
 
-	/** @member {String} **/
-	this.provApiEndpoint = baseUrl || provisionSettings.Endpoints.BaseUrl;
+	constructor(baseUrl) {
+		/** @member {String} **/
+		this.provApiEndpoint = baseUrl || provisionSettings.Endpoints.BaseUrl;
+	}
 
-};
+	/**
+	 * @param {String} baseDir
+	 * @param {String} path2Pk
+	 * @param {String} path2X509
+	 * @returns {typeof AuthData}
+	 */
+	static getAuthToken(baseDir, path2Pk, path2X509) {
+		return {
+			pk:   path.join(baseDir, path2Pk),
+			x509: path.join(baseDir, path2X509)
+		}
+	}
 
-/**
- *
- * @param {AuthData} authData
- */
-ProvApiService.prototype.setAuthData = function (authData) {
-	this.options = {
-		key:  fs.readFileSync(authData.pk),
-		cert: fs.readFileSync(authData.x509)
-	};
-};
-
-ProvApiService.prototype.setClientCerts = function (pk, cert) {
-	this.options = {
-		key:  pk,
-		cert: cert
-	};
-};
-
-/**
- *
- * @param {ApiData} apiData
- * @param {Function} callback
- * @param {String|null} [method] ==>  POST | GET
- * @param {String|null} [signature]
- */
-ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, signature) {
-
-	this.options = this.options || {};
-
-	var options = _.extend(this.options, {form: apiData.postData});
-
-	if (signature) {
-		this.options.headers = {
-			"X-BeameAuthToken": signature
+	/**
+	 * @param {String} endpoint
+	 * @param {Object} postData
+	 * @param {boolean} [answerExpected]
+	 * @returns {typeof ApiData}
+	 */
+	static getApiData(endpoint, postData, answerExpected) {
+		return {
+			api:            endpoint,
+			postData:       postData,
+			answerExpected: answerExpected || true
 		};
 	}
 
-	var apiEndpoint = this.provApiEndpoint + apiData.api;
-	logger.debug(`Api call to : ${apiEndpoint}`);
-	var _method = method || 'POST';
-
-	switch (_method) {
-		case 'POST' :
-			postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
-			return;
-		case 'GET' :
-			getFromProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
-			return;
-		default:
-			callback('Invalid method', null);
-			return;
-
-	}
-};
-
-/**
- * Common post method for given url
- * @param {String} url
- * @param {Object} postData
- * @param {Function} callback
- * @param {String|null} [authToken]
- * @param {Number|null} [retries]
- */
-ProvApiService.prototype.postRequest = function (url, postData, callback, authToken, retries) {
-	var options     = _.extend(this.options || {}, {"form": postData});
-	options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
-
-	if (authToken) {
-		options.headers = {
-			"X-BeameAuthToken": authToken
+	/**
+	 *
+	 * @param {AuthData} authData
+	 */
+	setAuthData(authData) {
+		this.options = {
+			key:  fs.readFileSync(authData.pk),
+			cert: fs.readFileSync(authData.x509)
 		};
 	}
 
-	postToProvisionApi(url, options, "custom_post", retries || provisionSettings.RetryAttempts, 1000, callback);
-};
+	setClientCerts(pk, cert) {
+		this.options = {
+			key:  pk,
+			cert: cert
+		};
+	}
 
-ProvApiService.prototype.getRequest = function (url, callback) {
-	getFromProvisionApi(url, {}, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
-};
+	/**
+	 *
+	 * @param {ApiData} apiData
+	 * @param {Function} callback
+	 * @param {String|null} [method] ==>  POST | GET
+	 * @param {String|null} [signature]
+	 */
+	runRestfulAPI(apiData, callback, method, signature) {
+
+		this.options = this.options || {};
+
+		var options = _.extend(this.options, {form: apiData.postData});
+
+		if (signature) {
+			this.options.headers = {
+				"X-BeameAuthToken": signature
+			};
+		}
+
+		var apiEndpoint = this.provApiEndpoint + apiData.api;
+		logger.debug(`Api call to : ${apiEndpoint}`);
+		var _method = method || 'POST';
+
+		switch (_method) {
+			case 'POST' :
+				postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
+				return;
+			case 'GET' :
+				getFromProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
+				return;
+			default:
+				callback('Invalid method', null);
+				return;
+
+		}
+	}
+
+	/**
+	 * Common post method for given url
+	 * @param {String} url
+	 * @param {Object} postData
+	 * @param {Function} callback
+	 * @param {String|null} [authToken]
+	 * @param {Number|null} [retries]
+	 */
+	postRequest(url, postData, callback, authToken, retries) {
+		var options     = _.extend(this.options || {}, {"form": postData});
+		options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+
+		if (authToken) {
+			options.headers = {
+				"X-BeameAuthToken": authToken
+			};
+		}
+
+		postToProvisionApi(url, options, "custom_post", retries || provisionSettings.RetryAttempts, 1000, callback);
+	}
+
+	static getRequest(url, callback) {
+		getFromProvisionApi(url, {}, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
+	}
+}
 
 
 module.exports = ProvApiService;

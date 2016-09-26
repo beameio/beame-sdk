@@ -3,17 +3,16 @@
  */
 'use strict';
 
-var path          = require('path');
-var fs            = require('fs');
-var async         = require('async');
-var rimraf        = require('rimraf');
-var _             = require('underscore');
-var config        = require('../../config/Config');
+const path        = require('path');
+const fs          = require('fs');
+const async       = require('async');
+const rimraf      = require('rimraf');
+const config      = require('../../config/Config');
 const module_name = config.AppModules.DataServices;
-var logger        = new (require('../utils/Logger'))(module_name);
-
-var beameUtils = require('../utils/BeameUtils');
-var mkdirp     = require('mkdirp');
+const logger      = new (require('../utils/Logger'))(module_name);
+const CommonUtils = require('../utils/CommonUtils');
+const beameUtils  = require('../utils/BeameUtils');
+const mkdirp      = require('mkdirp');
 /** @const {String} */
 
 
@@ -166,10 +165,8 @@ class DataServices {
 
 	writeMetadataSync(dir, fqdn, metadata) {
 		let dirPath = beameUtils.makePath(dir, fqdn);
-		this.saveFile(dirPath, config.metadataFileName, beameUtils.stringify(metadata));
+		this.saveFile(dirPath, config.metadataFileName, CommonUtils.stringify(metadata,false));
 	}
-
-
 
 
 	/**

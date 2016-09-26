@@ -34,7 +34,8 @@ const BeameStoreDataServices = require('../services/BeameStoreDataServices');
 const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
 const beameUtils             = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
-const provisionApi           = new (require('../services/ProvisionApi'))();
+const ProvisionApi = require('../services/ProvisionApi');
+const provisionApi           = new ProvisionApi();
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 
@@ -449,7 +450,7 @@ class Credential {
 					};
 
 					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = beameUtils.getApiData(apiEntityActions.RegisterEntity.endpoint, postData);
+					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData);
 
 					provisionApi.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
 
@@ -589,7 +590,7 @@ class Credential {
 					fqdn: fqdn
 				};
 
-				var apiData = beameUtils.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData, true);
+				var apiData = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData, true);
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
@@ -719,9 +720,9 @@ class Credential {
 
 		return new Promise((resolve, reject) => {
 
-				provisionApi.setAuthData(beameUtils.getAuthToken(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+				provisionApi.setAuthData(ProvisionApi.getAuthToken(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
 
-				var apiData = beameUtils.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
+				var apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
 
 				provisionApi.runRestfulAPI(apiData, function (error, metadata) {
 					if (!error) {
