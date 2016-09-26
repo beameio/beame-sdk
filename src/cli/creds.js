@@ -33,7 +33,6 @@ const CommonUtils       = require('../utils/CommonUtils');
 
 const path   = require('path');
 const fs     = require('fs');
-const mkdirp = require("mkdirp");
 
 module.exports = {
 	show,
@@ -45,7 +44,8 @@ module.exports = {
 	shred,
 	exportCredentials,
 	importCredentials,
-	importLiveCredentials
+	importLiveCredentials,
+	signWithFqdn
 };
 
 /**
@@ -405,4 +405,16 @@ function importLiveCredentials(fqdn) {
 
 }
 
+function signWithFqdn(fqdn, data, callback) {
+	const store = new (require("../services/BeameStoreV2"))();
+	const cred = store.getCredential(fqdn);
 
+	if(!cred) {
+		callback(new Error(`Credentials for ${fqdn} not found`), null);
+		return;
+	}
+
+	cred.signWithFqdn(fqdn, data)
+		.then(authToken => callback(null, authToken))
+		.catch(e => callback(e, null));
+}
