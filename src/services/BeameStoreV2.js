@@ -25,7 +25,7 @@ const logger            = new BeameLogger(module_name);
 const ProvisionApi      = require('./ProvisionApi');
 const Credential        = require('./Credential');
 const async             = require('async');
-const utils             = require('../utils/BeameUtils');
+const BeameUtils        = require('../utils/BeameUtils');
 const CommonUtils       = require('../utils/CommonUtils');
 const DirectoryServices = require('./DirectoryServices');
 
@@ -173,15 +173,6 @@ class BeameStoreV2 {
 		}
 	}
 
-	/*list(regex, searchArray){
-	 if(!searchArray){
-	 searchArray = this.credentials;
-	 }
-	 let result = this.list(fqdn, searchArray);
-
-	 return [result];
-	 }*/
-
 	/**
 	 *
 	 * @param {String} regex
@@ -189,6 +180,7 @@ class BeameStoreV2 {
 	 * @returns {Array}
 	 */
 	list(regex, searchArray) {
+
 		//console.log(`starting _search ${fqdn}`);
 		if (!searchArray) {
 			searchArray = this.credentials;
