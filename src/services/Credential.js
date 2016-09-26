@@ -172,7 +172,7 @@ class Credential {
 		});
 
 		try {
-			this.beameStoreServices.writeMetadataSync(this.metadata);
+			DirectoryServices.writeMetadataSync(this.metadata);
 			//noinspection encies,nodemodulesdependencies
 		} catch (e) {
 			logger.debug("read cert data error " + e.toString());
@@ -541,7 +541,6 @@ class Credential {
 
 	}
 
-
 	createCSR() {
 		var errMsg;
 
@@ -573,7 +572,6 @@ class Credential {
 		});
 	}
 
-	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {String} csr
@@ -601,6 +599,31 @@ class Credential {
 		);
 	}
 
+	getMetadata() {
+		let dirPath = this.getMetadataKey("path");
+
+		return new Promise((resolve, reject) => {
+
+				provisionApi.setAuthData(ProvisionApi.getAuthToken(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+
+				var apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
+
+				provisionApi.runRestfulAPI(apiData, function (error, metadata) {
+					if (!error) {
+						resolve(metadata);
+					}
+					else {
+						reject(error);
+					}
+				}, 'GET');
+			}
+		);
+	}
+
+	updateMetadata(name,email){
+
+	}
+
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
 
@@ -616,7 +639,7 @@ class Credential {
 						cred.createCSR().then(
 							csr => {
 								cred.getCert(csr, sign).then(function () {
-									cred.updateMetadata().then(resolve).catch(error=> {
+									cred._syncMetadata().then(resolve).catch(error=> {
 										logger.error(error);
 										resolve(metadata);
 									})
@@ -698,14 +721,14 @@ class Credential {
 		);
 	}
 
-	updateMetadata() {
+	_syncMetadata() {
 		let fqdn    = this.fqdn,
 		    dirPath = this.getMetadataKey("path");
 
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn, dirPath).then(payload => {
 
-					this.beameStoreServices.writeMetadataSync(payload);
+					DirectoryServices.writeMetadataSync(payload);
 					resolve(payload);
 
 				}).catch(reject);
@@ -713,28 +736,6 @@ class Credential {
 		);
 	}
 
-	getMetadata() {
-		let dirPath = this.getMetadataKey("path");
-
-		return new Promise((resolve, reject) => {
-
-				provisionApi.setAuthData(ProvisionApi.getAuthToken(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
-
-				var apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
-
-				provisionApi.runRestfulAPI(apiData, function (error, metadata) {
-					if (!error) {
-						resolve(metadata);
-					}
-					else {
-						reject(error);
-					}
-				}, 'GET');
-			}
-		);
-
-
-	}
 
 	static formatRegisterPostData(metadata) {
 		return {

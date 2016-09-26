@@ -33,7 +33,7 @@
  * @property {String|null} error
  */
 
-const config            = require('../../config/Config');
+const config = require('../../config/Config');
 //const module_name       = config.AppModules.BeameEntity;
 //const BeameLogger       = require('../utils/Logger');
 //const logger            = new BeameLogger(module_name);
@@ -49,12 +49,12 @@ class BeameStoreDataServices {
 	constructor(fqdn) {
 		this._certsDir         = config.localCertsDirV2;
 		this.directoryServices = new DirectoryServices();
-		this._fqdn              = fqdn;
+		this._fqdn             = fqdn;
 	}
 
 	readObject(name) {
 		let p = path.join(this._certsDir, this._fqdn, name);
-		return this.directoryServices.readObject(p);
+		return DirectoryServices.readObject(p);
 	}
 
 	writeObject(name, data) {
@@ -64,12 +64,12 @@ class BeameStoreDataServices {
 	}
 
 	readMetadataSync() {
-		return this.directoryServices.readMetadataSync(this._certsDir, this._fqdn);
+		return DirectoryServices.readMetadataSync(this._certsDir, this._fqdn);
 	}
 
 	writeMetadataSync(metadata) {
 		this._createDir();
-		this.directoryServices.writeMetadataSync(this._certsDir, this._fqdn, metadata);
+		DirectoryServices.writeMetadataSync(this._certsDir, this._fqdn, metadata);
 	}
 
 	_createDir() {

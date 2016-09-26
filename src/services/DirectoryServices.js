@@ -21,8 +21,108 @@ const mkdirp      = require('mkdirp');
  * @constructor
  */
 class DataServices {
-	/**------------------- save payload methods -----------------------**/
 
+	/**
+	 * check if directory or file exists
+	 * @param {String} dir
+	 * @returns {boolean}
+	 */
+	static doesPathExists(dir) {
+		try {
+			fs.accessSync(dir, fs.F_OK);
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	/**
+	 * create directory for supplied path
+	 * @param {String} dirPath
+	 */
+	static createDir(dirPath) {
+		try {
+			fs.accessSync(dirPath, fs.F_OK);
+		}
+		catch (e) {
+			fs.mkdirSync(dirPath);
+		}
+	}
+
+	/**
+	 *
+	 * @param {String} dirPath
+	 * @param fileName
+	 * @param {Object} data
+	 * @param {Function|null} [cb]
+	 */
+	static saveFile(dirPath, fileName, data, cb) {
+		try {
+			fs.writeFileSync(path.join(dirPath, fileName), data);
+			cb && cb(null, true);
+		}
+		catch (error) {
+			cb && cb(error, null);
+		}
+
+	}
+
+	/**
+	 * @param {String} dirPath
+	 * @param {Function} callback
+	 */
+	static deleteFolder(dirPath, callback) {
+		rimraf(dirPath, callback);
+	}
+
+	static readMetadataSync(dir, fqdn) {
+		let p         = beameUtils.makePath(dir, fqdn, config.metadataFileName);
+		var metadata  = DataServices.readJSON(p);
+		metadata.path = beameUtils.makePath(dir, fqdn);
+		return metadata;
+	}
+
+	static writeMetadataSync(dir, fqdn, metadata) {
+		let dirPath = beameUtils.makePath(dir, fqdn);
+		DataServices.saveFile(dirPath, config.metadataFileName, CommonUtils.stringify(metadata, false));
+	}
+
+	/**
+	 *
+	 * @param {String} filename
+	 * @returns {Object}
+	 */
+	static readObject(filename) {
+		if (DataServices.doesPathExists(filename)) {
+			try {
+				return fs.readFileSync(filename);
+			}
+			catch (error) {
+				return {};
+			}
+		}
+
+		return {};
+	}
+
+	/**
+	 * read JSON file
+	 * @param {String} dirPath
+	 */
+	static readJSON(dirPath) {
+		if (DataServices.doesPathExists(dirPath)) {
+			try {
+				var file = fs.readFileSync(dirPath);
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				return JSON.parse(file);
+			}
+			catch (error) {
+				return {};
+			}
+		}
+
+		return {};
+	}
 
 	/**
 	 *
@@ -81,63 +181,6 @@ class DataServices {
 
 	}
 
-	/**------------------- folder/files methods -----------------------**/
-
-	/**
-	 * check if directory or file exists
-	 * @param {String} dir
-	 * @returns {boolean}
-	 */
-	static doesPathExists(dir) {
-		try {
-			fs.accessSync(dir, fs.F_OK);
-			return true;
-		} catch (e) {
-			return false;
-		}
-	}
-
-
-	/**
-	 * create directory for supplied path
-	 * @param {String} dirPath
-	 */
-	static createDir(dirPath) {
-		try {
-			fs.accessSync(dirPath, fs.F_OK);
-		}
-		catch (e) {
-			fs.mkdirSync(dirPath);
-		}
-	}
-
-	/**
-	 *
-	 * @param {String} dirPath
-	 * @param fileName
-	 * @param {Object} data
-	 * @param {Function|null} [cb]
-	 */
-	static saveFile(dirPath, fileName, data, cb) {
-		try {
-			fs.writeFileSync(path.join(dirPath, fileName), data);
-			cb && cb(null, true);
-		}
-		catch (error) {
-			cb && cb(error, null);
-		}
-
-	}
-
-
-	/**
-	 * @param {String} dirPath
-	 * @param {Function} callback
-	 */
-	static deleteFolder(dirPath, callback) {
-		rimraf(dirPath, callback);
-	}
-
 	/**
 	 *
 	 * @param {String} dirPath
@@ -153,59 +196,6 @@ class DataServices {
 			}
 			cb(null, true);
 		});
-	}
-
-
-	readMetadataSync(dir, fqdn) {
-		let p         = beameUtils.makePath(dir, fqdn, config.metadataFileName);
-		var metadata  = this.readJSON(p);
-		metadata.path = beameUtils.makePath(dir, fqdn);
-		return metadata;
-	}
-
-	writeMetadataSync(dir, fqdn, metadata) {
-		let dirPath = beameUtils.makePath(dir, fqdn);
-		this.saveFile(dirPath, config.metadataFileName, CommonUtils.stringify(metadata,false));
-	}
-
-
-	/**
-	 *
-	 * @param {String} filename
-	 * @returns {Object}
-	 */
-
-
-	readObject(filename) {
-		if (this.doesPathExists(filename)) {
-			try {
-				return fs.readFileSync(filename);
-			}
-			catch (error) {
-				return {};
-			}
-		}
-
-		return {};
-	}
-
-	/**
-	 * read JSON file
-	 * @param {String} dirPath
-	 */
-	readJSON(dirPath) {
-		if (this.doesPathExists(dirPath)) {
-			try {
-				var file = fs.readFileSync(dirPath);
-				//noinspection ES6ModulesDependencies,NodeModulesDependencies
-				return JSON.parse(file);
-			}
-			catch (error) {
-				return {};
-			}
-		}
-
-		return {};
 	}
 
 	scanDir(src) {
