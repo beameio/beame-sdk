@@ -50,7 +50,8 @@ class BeameStoreV2 {
 
 	init() {
 
-		DirectoryServices.createDir(path.join(config.rootDir, config.localCertsDirV2));
+		DirectoryServices.createDir(config.rootDir);
+		DirectoryServices.createDir(config.localCertsDirV2);
 
 		this.directoryServices.scanDir(config.localCertsDirV2).forEach(fqdn => {
 			let cred = new Credential(this);
