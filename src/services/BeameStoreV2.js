@@ -176,40 +176,14 @@ class BeameStoreV2 {
 	/**
 	 *
 	 * @param {String} regex
-	 * @param {Array|null} [searchArray]
 	 * @returns {Array}
 	 */
-	list(regex, searchArray) {
+	list(regex) {
 
-		//console.log(`starting _search ${fqdn}`);
-		if (!searchArray) {
-			searchArray = this.credentials;
-		}
-		let results = [];
-
-		for (let k in searchArray) {
-			let creds = searchArray[k];
-			//	console.log(`comparing ${searchArray[item].getMetadataKey("FQDN")} ${fqdn}`);
-			if (!creds) {
-				// WHY CAN THIS HAPPEN?
-				continue;
-			}
-			if (!creds.fqdn) {
-				continue;
-			}
-			if (creds.fqdn.match(regex)) {
-				results.push(creds);
-			}
-			if (creds.children) {
-				// WHY DO WE NEED THIS?
-				let result = this.list(regex, creds.children);
-				if (!result) {
-					continue;
-				}
-				results = results.concat(result);
-			}
-		}
-		return results;
+		return BeameUtils.findInTree(
+			{children: this.credentials},
+			cred => cred.fqdn && cred.fqdn.match(regex)
+		);
 	}
 
 

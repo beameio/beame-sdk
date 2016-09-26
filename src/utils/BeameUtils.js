@@ -36,11 +36,23 @@ const CommonUtils = require('../utils/CommonUtils');
 
 /**
  *
- * @param node
- * @param predicate
- * @param limit
- * @returns {Object}
- * @private
+ * @param {Object} node
+ * @param {Function} callback
+ */
+function iterateTree(node, callback) {
+	callback(node);
+	for(let k in node.children) {
+		iterateTree(node.children[k], callback);
+	}
+}
+
+
+/**
+ *
+ * @param {Object} node
+ * @param {Function} predicate
+ * @param {Number} limit
+ * @returns {Array}
  */
 function findInTree(node, predicate, limit) {
 
@@ -55,15 +67,12 @@ function findInTree(node, predicate, limit) {
 		}
 	}
 
-	function kern(node) {
-		if(predicate(node)) {
-			matchFound(node);
-		}
-		node.children.forEach(kern);
-	}
-
 	try {
-		kern(node, predicate);
+		iterateTree(node, x => {
+			if(predicate(x)) {
+				matchFound(x);
+			}
+		});
 	} catch(e) {
 		if(!(e instanceof allFoundException)) {
 			throw e;
@@ -209,5 +218,6 @@ module.exports = {
 		return process.env.NODE_ENV ? true : false;
 	},
 
+	iterateTree,
 	findInTree
 };
