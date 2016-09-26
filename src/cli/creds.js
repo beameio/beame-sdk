@@ -41,6 +41,7 @@ module.exports = {
 	signAndCreate,
 	createWithToken,
 	createWithLocalCreds,
+	updateMetadata,
 	shred,
 	exportCredentials,
 	importCredentials,
@@ -111,6 +112,20 @@ function signAndCreate(signWithFqdn, authSrvFqdn, dataToSign, name, email, callb
 	})
 }
 signAndCreate.toText = lineToText;
+
+
+function updateMetadata(fqdn, name, email, callback){
+	const store2 = new (require("../services/BeameStoreV2"))();
+
+	let cred = new (require('../services/Credential'))(store2);
+
+	cred.updateMetadata(fqdn, name, email).then(metadata=> {
+		callback && callback(null, metadata)
+	}).catch(error=> {
+		callback && callback(error, null)
+	})
+}
+updateMetadata.toText = lineToText;
 
 /** private helpers and services **/
 

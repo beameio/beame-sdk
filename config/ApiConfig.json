@@ -11,8 +11,8 @@
             "CompleteRegistration": {
                 "endpoint": "/api/v1/node/register/complete"
             },
-            "CreateEntity": {
-                "endpoint": "/api/v1/node/create"
+            "UpdateEntity": {
+                "endpoint": "/api/v1/node/update"
             },
             "GetCert": {
                 "endpoint": "/api/v1/node/cert/get"

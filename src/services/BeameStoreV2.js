@@ -17,7 +17,7 @@
  * @property {String|null} parent_fqdn
  */
 
-
+const path = require('path');
 const config            = require('../../config/Config');
 const module_name       = config.AppModules.BeameStore;
 const BeameLogger       = require('../utils/Logger');
@@ -50,7 +50,7 @@ class BeameStoreV2 {
 
 	init() {
 
-		DirectoryServices.createDir(config.localCertsDirV2);
+		DirectoryServices.createDir(path.join(config.rootDir, config.localCertsDirV2));
 
 		this.directoryServices.scanDir(config.localCertsDirV2).forEach(fqdn => {
 			let cred = new Credential(this);

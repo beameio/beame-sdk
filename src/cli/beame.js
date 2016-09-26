@@ -45,7 +45,7 @@ var parametersSchema = {
 	'authSrvFqdn':	      {required: false},
 	'authToken':          {required: true},
 	'name':               {required: false},
-	'email':               {required: false},
+	'email':              {required: false},
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

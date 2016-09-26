@@ -189,9 +189,9 @@ class Credential {
 		});
 
 		try {
-			let filecontent = this.beameStoreServices.readMetadataSync();
+			let metadata = this.beameStoreServices.readMetadataSync();
 			//noinspection es6modulesdependencies,nodemodulesdependencies
-			_.map(filecontent, (value, key) => {
+			_.map(metadata, (value, key) => {
 				this.metadata[key] = value;
 			});
 		} catch (e) {
@@ -618,36 +618,42 @@ class Credential {
 		);
 	}
 
-	updateMetadata(name, email) {
+	updateMetadata(fqdn, name, email) {
 		return new Promise((resolve, reject) => {
+
+				var cred = this._store.getCredential(fqdn);
+
+				if (!cred) {
+					reject(`Creds for ${fqdn} not found`);
+					return;
+				}
+
 				let postData = {
-					    fqdn: this.fqdn,
-					          name,
-					          email
+					    fqdn,
+					    name,
+					    email
 				    },
-				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData);
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntity.endpoint, postData);
 
-				provisionApi.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
-
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+				provisionApi.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
-				provisionApi.runRestfulAPI(apiData, (error, payload) => {
+				provisionApi.runRestfulAPI(apiData, (error) => {
 					if (error) {
 						reject(error);
 						return;
 					}
 					//set signature to consistent call of new credentials
-					this.signWithFqdn(parent_fqdn, payload.fqdn).then(authToken=> {
-						payload.sign = authToken;
-
-						this._requestCerts(payload, metadata).then(resolve).catch(reject);
-					}).catch(reject);
+					cred._syncMetadata().then(resolve).catch(error=> {
+						logger.error(error);
+						resolve(metadata);
+					})
 
 				});
 			}
 		);
 	}
+
 
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
