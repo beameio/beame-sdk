@@ -169,7 +169,7 @@ function createWithAuthToken(name) {
 }
 
 
-function createAuthToken(){
+function createAuthToken(data){
 	console.log(`env signed fqdn is ${process.env.signed_fqdn}`);
 	let fqdn = process.env.signed_fqdn || config.BeameConfig.beameDevCredsFqdn;
 
@@ -190,7 +190,7 @@ function createAuthToken(){
 
 	it('Should create entity', function (done) {
 
-		cred.signWithFqdn(fqdn, null).then(authToken=> {
+		cred.signWithFqdn(fqdn, data || process.env.data_to_sign).then(authToken=> {
 
 				assert.isString(authToken);
 
