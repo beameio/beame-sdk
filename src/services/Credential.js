@@ -791,6 +791,10 @@ class Credential {
 		);
 	}
 
+	/**
+	 * @returns {Promise}
+	 * @private
+	 */
 	_syncMetadata() {
 		let fqdn    = this.fqdn,
 		    dirPath = this.getMetadataKey("path");
