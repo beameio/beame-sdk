@@ -490,7 +490,9 @@ class Credential {
 				if (!authToken) {
 					reject('Auth token required');
 					return;
-				}
+				};
+
+				logger.debug("createEntityWithAuthServer(): Selecting proxy");
 
 				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
 					if (!error) {
@@ -504,6 +506,7 @@ class Credential {
 
 				function onEdgeServerSelected(edge) {
 
+					logger.debug("createEntityWithAuthServer(): onEdgeServerSelected");
 					let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || config.authServerURL;
 
 					metadata = {
@@ -513,6 +516,7 @@ class Credential {
 					};
 
 
+					logger.debug("createEntityWithAuthServer(): provisionApi.postRequest: " + JSON.stringify(Credential.formatRegisterPostData(metadata)));
 					provisionApi.postRequest(
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
@@ -528,6 +532,7 @@ class Credential {
 				 * @this {Credential}
 				 */
 				function fqdnResponseReady(error, payload) {
+					logger.debug("createEntityWithAuthServer(): fqdnResponseReady");
 					if (error) {
 						reject(error);
 						return;
@@ -657,6 +662,7 @@ class Credential {
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
 
+				logger.debug("_requestCerts()");
 				var sign = CommonUtils.parse(payload.sign);
 
 				if (!sign) {
@@ -672,9 +678,9 @@ class Credential {
 									cred._syncMetadata().then(resolve).catch(error=> {
 										logger.error(error);
 										resolve(metadata);
-									})
-								})
-							})
+									});
+								});
+							});
 					}).catch(onError);
 
 				function onError(e) {
