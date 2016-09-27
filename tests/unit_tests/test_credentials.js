@@ -3,10 +3,10 @@
  */
 "use strict";
 
-var config     = require('./config');
-var assert     = config.assert;
-var store      = config.beameStore;
-var logger     = new config.Logger("TestCredential");
+var config        = require('./config');
+var assert        = config.assert;
+var store         = config.beameStore;
+var logger        = new config.Logger("TestCredential");
 const CommonUtils = require('../../src/utils/CommonUtils');
 
 
@@ -141,16 +141,16 @@ function createWithAuthToken(name) {
 
 			credential.createEntityWithAuthServer(authToken, null, name || process.env.name || config.beameUtils.randomString(8), null).then(metadata => {
 
-					logger.info(`metadata received `, metadata);
+				logger.info(`metadata received `, metadata);
 
-					assert.isNotNull(metadata, `expected metadata`);
-					assert.isNotNull(metadata.fqdn, `expected fqdn`);
+				assert.isNotNull(metadata, `expected metadata`);
+				assert.isNotNull(metadata.fqdn, `expected fqdn`);
 
-					let cred = store.getCredential(metadata.fqdn);
+				let cred = store.getCredential(metadata.fqdn);
 
-					assert.isNotNull(cred, 'New credential not found inn store');
+				assert.isNotNull(cred, 'New credential not found inn store');
 
-					done();
+				done();
 
 
 			}).catch(error=> {
@@ -169,7 +169,7 @@ function createWithAuthToken(name) {
 }
 
 
-function createAuthToken(data){
+function createAuthToken(data) {
 	console.log(`env signed fqdn is ${process.env.signed_fqdn}`);
 	let fqdn = process.env.signed_fqdn || config.BeameConfig.beameDevCredsFqdn;
 
@@ -192,11 +192,11 @@ function createAuthToken(data){
 
 		cred.signWithFqdn(fqdn, data || process.env.data_to_sign).then(authToken=> {
 
-				assert.isString(authToken);
+			assert.isString(authToken);
 
-				console.log(CommonUtils.stringify(authToken,false));
+			console.log(CommonUtils.stringify(authToken, false));
 
-				done();
+			done();
 		}).catch(error=> {
 			var msg = config.Logger.formatError(error);
 
@@ -210,4 +210,50 @@ function createAuthToken(data){
 	});
 }
 
-module.exports = {createWithLocalCreds, signAndCreate, createWithAuthToken, createAuthToken};
+function createSnsTopic() {
+	let fqdn = process.env.fqdn || config.BeameConfig.beameDevCredsFqdn;
+
+	let cred;
+
+
+	describe('Test create sns topic', function () {
+		this.timeout(1000000);
+
+		before(function (done) {
+
+			assert.isString(fqdn, 'Fqdn required');
+
+			logger.info(`find local creds for ${fqdn}`);
+
+			cred = store.getCredential(fqdn);
+
+			assert.isNotNull(cred, 'Parent credential not found');
+
+			done()
+		});
+
+		it('Should create entity', function (done) {
+
+			cred.subscribeForChildRegistration(fqdn).then(() => {
+
+				console.log('topic created');
+
+				done();
+			}).catch(error=> {
+				var msg = config.Logger.formatError(error);
+
+				logger.error(msg, error);
+				assert.fail(0, 1, msg);
+
+				done();
+			});
+
+
+		});
+
+	});
+
+
+}
+
+module.exports = {createWithLocalCreds, signAndCreate, createWithAuthToken, createAuthToken, createSnsTopic};

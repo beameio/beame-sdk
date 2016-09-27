@@ -35,7 +35,7 @@ const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
 const beameUtils             = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
 const ProvisionApi           = require('../services/ProvisionApi');
-const provisionApi           = new ProvisionApi();
+const provisionApi           = new ProvisionApi('https://zenit.office.beameio.net');
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
@@ -643,16 +643,38 @@ class Credential {
 						return;
 					}
 					//set signature to consistent call of new credentials
-					cred._syncMetadata().then(resolve).catch(error=> {
-						logger.error(error);
-						resolve(metadata);
-					})
+					cred._syncMetadata().then(resolve).catch(reject);
 
 				});
 			}
 		);
 	}
 
+	subscribeForChildRegistration(fqdn) {
+		return new Promise((resolve, reject) => {
+
+				var cred = this._store.getCredential(fqdn);
+
+				if (!cred) {
+					reject(`Creds for ${fqdn} not found`);
+					return;
+				}
+
+				let apiData  = ProvisionApi.getApiData(apiEntityActions.SubscribeRegistration.endpoint, {});
+
+				provisionApi.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				provisionApi.runRestfulAPI(apiData, (error) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+					resolve();
+				});
+			}
+		);
+	}
 
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {

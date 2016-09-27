@@ -19,6 +19,9 @@
             },
             "GetMetadata": {
                 "endpoint": "/api/v1/node/get/meta"
+            },
+            "SubscribeRegistration": {
+                "endpoint": "/api/v1/node/subscribe/registration"
             }
         },
         "AuthServerApi": {
