@@ -649,7 +649,6 @@ class Credential {
 					}
 					//set signature to consistent call of new credentials
 					cred._syncMetadata().then(resolve).catch(reject);
-
 				});
 			}
 		);
@@ -679,6 +678,18 @@ class Credential {
 				});
 			}
 		);
+	}
+
+	// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
+	getHttpsServerOptions() {
+		if(!this.PRIVATE_KEY || !this.P7B || !this.CA) {
+			throw new Error(`Credential#getHttpsServerOptions: fqdn ${this.fqdn} does not have required fields for running HTTPS server using this credential`);
+		}
+		return {
+			key:  this.PRIVATE_KEY,
+			cert: this.P7B,
+			ca:   this.CA
+		};
 	}
 
 	_requestCerts(payload, metadata) {
