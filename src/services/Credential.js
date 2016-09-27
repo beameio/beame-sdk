@@ -648,7 +648,7 @@ class Credential {
 						return;
 					}
 					//set signature to consistent call of new credentials
-					cred.syncMetadata().then(resolve).catch(reject);
+					cred._syncMetadata().then(resolve).catch(reject);
 
 				});
 			}
@@ -681,6 +681,18 @@ class Credential {
 		);
 	}
 
+	// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
+	getHttpsServerOptions() {
+		if(!this.PRIVATE_KEY || !this.P7B || !this.CA) {
+			throw new Error(`Credential#getHttpsServerOptions: fqdn ${this.fqdn} does not have required fields for running HTTPS server using this credential`);
+		}
+		return {
+			key:  this.PRIVATE_KEY,
+			cert: this.P7B,
+			ca:   this.CA
+		};
+	}
+
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
 
@@ -697,7 +709,7 @@ class Credential {
 						cred.createCSR().then(
 							csr => {
 								cred.getCert(csr, sign).then(function () {
-									cred.syncMetadata().then(resolve).catch(error=> {
+									cred._syncMetadata().then(resolve).catch(error=> {
 										logger.error(error);
 										resolve(metadata);
 									});
@@ -779,7 +791,7 @@ class Credential {
 		);
 	}
 
-	syncMetadata() {
+	_syncMetadata() {
 		let fqdn    = this.fqdn,
 		    dirPath = this.getMetadataKey("path");
 

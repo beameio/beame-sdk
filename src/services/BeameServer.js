@@ -38,15 +38,8 @@ function BeameServer(instanceHostname, requestListener, hostOnlineCallback) {
 		return;
 	}
 
-	/** @type {ServerCertificates} **/
-	let serverCerts = {
-		key:  server_entity.PRIVATE_KEY,
-		cert: server_entity.P7B,
-		ca:   server_entity.CA
-	};
-
 	let srv = SNIServer.get(config.SNIServerPort);
-	srv.addFqdn(fqdn, serverCerts, requestListener);
+	srv.addFqdn(fqdn, server_entity.getHttpsServerOptions(), requestListener);
 
 	srv.start(function () {
 		function onLocalServerCreated(data) {
@@ -71,7 +64,7 @@ function BeameServer(instanceHostname, requestListener, hostOnlineCallback) {
 			new ProxyClient("HTTPS", fqdn,
 				edge_fqdn, 'localhost',
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
-				null, serverCerts);
+				null, server_entity.getHttpsServerOptions());
 		}
 		else {
 			onLocalServerCreated(null);
