@@ -30,7 +30,7 @@ var localCertsDirV2 = path.join(rootDir, 'v2');
 
 
 /** @const {String} **/
-const authServerURL = "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
+const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
 
 /** @const {String} **/
 const loadBalancerURL = "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";

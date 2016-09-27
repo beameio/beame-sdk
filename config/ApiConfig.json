@@ -14,9 +14,6 @@
             "UpdateEntity": {
                 "endpoint": "/api/v1/node/update"
             },
-            "GetCert": {
-                "endpoint": "/api/v1/node/cert/get"
-            },
             "GetMetadata": {
                 "endpoint": "/api/v1/node/get/meta"
             },

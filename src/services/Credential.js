@@ -648,7 +648,7 @@ class Credential {
 						return;
 					}
 					//set signature to consistent call of new credentials
-					cred._syncMetadata().then(resolve).catch(reject);
+					cred.syncMetadata().then(resolve).catch(reject);
 
 				});
 			}
@@ -697,7 +697,7 @@ class Credential {
 						cred.createCSR().then(
 							csr => {
 								cred.getCert(csr, sign).then(function () {
-									cred._syncMetadata().then(resolve).catch(error=> {
+									cred.syncMetadata().then(resolve).catch(error=> {
 										logger.error(error);
 										resolve(metadata);
 									});
@@ -779,7 +779,7 @@ class Credential {
 		);
 	}
 
-	_syncMetadata() {
+	syncMetadata() {
 		let fqdn    = this.fqdn,
 		    dirPath = this.getMetadataKey("path");
 
