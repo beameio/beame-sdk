@@ -146,12 +146,23 @@ class BeameStoreV2 {
 	/**
 	 *
 	 * @param {String} regex
+	 * @param {Object} options
 	 * @returns {Array}
 	 */
-	list(regex) {
+	list(regex, options) {
+		regex = regex || '.';
+		options = options || {};
 		return BeameUtils.findInTree(
 			{children: this.credentials},
-			cred => cred.fqdn && cred.fqdn.match(regex)
+			cred => {
+				if(!(cred.fqdn && cred.fqdn.match(regex))) {
+					return false;
+				}
+				if(options.mustHavePrivateKey && !cred.hasKey('PRIVATE_KEY')) {
+					return false;
+				}
+				return true;
+			}
 		);
 	}
 

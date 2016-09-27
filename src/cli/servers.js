@@ -67,7 +67,7 @@ function runDemoServer(fqdn, sharedFolder) {
 }
 
 
-function runLogginServer(fqdn) {
+function runLoggingServer(fqdn) {
 
 	new beameSDK.BeameServer(fqdn, (req, resp) =>{
 		resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});
@@ -100,7 +100,6 @@ function runLogginServer(fqdn) {
 }
 
 module.exports = {
-
 	runDemoServer,
-	runLogginServer
+	runLoggingServer
 };
