@@ -120,7 +120,7 @@ class Credential {
 			try {
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 			} catch (e) {
-				console.log(`Error could not import ${this.publicKeyStr}`)
+				console.log(`Error could not import ${this.publicKeyStr}`);
 			}
 		});
 		this.parseMetadata(metadata);
