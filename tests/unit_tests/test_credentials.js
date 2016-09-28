@@ -3,11 +3,14 @@
  */
 "use strict";
 
-var config        = require('./config');
+var config      = require('./config');
+const appConfig = require('../../config/Config');
+
 var assert        = config.assert;
 var store         = config.beameStore;
 var logger        = new config.Logger("TestCredential");
-const CommonUtils = require('../../src/utils/CommonUtils');
+var provApi       = config.ProvisionApi;
+const CommonUtils = config.CommonUtils;
 
 
 /**
@@ -64,15 +67,20 @@ function createWithLocalCreds(local_fqdn, name) {
 
 }
 
+function  generateDigest(data) {
+	let str = CommonUtils.stringify(data, false);
+	return require('crypto').createHash('sha256').update(str).digest("hex");
+}
+
 /**
  * CMD to run from console
  *  env signed_fqdn=[signed_fqdn] name=[name] npm run test_sign_credential
  **/
-function signAndCreate(signed_fqdn, name) {
+function signAndCreate(signed_fqdn, data) {
 	describe('Test create with local signature', function () {
 		this.timeout(1000000);
 
-		let parent_fqdn = signed_fqdn || process.env.signed_fqdn;
+		let parent_fqdn = signed_fqdn;
 
 		let signing_cred;
 
@@ -91,8 +99,8 @@ function signAndCreate(signed_fqdn, name) {
 
 		it('Should create entity', function (done) {
 
-			signing_cred.signWithFqdn(parent_fqdn, null).then(authToken=> {
-				signing_cred.createEntityWithAuthServer(authToken, null, name || process.env.name || config.beameUtils.randomString(8), null).then(metadata => {
+			signing_cred.signWithFqdn(parent_fqdn, data).then(authToken=> {
+				signing_cred.createEntityWithAuthServer(authToken, null, data.name, data.email).then(metadata => {
 
 					logger.info(`metadata received `, metadata);
 
@@ -120,7 +128,6 @@ function signAndCreate(signed_fqdn, name) {
 
 	});
 }
-
 
 function createWithAuthToken(name) {
 
@@ -167,7 +174,6 @@ function createWithAuthToken(name) {
 
 	});
 }
-
 
 function createAuthToken(data) {
 	console.log(`env signed fqdn is ${process.env.signed_fqdn}`);
@@ -256,4 +262,117 @@ function createSnsTopic() {
 
 }
 
-module.exports = {createWithLocalCreds, signAndCreate, createWithAuthToken, createAuthToken, createSnsTopic};
+
+function _getRandomRegistrationData(prefix){
+	let rnd  = config.beameUtils.randomString(8);
+		return {
+			name:  prefix + rnd,
+			email: rnd + '@example.com'
+		};
+}
+
+function testFlow() {
+
+	describe('Test full flow', function () {
+		this.timeout(1000000);
+
+		let devCreds,
+		    fqdn = process.env.signing_fqdn || appConfig.beameDevCredsFqdn,
+		    zeroLevelData = _getRandomRegistrationData('zero-level');
+
+		before(function (done) {
+
+			devCreds = store.getCredential(fqdn);
+
+			assert.isNotNull(devCreds, 'Parent credential not found');
+
+			done()
+		});
+
+		let initialAuthToken;
+
+		it('Should create authToken', (done) => {
+			devCreds.signWithFqdn(fqdn, zeroLevelData).then(t=> {
+
+				assert.isNotNull(t);
+				initialAuthToken = t;
+				logger.info(`auth token received ${initialAuthToken}`);
+				done();
+			}).catch(error=> {
+				logger.error(error);
+				process.exist(2);
+			});
+		});
+
+
+		let registrationAuthToken;
+
+		it('Should register entity', done => {
+			let authServerRegisterUrl = appConfig.authServerURL + '/test/sdk/register';
+
+			provApi.postRequest(authServerRegisterUrl, zeroLevelData, (error, payload)=> {
+				if(error){
+					logger.error(error);
+					process.exit(2);
+				}
+				assert.isNotNull(payload);
+
+				registrationAuthToken = CommonUtils.parse(payload.authToken);
+
+				assert.isNotNull(registrationAuthToken);
+
+				logger.debug(`auth token received from server`,registrationAuthToken);
+
+				done();
+			}, initialAuthToken);
+		});
+
+		let zeroLevelFqdn;
+
+		it('Should complete registration with received server auth token',done=> {
+
+			devCreds.createEntityWithAuthServer(CommonUtils.stringify(registrationAuthToken,false), null, zeroLevelData.name, zeroLevelData.email).then(metadata => {
+
+				logger.debug(`metadata received `, metadata);
+
+				assert.isNotNull(metadata, `expected metadata`);
+				assert.isNotNull(metadata.fqdn, `expected fqdn`);
+
+				let cred = store.getCredential(metadata.fqdn);
+
+				assert.isNotNull(cred, 'New credential not found inn store');
+
+				zeroLevelFqdn = metadata.fqdn;
+
+				done();
+
+			});
+
+		});
+
+		it('Should create child with zero level signature',done => {
+
+			var newData = _getRandomRegistrationData(`${zeroLevelFqdn}-child-1-`);
+
+			signAndCreate(zeroLevelFqdn,newData);
+
+			done()
+		});
+
+
+	});
+
+}
+
+var test = process.env.test_type;
+
+if (!test) {
+	logger.error(`test type required`);
+	process.exit(1)
+}
+
+switch (test) {
+	case 'flow':
+		testFlow();
+		break;
+}

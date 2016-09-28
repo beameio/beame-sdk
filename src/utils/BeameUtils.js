@@ -51,7 +51,7 @@ function iterateTree(node, callback) {
  *
  * @param {Object} node
  * @param {Function} predicate
- * @param {Number} limit
+ * @param {Number} [limit]
  * @returns {Array}
  */
 function findInTree(node, predicate, limit) {

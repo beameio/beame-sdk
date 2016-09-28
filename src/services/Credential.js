@@ -491,7 +491,7 @@ class Credential {
 				if (!authToken) {
 					reject('Auth token required');
 					return;
-				};
+				}
 
 				logger.debug("createEntityWithAuthServer(): Selecting proxy");
 
@@ -517,7 +517,7 @@ class Credential {
 					};
 
 
-					logger.debug("createEntityWithAuthServer(): provisionApi.postRequest: " + JSON.stringify(Credential.formatRegisterPostData(metadata)));
+					logger.debug("createEntityWithAuthServer(): provisionApi.postRequest: " + CommonUtils.stringify(Credential.formatRegisterPostData(metadata)));
 					provisionApi.postRequest(
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
@@ -697,8 +697,10 @@ class Credential {
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
 
-				logger.debug("_requestCerts()");
+
 				var sign = CommonUtils.parse(payload.sign);
+
+				logger.debug("_requestCerts()",sign);
 
 				if (!sign) {
 					reject('Invalid authorization token');
@@ -709,9 +711,11 @@ class Credential {
 					cred => {
 						cred.createCSR().then(
 							csr => {
-								cred.getCert(csr, sign).then(function () {
+								cred.getCert(csr, sign).then( () => {
 									cred._syncMetadata().then(resolve).catch(error=> {
 										logger.error(error);
+										metadata.fqdn = payload.fqdn;
+										metadata.parent_fqdn = payload.parent_fqdn;
 										resolve(metadata);
 									});
 								});

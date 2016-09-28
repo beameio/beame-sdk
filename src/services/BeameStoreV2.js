@@ -126,9 +126,7 @@ class BeameStoreV2 {
 	/**
 	 *
 	 * @param fqdn
-	 * @param {Array.<Credential>} searchArray
 	 * @returns {*}
-	 * @private
 	 */
 	search(fqdn) {
 		return BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn);
