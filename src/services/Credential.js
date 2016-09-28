@@ -125,6 +125,7 @@ class Credential {
 		});
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
+		this.beameStoreServices.writeMetadataSync(this.metadata);
 		pem.config({sync: false});
 	}
 
