@@ -106,7 +106,7 @@ class Credential {
 		pem.config({sync: true});
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
-				this.certData           = err ? null : certData;
+				this.certData           = certData;
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this._store);
 				this.metadata.fqdn      = certData.commonName;
 				this.fqdn               = certData.commonName;
