@@ -468,18 +468,7 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken=> {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(()=> {
-
-								let cred = this._store.getCredential(payload.fqdn);
-
-								if (cred == null) {
-									reject(`credential for ${payload.fqdn} not found`);
-									return;
-								}
-
-								cred._syncMetadata(payload.fqdn).then(resolve);
-
-							});
+							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve);
 						}).catch(reject);
 
 					});
@@ -549,14 +538,12 @@ class Credential {
 						return;
 					}
 
-					this._requestCerts(payload, metadata).then(resolve).catch(reject);
-
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve);
 				}
 			}
 		);
 
 	}
-
 
 	/**
 	 *
@@ -630,23 +617,27 @@ class Credential {
 					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken=> {
 						payload.sign = authToken;
 
-						this._requestCerts(payload, metadata).then(()=> {
-
-							let cred = this._store.getCredential(payload.fqdn);
-
-							if (cred == null) {
-								reject(`credential for ${payload.fqdn} not found`);
-								return;
-							}
-
-							cred._syncMetadata(payload.fqdn).then(resolve);
-						});
+						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve);
 					}).catch(reject);
 
 				}
 			}
 		);
 
+	}
+
+	_onCertsReceived(fqdn) {
+		return new Promise((resolve, reject) => {
+				let cred = this._store.getCredential(fqdn);
+
+				if (cred == null) {
+					reject(`credential for ${fqdn} not found`);
+					return;
+				}
+
+				cred._syncMetadata(fqdn).then(resolve);
+			}
+		);
 	}
 
 	createCSR() {
