@@ -52,12 +52,20 @@ class CommonUtils {
 
 	}
 
+	/**
+	 *
+	 * @param data
+	 * @param {String|null} [alg] => hash algorithm
+	 * @param {String|null} [dig] => hash digest
+	 * @returns {*}
+	 */
+	static generateDigest(data,alg,dig) {
+		let str = CommonUtils.isObject(data) ? CommonUtils.stringify(data, false) : data;
+		return require('crypto').createHash(alg || 'sha256').update(str).digest(dig || 'hex');
+	}
+
 	static isObject(obj) {
-		try {
-			return typeof obj === 'object';
-		} catch (e) {
-			return false;
-		}
+		return typeof obj === 'object';
 	}
 }
 

@@ -3,9 +3,9 @@
  */
 "use strict";
 
-var config      = require('./config');
-const appConfig = require('../../config/Config');
-
+var config        = require('./config');
+const appConfig   = require('../../config/Config');
+const async       = require('async');
 var assert        = config.assert;
 var store         = config.beameStore;
 var logger        = new config.Logger("TestCredential");
@@ -13,15 +13,25 @@ var provApi       = config.ProvisionApi;
 const CommonUtils = config.CommonUtils;
 
 
+function _getRandomRegistrationData(prefix) {
+	let rnd = config.beameUtils.randomString(8);
+	return {
+		name:  prefix + rnd,
+		email: rnd + '@example.com'
+	};
+}
+
 /**
  * CMD to run from console
  *  env local_fqdn=[local_fqdn] name=[name] npm run test_local_credential
  **/
-function createWithLocalCreds(local_fqdn, name) {
+function createWithLocalCreds(local_fqdn, data) {
 	describe('Test create with local creds', function () {
 		this.timeout(1000000);
 
 		let parent_fqdn = local_fqdn || process.env.local_fqdn;
+
+		data = data || _getRandomRegistrationData(`${parent_fqdn}-child-`);
 
 		let parent_cred;
 
@@ -40,7 +50,7 @@ function createWithLocalCreds(local_fqdn, name) {
 
 		it('Should create entity', function (done) {
 
-			parent_cred.createEntityWithLocalCreds(parent_fqdn, name || process.env.name || config.beameUtils.randomString(8), null).then(metadata => {
+			parent_cred.createEntityWithLocalCreds(parent_fqdn, data.name, data.email).then(metadata => {
 
 				logger.info(`metadata received `, metadata);
 
@@ -51,6 +61,7 @@ function createWithLocalCreds(local_fqdn, name) {
 
 				assert.isNotNull(cred, 'New credential not found inn store');
 
+
 				done();
 
 			}).catch(error=> {
@@ -58,7 +69,6 @@ function createWithLocalCreds(local_fqdn, name) {
 
 				logger.error(msg, error);
 				assert.fail(0, 1, msg);
-
 				done();
 			});
 		});
@@ -67,20 +77,18 @@ function createWithLocalCreds(local_fqdn, name) {
 
 }
 
-function  generateDigest(data) {
-	let str = CommonUtils.stringify(data, false);
-	return require('crypto').createHash('sha256').update(str).digest("hex");
-}
 
 /**
  * CMD to run from console
  *  env signed_fqdn=[signed_fqdn] name=[name] npm run test_sign_credential
  **/
-function signAndCreate(signed_fqdn, data) {
+function signAndCreate(signing_fqdn, data) {
 	describe('Test create with local signature', function () {
 		this.timeout(1000000);
 
-		let parent_fqdn = signed_fqdn;
+		let parent_fqdn = signing_fqdn || process.env.signing_fqdn;
+
+		data = data || _getRandomRegistrationData(`${parent_fqdn}-child-`);
 
 		let signing_cred;
 
@@ -99,8 +107,8 @@ function signAndCreate(signed_fqdn, data) {
 
 		it('Should create entity', function (done) {
 
-			signing_cred.signWithFqdn(parent_fqdn, data).then(authToken=> {
-				signing_cred.createEntityWithAuthServer(authToken, null, data.name, data.email).then(metadata => {
+			signing_cred.signWithFqdn(parent_fqdn, CommonUtils.generateDigest(data)).then(authToken=> {
+				signing_cred.createEntityWithAuthToken(authToken, data.name, data.email).then(metadata => {
 
 					logger.info(`metadata received `, metadata);
 
@@ -110,6 +118,7 @@ function signAndCreate(signed_fqdn, data) {
 					let cred = store.getCredential(metadata.fqdn);
 
 					assert.isNotNull(cred, 'New credential not found inn store');
+
 
 					done();
 
@@ -129,147 +138,6 @@ function signAndCreate(signed_fqdn, data) {
 	});
 }
 
-function createWithAuthToken(name) {
-
-	let credential = new config.Credential(config.beameStore);
-
-	describe('Test create with auth token', function () {
-		this.timeout(1000000);
-		let authToken = process.env.token;
-
-		before(function (done) {
-
-			assert.isString(authToken, 'Parent fqdn required');
-
-			done()
-		});
-
-		it('Should create entity', function (done) {
-
-			credential.createEntityWithAuthServer(authToken, null, name || process.env.name || config.beameUtils.randomString(8), null).then(metadata => {
-
-				logger.info(`metadata received `, metadata);
-
-				assert.isNotNull(metadata, `expected metadata`);
-				assert.isNotNull(metadata.fqdn, `expected fqdn`);
-
-				let cred = store.getCredential(metadata.fqdn);
-
-				assert.isNotNull(cred, 'New credential not found inn store');
-
-				done();
-
-
-			}).catch(error=> {
-				var msg = config.Logger.formatError(error);
-
-				logger.error(msg, error);
-				assert.fail(0, 1, msg);
-
-				done();
-			});
-
-
-		});
-
-	});
-}
-
-function createAuthToken(data) {
-	console.log(`env signed fqdn is ${process.env.signed_fqdn}`);
-	let fqdn = process.env.signed_fqdn || config.BeameConfig.beameDevCredsFqdn;
-
-	let cred;
-
-	before(function (done) {
-
-		assert.isString(fqdn, 'Parent fqdn required');
-
-		logger.info(`find local creds for ${fqdn}`);
-
-		cred = store.getCredential(fqdn);
-
-		assert.isNotNull(cred, 'Parent credential not found');
-
-		done()
-	});
-
-	it('Should create entity', function (done) {
-
-		cred.signWithFqdn(fqdn, data || process.env.data_to_sign).then(authToken=> {
-
-			assert.isString(authToken);
-
-			console.log(CommonUtils.stringify(authToken, false));
-
-			done();
-		}).catch(error=> {
-			var msg = config.Logger.formatError(error);
-
-			logger.error(msg, error);
-			assert.fail(0, 1, msg);
-
-			done();
-		});
-
-
-	});
-}
-
-function createSnsTopic() {
-	let fqdn = process.env.fqdn || config.BeameConfig.beameDevCredsFqdn;
-
-	let cred;
-
-
-	describe('Test create sns topic', function () {
-		this.timeout(1000000);
-
-		before(function (done) {
-
-			assert.isString(fqdn, 'Fqdn required');
-
-			logger.info(`find local creds for ${fqdn}`);
-
-			cred = store.getCredential(fqdn);
-
-			assert.isNotNull(cred, 'Parent credential not found');
-
-			done()
-		});
-
-		it('Should create entity', function (done) {
-
-			cred.subscribeForChildRegistration(fqdn).then(() => {
-
-				console.log('topic created');
-
-				done();
-			}).catch(error=> {
-				var msg = config.Logger.formatError(error);
-
-				logger.error(msg, error);
-				assert.fail(0, 1, msg);
-
-				done();
-			});
-
-
-		});
-
-	});
-
-
-}
-
-
-function _getRandomRegistrationData(prefix){
-	let rnd  = config.beameUtils.randomString(8);
-		return {
-			name:  prefix + rnd,
-			email: rnd + '@example.com'
-		};
-}
 
 function testFlow() {
 
@@ -277,7 +145,7 @@ function testFlow() {
 		this.timeout(1000000);
 
 		let devCreds,
-		    fqdn = process.env.signing_fqdn || appConfig.beameDevCredsFqdn,
+		    fqdn          = process.env.signing_fqdn || appConfig.beameDevCredsFqdn,
 		    zeroLevelData = _getRandomRegistrationData('zero-level');
 
 		before(function (done) {
@@ -311,7 +179,7 @@ function testFlow() {
 			let authServerRegisterUrl = appConfig.authServerURL + '/test/sdk/register';
 
 			provApi.postRequest(authServerRegisterUrl, zeroLevelData, (error, payload)=> {
-				if(error){
+				if (error) {
 					logger.error(error);
 					process.exit(2);
 				}
@@ -321,7 +189,7 @@ function testFlow() {
 
 				assert.isNotNull(registrationAuthToken);
 
-				logger.debug(`auth token received from server`,registrationAuthToken);
+				logger.debug(`auth token received from server`, registrationAuthToken);
 
 				done();
 			}, initialAuthToken);
@@ -329,9 +197,9 @@ function testFlow() {
 
 		let zeroLevelFqdn;
 
-		it('Should complete registration with received server auth token',done=> {
+		it('Should complete registration with received server auth token', done=> {
 
-			devCreds.createEntityWithAuthServer(CommonUtils.stringify(registrationAuthToken,false), null, zeroLevelData.name, zeroLevelData.email).then(metadata => {
+			devCreds.createEntityWithAuthServer(CommonUtils.stringify(registrationAuthToken, false), null, zeroLevelData.name, zeroLevelData.email).then(metadata => {
 
 				logger.debug(`metadata received `, metadata);
 
@@ -350,15 +218,118 @@ function testFlow() {
 
 		});
 
-		it('Should create child with zero level signature',done => {
+		it('Should create children', done => {
 
-			var newData = _getRandomRegistrationData(`${zeroLevelFqdn}-child-1-`);
+			function createWithLocal(cb,ind) {
 
-			signAndCreate(zeroLevelFqdn,newData);
+				console.log(`local call ${ind} received`);
 
-			done()
+				let data = _getRandomRegistrationData(`${zeroLevelFqdn}-child-1-`);
+				logger.info(`Creating entity ${data.name} under ${zeroLevelFqdn}`);
+
+				devCreds.createEntityWithLocalCreds(zeroLevelFqdn, data.name, data.email).then(metadata => {
+
+					logger.info(`metadata received for ${data.name}`, metadata);
+					cb(null, metadata);
+
+				}).catch(error=> {
+					var msg = config.Logger.formatError(error);
+
+					logger.error(msg, error);
+					cb(error, null);
+				});
+			}
+
+			function createWithToken(cb,ind) {
+				console.log(`token call ${ind} received`);
+
+				let newData2 = _getRandomRegistrationData(`${zeroLevelFqdn}-child-1-`);
+				logger.info(`Creating entity ${newData2.name} under ${zeroLevelFqdn}`);
+
+				devCreds.signWithFqdn(zeroLevelFqdn, CommonUtils.generateDigest(newData2)).then(authToken=> {
+					devCreds.createEntityWithAuthToken(authToken, newData2.name, newData2.email).then(metadata => {
+
+						logger.info(`metadata received for ${newData2.name}`, metadata);
+
+						cb(null, metadata);
+
+					});
+				}).catch(error=> {
+					var msg = config.Logger.formatError(error);
+
+					logger.error(msg, error);
+					cb(error, null);
+				});
+			}
+
+			console.log(`**************************** CALL CREATE CHILDREN *****************`);
+
+			async.parallel(
+				[
+					cb=>{createWithLocal(cb,1)},
+					cb=>{createWithToken(cb,2)},
+					// cb=>{createWithLocal(cb,3)},
+					// cb=>{createWithToken(cb,4)}
+
+					// function (cb) {
+					// 	console.log(`**************************** CALL 1 *****************`);
+					// 	setTimeout(()=> {
+					// 		createWithLocal(cb,1)
+					// 	}, Math.random() + 4);
+					// },
+					// function (cb) {
+					// 	console.log(`**************************** CALL 2 *****************`);
+					// 	setTimeout(()=> {
+					// 		createWithToken(cb,2)
+					// 	}, Math.random() + 64);
+					// },
+					// function (cb) {
+					// 	console.log(`**************************** CALL 3 *****************`);
+					// 	setTimeout(()=> {
+					// 		createWithLocal(cb,3)
+					// 	}, Math.random() + 128);
+					// },
+					// function (cb) {
+					// 	console.log(`**************************** CALL 4 *****************`);
+					// 	setTimeout(()=> {
+					// 		createWithToken(cb,4)
+					// 	}, Math.random() + 256);
+					// },
+					// function (cb) {
+					// 	console.log(`**************************** CALL 5 *****************`);
+					// 	setTimeout(()=> {
+					// 		createWithLocal(cb,5)
+					// 	}, Math.random() + 512);
+					// },
+					// function (cb) {
+					// 	console.log(`**************************** CALL 6 *****************`);
+					// 	setTimeout(()=> {
+					// 		createWithToken(cb,6)
+					// 	}, Math.random() + 512);
+					//},
+					// function (cb) {
+					// 	console.log(`**************************** CALL 7 *****************`);
+					// 	setTimeout(()=> {
+					// 		createWithLocal(cb,7)
+					// 	}, Math.random() + 128);
+					// },
+					// function (cb) {
+					// 	console.log(`**************************** CALL 8 *****************`);
+					// 	setTimeout(()=> {
+					// 		createWithToken(cb,8)
+					// 	}, Math.random() + 256);
+					// }
+				],
+				error=> {
+					if (error) {
+						logger.error(`create children`, error);
+					}
+					assert.isNull(error);
+					done();
+				}
+			);
+
 		});
-
 
 	});
 
@@ -375,4 +346,144 @@ switch (test) {
 	case 'flow':
 		testFlow();
 		break;
+	case 'sign_and_create':
+		signAndCreate();
+		break;
+	case 'local':
+		createWithLocalCreds();
+		break;
 }
+
+
+// function createWithAuthToken(name) {
+//
+// 	let credential = new config.Credential(config.beameStore);
+//
+// 	describe('Test create with auth token', function () {
+// 		this.timeout(1000000);
+// 		let authToken = process.env.token;
+//
+// 		before(function (done) {
+//
+// 			assert.isString(authToken, 'Parent fqdn required');
+//
+// 			done()
+// 		});
+//
+// 		it('Should create entity', function (done) {
+//
+// 			credential.createEntityWithAuthServer(authToken, null, name || process.env.name || config.beameUtils.randomString(8), null).then(metadata => {
+//
+// 				logger.info(`metadata received `, metadata);
+//
+// 				assert.isNotNull(metadata, `expected metadata`);
+// 				assert.isNotNull(metadata.fqdn, `expected fqdn`);
+//
+// 				let cred = store.getCredential(metadata.fqdn);
+//
+// 				assert.isNotNull(cred, 'New credential not found inn store');
+//
+// 				done();
+//
+//
+// 			}).catch(error=> {
+// 				var msg = config.Logger.formatError(error);
+//
+// 				logger.error(msg, error);
+// 				assert.fail(0, 1, msg);
+//
+// 				done();
+// 			});
+//
+//
+// 		});
+//
+// 	});
+// }
+//
+// function createAuthToken(data) {
+// 	console.log(`env signed fqdn is ${process.env.signed_fqdn}`);
+// 	let fqdn = process.env.signed_fqdn || config.BeameConfig.beameDevCredsFqdn;
+//
+// 	let cred;
+//
+// 	before(function (done) {
+//
+// 		assert.isString(fqdn, 'Parent fqdn required');
+//
+// 		logger.info(`find local creds for ${fqdn}`);
+//
+// 		cred = store.getCredential(fqdn);
+//
+// 		assert.isNotNull(cred, 'Parent credential not found');
+//
+// 		done()
+// 	});
+//
+// 	it('Should create entity', function (done) {
+//
+// 		cred.signWithFqdn(fqdn, data || process.env.data_to_sign).then(authToken=> {
+//
+// 			assert.isString(authToken);
+//
+// 			console.log(CommonUtils.stringify(authToken, false));
+//
+// 			done();
+// 		}).catch(error=> {
+// 			var msg = config.Logger.formatError(error);
+//
+// 			logger.error(msg, error);
+// 			assert.fail(0, 1, msg);
+//
+// 			done();
+// 		});
+//
+//
+// 	});
+// }
+//
+// function createSnsTopic() {
+// 	let fqdn = process.env.fqdn || config.BeameConfig.beameDevCredsFqdn;
+//
+// 	let cred;
+//
+//
+// 	describe('Test create sns topic', function () {
+// 		this.timeout(1000000);
+//
+// 		before(function (done) {
+//
+// 			assert.isString(fqdn, 'Fqdn required');
+//
+// 			logger.info(`find local creds for ${fqdn}`);
+//
+// 			cred = store.getCredential(fqdn);
+//
+// 			assert.isNotNull(cred, 'Parent credential not found');
+//
+// 			done()
+// 		});
+//
+// 		it('Should create entity', function (done) {
+//
+// 			cred.subscribeForChildRegistration(fqdn).then(() => {
+//
+// 				console.log('topic created');
+//
+// 				done();
+// 			}).catch(error=> {
+// 				var msg = config.Logger.formatError(error);
+//
+// 				logger.error(msg, error);
+// 				assert.fail(0, 1, msg);
+//
+// 				done();
+// 			});
+//
+//
+// 		});
+//
+// 	});
+//
+//
+// }

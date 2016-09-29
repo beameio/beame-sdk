@@ -35,7 +35,6 @@ const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
 const beameUtils             = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
 const ProvisionApi           = require('../services/ProvisionApi');
-const provisionApi           = new ProvisionApi();
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
@@ -452,23 +451,35 @@ class Credential {
 					};
 
 					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData);
+					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+					    api      = new ProvisionApi();
 
-					provisionApi.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
+					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
 					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					provisionApi.runRestfulAPI(apiData, (error, payload) => {
+					api.runRestfulAPI(apiData, (error, payload) => {
 						if (error) {
 							reject(error);
 							return;
 						}
 						//set signature to consistent call of new credentials
-						this.signWithFqdn(parent_fqdn, payload.fqdn).then(authToken=> {
+						this.signWithFqdn(parent_fqdn, payload).then(authToken=> {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(resolve).catch(reject);
+							this._requestCerts(payload, metadata).then(()=> {
+
+								let cred = this._store.getCredential(payload.fqdn);
+
+								if (cred == null) {
+									reject(`credential for ${payload.fqdn} not found`);
+									return;
+								}
+
+								cred._syncMetadata(payload.fqdn).then(resolve);
+
+							});
 						}).catch(reject);
 
 					});
@@ -515,10 +526,9 @@ class Credential {
 						email,
 						edge_fqdn: edge.endpoint
 					};
+					let api  = new ProvisionApi();
 
-
-					logger.debug("createEntityWithAuthServer(): provisionApi.postRequest: " + CommonUtils.stringify(Credential.formatRegisterPostData(metadata)));
-					provisionApi.postRequest(
+					api.postRequest(
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
 						fqdnResponseReady.bind(this),
@@ -540,6 +550,98 @@ class Credential {
 					}
 
 					this._requestCerts(payload, metadata).then(resolve).catch(reject);
+
+				}
+			}
+		);
+
+	}
+
+
+	/**
+	 *
+	 * @param {String} authToken
+	 * @param {String|null} [name]
+	 * @param {String|null} [email]
+	 * @returns {Promise}
+	 */
+	createEntityWithAuthToken(authToken, name, email) {
+		return new Promise((resolve, reject) => {
+				var metadata;
+
+				if (!authToken) {
+					reject('Auth token required');
+					return;
+				}
+
+				let tokenObj = CommonUtils.parse(authToken);
+
+				if (!tokenObj) {
+					reject('Invalid Auth token');
+					return;
+				}
+
+				logger.debug("createEntityWithAuthToken(): Selecting proxy");
+
+				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
+					if (!error) {
+						onEdgeServerSelected.call(this, payload);
+					}
+					else {
+						reject(error);
+					}
+				});
+
+
+				function onEdgeServerSelected(edge) {
+
+					metadata = {
+						name,
+						email,
+						parent_fqdn: tokenObj.signedBy,
+						edge_fqdn:   edge.endpoint,
+					};
+
+
+					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, metadata.parent_fqdn);
+
+					let postData = Credential.formatRegisterPostData(metadata),
+					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+					    api      = new ProvisionApi();
+
+					api.runRestfulAPI(apiData,
+						fqdnResponseReady.bind(this),
+						'POST',
+						authToken
+					);
+				}
+
+				/**
+				 * @param error
+				 * @param payload
+				 * @this {Credential}
+				 */
+				function fqdnResponseReady(error, payload) {
+					logger.debug("createEntityWithAuthServer(): fqdnResponseReady");
+					if (error) {
+						reject(error);
+						return;
+					}
+					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken=> {
+						payload.sign = authToken;
+
+						this._requestCerts(payload, metadata).then(()=> {
+
+							let cred = this._store.getCredential(payload.fqdn);
+
+							if (cred == null) {
+								reject(`credential for ${payload.fqdn} not found`);
+								return;
+							}
+
+							cred._syncMetadata(payload.fqdn).then(resolve);
+						});
+					}).catch(reject);
 
 				}
 			}
@@ -586,33 +688,47 @@ class Credential {
 
 
 		return new Promise((resolve, reject) => {
-				var postData = {
-					csr:  csr,
-					fqdn: fqdn
-				};
-
-				var apiData = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData, true);
+				let postData = {
+					    csr:  csr,
+					    fqdn: fqdn
+				    },
+				    api      = new ProvisionApi(),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData, true);
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
-				provisionApi.runRestfulAPI(apiData, (error, payload) => {
+				api.runRestfulAPI(apiData, (error, payload) => {
 					this._saveCerts(error, payload).then(resolve).catch(reject);
 				}, 'POST', JSON.stringify(authToken));
 			}
 		);
 	}
 
-	getMetadata() {
-		let dirPath = this.getMetadataKey("path");
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @returns {Promise}
+	 */
+	getMetadata(fqdn) {
 
 		return new Promise((resolve, reject) => {
 
-				provisionApi.setAuthData(ProvisionApi.getAuthToken(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.X509));
+				var cred = this._store.getCredential(fqdn);
 
-				var apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
+				if (!cred) {
+					reject(`Creds for ${fqdn} not found`);
+					return;
+				}
 
-				provisionApi.runRestfulAPI(apiData, function (error, metadata) {
+				var api     = new ProvisionApi(),
+				    apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
+
+				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+
+				logger.debug(`requesting metadata for ${fqdn}`);
+
+				api.runRestfulAPI(apiData, (error, metadata) => {
 					if (!error) {
 						resolve(metadata);
 					}
@@ -627,12 +743,14 @@ class Credential {
 	updateMetadata(fqdn, name, email) {
 		return new Promise((resolve, reject) => {
 
-				var cred = this._store.getCredential(fqdn);
+				let cred = this._store.getCredential(fqdn);
 
 				if (!cred) {
 					reject(`Creds for ${fqdn} not found`);
 					return;
 				}
+
+				var api = new ProvisionApi();
 
 				let postData = {
 					    name,
@@ -640,22 +758,28 @@ class Credential {
 				    },
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntity.endpoint, postData);
 
-				provisionApi.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
-				provisionApi.runRestfulAPI(apiData, (error) => {
+				api.runRestfulAPI(apiData, (error) => {
 					if (error) {
 						reject(error);
 						return;
 					}
 					//set signature to consistent call of new credentials
-					cred._syncMetadata().then(resolve).catch(reject);
+					cred._syncMetadata(fqdn).then(resolve).catch(reject);
 
 				});
 			}
 		);
 	}
 
+	//noinspection JSUnusedGlobalSymbols
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @returns {Promise}
+	 */
 	subscribeForChildRegistration(fqdn) {
 		return new Promise((resolve, reject) => {
 
@@ -666,12 +790,13 @@ class Credential {
 					return;
 				}
 
-				let apiData  = ProvisionApi.getApiData(apiEntityActions.SubscribeRegistration.endpoint, {});
+				let apiData = ProvisionApi.getApiData(apiEntityActions.SubscribeRegistration.endpoint, {}),
+				    api     = new ProvisionApi();
 
-				provisionApi.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
-				provisionApi.runRestfulAPI(apiData, (error) => {
+				api.runRestfulAPI(apiData, (error) => {
 					if (error) {
 						reject(error);
 						return;
@@ -684,7 +809,7 @@ class Credential {
 
 	// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
 	getHttpsServerOptions() {
-		if(!this.PRIVATE_KEY || !this.P7B || !this.CA) {
+		if (!this.PRIVATE_KEY || !this.P7B || !this.CA) {
 			throw new Error(`Credential#getHttpsServerOptions: fqdn ${this.fqdn} does not have required fields for running HTTPS server using this credential`);
 		}
 		return {
@@ -700,7 +825,7 @@ class Credential {
 
 				var sign = CommonUtils.parse(payload.sign);
 
-				logger.debug("_requestCerts()",sign);
+				logger.debug("_requestCerts()", sign);
 
 				if (!sign) {
 					reject('Invalid authorization token');
@@ -711,13 +836,10 @@ class Credential {
 					cred => {
 						cred.createCSR().then(
 							csr => {
-								cred.getCert(csr, sign).then( () => {
-									cred._syncMetadata().then(resolve).catch(error=> {
-										logger.error(error);
-										metadata.fqdn = payload.fqdn;
-										metadata.parent_fqdn = payload.parent_fqdn;
-										resolve(metadata);
-									});
+								cred.getCert(csr, sign).then(() => {
+									metadata.fqdn        = payload.fqdn;
+									metadata.parent_fqdn = payload.parent_fqdn;
+									resolve(metadata);
 								});
 							});
 					}).catch(onError);
@@ -797,17 +919,24 @@ class Credential {
 	}
 
 	/**
+	 *
+	 * @param fqdn
 	 * @returns {Promise}
 	 * @private
 	 */
-	_syncMetadata() {
-		let fqdn    = this.fqdn,
-		    dirPath = this.getMetadataKey("path");
+	_syncMetadata(fqdn) {
 
 		return new Promise((resolve, reject) => {
-				this.getMetadata(fqdn, dirPath).then(payload => {
+				this.getMetadata(fqdn).then(payload => {
 
-					this.beameStoreServices.writeMetadataSync(payload);
+					let cred = this._store.getCredential(fqdn);
+
+					if (!cred) {
+						reject(`Creds for ${fqdn} not found`);
+						return;
+					}
+
+					cred.beameStoreServices.writeMetadataSync(payload);
 					resolve(payload);
 
 				}).catch(reject);

@@ -27,11 +27,14 @@ class AuthToken {
 			}
 
 			const now   = Date.now();
+
+			let data2sign = data ? (typeof data == "object" ? CommonUtils.stringify(data,false) : data) : null;
+
 			/** @type {SignedData} */
 			const token = {
 				created_at: Math.round(now / 1000),
 				valid_till: Math.round(now / 1000) + (ttl || 10),
-				data:       data || null
+				data:       data2sign
 			};
 
 			return CommonUtils.stringify(signingCreds ? signingCreds.sign(token) : token, false);
