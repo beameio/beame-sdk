@@ -3,44 +3,25 @@
 # NGS language - https://github.com/ilyash/ngs/
 
 if 'BEAME_DIR' in ENV {
-	# TODO: support BEAME_DIR environment variable
 	throw Error("BEAME_DIR environment variable must be unset for tests")
 }
 
-if not(Path(ENV.HOME + '/authData')) {
-	throw Error("~/authData must be present for tests")
-}
+HOME = ENV.HOME
 
-BEAME_DIR = ENV.HOME + '/.beame'
-BEAME_BIN = ENV.HOME + '/beame-sdk/src/cli/beame.js'
+BEAME_DIR = HOME / '.beame'
+BEAME_BIN = HOME / 'beame-sdk/src/cli/beame.js'
 
-{ ENV['SNI_SERVER_PORT'] = '0' }
+{ ENV.SNI_SERVER_PORT = '0' }
 
 if Path(BEAME_DIR) {
 	throw Error("Beame directory exists ($BEAME_DIR). Will not run tests.")
 }
 
-DEVELOPER_NAME = "Cli Test Developer"
-DEVELOPER_EMAIL = "beame-test-developer-${time()}@example.com"
-ATOMS_TO_CREATE = 2
-EDGE_CLIENTS_PER_ATOM = 2
-# TODO: test binary data
-TEST_DATA = 'abcd0123~!@#'
-CREDS_FILE = "/tmp/beame-cli-test-creds-${time()}"
-
-developer = null
-atoms = []
-edge_clients = []
-exit_code = 0
-
-echo("[INFO] DEVELOPER_EMAIL=$DEVELOPER_EMAIL")
-echo("[INFO] CREDS_FILE=$CREDS_FILE")
-
 { type TestFail(Error) }
 
 F do_test(name:Str, f:Fun) {
 	echo("")
-	echo("==================== TEST: $name ====================")
+	echo("=== TEST: $name ===")
 	result = try {
 		msg = f()
 		"OK: $msg"
@@ -55,179 +36,8 @@ F do_test(name:Str, f:Fun) {
 	echo("  RESULT: $result")
 }
 
-do_test("Create test developer", F() {
-	global developer = ``$BEAME_BIN creds createTestDeveloper --developerName developerName $DEVELOPER_NAME --developerEmail $DEVELOPER_EMAIL --format json``
-	developer is not Hash throws TestFail("Developer must be hash, not '$developer'")
-	developer.email != DEVELOPER_EMAIL throws TestFail("Developer email mismatch")
-	developer
-})
+do_test
 
 
-if developer {
-	for(i;ATOMS_TO_CREATE) {
-		do_test("Create atom #$i", F() {
-			atom = ``$BEAME_BIN creds createAtom --developerFqdn ${developer.hostname} --atomName "atom-$i" --format json``
-			atom is not Hash throws TestFail("Atom must be hash, not $atom")
-			atom.parent_fqdn != developer.hostname throws TestFail("Atom parent_fqdn mismatch")
-			atoms.push(atom)
-			atom
-		})
-	}
-}
-
-each_idx_val(atoms, F(atom_idx, atom) {
-	for(i;EDGE_CLIENTS_PER_ATOM) {
-		do_test("Create edge client #$i for atom ${atom.hostname}", F() {
-			edge_client = ``$BEAME_BIN creds createEdgeClient --atomFqdn ${atom.hostname} --format json``
-			# TODO: checks
-			edge_clients.push(edge_client)
-			edge_client
-		})
-	}
-})
-
-encrypted_data = null
-
-if atoms {
-	do_test("Encrypt data", F() {
-		global encrypted_data = `$BEAME_BIN crypto encrypt --data $TEST_DATA --fqdn ${atoms[0].hostname}`
-		enc = encrypted_data.decode_json()
-		enc is not Hash throws TestFail("Encrypted data must be hash, not $enc")
-		%[rsaCipheredKeys data encryptedFor].each(F(k) k not in enc throws TestFail("Key $k is missing in 'encrypt' output"))
-		enc.encryptedFor != atoms[0].hostname throws TestFail("encryptedFor mismatch")
-		enc
-	})
-}
-
-if encrypted_data {
-	do_test("Decrypt data", F() {
-		dec = ``$BEAME_BIN crypto decrypt --data $encrypted_data``
-		dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
-		"Decryped data was same as the original data"
-	})
-}
-
-data_signature = null
-if atoms {
-	do_test("Sign data", F() {
-		global data_signature = `$BEAME_BIN crypto sign --data $TEST_DATA --fqdn ${atoms[0].hostname}`
-		sig = data_signature.decode_json()
-		sig is not Str throws TestFail("Signature is not a string")
-		sig
-	})
-}
-
-if data_signature {
-	do_test("Check good signature", F() {
-		 chk = ``$BEAME_BIN crypto checkSignature --data $TEST_DATA --fqdn ${atoms[0].hostname} --signature $data_signature``
-		 chk !== true throws TestFail("Good signature check did not return true but '$chk'")
-		 chk
-	})
-	do_test("Check good signature for tampered data", F() {
-		 chk = ``$BEAME_BIN crypto checkSignature --data ${TEST_DATA+'xyz'} --fqdn ${atoms[0].hostname} --signature $data_signature``
-		 chk !== false throws TestFail("Good signature check did not return false for tampered data but '$chk'")
-		 chk
-	})
-}
-
-creds_exported = false
-if atoms.len() >= 2 {
-	do_test("Export credentials", F() {
-		ENV.get('SKIP_EXPORT', false) returns "SKIPPED"
-		exp = ``$BEAME_BIN creds exportCredentials --fqdn ${atoms[0].hostname} --targetFqdn ${atoms[1].hostname} --file $CREDS_FILE``
-		exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
-		exp != CREDS_FILE throws TestFail("exportCredentials returned '$exp', not the expected file $CREDS_FILE")
-		global creds_exported = true
-		exp
-	})
-}
-# XXX
-creds_exported = false
-
-if creds_exported {
-	F test_creds_exist() {
-		ls = ``$BEAME_BIN creds list --fqdn ${atoms[0].hostname} --format json``
-		ls is not Arr throws TestFail("Creds list did not return an array")
-		ls.len() != 1 throws TestFail("Creds list length is not 1")
-		ls[0].hostname != atoms[0].hostname throws TestFail("Creds list returned the wrong item")
-		ls
-	}
-	do_test("[Import credentials] Test credentials exist before deleting them", test_creds_exist)
-	do_test("[Import credentials] Deleting exported credentials", F() {
-		# TODO: CLI command
-		$(rm -rf "$BEAME_DIR/v1/local/${developer.hostname}/${atoms[0].hostname}")
-		"deleted"
-	})
-	do_test("[Import credentials] Test credentials do not exist before importing", F() {
-		ls = ``$BEAME_BIN creds list --fqdn ${atoms[0].hostname} --format json``
-		ls is not Arr throws TestFail("Creds list did not return an array")
-		ls.len() != 0 throws TestFail("Creds list length is not 0")
-		ls
-	})
-	do_test("[Import credentials] Check certificate exists", F() {
-		# https://beameio-net-certs-dev.s3.amazonaws.com/h9dgcv7wdlsff7oo.h7zujy4ch0hg8rgd.v1.beameio.net/x509.pem
-		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
-		$(curl -s $url)
-		"URL $url is available"
-	})
-	do_test("[Import credentials] Import", F() {
-		imp = ``$BEAME_BIN creds importCredentials --file $CREDS_FILE``
-		imp is not Bool throws TestFail("Import result must be a boolean, not '$imp'")
-		not(imp) throws TestFail("Import did not return true")
-		imp
-	})
-	do_test("[Import credentials] Test credentials exist after import", test_creds_exist)
-}
-
-if edge_clients {
-	do_test('HTTPS servers', F() {
-
-		F bad_output(s:Str) 'hello world' not in s
-
-		servers = edge_clients.map(F(edge_client) {
-			echo("  Starting server at https://${edge_client.hostname}/")
-			Thread(F() $($BEAME_BIN servers HttpsServerTestStart --edgeClientFqdn ${edge_client.hostname}))
-		})
-		echo("  Waiting 5 seconds for servers to come up")
-		$(sleep 5)
-		echo("  Fetching URLs")
-		outputs = edge_clients.pmap(F(edge_client) {
-			`curl --silent --max-time 10 "https://${edge_client.hostname}/"`
-		})
-		echo("  Killing servers")
-		$(pkill -f HttpsServerTestStart)
-		servers.join()
-		echo("  Checking outputs")
-		outputs.any(is, ProcessFail) throws TestFail("Some curl processes failed: $outputs")
-		outputs.any(bad_output) throws TestFail("Some outputs were not OK: $outputs")
-		"All ${outputs.len()} outputs were correct"
-	})
-}
-
-do_test("S3 credentials", F() {
-	results = ([developer] + atoms + edge_clients).hostname.map(F(hostname) {
-		echo("  Checking $hostname")
-		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
-		try {
-			$(curl -m 5 -s $url)
-			true
-		} catch(pf:ProcessFail) {
-			false
-		}
-	})
-	oks = results.count()
-	oks < results.len() throws TestFail("Only $oks out of ${results.len()} certificates are present in S3")
-	"All $oks certificates present in S3"
-})
-
-if Path(CREDS_FILE) {
-	echo("+ Removing temporary credentials file $CREDS_FILE")
-	$(rm $CREDS_FILE)
-}
-
-# echo("")
-# echo("--- info ---")
-# echo("ATOMS: $atoms")
-# echo("EDGE CLIENTS: $edge_clients")
 echo("All tests done. Exit code: $exit_code")
 { exit_code }
