@@ -12,7 +12,7 @@ var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 
 var commands = {};
-['creds', 'token', 'crypto', 'servers', 'system'].forEach( cmdName => {
+['creds', 'token', 'crypto', 'servers', 'system'].forEach(cmdName => {
 	commands[cmdName] = require('./' + cmdName + '.js');
 });
 
@@ -23,7 +23,7 @@ var parametersSchema = {
 	'developerName':      {required: true},
 	'format':             {required: false, options: ['text', 'json'], default: 'text'},
 	'fqdn':               {required: false},
-	'signingFqdn':	      {required: false},
+	'signingFqdn':        {required: false},
 	'signature':          {required: true},
 	'regex':              {required: false},
 	'uid':                {required: true},
@@ -37,13 +37,14 @@ var parametersSchema = {
 	'sharedFolder':       {required: false},
 	'localIp':            {required: false},
 	'localPort':          {required: true},
-	'sharedSecret':		  {required: false},
+	'sharedSecret':       {required: false},
 	// createWithToken
-	'signWithFqdn':	      {required: false},
-	'parent_fqdn':	      {required: false},
-	'dataToSign':	      {required: false},
-	'authSrvFqdn':	      {required: false},
+	'signWithFqdn':       {required: false},
+	'parent_fqdn':        {required: false},
+	'dataToSign':         {required: false},
+	'authSrvFqdn':        {required: false},
 	'authToken':          {required: true},
+	'token':              {required: true},
 	'name':               {required: false},
 	'email':              {required: false}
 };
@@ -63,7 +64,7 @@ function getParamsNames(fun) {
 	var ret         = (names.length == 1 && !names[0] ? [] : names);
 	var useCallback = false;
 
-	ret = ret.filter(paramName => {
+	ret             = ret.filter(paramName => {
 		if (paramName == 'callback') {
 			useCallback = true;
 			return false;
