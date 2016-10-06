@@ -29,14 +29,14 @@ if Path(BEAME_DIR) {
 TEST_DATA = 'abcd0123~!@#'
 CREDS_FILE = "/tmp/beame-cli-test-creds-${time()}"
 
-developer = null
+entity = null
 exit_code = 0
 
 { type TestFail(Error) }
 
 F do_test(name:Str, f:Fun) {
 	echo("")
-	echo("==================== TEST: $name ====================")
+	echo("=== TEST: $name ===")
 	result = try {
 		msg = f()
 		"OK: $msg"
@@ -61,54 +61,45 @@ F copy_to_store() {
 
 doc Creates token needed for signing request for level 0 entity
 F create_token() {
-	global token = ``$BEAME_SDK_BIN token create --fqdn $BEAME_DEV_AUTH_FQDN --data NONE``
+	global token = ``$BEAME_BIN token create --fqdn $BEAME_DEV_AUTH_FQDN --data NONE``
 	assert(token is Str, "Token expected to be a string")
 	token
 }
 
-doc Creates level 0 entity
-F create_L0() {
-    t = time()
-	beame_insta_ssl_token = {
-		'authToken': token.base64decode()
-		'authSrvFqdn': ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN
-		'name': "sdk-test-L0-$t"
-		'email': "sdk-L0-${t}@example.com"
-	}
-	txt = `$BEAME_INSTA_SSL_BIN create ${beame_insta_ssl_token.encode_json().base64encode()}`
-	cert_created_line = txt.lines().filter(X ~ Pfx('Certificate created'))[0]
-	global fqdn = cert_created_line.split(' ')[-1]
-	"Entity $fqdn created"
+doc Creates an entity
+F create_entity() {
+	entity = ``$BEAME_BIN creds getCreds --token $token --format json``
+	entity is not Hash throws TestFail("Entity must be hash, not '$entity'")
+	entity.parent_fqdn != ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN throws TestFail("Parent FQDN mismatch")
+	entity
 }
 
 # ---------- Tests ----------
 
+F finished_ok(p:Process) {
+	guard p.command.argv == [BEAME_BIN]
+	p.exit_code == 1
+}
+
+do_test("Run without arguments", {
+	out = `$BEAME_BIN`
+	'beame.js creds list' not in out throws TestFail("Expected text not found")
+	"OK"
+})
 do_test("Copy $BEAME_DEV_AUTH_FQDN into store", copy_to_store)
 do_test("Create token for test L0 entity", create_token)
-do_test("Create test L0 entity", create_L0);
+do_test("Create test entity", create_entity);
 
 
-xxx
+c_exit(exit_code)
 
-do_test("Create test developer", F() {
-	global developer = ``$BEAME_BIN creds createTestDeveloper --developerName developerName $DEVELOPER_NAME --developerEmail $DEVELOPER_EMAIL --format json``
-	developer is not Hash throws TestFail("Developer must be hash, not '$developer'")
-	developer.email != DEVELOPER_EMAIL throws TestFail("Developer email mismatch")
-	developer
+do_test("Create test entity", F() {
+	global entity = ``$BEAME_BIN creds createTestEntity --entityName entityName $ENTITY_NAME --entityEmail $ENTITY_EMAIL --format json``
+	entity is not Hash throws TestFail("Entity must be hash, not '$entity'")
+	entity.email != ENTITY_EMAIL throws TestFail("Entity email mismatch")
+	entity
 })
 
-
-if developer {
-	for(i;ATOMS_TO_CREATE) {
-		do_test("Create atom #$i", F() {
-			atom = ``$BEAME_BIN creds createAtom --developerFqdn ${developer.hostname} --atomName "atom-$i" --format json``
-			atom is not Hash throws TestFail("Atom must be hash, not $atom")
-			atom.parent_fqdn != developer.hostname throws TestFail("Atom parent_fqdn mismatch")
-			atoms.push(atom)
-			atom
-		})
-	}
-}
 
 each_idx_val(atoms, F(atom_idx, atom) {
 	for(i;EDGE_CLIENTS_PER_ATOM) {
@@ -190,7 +181,7 @@ if creds_exported {
 	do_test("[Import credentials] Test credentials exist before deleting them", test_creds_exist)
 	do_test("[Import credentials] Deleting exported credentials", F() {
 		# TODO: CLI command
-		$(rm -rf "$BEAME_DIR/v1/local/${developer.hostname}/${atoms[0].hostname}")
+		$(rm -rf "$BEAME_DIR/v1/local/${entity.hostname}/${atoms[0].hostname}")
 		"deleted"
 	})
 	do_test("[Import credentials] Test credentials do not exist before importing", F() {
@@ -240,7 +231,7 @@ if edge_clients {
 }
 
 do_test("S3 credentials", F() {
-	results = ([developer] + atoms + edge_clients).hostname.map(F(hostname) {
+	results = ([entity] + atoms + edge_clients).hostname.map(F(hostname) {
 		echo("  Checking $hostname")
 		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${atoms[0].hostname}/x509.pem"
 		try {
