@@ -52,7 +52,7 @@ module.exports = {
 function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 
 	if (!token && !fqdn) {
-		logger.fatal(`Auth TOken or Fqdn required`);
+		logger.fatal(`Auth Token or Fqdn required`);
 		return;
 	}
 
@@ -138,7 +138,7 @@ function listCreds(fqdn) {
  * @public
  * @method Creds.show
  * @param {String|null} [fqdn] entity fqdn
- * @returns {Array.<CertListItem>}
+ * @returns {Array.<CredsListItem>}
  */
 function show(fqdn) {
 	const store = new BeameStore();
