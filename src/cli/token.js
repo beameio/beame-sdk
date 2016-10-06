@@ -6,6 +6,7 @@ const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger(module_name);
 const CommonUtils       = require('../utils/CommonUtils');
 const BeameStore        = new (require('../services/BeameStoreV2'))();
+const AuthToken         = new (require('../services/AuthToken'))();
 
 function create(fqdn, data, callback) {
 	const cred = BeameStore.getCredential(fqdn);
@@ -26,6 +27,12 @@ function create(fqdn, data, callback) {
 
 create.toText = x=>x;
 
+// UNFINISHED
+function validate(token) {
+	const ret = AuthToken.validate(token);
+}
+
 module.exports = {
-	create
+	create,
+	validate
 };

@@ -35,7 +35,6 @@ const fs     = require('fs');
 module.exports = {
 	show,
 	list,
-	signAndCreate,
 	createWithToken,
 	createWithLocalCreds,
 	updateMetadata,
@@ -46,7 +45,7 @@ module.exports = {
 };
 
 /**
- *
+ * XXX To be: "creds get --token"
  * @param {String} authToken
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
@@ -66,7 +65,7 @@ function createWithToken(authToken, authSrvFqdn, name, email, callback) {
 createWithToken.toText = lineToText;
 
 /**
- *
+ * XXX To be: "creds get --fqdn"
  * @param {String} parent_fqdn
  * @param {String|null} [name]
  * @param {String|null} [email]
@@ -81,28 +80,6 @@ function createWithLocalCreds(parent_fqdn, name, email, callback) {
 
 }
 createWithLocalCreds.toText = lineToText;
-
-/**
- *
- * @param {String} signWithFqdn
- * @param {Object|String|null} [dataToSign]
- * @param {String|null} [authSrvFqdn]
- * @param {String|null} [name]
- * @param {String|null} [email]
- * @param {Function} callback
- */
-function signAndCreate(signWithFqdn, authSrvFqdn, dataToSign, name, email, callback) {
-	const store2 = new (require("../services/BeameStoreV2"))();
-
-	let cred = new (require('../services/Credential'))(store2);
-
-	cred.signWithFqdn(signWithFqdn, dataToSign).then(authToken=> {
-		createWithToken(authToken, authSrvFqdn, name, email, callback);
-	}).catch(error=> {
-		callback && callback(error, null);
-	});
-}
-signAndCreate.toText = lineToText;
 
 
 function updateMetadata(fqdn, name, email, callback){
@@ -151,57 +128,6 @@ function objectToText(line) {
 
 	return lineToText(line2);
 }
-
-//noinspection JSUnusedLocalSymbols
-/**
- * @private
- * @param {Function} callback
- */
-function readStdinStream(callback) {
-	let stdin       = process.stdin,
-	    //stdout = process.stdout,
-	    inputChunks = [];
-
-	stdin.resume();
-	stdin.setEncoding('utf8');
-
-	stdin.on('data', function (chunk) {
-		inputChunks.push(chunk);
-	});
-
-	stdin.on('end', function () {
-		callback(inputChunks.join());
-	});
-}
-
-//noinspection JSUnusedLocalSymbols
-/**
- * @private
- * @param {String} data
- * @returns {*}
- */
-function decryptCreds(data) {
-	const store2 = new (require("../services/BeameStoreV2"))();
-	let crypto     = require('./crypto');
-	//noinspection ES6ModulesDependencies,NodeModulesDependencies
-	/** @type {SignatureToken} **/
-	let parsedData = JSON.parse(data);
-
-	//noinspection JSCheckFunctionSignatures
-	let signatureStatus = crypto.checkSignature(parsedData.signedData, parsedData.signedData.signedBy, parsedData.signature);
-	if (signatureStatus === true) {
-		let creds = store2.getCredential(parsedData.signedData.encryptedFor);
-
-		if (!creds) {
-			logger.fatal(`Private key for ${parsedData.signedData.encryptedFor} is not found`);
-		}
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		return crypto.decrypt(JSON.stringify(parsedData.signedData.data));
-	}
-}
-
-
-/** public methods **/
 
 /**
  * Return list of credentials
@@ -351,6 +277,7 @@ function importCredentials(file) {
 }
 
 /**
+ * XXX TODO: use URL not FQDN as parameter
  * Import non Beame credentials by fqdn and save to to ./beame/v{}/remote
  * @public
  * @method Creds.importNonBeameCredentials

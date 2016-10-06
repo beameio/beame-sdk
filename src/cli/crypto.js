@@ -29,6 +29,7 @@ require('../../initWin');
 
 
 /**
+ * TODO move logic
  * Encrypts given data
  * @public
  * @method Crypto.aesEncrypt
@@ -54,6 +55,7 @@ function aesEncrypt(data, sharedSecret) {
 }
 
 /**
+ * TODO move logic
  * Decrypts given data
  * @public
  * @method Crypto.aesDecrypt
@@ -76,6 +78,7 @@ function aesDecrypt(data) {
 }
 
 /**
+ * TODO move to creds
  * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
  * @public
  * @method Crypto.encrypt
@@ -92,6 +95,7 @@ function encrypt(data, fqdn, signingFqdn) {
 
 
 /**
+ * TODO move to creds
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
  * @public
  * @method Crypto.decrypt
@@ -107,15 +111,14 @@ function decrypt(data) {
         let targetFqdn = encryptedMessage.encryptedFor || encryptedMessage.signedData.encryptedFor;
 		let credential = store.search(targetFqdn )[0];
 		return credential.decrypt(encryptedMessage);
-
-
 	} catch (e) {
 		logger.fatal("decrypt error ", e);
+		return null;
 	}
-	return dechipheredPayload || null;
 }
 
 /**
+ * TODO move to creds
  * Signs given data. You must have private key of the fqdn.
  * @public
  * @method Crypto.sign
@@ -133,6 +136,7 @@ function sign(data, fqdn) {
 }
 
 /**
+ * TODO move to creds
  * Checks signature.
  * @public
  * @method Crypto.checkSignature
@@ -142,10 +146,7 @@ function sign(data, fqdn) {
  */
 function checkSignature(data, fqdn, signature) {
 	let element = store.search(fqdn)[0];
-
     return element.checkSignature(data, fqdn, signature);
-//	let status = rsaKey.verify(data, signature, "utf8", "base64");
-//	logger.info(`signing status is ${status} ${fqdn}`);
 }
 
 
