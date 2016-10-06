@@ -60,7 +60,7 @@ function createWithToken(authToken, authSrvFqdn, name, email, callback) {
 	let cred = new (require('../services/Credential'))(store2),
 	    token = CommonUtils.parse(new Buffer(authToken, 'base64').toString());
 
-	CommonUtils.promise2callback(cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email), callback);
+	CommonUtils.promise2callback(cred.createEntityWithAuthServer(token, authSrvFqdn, name, email), callback);
 
 
 }
