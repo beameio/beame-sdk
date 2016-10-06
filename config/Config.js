@@ -33,9 +33,9 @@ var localCertsDirV2 = path.join(rootDir, 'v2');
 const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
 
 /** @const {String} **/
-const loadBalancerURL = "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";
+const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";
 
-const beameDevCredsFqdn = "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
+const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";

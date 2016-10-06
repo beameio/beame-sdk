@@ -220,11 +220,11 @@ function testFlow() {
 
 		it('Should create children', done => {
 
-			function createWithLocal(cb,ind) {
+			function createWithLocal(cb, ind) {
 
 				console.log(`local call ${ind} received`);
 
-				let data = _getRandomRegistrationData(`${zeroLevelFqdn}-child-1-`);
+				let data = _getRandomRegistrationData(`${ind}-${zeroLevelFqdn}-child-1-`);
 				logger.info(`Creating entity ${data.name} under ${zeroLevelFqdn}`);
 
 				devCreds.createEntityWithLocalCreds(zeroLevelFqdn, data.name, data.email).then(metadata => {
@@ -240,10 +240,10 @@ function testFlow() {
 				});
 			}
 
-			function createWithToken(cb,ind) {
+			function createWithToken(cb, ind) {
 				console.log(`token call ${ind} received`);
 
-				let newData2 = _getRandomRegistrationData(`${zeroLevelFqdn}-child-1-`);
+				let newData2 = _getRandomRegistrationData(`${ind}-${zeroLevelFqdn}-child-1-`);
 				logger.info(`Creating entity ${newData2.name} under ${zeroLevelFqdn}`);
 
 				devCreds.signWithFqdn(zeroLevelFqdn, CommonUtils.generateDigest(newData2)).then(authToken=> {
@@ -263,62 +263,21 @@ function testFlow() {
 			}
 
 			console.log(`**************************** CALL CREATE CHILDREN *****************`);
+			// let cnt   = 0,
+			//     total = 4,
+			//     cb    = (error) => {
+			// 	    cnt++;
+			// 	    assert.isNull(error);
+			// 	    if (cnt == total) done()
+			//     };
+
 
 			async.parallel(
 				[
+
 					cb=>{createWithLocal(cb,1)},
 					cb=>{createWithToken(cb,2)},
-					// cb=>{createWithLocal(cb,3)},
-					// cb=>{createWithToken(cb,4)}
 
-					// function (cb) {
-					// 	console.log(`**************************** CALL 1 *****************`);
-					// 	setTimeout(()=> {
-					// 		createWithLocal(cb,1)
-					// 	}, Math.random() + 4);
-					// },
-					// function (cb) {
-					// 	console.log(`**************************** CALL 2 *****************`);
-					// 	setTimeout(()=> {
-					// 		createWithToken(cb,2)
-					// 	}, Math.random() + 64);
-					// },
-					// function (cb) {
-					// 	console.log(`**************************** CALL 3 *****************`);
-					// 	setTimeout(()=> {
-					// 		createWithLocal(cb,3)
-					// 	}, Math.random() + 128);
-					// },
-					// function (cb) {
-					// 	console.log(`**************************** CALL 4 *****************`);
-					// 	setTimeout(()=> {
-					// 		createWithToken(cb,4)
-					// 	}, Math.random() + 256);
-					// },
-					// function (cb) {
-					// 	console.log(`**************************** CALL 5 *****************`);
-					// 	setTimeout(()=> {
-					// 		createWithLocal(cb,5)
-					// 	}, Math.random() + 512);
-					// },
-					// function (cb) {
-					// 	console.log(`**************************** CALL 6 *****************`);
-					// 	setTimeout(()=> {
-					// 		createWithToken(cb,6)
-					// 	}, Math.random() + 512);
-					//},
-					// function (cb) {
-					// 	console.log(`**************************** CALL 7 *****************`);
-					// 	setTimeout(()=> {
-					// 		createWithLocal(cb,7)
-					// 	}, Math.random() + 128);
-					// },
-					// function (cb) {
-					// 	console.log(`**************************** CALL 8 *****************`);
-					// 	setTimeout(()=> {
-					// 		createWithToken(cb,8)
-					// 	}, Math.random() + 256);
-					// }
 				],
 				error=> {
 					if (error) {
@@ -341,6 +300,8 @@ if (!test) {
 	logger.error(`test type required`);
 	process.exit(1)
 }
+
+//createWithLocalCreds('tl5h1ipgobrdqsj6.v1.p.beameio.net',{name:'Instance Information Services',email:null});
 
 switch (test) {
 	case 'flow':
