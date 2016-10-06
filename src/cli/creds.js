@@ -2,14 +2,6 @@
 /** @namespace Creds **/
 
 
-/**
- * @typedef {Object} CredsListItem
- * @property {String} name
- * @property {String} hostname
- * @property {String} level
- * @property {String} parent
- */
-
 
 
 const Table = require('cli-table2');
@@ -42,9 +34,9 @@ module.exports = {
 };
 
 /**
- * @param {String} [token]
+ * @param {String|null} [token]
  * @param {String|null} [authSrvFqdn]
- * @param {String} [fqdn]
+ * @param {String|null} [fqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
  * @param {Function} callback
@@ -56,25 +48,22 @@ function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 		return;
 	}
 
-	const store = new BeameStore();
+	let cred      = new (require('../services/Credential'))(new BeameStore()),
+	    authToken = token ? CommonUtils.parse(new Buffer(token, 'base64').toString()) : null,
+	    promise   = token ? cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email) : cred.createEntityWithLocalCreds(fqdn, name, email);
 
-	let cred = new (require('../services/Credential'))(store);
-
-
-	if (token) {
-		let authToken = CommonUtils.parse(new Buffer(token, 'base64').toString());
-
-		CommonUtils.promise2callback(cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email), callback);
-	}
-	else {
-		CommonUtils.promise2callback(cred.createEntityWithLocalCreds(fqdn, name, email), callback);
-	}
-
+	CommonUtils.promise2callback(promise, callback);
 
 }
 getCreds.toText = lineToText;
 
-
+/**
+ *
+ * @param {String} fqdn
+ * @param {String|null} [name]
+ * @param {String|null} [email]
+ * @param {Function} callback
+ */
 function updateMetadata(fqdn, name, email, callback) {
 	const store = new BeameStore();
 
@@ -126,7 +115,7 @@ function objectToText(line) {
  * Return list of credentials
  * @private
  * @param {String|null} [fqdn] entity fqdn
- * @returns {Array<CredsListItem>}
+ * @returns {Array<Credential>}
  */
 function listCreds(fqdn) {
 	const store = new BeameStore();
@@ -138,7 +127,7 @@ function listCreds(fqdn) {
  * @public
  * @method Creds.show
  * @param {String|null} [fqdn] entity fqdn
- * @returns {Array.<CredsListItem>}
+ * @returns {Array.<Credential>}
  */
 function show(fqdn) {
 	const store = new BeameStore();
@@ -156,7 +145,7 @@ show.toText = lineToText;
  * @public
  * @method Creds.list
  * @param {String|null} [regex] entity fqdn
- * @returns {Array.<CredsListItem>}
+ * @returns {Array.<Credential>}
  */
 function list(regex) {
 	logger.debug(`list  ${regex}`);

@@ -17,8 +17,8 @@ function create(fqdn, data, callback) {
 	}
 
 	function base64(token) {
-		return new Promise((resolve, reject) => {
-			resolve(new Buffer(token).toString('base64'));
+		return new Promise((resolve) => {
+			resolve(new Buffer(CommonUtils.stringify(token,false)).toString('base64'));
 		});
 	}
 
@@ -28,7 +28,7 @@ function create(fqdn, data, callback) {
 create.toText = x=>x;
 
 function validate(authToken) {
-	const tok = JSON.parse(new Buffer(authToken, 'base64').toString());
+	const tok = CommonUtils.parse(new Buffer(authToken, 'base64').toString());
 	return AuthToken.validate(tok);
 }
 

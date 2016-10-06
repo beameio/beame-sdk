@@ -153,6 +153,7 @@ class BeameStoreV2 {
 		return BeameUtils.findInTree(
 			{children: this.credentials},
 			cred => {
+				//noinspection JSCheckFunctionSignatures
 				if(!(cred.fqdn && cred.fqdn.match(regex))) {
 					return false;
 				}

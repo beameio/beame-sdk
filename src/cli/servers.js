@@ -18,7 +18,7 @@ const beameSDK = new require('../../index.js');
  * @param {String|null} [sharedFolder]
  */
 
-function runDemoChatServer(fqdn, sharedFolder) {
+function runChatServer(fqdn, sharedFolder) {
 
 	if (sharedFolder) {
 		logger.debug("Custom folder specified");
@@ -87,5 +87,5 @@ function runHelloWorldServer(fqdn) {
 
 module.exports = {
 	runHelloWorldServer,
-	runDemoChatServer
+	runChatServer
 };
