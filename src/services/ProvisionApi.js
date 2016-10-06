@@ -256,6 +256,7 @@ class ProvApiService {
 		this.provApiEndpoint = baseUrl || provisionSettings.Endpoints.BaseUrl;
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	/**
 	 * @param {String} baseDir
 	 * @param {String} path2Pk
@@ -283,6 +284,7 @@ class ProvApiService {
 		};
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {AuthData} authData

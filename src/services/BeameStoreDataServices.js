@@ -33,11 +33,7 @@
  * @property {String|null} error
  */
 
-const config = require('../../config/Config');
-//const module_name       = config.AppModules.BeameEntity;
-//const BeameLogger       = require('../utils/Logger');
-//const logger            = new BeameLogger(module_name);
-//const beameUtils        = require('../utils/BeameUtils');
+const config            = require('../../config/Config');
 const path              = require('path');
 const _                 = require('underscore');
 const DirectoryServices = require('./DirectoryServices');

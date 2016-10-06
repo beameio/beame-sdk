@@ -156,6 +156,7 @@ class BeameStoreV2 {
 				if(!(cred.fqdn && cred.fqdn.match(regex))) {
 					return false;
 				}
+				//noinspection RedundantIfStatementJS,JSUnresolvedVariable
 				if(options.mustHavePrivateKey && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
