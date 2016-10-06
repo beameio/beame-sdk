@@ -1,6 +1,8 @@
 "use strict";
 /** @namespace Token **/
 
+const Table         = require('cli-table2');
+
 const module_name   = 'Token';
 const BeameLogger   = require('../utils/Logger');
 const logger        = new BeameLogger(module_name);
@@ -50,6 +52,43 @@ validate.toText = authToken => {
 	ret.signature = authToken.signature.slice(0, 16) + '...';
 	return require('./creds.js').objectToText(ret);
 };
+
+
+/**
+ * @private
+ * @param line
+ * @returns {*}
+ */
+function lineToText(line) {
+	let table = new Table();
+	for (let k in line) {
+		//noinspection JSUnfilteredForInLoop
+		table.push({[k]: line[k].toString()});
+	}
+
+	return table;
+}
+
+//noinspection JSUnusedLocalSymbols
+/**
+ * @private
+ * @param line
+ * @returns {string}
+ */
+function objectToText(line) {
+	let line2 = {};
+	Object.keys(line).forEach(k => {
+		if (CommonUtils.isObject(line[k])) {
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
+			line2[k] = JSON.stringify(line[k]);
+		}
+		else {
+			line2[k] = line[k].toString();
+		}
+	});
+
+	return lineToText(line2);
+}
 
 module.exports = {
 	create,

@@ -30,10 +30,7 @@ module.exports = {
 	encrypt,
 	decrypt,
 	sign,
-	checkSignature,
-
-	// TODO: Move to Utils. Used by token.js
-	objectToText
+	checkSignature
 };
 
 /**
@@ -91,27 +88,6 @@ function lineToText(line) {
 	}
 
 	return table;
-}
-
-//noinspection JSUnusedLocalSymbols
-/**
- * @private
- * @param line
- * @returns {string}
- */
-function objectToText(line) {
-	let line2 = {};
-	Object.keys(line).forEach(k => {
-		if (CommonUtils.isObject(line[k])) {
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			line2[k] = JSON.stringify(line[k]);
-		}
-		else {
-			line2[k] = line[k].toString();
-		}
-	});
-
-	return lineToText(line2);
 }
 
 /**

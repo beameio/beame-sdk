@@ -14,6 +14,7 @@ HOME = ENV.HOME
 
 BEAME_DIR = HOME / '.beame'
 BEAME_BIN = HOME / 'beame-sdk/src/cli/beame.js'
+BEAME_DEV_AUTH_FQDN = 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net'
 
 if Path(BEAME_DIR) {
 	throw Error("Beame directory exists ($BEAME_DIR). Will not run tests.")
