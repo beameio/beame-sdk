@@ -29,7 +29,6 @@ create.toText = x=>x;
 
 function validate(authToken) {
 	const tok = JSON.parse(new Buffer(authToken, 'base64').toString());
-	console.log(new AuthToken());
 	return AuthToken.validate(tok);
 }
 
