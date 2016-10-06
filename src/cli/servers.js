@@ -15,16 +15,17 @@ const beameSDK = new require('../../index.js');
 /**
  * run sample chat on given fqdn
  * @param {String} fqdn
+ * @param {String|null} [sharedFolder]
  */
 
-function runDemoServer(fqdn, sharedFolder) {
+function runDemoChatServer(fqdn, sharedFolder) {
 
 	if (sharedFolder) {
 		logger.debug("Custom folder specified");
 		defaultSharedFolder = path.normalize(sharedFolder + "/");
 	}
 
-	beameSDK.BaseHttpsServer(fqdn,  appExpress, function (data, app) {
+	beameSDK.BeameServer(fqdn,  appExpress, function (data, app) {
 		if (config.PinAtomPKbyDefault) {
 			var pinning = require('./pinning');
 			var header = pinning.createPublicKeyPinningHeader(fqdn, true, true);
@@ -67,7 +68,7 @@ function runDemoServer(fqdn, sharedFolder) {
 }
 
 
-function runLoggingServer(fqdn) {
+function runHelloWorldServer(fqdn) {
 
 	new beameSDK.BeameServer(fqdn, (req, resp) =>{
 		resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});
@@ -78,13 +79,13 @@ function runLoggingServer(fqdn) {
 			url: req.url,
 			headers: req.headers
 		});
-	},  (data, app) => {
+	},  (data) => {
 		logger.info(`Server started on ${fqdn}`);
 		logger.debug("BeameServer callback got data", data);
 	});
 }
 
 module.exports = {
-	runDemoServer,
-	runLoggingServer
+	runHelloWorldServer,
+	runDemoChatServer
 };

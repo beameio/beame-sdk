@@ -22,70 +22,70 @@ const Table = require('cli-table2');
 
 require('../../initWin');
 
-const config            = require('../../config/Config');
-const module_name       = config.AppModules.BeameCreds;
-const BeameLogger       = require('../utils/Logger');
-const logger            = new BeameLogger(module_name);
-const CommonUtils       = require('../utils/CommonUtils');
+const config      = require('../../config/Config');
+const module_name = config.AppModules.BeameCreds;
+const BeameLogger = require('../utils/Logger');
+const logger      = new BeameLogger(module_name);
+const CommonUtils = require('../utils/CommonUtils');
+const BeameStore  = require("../services/BeameStoreV2");
 
-
-const path   = require('path');
-const fs     = require('fs');
+const path = require('path');
+const fs   = require('fs');
 
 module.exports = {
 	show,
 	list,
-	createWithToken,
-	createWithLocalCreds,
+	getCreds,
 	updateMetadata,
 	shred,
 	exportCredentials,
 	importCredentials,
-	importLiveCredentials
+	importLiveCredentials,
+	encrypt,
+	decrypt,
+	sign,
+	checkSignature
 };
 
 /**
- * XXX To be: "creds get --token"
- * @param {String} authToken
+ * @param {String} [token]
  * @param {String|null} [authSrvFqdn]
+ * @param {String} [fqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
  * @param {Function} callback
  */
-function createWithToken(authToken, authSrvFqdn, name, email, callback) {
-	const store2 = new (require("../services/BeameStoreV2"))();
+function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 
-	let cred = new (require('../services/Credential'))(store2),
-	    token = CommonUtils.parse(new Buffer(authToken, 'base64').toString());
+	if (!token && !fqdn) {
+		logger.fatal(`Auth TOken or Fqdn required`);
+		return;
+	}
 
-	CommonUtils.promise2callback(cred.createEntityWithAuthServer(token, authSrvFqdn, name, email), callback);
+	const store = new BeameStore();
+
+	let cred = new (require('../services/Credential'))(store);
+
+
+	if (token) {
+		let authToken = CommonUtils.parse(new Buffer(token, 'base64').toString());
+
+		CommonUtils.promise2callback(cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email), callback);
+	}
+	else {
+		CommonUtils.promise2callback(cred.createEntityWithLocalCreds(parent_fqdn, name, email), callback);
+	}
 
 
 }
-createWithToken.toText = lineToText;
-
-/**
- * XXX To be: "creds get --fqdn"
- * @param {String} parent_fqdn
- * @param {String|null} [name]
- * @param {String|null} [email]
- * @param {Function} callback
- */
-function createWithLocalCreds(parent_fqdn, name, email, callback) {
-	const store2 = new (require("../services/BeameStoreV2"))();
-
-	let cred = new (require('../services/Credential'))(store2);
-
-	CommonUtils.promise2callback(cred.createEntityWithLocalCreds(parent_fqdn, name, email), callback);
-
-}
-createWithLocalCreds.toText = lineToText;
+getCreds.toText = lineToText;
 
 
-function updateMetadata(fqdn, name, email, callback){
-	const store2 = new (require("../services/BeameStoreV2"))();
 
-	let cred = new (require('../services/Credential'))(store2);
+function updateMetadata(fqdn, name, email, callback) {
+	const store = new BeameStore();
+
+	let cred = new (require('../services/Credential'))(store);
 
 	CommonUtils.promise2callback(cred.updateMetadata(fqdn, name, email), callback);
 }
@@ -136,8 +136,8 @@ function objectToText(line) {
  * @returns {Array<CredsListItem>}
  */
 function listCreds(fqdn) {
-	const store2 = new (require("../services/BeameStoreV2"))();
-	return store2.list(fqdn);
+	const store = new BeameStore();
+	return store.list(fqdn, {});
 }
 
 /**
@@ -148,8 +148,8 @@ function listCreds(fqdn) {
  * @returns {Array.<CertListItem>}
  */
 function show(fqdn) {
-	const store2 = new (require("../services/BeameStoreV2"))();
-	let creds    = store2.getCredential(fqdn);
+	const store = new BeameStore();
+	let creds   = store.getCredential(fqdn);
 	if (!creds) {
 		throw new Error(`show: fqdn ${fqdn} was not found`);
 	}
@@ -182,11 +182,11 @@ list.toText = function (creds) {
 };
 
 function shred(fqdn) {
-	const store2 = new (require("../services/BeameStoreV2"))();
+	const store = new BeameStore();
 	if (!fqdn) {
 		logger.fatal("FQDN is required in shred");
 	}
-	store2.shredCredentials(fqdn, () => {
+	store.shredCredentials(fqdn, () => {
 		return 'fqdn has been erased from store';
 	});
 }
@@ -206,9 +206,9 @@ shred.toText = lineToText;
  */
 
 function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
-	const store2 = new (require("../services/BeameStoreV2"))();
+	const store = new BeameStore();
 
-	let creds = store2.getCredential(fqdn);
+	let creds = store.getCredential(fqdn);
 	if (creds && targetFqdn) {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let jsonCredentialObject = JSON.stringify(creds);
@@ -246,14 +246,14 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
  * @returns {String}
  */
 function importCredentials(file) {
-	const store2 = new (require("../services/BeameStoreV2"))();
+	const store = new BeameStore();
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
-	let data     = JSON.parse(fs.readFileSync(path.resolve(file)) + "");
-	let crypto   = require('./crypto');
+	let data    = JSON.parse(fs.readFileSync(path.resolve(file)) + "");
+	let creds   = new (require('../services/Credential'))(store);
 	let encryptedCredentials;
 
 	if (data.signature) {
-		let sigStatus = crypto.checkSignature(data.signedData, data.signedBy, data.signature);
+		let sigStatus = creds.checkSignatureToken(data);
 		console.log(`Signature status is ${sigStatus}`);
 		if (!sigStatus) {
 			logger.fatal(`Import credentials signature missmatch ${data.signedBy}, ${data.signature}`);
@@ -269,7 +269,7 @@ function importCredentials(file) {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let parsedCreds = JSON.parse(decrtypedCreds);
 
-		let importedCredential = new (require('../services/Credential.js'))(store2);
+		let importedCredential = new (require('../services/Credential.js'))(store);
 		importedCredential.initFromObject(parsedCreds);
 		importedCredential.saveCredentialsObject();
 		return `Successfully imported credentials ${importedCredential.fqdn}`;
@@ -284,8 +284,8 @@ function importCredentials(file) {
  * @param {String} fqdn
  */
 function importLiveCredentials(fqdn) {
-	const store2 = new (require("../services/BeameStoreV2"))();
-	let tls = require('tls');
+	const store = new BeameStore();
+	let tls     = require('tls');
 	try {
 		let ciphers           = tls.getCiphers().filter(cipher => {
 			return cipher.indexOf('ec') < 0;
@@ -301,7 +301,7 @@ function importLiveCredentials(fqdn) {
 			let certBody    = "-----BEGIN CERTIFICATE-----\r\n";
 			certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
 			certBody += "-----END CERTIFICATE-----";
-			let credentials = store2.addToStore(certBody);
+			let credentials = store.addToStore(certBody);
 			credentials.saveCredentialsObject();
 		};
 
@@ -318,3 +318,80 @@ function importLiveCredentials(fqdn) {
 	}
 
 }
+
+
+/**
+ * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
+ * @public
+ * @method Crypto.encrypt
+ * @param {String} data - data to encrypt
+ * @param {String} fqdn - entity to encrypt for
+ * @param {String} signingFqdn
+ */
+function encrypt(data, fqdn, signingFqdn) {
+	const store          = new BeameStore();
+	let targetCredential = store.getCredential(fqdn);
+	if (!targetCredential) {
+		throw new Error(`Could not find target credential (public key to encrypt for)`);
+	}
+	return targetCredential.encrypt(fqdn, data, signingFqdn);
+}
+
+
+/**
+ * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
+ * @public
+ * @method Crypto.decrypt
+ * @param {String} data - data to encrypt
+ */
+function decrypt(data) {
+	const store = new BeameStore();
+	try {
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		/** @type {Object} */
+		let encryptedMessage = JSON.parse(data);
+		if (!encryptedMessage.encryptedFor && !encryptedMessage.signature) {
+			logger.fatal("Decrypting a wrongly formatted message", data);
+		}
+		//noinspection JSUnresolvedVariable
+		let targetFqdn = encryptedMessage.encryptedFor || encryptedMessage.signedData.encryptedFor;
+		let credential = store.getCredential(targetFqdn);
+		return credential.decrypt(encryptedMessage);
+	} catch (e) {
+		logger.fatal("decrypt error ", e);
+		return null;
+	}
+}
+
+/**
+ * Signs given data. You must have private key of the fqdn.
+ * @public
+ * @method Crypto.sign
+ * @param {String} data - data to sign
+ * @param {String} fqdn - sign as this entity
+ * @returns {SignatureToken|null}
+ */
+function sign(data, fqdn) {
+	const store = new BeameStore();
+	let element = store.getCredential(fqdn);
+	if (element) {
+		return element.sign(data);
+	}
+	logger.error("sign data with fqdn, element not found ");
+	return null;
+}
+
+/**
+ * Checks signature.
+ * @public
+ * @method Crypto.checkSignature
+ * @param {String} data - signed data
+ * @param {String} fqdn - check signature that was signed as this entity
+ * @param {String|null} signature
+ */
+function checkSignature(data, fqdn, signature) {
+	const store = new BeameStore();
+	let cred    = store.getCredential(fqdn);
+	return cred ? cred.checkSignatureToken({signedData: data, signedBy: fqdn, signature}) : null;
+}
+

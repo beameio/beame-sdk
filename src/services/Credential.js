@@ -38,6 +38,7 @@ const ProvisionApi           = require('../services/ProvisionApi');
 const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
+const CryptoServices         = require('../services/Crypto');
 
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
@@ -51,7 +52,9 @@ class Credential {
 	 *
 	 */
 	constructor(store) {
-		this._store = store;
+		if(store) {
+			this._store = store;
+		}
 
 		this.metadata = {};
 		this.children = [];
@@ -332,6 +335,30 @@ class Credential {
 
 	}
 
+	// TODO: Phase out this method. Use checkSignatureToken instead.
+	checkSignature(data, fqdn, signature) {
+		let rsaKey = this.getPublicKeyNodeRsa();
+		let status = rsaKey.verify(data, signature, "utf8", "base64");
+		logger.info(`signing status is ${status} ${fqdn}`);
+		return status;
+	}
+
+	/**
+	 *
+	 * @param {SignatureToken} token
+	 * @returns {*}
+	 */
+	checkSignatureToken(token) {
+		return this.checkSignature(token.signedData, token.signedBy, token.signature);
+	}
+
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @param {String} data
+	 * @param {String} signingFqdn
+	 * @returns {EncryptedMessage}
+	 */
 	encrypt(fqdn, data, signingFqdn) {
 		let signingCredential;
 		if (signingFqdn) {
@@ -343,14 +370,14 @@ class Credential {
 			throw new Error("encrypt failure, public key not found");
 		}
 
-
-		let sharedCiphered = require('../cli/crypto').aesEncrypt(data);
+		let sharedCiphered = CryptoServices.aesEncrypt(data);
 
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let symmetricCipherElement = JSON.stringify(sharedCiphered[1]);
 		sharedCiphered[1]          = "";
 
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		/** @type {EncryptedMessage} */
 		let encryptedUnsignedMessage = {
 			rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
 			data:            sharedCiphered[0],
@@ -363,21 +390,14 @@ class Credential {
 		return encryptedUnsignedMessage;
 	}
 
-	// TODO: Phase out this method. Use checkSignatureToken instead.
-	checkSignature(data, fqdn, signature) {
-		let rsaKey = this.getPublicKeyNodeRsa();
-		let status = rsaKey.verify(data, signature, "utf8", "base64");
-		logger.info(`signing status is ${status} ${fqdn}`);
-		return status;
-	}
-
-	checkSignatureToken(token) {
-		return this.checkSignature(token.signedData, token.signedBy, token.signature);
-	}
-
+	/**
+	 *
+	 * @param {Object} encryptedMessage
+	 * @returns {*}
+	 */
 	decrypt(encryptedMessage) {
 		if (encryptedMessage.signature) {
-			let signingCredential = this._store.search(encryptedMessage.signedBy)[0];
+			let signingCredential = this._store.getCredential(encryptedMessage.signedBy);
 			if (!signingCredential) {
 				new Error("Signing credential is not found in the local store");
 			}
@@ -397,7 +417,7 @@ class Credential {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let payload          = JSON.parse(decryptedMessage);
 
-		let dechipheredPayload = require('../cli/crypto').aesDecrypt([
+		let dechipheredPayload = CryptoServices.aesDecrypt([
 			encryptedMessage.data,
 			payload,
 		]);
@@ -800,13 +820,17 @@ class Credential {
 
 	// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
 	getHttpsServerOptions() {
-		if (!this.PRIVATE_KEY || !this.P7B || !this.CA) {
+		let pk  = this.getKey("PRIVATE_KEY"),
+		    p7b = this.getKey("P7B"),
+		    ca  = this.getKey("CA");
+
+		if (!pk || !p7b || !ca) {
 			throw new Error(`Credential#getHttpsServerOptions: fqdn ${this.fqdn} does not have required fields for running HTTPS server using this credential`);
 		}
 		return {
-			key:  this.PRIVATE_KEY,
-			cert: this.P7B,
-			ca:   this.CA
+			key:  pk,
+			cert: p7b,
+			ca:   ca
 		};
 	}
 

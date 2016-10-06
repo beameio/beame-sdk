@@ -2,14 +2,6 @@
 
 const request = require('sync-request');
 
-const creds         = require('./creds');
-const servers       = require('./servers');
-const config        = require('../../config/Config');
-const module_name = config.AppModules.BeameSystem;
-const BeameLogger   = require('../utils/Logger');
-const logger        = new BeameLogger(module_name);
-
-
 function checkVersion() {
 	var currentVersion = require("../../package.json");
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSUnresolvedVariable
