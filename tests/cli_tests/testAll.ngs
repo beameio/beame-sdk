@@ -36,7 +36,7 @@ exit_code = 0
 
 F do_test(name:Str, f:Fun) {
 	echo("")
-	echo("==================== TEST: $name ====================")
+	echo("=== TEST: $name ===")
 	result = try {
 		msg = f()
 		"OK: $msg"
@@ -50,6 +50,26 @@ F do_test(name:Str, f:Fun) {
 	echo("  RESULT: $result")
 }
 
+# ---------- Utilities ----------
+
+F base64encode(s:Str) {
+	fname = "/tmp/base64.${c_getpid()}"
+	$(echo $s >$fname)
+	ret = `base64 -w0 <$fname`
+	$(rm $fname)
+	log("base64 done")
+	ret
+}
+
+F base64decode(s:Str) {
+	fname = "/tmp/base64decode.${c_getpid()}"
+	$(echo $s >$fname)
+	ret = `base64 -d <$fname`
+	$(rm $fname)
+	log("base64 decode done")
+	ret
+}
+
 # ---------- Tests library ----------
 
 
@@ -61,7 +81,7 @@ F copy_to_store() {
 
 doc Creates token needed for signing request for level 0 entity
 F create_token() {
-	global token = ``$BEAME_SDK_BIN token create --fqdn $BEAME_DEV_AUTH_FQDN --data NONE``
+	global token = ``$BEAME_BIN token create --fqdn $BEAME_DEV_AUTH_FQDN --data NONE``
 	assert(token is Str, "Token expected to be a string")
 	token
 }
@@ -69,13 +89,13 @@ F create_token() {
 doc Creates level 0 entity
 F create_L0() {
     t = time()
-	beame_insta_ssl_token = {
+	token = {
 		'authToken': token.base64decode()
 		'authSrvFqdn': ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN
 		'name': "sdk-test-L0-$t"
 		'email': "sdk-L0-${t}@example.com"
 	}
-	txt = `$BEAME_INSTA_SSL_BIN create ${beame_insta_ssl_token.encode_json().base64encode()}`
+	txt = `$BEAME_BIN creds getCreds --token ${token.encode_json().base64encode()}`
 	cert_created_line = txt.lines().filter(X ~ Pfx('Certificate created'))[0]
 	global fqdn = cert_created_line.split(' ')[-1]
 	"Entity $fqdn created"
@@ -83,6 +103,16 @@ F create_L0() {
 
 # ---------- Tests ----------
 
+F finished_ok(p:Process) {
+	guard p.command.argv == [BEAME_BIN]
+	p.exit_code in [0, 1]
+}
+
+do_test("Run without arguments", {
+	out = `$BEAME_BIN`
+	'beame.js creds list' not in out throws TestFail("Expected text not found")
+	"OK"
+})
 do_test("Copy $BEAME_DEV_AUTH_FQDN into store", copy_to_store)
 do_test("Create token for test L0 entity", create_token)
 do_test("Create test L0 entity", create_L0);
