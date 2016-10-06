@@ -1,34 +1,47 @@
 'use strict';
-var path                 = require('path');
-var os                   = require('os');
-var home                 = os.homedir();
-var npmPrefix            = require('npm-prefix');
-const npmRootDir         = npmPrefix();
-const AuthServerEndPoint = "https://registration-staging.beameio.net";
+/**
+ * @typedef {Object} RegistrationPayload
+ * @property {String} fqdn
+ * @property {String} parent_fqdn
+ * @property {Number} level
+ */
+
+
+var path         = require('path');
+var os           = require('os');
+var home         = os.homedir();
+var npmPrefix    = require('npm-prefix');
+const npmRootDir = npmPrefix();
+
 
 const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 
-const AuthorizationAtomFqdn     = "hbdtatsa1eywxy7m.w3ndpqy0sxf9zpjy.v1.beameio.net";
-const AuthenticationAtomFqdn    = "jaclmjhdflzibbm1.w3ndpqy0sxf9zpjy.v1.beameio.net";
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 /** @const {String} **/
 var rootDir                     = process.env.BEAME_DIR || path.join(home, '.beame');
 
-/** @const {String} **/
-var localCertsDir = path.join(rootDir, 'v2', 'local');
 
 /** @const {String} **/
-var remoteCertsDir = path.join(rootDir, 'v2', 'remote');
+var remotePKsDirV1 = path.join(rootDir, 'pki');
+
+
+var localCertsDirV2 = path.join(rootDir, 'v2');
+
 
 /** @const {String} **/
-var remotePKsDir = path.join(rootDir, 'pki');
+const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
 
 /** @const {String} **/
-var loadBalancerURL = process.env.BEAME_LB || "http://lb-dev.beameio.net/";
+const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";
+
+const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
 
 /** @const {String} **/
 var metadataFileName = "metadata.json";
+
+/** @const {String} **/
+var s3MetadataFileName = "metadata.json";
 
 /** @const {String} **/
 var PKsFileName = "PKs.json";
@@ -63,29 +76,16 @@ var CertificateFiles = {
 	"PWD":         "pwd.txt"
 };
 
-var CredentialStatus = {
-	PRIVATE_KEY:       1 << 1,
-	CERT:              1 << 2,
-	BEAME_ISSUED_CERT: 1 << 3,
-	NON_BEAME_CERT:    1 << 4,
-	EMPTY_DIR:         1 << 5,
-	DIR_NOTREAD:       1 << 6
+var MetadataProperties = {
+	LEVEL:       "level",
+	FQDN:        "fqdn",
+	UID:         "uid",
+	NAME:        "name",
+	PARENT_FQDN: "parent_fqdn",
+	EDGE_FQDN:   "edge_fqdn",
+	PATH:        "path"
 };
 
-var SecurityPolicy = {
-	Basic:           1 << 0,
-	CanHasChildren:  1 << 1,
-	CanAuthorize:    1 << 2,
-	CanAuthenticate: 1 << 3,
-	CanAttachPolicy: 1 << 4
-};
-
-/** @enum {String} **/
-var IdentityType       = {
-	"Developer":  "Developer",
-	"Atom":       "Atom",
-	"EdgeClient": "EdgeClient"
-};
 /**
  * Certificate response fields
  *  @enum {string}
@@ -102,7 +102,7 @@ var CertResponseFields = {
  *  @enum {string}
  */
 var AppModules = {
-	"BeameIdentity":    "BeameIdentity",
+	"BeameEntity":      "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
 	"BeameCreds":       "BeameCreds",
 	"BeameCrypto":      "BeameCrypto",
@@ -111,12 +111,6 @@ var AppModules = {
 	"BeameStore":       "BeameStore",
 	"BeameSystem":      "BeameSystem",
 	"BeameDirServices": "BeameDirServices",
-	"Developer":        "Developer",
-	"Atom":             "Atom",
-	"AtomAgent":        "AtomAgent",
-	"EdgeClient":       "EdgeClient",
-	"RemoteClient":     "RemoteClient",
-	"LocalClient":      "LocalClient",
 	"ProvisionApi":     "ProvisionApi",
 	"DataServices":     "DataServices",
 	"UnitTest":         "UnitTest",
@@ -124,7 +118,9 @@ var AppModules = {
 	"SNIServer":        "SNIServer",
 	"BeameSDKlauncher": "BeameSDKlauncher",
 	"ProxyClient":      "ProxyClient",
-	"Tunnel":           "Tunnel"
+	"Tunnel":           "Tunnel",
+	"OpenSSL":          "OpenSSL",
+	"AuthToken":        "AuthToken"
 };
 
 /**
@@ -146,13 +142,11 @@ var MessageCodes = {
 
 
 var ResponseKeys = {
-	"NodeFiles":                   [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
-	"DeveloperCreateResponseKeys": ["hostname", "uid", "name", "email"],
-	"AtomCreateResponseKeys":      ["hostname", "uid", "name", "parent_fqdn", "edgeHostname"],
-	"EdgeClientResponseKeys":      ["uid", "hostname", "edgeHostname", "parent_fqdn"],
-	"LocalClientResponseKeys":     ["uid", "hostname", "parent_fqdn", "edge_client_fqdn", "local_ip"],
-	"CertificateResponseKeys":     ["x509", "pkcs7", "ca"],
-	"RevokeDevCertResponseKeys":   ["recovery_code"]
+	"NodeFiles":                 [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
+	"EntityMetadataKeys":        ["fqdn", "parent_fqdn", "name", "email", "level", "local_ip", "edge_fqdn"],
+	"EntityCreateResponseKeys":  ["fqdn"],
+	"CertificateResponseKeys":   ["x509", "pkcs7", "ca"],
+	"RevokeDevCertResponseKeys": ["recovery_code"]
 };
 
 /**
@@ -166,37 +160,18 @@ var TimeUnits = {
 	"Day":    "d"
 };
 
-/**
- * Atom type values
- *  @enum {number}
- */
-var AtomType = {
-	"Default":              0,
-	"AuthenticationServer": 1,
-	"AuthorizationServer":  2
-};
-
-/**
- * Atom request types
- *  @enum {string}
- */
-var AtomServerRequests = {
-	"GetHost":                 "getHost",
-	"GetHostsForLocalClients": "GetHostsForLocalClients",
-	"AuthorizeToken":          "authorizeToken",
-	"SignAuthToken":           "signAuthToken"
-};
 
 var SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
 	rootDir,
 	npmRootDir,
-	localCertsDir,
-	remoteCertsDir,
-	remotePKsDir,
+	localCertsDirV2,
+	remotePKsDirV1,
 	loadBalancerURL,
+	beameDevCredsFqdn,
 	metadataFileName,
+	s3MetadataFileName,
 	CertFileNames,
 	CertificateFiles,
 	CertResponseFields,
@@ -204,17 +179,11 @@ module.exports = {
 	MessageCodes,
 	ResponseKeys,
 	TimeUnits,
-	AtomType,
-	AtomServerRequests,
 	SNIServerPort,
-	AuthServerEndPoint,
-	AuthorizationAtomFqdn,
-	AuthenticationAtomFqdn,
 	PKsFileName,
 	CertEndpoint,
 	InitFirstRemoteEdgeClient,
 	PinAtomPKbyDefault,
-	CredentialStatus,
-	SecurityPolicy,
-	IdentityType
+	MetadataProperties,
+	authServerURL,
 };

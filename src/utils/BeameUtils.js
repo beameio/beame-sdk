@@ -2,67 +2,16 @@
  * Created by zenit1 on 03/07/2016.
  */
 'use strict';
-var path          = require('path');
-var request       = require('request');
-var _             = require('underscore');
-var network       = require('network');
-var os            = require('os');
-var beameStore    = new (require('../services/BeameStore'))();
-var config        = require('../../config/Config');
+const path        = require('path');
+const request     = require('request');
+const network     = require('network');
+const os          = require('os');
+const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
-var BeameLogger   = require('../utils/Logger');
-var logger        = new BeameLogger(module_name);
-/**
- * @typedef {Object} AwsRegion
- * @property {String} Name
- * @property {String} Code
- */
+const BeameLogger = require('../utils/Logger');
+const logger      = new BeameLogger(module_name);
+const CommonUtils = require('../utils/CommonUtils');
 
-/**
- * @type {AwsRegion[]}
- */
-var AwsRegions = [
-	{
-		"Name": "EU (Ireland)",
-		"Code": "eu-west-1"
-	},
-	{
-		"Name": "Asia Pacific (Singapore)",
-		"Code": "ap-southeast-1"
-	},
-	{
-		"Name": "Asia Pacific (Sydney)",
-		"Code": "ap-southeast-2"
-	},
-	{
-		"Name": "EU (Frankfurt)",
-		"Code": "eu-central-1"
-	},
-	{
-		"Name": "Asia Pacific (Seoul)",
-		"Code": "ap-northeast-2"
-	},
-	{
-		"Name": "Asia Pacific (Tokyo)",
-		"Code": "ap-northeast-1"
-	},
-	{
-		"Name": "US East (N. Virginia)",
-		"Code": "us-east-1"
-	},
-	{
-		"Name": "South America (S?o Paulo)",
-		"Code": "sa-east-1"
-	},
-	{
-		"Name": "US West (N. California)",
-		"Code": "us-west-1"
-	},
-	{
-		"Name": "US West (Oregon)",
-		"Code": "us-west-2"
-	}
-];
 
 /**
  * @typedef {Object} AuthData
@@ -77,77 +26,67 @@ var AwsRegions = [
  * @property {boolean} answerExpected => if response data expecting from provision
  */
 
+//noinspection JSUnusedGlobalSymbols
 /**
  * @typedef {Object} EdgeShortData
  * @property {String} endpoint
  * @property {String} region
- * @property {String} zone
  * @property {String} publicIp
  */
 
+/**
+ *
+ * @param {Object} node
+ * @param {Function} callback
+ */
+function iterateTree(node, callback) {
+	callback(node);
+	for(let k in node.children) {
+		iterateTree(node.children[k], callback);
+	}
+}
 
+
+/**
+ *
+ * @param {Object} node
+ * @param {Function} predicate
+ * @param {Number} [limit]
+ * @returns {Array}
+ */
+function findInTree(node, predicate, limit) {
+
+	var result = [];
+
+	function allFoundException() {}
+
+	function matchFound(x) {
+		result.push(x);
+		if(limit && result.length >= limit) {
+			throw new allFoundException();
+		}
+	}
+
+	try {
+		iterateTree(node, x => {
+			if(predicate(x)) {
+				matchFound(x);
+			}
+		});
+	} catch(e) {
+		if(!(e instanceof allFoundException)) {
+			throw e;
+		}
+	}
+
+	return result;
+}
+
+//noinspection JSUnusedGlobalSymbols
 module.exports = {
 
 	makePath: path.join,
 
-
-	/**
-	 * @param {String} baseDir
-	 * @param {String} path2Pk
-	 * @param {String} path2X509
-	 * @returns {typeof AuthData}
-	 */
-	getAuthToken: function (baseDir, path2Pk, path2X509) {
-		return {
-			pk:   path.join(baseDir, path2Pk),
-			x509: path.join(baseDir, path2X509)
-		}
-	},
-
-
-	/**
-	 * @param {String} projName
-	 * @returns {string}
-	 */
-	// getProjHostName: function (projName) {
-	//     var varName = "BEAME_PROJ_" + projName;
-	//     var host = process.env[varName];
-	//     if (host == undefined) {
-	//         throw("Error: environment variable " + varName + " undefined, store project hostname in environment and rerun");
-	//     }
-	//     else
-	//         return host;
-	// },
-
-
-	/**
-	 * @param {String} endpoint
-	 * @param {Object} postData
-	 * @param {boolean} answerExpected
-	 * @returns {typeof ApiData}
-	 */
-	getApiData: function (endpoint, postData, answerExpected) {
-		return {
-			api:            endpoint,
-			postData:       postData,
-			answerExpected: answerExpected
-		};
-	},
-
-
-	getRegionName: function (hostname) {
-
-		if (!hostname) return "Unknown";
-
-		for (var i = 0; i < AwsRegions.length; i++) {
-			var region = AwsRegions[i];
-			if (hostname.lastIndexOf(region.Code) >= 0) {
-				return region.Name;
-			}
-		}
-
-		return "Unknown";
-	},
 
 	/**
 	 *
@@ -177,10 +116,9 @@ module.exports = {
 	 * @param {Function} callback
 	 */
 	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
-		var self          = this;
-		var getRegionName = self.getRegionName;
-		var get           = self.httpGet;
-		var selectBest    = self.selectBestProxy;
+		var self       = this;
+		var get        = self.httpGet;
+		var selectBest = self.selectBestProxy;
 
 		if (retries == 0) {
 			callback && callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
@@ -196,14 +134,11 @@ module.exports = {
 				 */
 				function (error, data) {
 					if (data) {
-						//noinspection JSUnresolvedVariable
-						var region = getRegionName(data.instanceData.endpoint);
+
 						//noinspection JSUnresolvedVariable
 						/** @type {EdgeShortData} edge **/
-						var edge   = {
+						var edge = {
 							endpoint: data.instanceData.endpoint,
-							region:   region,
-							zone:     data.instanceData.avlZone,
 							publicIp: data.instanceData.publicipv4
 						};
 
@@ -214,7 +149,7 @@ module.exports = {
 
 						sleep = parseInt(sleep * (Math.random() + 1.5));
 
-						logger.warn("Retry to get lb instance", {
+						logger.warn("Retry to getMetadataKey lb instance", {
 							"sleep":   sleep,
 							"retries": retries
 						});
@@ -228,14 +163,6 @@ module.exports = {
 
 	},
 
-	/**
-	 *
-	 * @param {Object} obj
-	 */
-	stringify: function (obj) {
-		//noinspection NodeModulesDependencies,ES6ModulesDependencies
-		return JSON.stringify(obj, null, 2);
-	},
 
 	/**
 	 *
@@ -251,65 +178,8 @@ module.exports = {
 
 	//validation services
 
-	deleteHostCerts: function (fqdn, callback) {
-		beameStore.shredCredentials(fqdn, callback || function () {
-			});
-	},
-
-	/**
-	 * @param hostname
-	 * @returns {Promise.<ItemAndParentFolderPath>}
-	 */
-	findHostPathAndParentAsync: function (hostname) {
-
-		return new Promise(function (resolve, reject) {
-			var data = beameStore.searchItemAndParentFolderPath(hostname);
-
-			if (!_.isEmpty(data)) {
-				resolve(data);
-			}
-			else {
-				reject('Not found');
-			}
-		});
-	},
-
-	/**
-	 *
-	 * @param {String} hostname
-	 * @returns {String|null|undefined}
-	 */
-	findHostPathSync: function (hostname) {
-
-		var data = beameStore.searchItemAndParentFolderPath(hostname);
-
-		if (!_.isEmpty(data)) {
-			return data["path"];
-		}
-		else {
-			return null;
-		}
-
-	},
-
 	/** ---------- Validation  shared services **/
-	/**
-	 *
-	 * @param {Function} callback
-	 * @param {Object} error
-	 */
-	onValidationError: function (callback, error) {
-		callback && callback(error, null);
-	},
 
-	/**
-	 *
-	 * @param {Function} callback
-	 * @param {String|null|undefined} [message]
-	 */
-	onSearchFailed: function (callback, message) {
-		callback && callback(message, null);
-	},
 
 	/** local network**/
 	getLocalActiveInterface: function (callback) {
@@ -343,5 +213,12 @@ module.exports = {
 
 			addresses.length > 0 ? resolve(addresses) : reject('Local interfaces not found');
 		});
-	}
+	},
+
+	isAmazon: function () {
+		return process.env.NODE_ENV ? true : false;
+	},
+
+	iterateTree,
+	findInTree
 };

@@ -5,47 +5,47 @@
 var argv = require('minimist')(process.argv.slice(2));
 var _    = require('underscore');
 
-var BeameStore    = require("../services/BeameStore");
+var BeameStore    = require("../services/BeameStoreV2");
 var config        = require('../../config/Config');
 const module_name = config.AppModules.BeameSDKCli;
 var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 
 var commands = {};
-_.each(['creds', 'servers', 'atomServer', 'crypto', 'system', 'pinning','tunnel'], function (cmdName) {
+['creds', 'crypto','servers', 'system'/*, 'pinning'*/].forEach( cmdName => {
 	commands[cmdName] = require('./' + cmdName + '.js')
 });
 
 var parametersSchema = {
-	'atomFqdn':       {required: true},
-	'atomName':       {required: true},
-	'data':           {required: false},
-	'developerEmail': {required: true},
-	'developerFqdn':  {required: true},
-	'developerName':  {required: true},
-	'edgeClientFqdn': {required: true},
-	'format':         {required: false, options: ['text', 'json'], default: 'text'},
-	'fqdn':           {required: false},
-	'signature':      {required: true},
-	'atomType':       {required: true, options: ['Default','AuthenticationServer','AuthorizationServer']},
-	'type':           {required: false, options: ['developer', 'atom', 'edgeclient', 'localclient']},
-	'uid':            {required: true},
-	'PKfilePath':	  {required: true},
-	'authSrvFqdn':	  {required: true},
-	'targetFqdn':     {required: true},
-	'file':           {required: false},
-	'authorizationFqdn':{required: false},
-	'authenticationFqdn':{required: false},
-	'pk':             {required: true},
-	'requiredLevel':  {required: false, options: ['Default','AuthenticationServer','AuthorizationServer']},
-	'count':          {required: false, default: 1},
-	'sharedFolder':   {required: false},
-	'localIp':        {required: true},
-	'edgeFqdn':       {required: true },
-	'pinAtom': 		  {required: true, options: ['true', 'false'], default: 'true'},
-	'pinDeveloper':   {required: true, options: ['true', 'false'], default: 'true'},
-	'targetPort':     {required: true},
-	'targetHost':     {required: false, default: 'localhost'}
+	'data':               {required: false},
+	'developerEmail':     {required: true},
+	'developerFqdn':      {required: true},
+	'developerName':      {required: true},
+	'format':             {required: false, options: ['text', 'json'], default: 'text'},
+	'fqdn':               {required: false},
+	'signingFqdn':	      {required: false},
+	'signature':          {required: true},
+	'regex':              {required: false},
+	'uid':                {required: true},
+	'targetFqdn':         {required: true},
+	'file':               {required: false},
+	'authorizationFqdn':  {required: false},
+	'authenticationFqdn': {required: false},
+	'pk':                 {required: true},
+	'requiredLevel':      {required: false, options: ['Default', 'AuthenticationServer', 'AuthorizationServer']},
+	'count':              {required: false, default: 1},
+	'sharedFolder':       {required: false},
+	'localIp':            {required: false},
+	'localPort':          {required: true},
+	'sharedSecret':		  {required: false},
+	// createWithToken
+	'signWithFqdn':	      {required: false},
+	'parent_fqdn':	      {required: false},
+	'dataToSign':	      {required: false},
+	'authSrvFqdn':	      {required: false},
+	'authToken':          {required: true},
+	'name':               {required: false},
+	'email':              {required: false}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -63,8 +63,8 @@ function getParamsNames(fun) {
 	var ret         = (names.length == 1 && !names[0] ? [] : names);
 	var useCallback = false;
 
-	ret             = _.filter(ret, function (x) {
-		if (x == 'callback') {
+	ret = ret.filter(paramName => {
+		if (paramName == 'callback') {
 			useCallback = true;
 			return false;
 		} else {
@@ -83,11 +83,11 @@ function main() {
 	var cmd = commands[cmdName];
 
 	if (!cmd) {
-		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + _.keys(commands));
+		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + Object.keys(commands));
 	}
 
 	if (!commands[cmdName][subCmdName]) {
-		logger.fatal("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + _.keys(commands[cmdName]));
+		logger.fatal("Sub-command '" + subCmdName + "' for command '" + cmdName + "' not found. Valid sub-commands are: " + Object.keys(commands[cmdName]));
 	}
 
 	// TODO: handle boolean such as in "--fqdn --some-other-switch" or "--no-fqdn"
@@ -132,6 +132,7 @@ function main() {
 			return;
 		}
 		if (argv.format == 'json' || !commands[cmdName][subCmdName].toText) {
+
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			output = JSON.stringify(output);
 		} else {
@@ -163,8 +164,10 @@ function usage() {
 			}
 			var params = paramsNames.map(function (paramName) {
 				var ret = '--' + paramName;
-				if (!parametersSchema[paramName])
-					logger.fatal("Missing " + paramName);
+				if (!parametersSchema[paramName]) {
+					console.log(`Internal coding error: missing ${paramName} in parametersSchema`);
+					throw new Error(`Internal coding error: missing ${paramName} in parametersSchema`);
+				}
 				if (parametersSchema[paramName].options) {
 					ret = ret + ' {' + parametersSchema[paramName].options.join('|') + '}';
 				} else {
@@ -176,7 +179,7 @@ function usage() {
 				return ret;
 			});
 			console.log('  ' + myname + ' ' + cmdName + ' ' + subCmdName + ' ' + params.join(' '));
-		})
+		});
 	});
 	console.log("");
 	console.log("Registration URL: https://registration.beameio.net/");

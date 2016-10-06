@@ -1,9 +1,12 @@
 "use strict";
+const path = require('path');
 
-var provisionSettings = require('../../config/ApiConfig.json');
-var config = require('../../config/Config');
-const module_name = config.AppModules.ProvisionApi;
-var logger = new (require('../utils/Logger'))(module_name);
+const provisionSettings = require('../../config/ApiConfig.json');
+const config            = require('../../config/Config');
+const module_name       = config.AppModules.ProvisionApi;
+const BeameLogger       = require('../utils/Logger');
+const logger            = new BeameLogger(module_name);
+const CommonUtils       = require('../utils/CommonUtils');
 /**
  * @typedef {Object} CertSettings
  * @property {String} appCertPath
@@ -25,17 +28,10 @@ var logger = new (require('../utils/Logger'))(module_name);
  */
 
 
-var _ = require('underscore');
+var _       = require('underscore');
 var request = require('request');
-var fs = require('fs');
+var fs      = require('fs');
 
-function isObject(str) {
-	try {
-		return typeof str === 'object';
-	} catch (e) {
-		return false;
-	}
-}
 
 function clearJSON(json) {
 
@@ -43,7 +39,7 @@ function clearJSON(json) {
 
 	Object.keys(json).map(function (k) {
 		if (k === '$id') return;
-		if (!isObject(json[k])) {
+		if (!CommonUtils.isObject(json[k])) {
 			jsonCleaned[k] = json[k];
 		}
 
@@ -65,6 +61,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 
 	if (error) {
+		logger.error(`parse response error ${BeameLogger.formatError(error)} for type ${type}`, error, module_name);
 		callback(logger.formatErrorMessage("Provision Api response error", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
@@ -96,15 +93,15 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		var errMsg = logger.formatErrorMessage(payload.Message || (payload.body && payload.body.message) || "Provision Api response error", module_name, {
-			"status": response.statusCode,
-			"message": payload.Message || (payload.body && payload.body.message) || payload
+		var msg    = payload.Message || payload.message || (payload.body && payload.body.message);
+		var errMsg = logger.formatErrorMessage(msg || "Provision Api response error", module_name, {
+			"status":  response.statusCode,
+			"message": msg || payload
 		}, config.MessageCodes.ApiRestError);
 
 		logger.debug(`Provision error payload ${payload.toString()}`,payload);
 		logger.debug(`Provision error response ${response.toString()}`,response);
-
-
+		logger.error(errMsg.message, payload, module_name);
 		callback && callback(errMsg, null);
 	}
 
@@ -126,7 +123,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 	var onApiError = function (error) {
 		logger.warn("Provision Api post error", {
 			"error": error,
-			"url": url
+			"url":   url
 		});
 
 		sleep = parseInt(sleep * (Math.random() + 1.5));
@@ -162,7 +159,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 								if (_.isEmpty(error.data)) {
 									error.data = {};
 								}
-								error.data.url = url;
+								error.data.url      = url;
 								error.data.postData = options.form;
 								callback(error, null);
 							}
@@ -194,9 +191,9 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 	retries--;
 
 	var onApiError = function (error) {
-		logger.warn("Provision Api get error", {
+		logger.warn(`Provision Api GET error on ${url}`, {
 			"error": error,
-			"url": url
+			"url":   url
 		});
 
 		sleep = parseInt(sleep * (Math.random() + 1.5));
@@ -230,7 +227,7 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 								if (_.isEmpty(error.data)) {
 									error.data = {};
 								}
-								error.data.url = url;
+								error.data.url      = url;
 								error.data.postData = options.form;
 								callback(error, null);
 							}
@@ -248,75 +245,124 @@ var getFromProvisionApi = function (url, options, type, retries, sleep, callback
 };
 
 /**
- * Empty constructor
+ * Constructor
+ * @param {String|null} [baseUrl]
  * @constructor
  */
-var ProvApiService = function () {
+class ProvApiService {
 
-	/** @member {String} **/
-	this.provApiEndpoint = provisionSettings.Endpoints.BaseUrl;
+	constructor(baseUrl) {
+		/** @member {String} **/
+		this.provApiEndpoint = baseUrl || provisionSettings.Endpoints.BaseUrl;
+	}
 
-};
-
-/**
- *
- * @param {AuthData} authData
- */
-ProvApiService.prototype.setAuthData = function (authData) {
-	this.options = {
-		key: fs.readFileSync(authData.pk),
-		cert: fs.readFileSync(authData.x509)
-	};
-};
-
-/**
- *
- * @param {ApiData} apiData
- * @param {Function} callback
- * @param {String|null} [method] ==>  POST | GET
- * @param {String|null} [signature]
- */
-ProvApiService.prototype.runRestfulAPI = function (apiData, callback, method, signature) {
-
-	this.options = this.options || {};
-
-	var options = _.extend(this.options, {form: apiData.postData});
-
-	if (signature) {
-		this.options.headers = {
-			"AuthToken": signature
+	/**
+	 * @param {String} baseDir
+	 * @param {String} path2Pk
+	 * @param {String} path2X509
+	 * @returns {typeof AuthData}
+	 */
+	static getAuthToken(baseDir, path2Pk, path2X509) {
+		return {
+			pk:   path.join(baseDir, path2Pk),
+			x509: path.join(baseDir, path2X509)
 		};
 	}
 
-	var apiEndpoint = this.provApiEndpoint + apiData.api;
-	logger.debug(`Api call to : ${apiEndpoint}`);
-	var _method = method || 'POST';
-
-	switch (_method) {
-		case 'POST' :
-			postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
-			return;
-		case 'GET' :
-			getFromProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
-			return;
-		default:
-			callback('Invalid method', null);
-			return;
-
+	/**
+	 * @param {String} endpoint
+	 * @param {Object} postData
+	 * @param {boolean} [answerExpected]
+	 * @returns {typeof ApiData}
+	 */
+	static getApiData(endpoint, postData, answerExpected) {
+		return {
+			api:            endpoint,
+			postData:       postData,
+			answerExpected: answerExpected || true
+		};
 	}
-};
 
-/**
- * Common post method for given url
- * @param {String} url
- * @param {Object} postData
- * @param {Function} callback
- */
-ProvApiService.prototype.postRequest = function (url, postData, callback) {
-	var options = _.extend(this.options || {}, {"form": postData});
-	options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
-	postToProvisionApi(url, options, "custom_post", provisionSettings.RetryAttempts, 1000, callback);
-};
+	/**
+	 *
+	 * @param {AuthData} authData
+	 */
+	setAuthData(authData) {
+		this.options = {
+			key:  fs.readFileSync(authData.pk),
+			cert: fs.readFileSync(authData.x509)
+		};
+	}
+
+	setClientCerts(pk, cert) {
+		this.options = {
+			key:  pk,
+			cert: cert
+		};
+	}
+
+	/**
+	 *
+	 * @param {ApiData} apiData
+	 * @param {Function} callback
+	 * @param {String|null} [method] ==>  POST | GET
+	 * @param {String|null} [signature]
+	 */
+	runRestfulAPI(apiData, callback, method, signature) {
+
+		this.options = this.options || {};
+
+		var options = _.extend(this.options, {form: apiData.postData});
+
+		if (signature) {
+			this.options.headers = {
+				"X-BeameAuthToken": signature
+			};
+		}
+
+		var apiEndpoint = this.provApiEndpoint + apiData.api;
+		logger.debug(`Api call to : ${apiEndpoint}`);
+		var _method = method || 'POST';
+
+		switch (_method) {
+			case 'POST' :
+				postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
+				return;
+			case 'GET' :
+				getFromProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
+				return;
+			default:
+				callback('Invalid method', null);
+				return;
+
+		}
+	}
+
+	/**
+	 * Common post method for given url
+	 * @param {String} url
+	 * @param {Object} postData
+	 * @param {Function} callback
+	 * @param {String|null} [authToken]
+	 * @param {Number|null} [retries]
+	 */
+	postRequest(url, postData, callback, authToken, retries) {
+		var options     = _.extend(this.options || {}, {"form": postData});
+		options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+
+		if (authToken) {
+			options.headers = {
+				"X-BeameAuthToken": authToken
+			};
+		}
+
+		postToProvisionApi(url, options, "custom_post", retries || provisionSettings.RetryAttempts, 1000, callback);
+	}
+
+	static getRequest(url, callback) {
+		getFromProvisionApi(url, {}, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
+	}
+}
 
 
 module.exports = ProvApiService;
