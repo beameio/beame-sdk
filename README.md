@@ -211,7 +211,7 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity can decrypt it
 * `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be the owner of the given entity
 * `beame crypto sign [--data data] [--fqdn fqdn]` - signs the given data as the specified entity
-* `beame crypto checkSignature [--fqdn fqdn] [--data data] --signature signature` - verifies the correctness of the signature
+* `beame crypto _checkSignature [--fqdn fqdn] [--data data] --signature signature` - verifies the correctness of the signature
 
 ## Beame NodeJS API
 [Extended JsDoc generated documentation - here](https://beameio.github.io/beame-sdk/index.html)

@@ -10,13 +10,7 @@
  * @property {String} parent
  */
 
-/**
- * @typedef {Object} CertListItem
- * @property {String} level
- * @property {String} hostname
- * @property {String} print
- * @property {String} serial
- */
+
 
 const Table = require('cli-table2');
 
@@ -73,13 +67,12 @@ function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 		CommonUtils.promise2callback(cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email), callback);
 	}
 	else {
-		CommonUtils.promise2callback(cred.createEntityWithLocalCreds(parent_fqdn, name, email), callback);
+		CommonUtils.promise2callback(cred.createEntityWithLocalCreds(fqdn, name, email), callback);
 	}
 
 
 }
 getCreds.toText = lineToText;
-
 
 
 function updateMetadata(fqdn, name, email, callback) {

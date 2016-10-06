@@ -335,21 +335,16 @@ class Credential {
 
 	}
 
-	// TODO: Phase out this method. Use checkSignatureToken instead.
-	checkSignature(data, fqdn, signature) {
-		let rsaKey = this.getPublicKeyNodeRsa();
-		let status = rsaKey.verify(data, signature, "utf8", "base64");
-		logger.info(`signing status is ${status} ${fqdn}`);
-		return status;
-	}
-
 	/**
 	 *
 	 * @param {SignatureToken} token
 	 * @returns {*}
 	 */
 	checkSignatureToken(token) {
-		return this.checkSignature(token.signedData, token.signedBy, token.signature);
+		let rsaKey = this.getPublicKeyNodeRsa();
+		let status = rsaKey.verify(token.signedData, token.signature, "utf8", "base64");
+		logger.info(`signing status is ${status} ${token.signedBy}`);
+		return status;
 	}
 
 	/**
@@ -401,7 +396,7 @@ class Credential {
 			if (!signingCredential) {
 				new Error("Signing credential is not found in the local store");
 			}
-			if (!signingCredential.checkSignature(encryptedMessage.signedData, encryptedMessage.signedBy, encryptedMessage.signature)) {
+			if (!signingCredential.checkSignatureToken({signedData: encryptedMessage.signedData, signedBy : encryptedMessage.signedBy, signature :encryptedMessage.signature})) {
 				return null;
 			}
 			encryptedMessage = encryptedMessage.signedData;
