@@ -32,6 +32,25 @@ function validate(authToken) {
 	return AuthToken.validate(tok);
 }
 
+validate.toText = authToken => {
+
+	function toStr(k, data) {
+		if(k == 'created_at' || k == 'valid_till') {
+			return `${data} - ${new Date(data*1000)}`;
+		} else {
+			return data;
+		}
+	}
+
+	var ret = {};
+	for(let k in authToken.signedData) {
+		ret['signedData.' + k] = toStr(k, authToken.signedData[k]);
+	}
+	ret.signedBy = authToken.signedBy;
+	ret.signature = authToken.signature.slice(0, 16) + '...';
+	return require('./creds.js').objectToText(ret);
+};
+
 module.exports = {
 	create,
 	validate
