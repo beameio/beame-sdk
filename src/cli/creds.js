@@ -42,8 +42,7 @@ module.exports = {
 	shred,
 	exportCredentials,
 	importCredentials,
-	importLiveCredentials,
-	signWithFqdn
+	importLiveCredentials
 };
 
 /**
@@ -100,8 +99,8 @@ function signAndCreate(signWithFqdn, authSrvFqdn, dataToSign, name, email, callb
 	cred.signWithFqdn(signWithFqdn, dataToSign).then(authToken=> {
 		createWithToken(authToken, authSrvFqdn, name, email, callback);
 	}).catch(error=> {
-		callback && callback(error, null)
-	})
+		callback && callback(error, null);
+	});
 }
 signAndCreate.toText = lineToText;
 
@@ -391,16 +390,4 @@ function importLiveCredentials(fqdn) {
 		logger.fatal(e.toString());
 	}
 
-}
-
-function signWithFqdn(fqdn, data, callback) {
-	const store = new (require("../services/BeameStoreV2"))();
-	const cred = store.getCredential(fqdn);
-
-	if(!cred) {
-		callback(new Error(`Credentials for ${fqdn} not found`), null);
-		return;
-	}
-
-	CommonUtils.promise2callback(cred.signWithFqdn(fqdn, data), callback);
 }

@@ -12,8 +12,8 @@ var BeameLogger   = require('../utils/Logger');
 var logger        = new BeameLogger(module_name);
 
 var commands = {};
-['creds', 'crypto','servers', 'system'/*, 'pinning'*/].forEach( cmdName => {
-	commands[cmdName] = require('./' + cmdName + '.js')
+['creds', 'token', 'crypto','servers', 'system'/*, 'pinning'*/].forEach( cmdName => {
+	commands[cmdName] = require('./' + cmdName + '.js');
 });
 
 var parametersSchema = {
