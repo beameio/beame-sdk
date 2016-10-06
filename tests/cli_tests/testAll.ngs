@@ -2,35 +2,34 @@
 
 # NGS language - https://github.com/ilyash/ngs/
 
+# ---------- Environment sanity checks ----------
+
+assert('BEAME_INTERNAL_AUTH_SERVER_FQDN' in ENV, 'Environment variable BEAME_INTERNAL_AUTH_SERVER_FQDN must be set')
+
 if 'BEAME_DIR' in ENV {
-	# TODO: support BEAME_DIR environment variable
 	throw Error("BEAME_DIR environment variable must be unset for tests")
 }
 
-BEAME_DIR = ENV.HOME + '/.beame'
-BEAME_BIN = ENV.HOME + '/beame-sdk/src/cli/beame.js'
+HOME = ENV.HOME
 
-{ ENV['SNI_SERVER_PORT'] = '0' }
+BEAME_DIR = HOME / '.beame'
+BEAME_BIN = HOME / 'beame-sdk/src/cli/beame.js'
 
 if Path(BEAME_DIR) {
 	throw Error("Beame directory exists ($BEAME_DIR). Will not run tests.")
 }
 
-DEVELOPER_NAME = "Cli Test Developer"
-DEVELOPER_EMAIL = "beame-test-developer-${time()}@example.com"
-ATOMS_TO_CREATE = 2
-EDGE_CLIENTS_PER_ATOM = 2
-# TODO: test binary data
+# ---------- Environment setup ----------
+
+{ ENV['SNI_SERVER_PORT'] = '0' }
+
+# ---------- Tests "framework" ----------
+
 TEST_DATA = 'abcd0123~!@#'
 CREDS_FILE = "/tmp/beame-cli-test-creds-${time()}"
 
 developer = null
-atoms = []
-edge_clients = []
 exit_code = 0
-
-echo("[INFO] DEVELOPER_EMAIL=$DEVELOPER_EMAIL")
-echo("[INFO] CREDS_FILE=$CREDS_FILE")
 
 { type TestFail(Error) }
 
@@ -49,6 +48,46 @@ F do_test(name:Str, f:Fun) {
 	}
 	echo("  RESULT: $result")
 }
+
+# ---------- Tests library ----------
+
+
+doc Copies Beame test requests signing credential into store for L0 entity creation
+F copy_to_store() {
+	$(cp -a "$HOME/$BEAME_DEV_AUTH_FQDN" "$HOME/.beame/v2/$BEAME_DEV_AUTH_FQDN")
+	'Copied'
+}
+
+doc Creates token needed for signing request for level 0 entity
+F create_token() {
+	global token = ``$BEAME_SDK_BIN token create --fqdn $BEAME_DEV_AUTH_FQDN --data NONE``
+	assert(token is Str, "Token expected to be a string")
+	token
+}
+
+doc Creates level 0 entity
+F create_L0() {
+    t = time()
+	beame_insta_ssl_token = {
+		'authToken': token.base64decode()
+		'authSrvFqdn': ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN
+		'name': "sdk-test-L0-$t"
+		'email': "sdk-L0-${t}@example.com"
+	}
+	txt = `$BEAME_INSTA_SSL_BIN create ${beame_insta_ssl_token.encode_json().base64encode()}`
+	cert_created_line = txt.lines().filter(X ~ Pfx('Certificate created'))[0]
+	global fqdn = cert_created_line.split(' ')[-1]
+	"Entity $fqdn created"
+}
+
+# ---------- Tests ----------
+
+do_test("Copy $BEAME_DEV_AUTH_FQDN into store", copy_to_store)
+do_test("Create token for test L0 entity", create_token)
+do_test("Create test L0 entity", create_L0);
+
+
+xxx
 
 do_test("Create test developer", F() {
 	global developer = ``$BEAME_BIN creds createTestDeveloper --developerName developerName $DEVELOPER_NAME --developerEmail $DEVELOPER_EMAIL --format json``
