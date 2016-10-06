@@ -59,9 +59,10 @@ module.exports = {
 function createWithToken(authToken, authSrvFqdn, name, email, callback) {
 	const store2 = new (require("../services/BeameStoreV2"))();
 
-	let cred = new (require('../services/Credential'))(store2);
+	let cred = new (require('../services/Credential'))(store2),
+	     token = CommonUtils.parse(new Buffer(authToken, 'base64').toString());
 
-	cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email).then(metadata=> {
+	cred.createEntityWithAuthServer(token, authSrvFqdn, name, email).then(metadata=> {
 		callback && callback(null, metadata)
 	}).catch(error=> {
 		callback && callback(error, null)
