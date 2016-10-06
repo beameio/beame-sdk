@@ -1,12 +1,10 @@
-/* The general simple http public key pinning explanation for merere mortals.
- * We convert the public key to a proper DER notation, with header exponent, and modulus, 
- * then we preform a SHA256 on it, and the sha is what goes in the header. 
- * Here we offer high level funcitons for the creation of http public key headers from x509. 
- * We will use existing x509 parse cert function that is located in crypto js. 
- *
- *
+/* *Work-in-progress*
+ * The general simple http public key pinning explanation for merere mortals.
+ * We convert the public key to a proper DER notation, with header exponent, and modulus,
+ * then we preform a SHA256 on it, and the sha is what goes in the header.
+ * Here we offer high level funcitons for the creation of http public key headers from x509.
+ * We will use existing x509 parse cert function that is located in crypto js.
  */
-
 
 var x509 = require('x509');
 var store = require("../services/BeameStore")();
@@ -27,6 +25,7 @@ function getPublicKeyEncodedDer(cert) {
 
 function getCertificate  (fqdn){
 	var element = store.search(fqdn)[0];
+	var certBody;
 	if (element) {
 		certBody = element.X509 + "";
 	}
