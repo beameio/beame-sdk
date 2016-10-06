@@ -38,7 +38,10 @@ module.exports = {
 	encrypt,
 	decrypt,
 	sign,
-	checkSignature
+	checkSignature,
+
+	// TODO: Move to Utils. Used by token.js
+	objectToText
 };
 
 /**
