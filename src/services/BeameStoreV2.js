@@ -17,7 +17,7 @@
  * @property {String|null} parent_fqdn
  */
 
-const path = require('path');
+const path              = require('path');
 const config            = require('../../config/Config');
 const module_name       = config.AppModules.BeameStore;
 const BeameLogger       = require('../utils/Logger');
@@ -73,14 +73,33 @@ class BeameStoreV2 {
 							remoteCred.initFromX509(data.x509, data.metadata);
 							this.addCredential(remoteCred);
 							remoteCred.saveCredentialsObject();
-							resolve(remoteCred)
+							resolve(remoteCred);
 						}
 					).catch(reject);
+				}
+				else {
+					reject('Unknown domain')
 				}
 			}
 		);
 	}
 
+	find(fqdn) {
+
+		return new Promise((resolve, reject) => {
+				let cred = this.getCredential(fqdn);
+
+				if (cred) {
+					resolve(cred);
+					return;
+				}
+
+				this.fetch(fqdn).then(resolve).catch(reject);
+			}
+		);
+
+
+	}
 
 	addCredential(credential) {
 		let parent_fqdn = credential.getMetadataKey(config.MetadataProperties.PARENT_FQDN),
@@ -148,17 +167,17 @@ class BeameStoreV2 {
 	 * @returns {Array}
 	 */
 	list(regex, options) {
-		regex = regex || '.';
+		regex   = regex || '.';
 		options = options || {};
 		return BeameUtils.findInTree(
 			{children: this.credentials},
 			cred => {
 				//noinspection JSCheckFunctionSignatures
-				if(!(cred.fqdn && cred.fqdn.match(regex))) {
+				if (!(cred.fqdn && cred.fqdn.match(regex))) {
 					return false;
 				}
 				//noinspection RedundantIfStatementJS,JSUnresolvedVariable
-				if(options.mustHavePrivateKey && !cred.hasKey('PRIVATE_KEY')) {
+				if (options.mustHavePrivateKey && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
 				return true;

@@ -52,7 +52,7 @@ class Credential {
 	 *
 	 */
 	constructor(store) {
-		if(store) {
+		if (store) {
 			this._store = store;
 		}
 
@@ -343,7 +343,13 @@ class Credential {
 	checkSignatureToken(token) {
 		let rsaKey = this.getPublicKeyNodeRsa();
 		let status = rsaKey.verify(token.signedData, token.signature, "utf8", "base64");
-		logger.info(`signing status is ${status} ${token.signedBy}`);
+		if (status) {
+			logger.info(`signature signed by  ${token.signedBy} verified successful`);
+		}
+		else {
+			logger.warn(`invalid signature signed by ${token.signedBy}`);
+		}
+
 		return status;
 	}
 
@@ -396,7 +402,11 @@ class Credential {
 			if (!signingCredential) {
 				new Error("Signing credential is not found in the local store");
 			}
-			if (!signingCredential.checkSignatureToken({signedData: encryptedMessage.signedData, signedBy : encryptedMessage.signedBy, signature :encryptedMessage.signature})) {
+			if (!signingCredential.checkSignatureToken({
+					signedData: encryptedMessage.signedData,
+					signedBy:   encryptedMessage.signedBy,
+					signature:  encryptedMessage.signature
+				})) {
 				return null;
 			}
 			encryptedMessage = encryptedMessage.signedData;
@@ -404,7 +414,7 @@ class Credential {
 
 
 		if (!this.hasKey("PRIVATE_KEY")) {
-			logger.fatal(`private key for ${encryptedMessage.encryptedFor}`);
+			logger.fatal(`private key for ${encryptedMessage.encryptedFor} not found`);
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
 

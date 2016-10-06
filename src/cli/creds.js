@@ -34,6 +34,7 @@ module.exports = {
 };
 
 /**
+ * AuthToken(token) or Local Credential(fqdn) required
  * @param {String|null} [token]
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [fqdn]
@@ -177,10 +178,15 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
 			logger.fatal(`Credentials for exporting ${fqdn} credentials are not found`);
 		}
 
-		let crypto = require('./crypto');
 		let encryptedString;
 		try {
-			encryptedString = crypto.encrypt(jsonCredentialObject, targetFqdn, signingFqdn);
+			encryptedString = encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
+				if (payload) {
+					return payload;
+				}
+				logger.error(`encryption failed`);
+				return null;
+			});
 		} catch (e) {
 			logger.error(`Could not encrypt with error `, e);
 			return null;
@@ -224,7 +230,7 @@ function importCredentials(file) {
 		encryptedCredentials = data;
 	}
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies
-	let decrtypedCreds = crypto.decrypt(JSON.stringify(encryptedCredentials));
+	let decrtypedCreds = decrypt(JSON.stringify(encryptedCredentials));
 
 	if (decrtypedCreds && decrtypedCreds.length) {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
@@ -285,19 +291,39 @@ function importLiveCredentials(fqdn) {
  * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
  * @public
  * @method Crypto.encrypt
- * @param {String} data - data to encrypt
+ * @param {String|Object} data - data to encrypt
  * @param {String} fqdn - entity to encrypt for
  * @param {String} signingFqdn
+ * @param {Function} callback
  */
-function encrypt(data, fqdn, signingFqdn) {
-	const store          = new BeameStore();
-	let targetCredential = store.getCredential(fqdn);
-	if (!targetCredential) {
-		throw new Error(`Could not find target credential (public key to encrypt for)`);
-	}
-	return targetCredential.encrypt(fqdn, data, signingFqdn);
-}
+function encrypt(data, fqdn, signingFqdn, callback) {
 
+	function _encrypt() {
+		return new Promise((resolve, reject) => {
+				const store = new BeameStore();
+				store.find(fqdn).then(targetCredential=> {
+					if (!targetCredential) {
+						logger.fatal(`Could not find target credential (public key to encrypt for)`);
+					}
+
+					try {
+						let data2Encrypt = CommonUtils.isObject(data) ? CommonUtils.stringify(data, false) : data,
+						    token        = targetCredential.encrypt(fqdn, data2Encrypt, signingFqdn);
+
+						resolve(CommonUtils.stringify(token, false));
+					}
+					catch (error) {
+						reject(error);
+					}
+				}).catch(reject);
+
+			}
+		);
+	}
+
+	CommonUtils.promise2callback(_encrypt(), callback);
+}
+encrypt.toText = x=>x;
 
 /**
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
@@ -308,16 +334,23 @@ function encrypt(data, fqdn, signingFqdn) {
 function decrypt(data) {
 	const store = new BeameStore();
 	try {
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		/** @type {Object} */
-		let encryptedMessage = JSON.parse(data);
-		if (!encryptedMessage.encryptedFor && !encryptedMessage.signature) {
+
+		/** @type {EncryptedMessage} */
+		let encryptedMessage = CommonUtils.parse(data);
+
+		if (!encryptedMessage) {
+			logger.fatal(`invalid data`);
+		}
+
+		logger.debug('message token parsed', encryptedMessage);
+		if (!encryptedMessage.encryptedFor) {
 			logger.fatal("Decrypting a wrongly formatted message", data);
 		}
-		//noinspection JSUnresolvedVariable
-		let targetFqdn = encryptedMessage.encryptedFor || encryptedMessage.signedData.encryptedFor;
-		let credential = store.getCredential(targetFqdn);
-		return credential.decrypt(encryptedMessage);
+
+		let targetFqdn = encryptedMessage.encryptedFor;
+		let credential = store.getCredential(targetFqdn),
+		    payload    = credential.decrypt(encryptedMessage);
+		return `Decrypted payload is ${payload}`;
 	} catch (e) {
 		logger.fatal("decrypt error ", e);
 		return null;
@@ -330,29 +363,68 @@ function decrypt(data) {
  * @method Crypto.sign
  * @param {String} data - data to sign
  * @param {String} fqdn - sign as this entity
- * @returns {SignatureToken|null}
+ * @returns {String|null}
  */
 function sign(data, fqdn) {
 	const store = new BeameStore();
-	let element = store.getCredential(fqdn);
-	if (element) {
-		return element.sign(data);
+	let cred    = store.getCredential(fqdn);
+	if (cred) {
+		let token = cred.sign(data);
+
+		return new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 	}
 	logger.error("sign data with fqdn, element not found ");
 	return null;
 }
-
+sign.toText = x=>x;
 /**
  * Checks signature.
  * @public
  * @method Crypto.checkSignature
- * @param {String} data - signed data
- * @param {String} fqdn - check signature that was signed as this entity
- * @param {String|null} signature
+ * @param {String} data => based64 encoded Signature Token
+ * @param {Function} callback
  */
-function checkSignature(data, fqdn, signature) {
-	const store = new BeameStore();
-	let cred    = store.getCredential(fqdn);
-	return cred ? cred.checkSignatureToken({signedData: data, signedBy: fqdn, signature}) : null;
-}
+function checkSignature(data, callback) {
 
+
+	function _checkSignature(data) {
+		return new Promise((resolve, reject) => {
+
+				if (!data) {
+					reject(`Data required`);
+					return;
+				}
+
+				try {
+					const store = new BeameStore();
+					/** @type {SignatureToken} */
+					var token   = CommonUtils.parse(new Buffer(data, 'base64').toString());
+
+					if (!token) {
+						logger.error(`invalid signature data`);
+						reject();
+						return;
+					}
+
+					logger.debug(`token parsed`, token);
+
+					store.find(token.signedBy).then(cred=> {
+						let status = cred.checkSignatureToken(token);
+						resolve(`signature verification status is ${status}`);
+					}).catch(error=> {
+						logger.error(`Credential ${token.signedBy} not found`);
+						reject(error);
+					});
+				}
+				catch (error) {
+					let e = BeameLogger.formatError(error);
+					logger.error(e);
+					reject(e);
+				}
+			}
+		);
+	}
+
+	CommonUtils.promise2callback(_checkSignature(data), callback);
+
+}

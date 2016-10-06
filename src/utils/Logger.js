@@ -81,7 +81,17 @@ class BeameLogger {
 	 * @returns {*|string|String}
 	 */
 	static formatError(error) {
-		return typeof error == "object" ? CommonUtils.stringify(error) : error.toString();
+		let type = typeof error;
+		switch (type){
+			case 'object':
+				let output = CommonUtils.stringify(error);
+				return _.isEmpty(output) ? error.toString() : output;
+			case 'array':
+				return error[0].toString();
+			default:
+				return error.toString();
+		}
+
 	}
 
 	/**
