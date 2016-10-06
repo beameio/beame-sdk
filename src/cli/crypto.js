@@ -1,10 +1,21 @@
 "use strict";
 /** @namespace Crypto **/
 
-require('../../initWin');
 const CryptoServices = require('../services/Crypto');
 
+require('../../initWin');
+
+
+function aesEncrypt(data, sharedSecret) {
+	return CryptoServices.aesEncrypt(data,sharedSecret);
+
+}
+
+function aesDecrypt(data) {
+	return CryptoServices.aesDecrypt(data);
+}
+
 module.exports = {
-	aesEncrypt: CryptoServices.aesEncrypt,
-	aesDecrypt: CryptoServices.aesDecrypt
+	aesEncrypt,
+	aesDecrypt
 };
