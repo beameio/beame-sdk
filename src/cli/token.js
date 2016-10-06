@@ -1,18 +1,18 @@
 "use strict";
 /** @namespace Token **/
 
-const module_name       = 'Token';
-const BeameLogger       = require('../utils/Logger');
-const logger            = new BeameLogger(module_name);
-const CommonUtils       = require('../utils/CommonUtils');
-const BeameStore        = new (require('../services/BeameStoreV2'))();
-const AuthToken         = new (require('../services/AuthToken'))();
+const module_name   = 'Token';
+const BeameLogger   = require('../utils/Logger');
+const logger        = new BeameLogger(module_name);
+const CommonUtils   = require('../utils/CommonUtils');
+const BeameStore    = new (require('../services/BeameStoreV2'))();
+const AuthToken     = require('../services/AuthToken');
 
 function create(fqdn, data, callback) {
 	const cred = BeameStore.getCredential(fqdn);
 
 	if(!cred) {
-		callback(new Error(`Credentials for ${fqdn} not found`), null);
+		callback(`token create - Credentials for ${fqdn} not found`, null);
 		return;
 	}
 
@@ -27,9 +27,10 @@ function create(fqdn, data, callback) {
 
 create.toText = x=>x;
 
-// UNFINISHED
-function validate(token) {
-	const ret = AuthToken.validate(token);
+function validate(authToken) {
+	const tok = JSON.parse(new Buffer(authToken, 'base64').toString());
+	console.log(new AuthToken());
+	return AuthToken.validate(tok);
 }
 
 module.exports = {
