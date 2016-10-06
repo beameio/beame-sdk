@@ -24,6 +24,8 @@ function create(fqdn, data, callback) {
 	CommonUtils.promise2callback(cred.signWithFqdn(fqdn, data).then(base64), callback);
 }
 
+create.toText = x=>x;
+
 module.exports = {
 	create
 };
