@@ -26,8 +26,6 @@ const config            = require('../../config/Config');
 const module_name       = config.AppModules.BeameCreds;
 const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger(module_name);
-// const directoryServices = new (require('../services/DirectoryServices'))();
-// const beameUtils        = require('../utils/BeameUtils');
 const CommonUtils       = require('../utils/CommonUtils');
 
 
@@ -60,13 +58,10 @@ function createWithToken(authToken, authSrvFqdn, name, email, callback) {
 	const store2 = new (require("../services/BeameStoreV2"))();
 
 	let cred = new (require('../services/Credential'))(store2),
-	     token = CommonUtils.parse(new Buffer(authToken, 'base64').toString());
+	    token = CommonUtils.parse(new Buffer(authToken, 'base64').toString());
 
-	cred.createEntityWithAuthServer(token, authSrvFqdn, name, email).then(metadata=> {
-		callback && callback(null, metadata)
-	}).catch(error=> {
-		callback && callback(error, null)
-	})
+	CommonUtils.promise2callback(cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email), callback);
+
 
 }
 createWithToken.toText = lineToText;
@@ -83,11 +78,7 @@ function createWithLocalCreds(parent_fqdn, name, email, callback) {
 
 	let cred = new (require('../services/Credential'))(store2);
 
-	cred.createEntityWithLocalCreds(parent_fqdn, name, email).then(metadata=> {
-		callback && callback(null, metadata)
-	}).catch(error=> {
-		callback && callback(error, null)
-	})
+	CommonUtils.promise2callback(cred.createEntityWithLocalCreds(parent_fqdn, name, email), callback);
 
 }
 createWithLocalCreds.toText = lineToText;
@@ -120,11 +111,7 @@ function updateMetadata(fqdn, name, email, callback){
 
 	let cred = new (require('../services/Credential'))(store2);
 
-	cred.updateMetadata(fqdn, name, email).then(metadata=> {
-		callback && callback(null, metadata)
-	}).catch(error=> {
-		callback && callback(error, null)
-	})
+	CommonUtils.promise2callback(cred.updateMetadata(fqdn, name, email), callback);
 }
 updateMetadata.toText = lineToText;
 
@@ -415,7 +402,5 @@ function signWithFqdn(fqdn, data, callback) {
 		return;
 	}
 
-	cred.signWithFqdn(fqdn, data)
-		.then(authToken => callback(null, authToken))
-		.catch(e => callback(e, null));
+	CommonUtils.promise2callback(cred.signWithFqdn(fqdn, data), callback);
 }

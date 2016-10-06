@@ -67,6 +67,15 @@ class CommonUtils {
 	static isObject(obj) {
 		return typeof obj === 'object';
 	}
+
+	static promise2callback(promise, callback) {
+		if(!callback) {
+			return;
+		}
+		promise
+			.then(data => callback(null, data))
+			.catch(error => callback(error, null));
+	}
 }
 
 module.exports = CommonUtils;
