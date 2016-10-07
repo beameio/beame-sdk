@@ -344,7 +344,7 @@ class Credential {
 		let rsaKey = this.getPublicKeyNodeRsa();
 		let status = rsaKey.verify(token.signedData, token.signature, "utf8", "base64");
 		if (status) {
-			logger.info(`signature signed by  ${token.signedBy} verified successful`);
+			logger.info(`signature signed by  ${token.signedBy} verified successfully`);
 		}
 		else {
 			logger.warn(`invalid signature signed by ${token.signedBy}`);

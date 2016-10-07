@@ -23,7 +23,7 @@
         },
         "AuthServerApi": {
             "RegisterEntity": {
-                "endpoint": "/node/auth/register"
+                    "endpoint": "/node/auth/register"
             }
         }
     }
