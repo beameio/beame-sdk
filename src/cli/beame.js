@@ -43,8 +43,8 @@ var parametersSchema = {
 	'parent_fqdn':        {required: false},
 	'dataToSign':         {required: false},
 	'authSrvFqdn':        {required: false},
-	'authToken':          {required: true},
-	'token':              {required: true},
+	'authToken':          {required: true, base64:true},
+	'token':              {required: true, base64:true},
 	'name':               {required: false},
 	'email':              {required: false}
 };
@@ -115,7 +115,16 @@ function main() {
 				logger.fatal("Command '" + cmdName + ' ' + subCmdName + "' - argument '" + paramName + "' must be one of: " + parametersSchema[paramName].options.join(','));
 			}
 		}
-		return argv[paramName];
+
+		var arg = argv[paramName];
+
+		// Optionally decode base64-encoded argument.
+		// Do not decode what appears to be JSON.
+		if(parametersSchema[paramName].base64 && arg[0] != '{' && arg[0] != '"') {
+			arg = new Buffer(arg, 'base64').toString();
+		}
+
+		return arg;
 	});
 
 	/**

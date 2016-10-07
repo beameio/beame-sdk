@@ -70,7 +70,7 @@ F create_token() {
 
 doc Emulate site registration
 F register_on_site() {
-	registration = ``curl -s -X POST -H "X-BeameAuthToken: $token" "https://${ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN}/test/sdk/register" -d "email=$entity_email"``
+	global registration = ``curl -s -X POST -H "X-BeameAuthToken: $token" "https://${ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN}/test/sdk/register" -d "email=$entity_email"``
 	registration is not Hash throws TestFail("Registration must be hash, not '$entity'")
 	'authToken' not in registration throws TestFail("Registration has no authToken")
 	registration
@@ -78,7 +78,7 @@ F register_on_site() {
 
 doc Creates an entity
 F create_entity() {
-	entity = ``$BEAME_BIN creds getCreds --token $token --format json``
+	global entity = ``$BEAME_BIN creds getCreds --token ${registration.authToken.encode_json()} --format json``
 	entity is not Hash throws TestFail("Entity must be hash, not '$entity'")
 	entity.parent_fqdn != ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN throws TestFail("Parent FQDN mismatch")
 	entity

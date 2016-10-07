@@ -50,7 +50,7 @@ function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 	}
 
 	let cred      = new (require('../services/Credential'))(new BeameStore()),
-	    authToken = token ? CommonUtils.parse(new Buffer(token, 'base64').toString()) : null,
+	    authToken = token ? CommonUtils.parse(token) : null,
 	    promise   = token ? cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email) : cred.createEntityWithLocalCreds(fqdn, name, email);
 
 	CommonUtils.promise2callback(promise, callback);

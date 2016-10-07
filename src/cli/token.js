@@ -25,7 +25,7 @@ create.toText = token => new Buffer(CommonUtils.stringify(token,false)).toString
 
 
 function validate(authToken) {
-	const tok = CommonUtils.parse(new Buffer(authToken, 'base64').toString());
+	const tok = CommonUtils.parse(authToken);
 	return AuthToken.validate(tok);
 }
 
