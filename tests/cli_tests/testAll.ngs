@@ -30,6 +30,8 @@ TEST_DATA = 'abcd0123~!@#'
 CREDS_FILE = "/tmp/beame-cli-test-creds-${time()}"
 
 entity = null
+entity_email = "sdk-test-${time()}@example.com"
+registration = null
 exit_code = 0
 
 { type TestFail(Error) }
@@ -61,9 +63,17 @@ F copy_to_store() {
 
 doc Creates token needed for signing request for level 0 entity
 F create_token() {
-	global token = ``$BEAME_BIN token create --fqdn $BEAME_DEV_AUTH_FQDN --data NONE``
+	global token = ``$BEAME_BIN token create --fqdn $BEAME_DEV_AUTH_FQDN --data NONE --format json``
 	assert(token is Str, "Token expected to be a string")
 	token
+}
+
+doc Emulate site registration
+F register_on_site() {
+	registration = ``curl -s -X POST -H "X-BeameAuthToken: $token" "https://${ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN}/test/sdk/register" -d "email=$entity_email"``
+	registration is not Hash throws TestFail("Registration must be hash, not '$entity'")
+	'authToken' not in registration throws TestFail("Registration has no authToken")
+	registration
 }
 
 doc Creates an entity
@@ -87,7 +97,8 @@ do_test("Run without arguments", {
 	"OK"
 })
 do_test("Copy $BEAME_DEV_AUTH_FQDN into store", copy_to_store)
-do_test("Create token for test L0 entity", create_token)
+do_test("Create token for an entity", create_token)
+do_test("Emulate site registration", register_on_site)
 do_test("Create test entity", create_entity);
 
 

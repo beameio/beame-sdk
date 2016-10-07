@@ -18,16 +18,11 @@ function create(fqdn, data, callback) {
 		return;
 	}
 
-	function base64(token) {
-		return new Promise((resolve) => {
-			resolve(new Buffer(CommonUtils.stringify(token,false)).toString('base64'));
-		});
-	}
-
-	CommonUtils.promise2callback(cred.signWithFqdn(fqdn, data).then(base64), callback);
+	CommonUtils.promise2callback(cred.signWithFqdn(fqdn, data), callback);
 }
 
-create.toText = x=>x;
+create.toText = token => new Buffer(CommonUtils.stringify(token,false)).toString('base64');
+
 
 function validate(authToken) {
 	const tok = CommonUtils.parse(new Buffer(authToken, 'base64').toString());
