@@ -44,7 +44,7 @@ var parametersSchema = {
 	'dataToSign':         {required: false},
 	'authSrvFqdn':        {required: false},
 	'authToken':          {required: true, base64:true},
-	'token':              {required: true, base64:true},
+	'token':              {required: false, base64:true},
 	'name':               {required: false},
 	'email':              {required: false}
 };
