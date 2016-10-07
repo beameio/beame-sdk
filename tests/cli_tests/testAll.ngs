@@ -30,7 +30,8 @@ TEST_DATA = 'abcd0123~!@#'
 CREDS_FILE = "/tmp/beame-cli-test-creds-${time()}"
 
 entity = null
-entity_email = "sdk-test-${time()}@example.com"
+entity_name = "sdk-test-${time()}"
+entity_email = "$entity_name@example.com"
 registration = null
 exit_code = 0
 
@@ -70,7 +71,7 @@ F create_token() {
 
 doc Emulate site registration
 F register_on_site() {
-	global registration = ``curl -s -X POST -H "X-BeameAuthToken: $token" "https://${ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN}/test/sdk/register" -d "email=$entity_email"``
+	global registration = ``curl -s -X POST -H "X-BeameAuthToken: $token" "https://${ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN}/test/sdk/register" -d "email=$entity_email&name=$entity_name"``
 	registration is not Hash throws TestFail("Registration must be hash, not '$entity'")
 	'authToken' not in registration throws TestFail("Registration has no authToken")
 	registration
@@ -80,7 +81,10 @@ doc Creates an entity
 F create_entity() {
 	global entity = ``$BEAME_BIN creds getCreds --token ${registration.authToken.encode_json()} --format json``
 	entity is not Hash throws TestFail("Entity must be hash, not '$entity'")
-	entity.parent_fqdn != ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN throws TestFail("Parent FQDN mismatch")
+	entity.get('parent_fqdn', null) throws TestFail("Entity has parent FQDN: ${entity.parent_fqdn}")
+	entity.level !=0 throws TestFail("Entity has non-zero level: ${entity.level}")
+	entity.email != entity_email throws TestFail("Entity email mismatch")
+	entity.name != entity_name throws TestFail("Entity name mismatch")
 	entity
 }
 
