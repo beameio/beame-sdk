@@ -1,18 +1,18 @@
 <img align="right" src="img/beame.png">
-_The Beame SDK allows you to establish a HTTPS session between two machines without public IPs, with no prior configuration. This SDK  allows you to create credentials and use them to identify machines. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for services that host credentials to require users to prove identity._
-
-[Click to Get Started Now!](https://registration.beameio.net/)
+_The Beame SDK allows you to establish a HTTPS session between machines without public IPs. This SDK  allows you to create credentials and use them to identify machines. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for services that host credentials to require users to prove identity._
+_Beame-SDK employs hierarchical structure. The most top level is the Layer-0 (L0) - network root. L1 considered child of L0. L0 may have any number of children (L1's), each of those, in turn, can have its own "children" L2's and so on. Any lower level "child" can be tracked, by cryptography, up to its L0 parent. This is the base for building proprietary chain of trust._  [Click to Get Started Now!](https://registration.beameio.net/)
 
 ## Common Uses for Beame SDK Network Infrastructure
 
 See the example folder to copy-paste and try it for yourself!
 
+ - Build your own networking application
+ - Define chain of trust for devices in your Beame-SDK based network
  - Multi-factor authentication
  - Check signatures of arbitrary data
  - Encrypt arbitrary data so that only a specified entity can decrypt it
  - Decrypt arbitrary data that was sent to one of the entities you own (encrypted with one of your public keys)
  - Sign arbitrary data with any of your certificates
- - Build your own networking application
  - Global, local, or hybrid socket.io chat over TLS
  - Patient ID in clinics using mobile phone
  - BYOD in local networks (access behind NAT)
@@ -50,12 +50,16 @@ NPM installed on your machine;
 for Mac: See the Mac instructions if current shell version does not support auto-completion.
 
 ## Installation Guide
-You will create three tiers of credentials (each with multiple components: a RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate). If you want to skip the intro, [jump directly to start!](#beame-cli)
+_If you already know how Beame-SDK is working and want to skip the intro, [jump directly to start!](#beame-cli)_
+### Beame-SDK proposes two options to start:
 
-1. First, generate [Developer credentials.](https://registration.beameio.net/)
-2. Second, generate application credentials. We call this level an Atom.
-3. Create your Client server credentials.  We call this level an Edge-Client.
-
+1. Create your own L0
+_You start by requesting a token at https://registration.beameio.net/. Completion of this step, following instructions that you can find below, will create highest level set of credentials._
+2. Use existing credentials to create new ones
+_You will use coresponding Beame-SDK cli command, as described below. As a result, you will create a new set of lower level credentials._
+<br>Whichever option you will choose, using Beame-SDK, you will create a full tier of credentials: a RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate.
+Creation of credentials by Beame-SDK, on any level, requires authorization. Beame-SDK is provided along with Auth-Server, that is built to generate encrypted, time-limited authorization tokens, that once validated, allow credentials reception.
+Enterprise clients, that wish to employ their own authorization policy, will integrate an appropriate Beame-SDK-API for token generation into their own environment. </br>
 Our extended demo ([see it here](#running-test-server)) has two features - chat, or file server:
  - To access the chat, just copy the URL to your browser. (By the way, you can freely send it to other people on other networks. The server is global and the TLS is real).
  - To access the file share function, open the `url/shared`.
