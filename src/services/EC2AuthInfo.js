@@ -2,6 +2,7 @@
 
 const request = require('request');
 const child_process = require('child_process');
+const CommonUtils            = require('../utils/CommonUtils');
 
 const URLS = {
 	doc: 'http://169.254.169.254/latest/dynamic/instance-identity/document',
@@ -31,20 +32,21 @@ class EC2AuthInfo {
 					outstandingRequestsCount--;
 					if(outstandingRequestsCount == 0) {
 						ret.sig = `-----BEGIN PKCS7-----\n${ret.sig}\n-----END PKCS7-----\n`;
-						resolve(JSON.stringify(ret));
+						resolve(CommonUtils.stringify(ret,false));
 					}
 				})
 			}
 		});
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	/**
 	 * @returns {Promise.<Boolean>}
 	 */
 	validate(info) {
 		return new Promise((resolve, reject) => {
 			const path = require('path');
-			child_process.execFile(path.join(__dirname, 'validate-ec2-auth-data.ngs'), [info], (error, stdout, stderr) => {
+			child_process.execFile(path.join(__dirname, 'validate-ec2-auth-data.ngs'), [info], (error) => {
 				if(error) {
 					reject(error);
 					return;
