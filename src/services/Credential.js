@@ -338,7 +338,7 @@ class Credential {
 	/**
 	 *
 	 * @param {SignatureToken} token
-	 * @returns {*}
+	 * @returns {boolean}
 	 */
 	checkSignatureToken(token) {
 		let rsaKey = this.getPublicKeyNodeRsa();

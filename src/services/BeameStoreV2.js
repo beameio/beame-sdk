@@ -97,8 +97,6 @@ class BeameStoreV2 {
 				this.fetch(fqdn).then(resolve).catch(reject);
 			}
 		);
-
-
 	}
 
 	addCredential(credential) {

@@ -1,9 +1,6 @@
 "use strict";
 /** @namespace Creds **/
 
-
-
-
 const Table = require('cli-table2');
 
 require('../../initWin');
@@ -168,40 +165,37 @@ shred.toText = lineToText;
  */
 
 function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
+	if (!targetFqdn) {
+		logger.fatal(`target fqdn required`);
+	}
+
 	const store = new BeameStore();
 
 	let creds = store.getCredential(fqdn);
-	if (creds && targetFqdn) {
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		let jsonCredentialObject = JSON.stringify(creds);
-		if (!jsonCredentialObject) {
-			logger.fatal(`Credentials for exporting ${fqdn} credentials are not found`);
-		}
 
-		let encryptedString;
+	if (creds) {
+		let jsonCredentialObject = CommonUtils.stringify(creds, false);
 		try {
-			encryptedString = encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
+			encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
 				if (payload) {
+					if (!file) {
+						console.log(CommonUtils.stringify(payload));
+					}
+					else {
+						let p = path.resolve(file);
+						fs.writeFileSync(p, payload);
+						return p;
+					}
 					return payload;
 				}
-				logger.error(`encryption failed`);
-				return null;
+				logger.fatal(`encryption failed`);
 			});
 		} catch (e) {
 			logger.error(`Could not encrypt with error `, e);
-			return null;
 		}
-
-		if (!file) {
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			console.log(JSON.stringify(encryptedString));
-		}
-		else {
-			let p = path.resolve(file);
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			fs.writeFileSync(p, JSON.stringify(encryptedString));
-			return p;
-		}
+	}
+	else {
+		logger.fatal(`Credentials for ${fqdn} not found`);
 	}
 }
 
@@ -214,33 +208,44 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
  */
 function importCredentials(file) {
 	const store = new BeameStore();
-	//noinspection ES6ModulesDependencies,NodeModulesDependencies
-	let data    = JSON.parse(fs.readFileSync(path.resolve(file)) + "");
-	let creds   = new (require('../services/Credential'))(store);
-	let encryptedCredentials;
 
-	if (data.signature) {
-		let sigStatus = creds.checkSignatureToken(data);
-		console.log(`Signature status is ${sigStatus}`);
-		if (!sigStatus) {
-			logger.fatal(`Import credentials signature missmatch ${data.signedBy}, ${data.signature}`);
+
+	let data    = CommonUtils.parse(fs.readFileSync(path.resolve(file)) + "");
+
+	store.find(data.signedBy).then(signingCreds=>{
+		let encryptedCredentials;
+
+		if (data.signature) {
+			let sigStatus = signingCreds.checkSignatureToken(data);
+			console.log(`Signature status is ${sigStatus}`);
+			if (!sigStatus) {
+				logger.fatal(`Import credentials signature missmatch ${data.signedBy}, ${data.signature}`);
+			}
+			encryptedCredentials = data.signedData;
+		} else {
+			encryptedCredentials = data;
 		}
-		encryptedCredentials = data.signedData;
-	} else {
-		encryptedCredentials = data;
-	}
-	//noinspection ES6ModulesDependencies,NodeModulesDependencies
-	let decrtypedCreds = decrypt(JSON.stringify(encryptedCredentials));
 
-	if (decrtypedCreds && decrtypedCreds.length) {
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		let parsedCreds = JSON.parse(decrtypedCreds);
+		let decryptedCreds = decrypt(CommonUtils.stringify(encryptedCredentials,false));
 
-		let importedCredential = new (require('../services/Credential.js'))(store);
-		importedCredential.initFromObject(parsedCreds);
-		importedCredential.saveCredentialsObject();
-		return `Successfully imported credentials ${importedCredential.fqdn}`;
-	}
+		if (decryptedCreds && decryptedCreds.length) {
+
+			let parsedCreds = CommonUtils.parse(decryptedCreds);
+
+			let importedCredential = new (require('../services/Credential.js'))(store);
+			importedCredential.initFromObject(parsedCreds);
+			importedCredential.saveCredentialsObject();
+			return `Successfully imported credentials ${importedCredential.fqdn}`;
+		}
+		}
+
+	).catch(error=>{
+		logger.error(error);
+		logger.fatal(`signing creds ${data.signedBy} not found`);
+	});
+
+
+
 }
 
 /**
@@ -350,7 +355,7 @@ function decrypt(data) {
 		let targetFqdn = encryptedMessage.encryptedFor;
 		let credential = store.getCredential(targetFqdn),
 		    payload    = credential.decrypt(encryptedMessage);
-		return `Decrypted payload is ${payload}`;
+		return payload;
 	} catch (e) {
 		logger.fatal("decrypt error ", e);
 		return null;
