@@ -353,9 +353,9 @@ function decrypt(data) {
 		}
 
 		let targetFqdn = encryptedMessage.encryptedFor;
-		let credential = store.getCredential(targetFqdn),
-		    payload    = credential.decrypt(encryptedMessage);
-		return payload;
+		let credential = store.getCredential(targetFqdn);
+
+		return credential.decrypt(encryptedMessage);
 	} catch (e) {
 		logger.fatal("decrypt error ", e);
 		return null;
