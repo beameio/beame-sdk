@@ -194,18 +194,18 @@ At any moment, using beame-sdk, you can see all credentials you currently own by
 
 The following commands are used for acquiring and manipulating certificates.
 
-* `beame creds show [--fqdn fqdn] [--format {text|json}]`
-* `beame creds list [--regex regex] [--format {text|json}]`
-* `beame creds getCreds [--token token] [--authSrvFqdn authSrvFqdn] [--fqdn fqdn] [--name name] [--email email] [--format {text|json}]`
-* `beame creds updateMetadata [--fqdn fqdn] [--name name] [--email email] [--format {text|json}]`
-* `beame creds shred [--fqdn fqdn] [--format {text|json}]`
-* `beame creds exportCredentials [--fqdn fqdn] --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]`
-* `beame creds importCredentials [--file file]`
-* `beame creds importLiveCredentials [--fqdn fqdn]`
-* `beame creds encrypt [--data data] [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]`
-* `beame creds decrypt [--data data]`
-* `beame creds sign --data data [--fqdn fqdn] [--format {text|json}]`
-* `beame creds checkSignature --data data`
+* `beame creds show --fqdn fqdn [--format {text|json}]` - _print details for specified hostname(fqdn)_
+* `beame creds list [--regex regex] [--format {text|json}]` - _list details of all credentials on this machine_
+* `beame creds getCreds [--token token] --authSrvFqdn authSrvFqdn [--fqdn fqdn] [--name name] [--email email] [--format {text|json}]` - _request new credentials from Beame; intended to be called in two ways: 1st - by copy-paste a [command](#quick-start) from registration email; 2nd - by providing local fqdn_:  `beame creds getCreds --fqdn x5lidev3ovw302bb.v1.d.beameio.net`
+* `beame creds updateMetadata --fqdn fqdn [--name name] [--email email] [--format {text|json}]` - _update your details for the specified fqdn_
+* `beame creds shred --fqdn fqdn [--format {text|json}]` - _shred credentials for specified fqdn_
+* `beame creds exportCredentials --fqdn fqdn --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]` - _encrypt specified credentials for particular target host_
+* `beame creds importCredentials --file file` - _decypt and import credentials contained in specified file_
+* `beame creds importLiveCredentials [--fqdn fqdn]` - _import non-Beame credentials to Beame store_
+* `beame creds encrypt --data data [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]` - _encrypt specified data with RSA public key for specific fqdn_
+* `beame creds decrypt --data data` - _decrypt data with local RSA private key_
+* `beame creds sign --data data [--fqdn fqdn] [--format {text|json}]` - _sign data with local private key_
+* `beame creds checkSignature --data data` - _check signature with public key for specified fqdn_
 
 ### Running test server
 
