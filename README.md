@@ -81,10 +81,12 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
 2.2 Run the command from the email you receive, it should look like:  
 `beame creds getCreds --token IntcInNpZ25lZERhdGFcIjp7XCJjcmVhdGVkX2F0XCI6MTQ3NTgzNTIwMyxcInZhbGlkX3RpbGxcIjoxNDc2MDA4MDAzLFwiZGF0YVwiOlwiNTZkYTg1MzdkYWMwMzE2YWY3ODVmNjU4YjkxYjU2lnbmF0dXJlXCI6XCJKM01PWEU5Qi9URU5FUm5qR2pFeUY1Yk9KOUJmK21zL0QvclJuSXlxOXNVY2ljYzdGWG5OUVNkaFhsM1kvbFN4Tkk5UGZqZCtubEZTbnN6N3Rmd1pqbGFINUMzaXFNRWdVa2huMnhnN09NMWppK3hoNHRIdjFrK0VYSTRFLzlCbmlrNkp2b3krT0NLRFBZcEJtZ0NFOTB5WWpkL0lLTWZNeEZEV21QYUZSUHhJcFQwRnJiTU13Vm9zQnB6SG5BYnNDdlorRHRrMVUvNjY5Vmp3eHFXa3ZUQmVrem9qRkJ1R29SWFZHUEVCdXpVcXdIL081RndPcDJEMEM3M1VHdjlzVEJteDRvSDNPbmQ2WXJJcEFyOXVOaXdCL2kvV0ZNa2NoUUlUaDFnc1dDY3BDNVo3ZzM1WFROK0l5enRIQUxnRFpFUWo2YTMwaFRKSG5Nb2NBVjBEQVE9PVwifSI= --authSrvFqdn asdfghjkl.qwertyuiop.v1.d.beameio.net`  
 3. Start your first HTTPS server by running `beame servers runHelloWorldServer`. It will print to your console something that looks like  
-`[2016-10-08 12:01:28] [SNIServer] INFO: starting server on qwertyuiop.v1.d.beameio.net`  
-`[2016-10-08 12:01:29] [BeameServer] INFO: Server started on qwertyuiop.v1.d.beameio.net`
+`[2016-10-08 12:01:28] [SNIServer] INFO: starting server on x5lidev3ovw302bb.v1.d.beameio.net`  
+`[2016-10-08 12:01:29] [BeameServer] INFO: Server started on x5lidev3ovw302bb.v1.d.beameio.net`
 
-You now have your public HTTPS server running. Just copy-paste the address to any web browser.
+You now have your public HTTPS server running. Just copy-paste the address to any web browser.  
+<img src="./img/helloworld.png" width="430" height="300"/>
+
 
 ## Mac System Requirements
 First ensure that your bash version is 4.3 or higher (`echo $BASH_VERSION`). If not - upgrade it.
