@@ -159,20 +159,10 @@ Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program 
 All routable nodes created with the Beame SDK are clients of Beame services. From the application perspective, they are fully functional HTTPS servers.
 
 ### Elements of the High Level Architecture
- - *Local Client* - hosts that are created with local IP
- - *Edge Client* - hosts that are accessible from the Internet, clients of *Edge Servers*
- - *Clients* - actual end users (mobile devices)
- - *Customers* - owners of networks created with Beame Infrastructure (described below)
- - *Developer* - holder of credentials to directly request Beame provision services
- - *Atom* - application under *developer*, used as a master node for networks built with Beame Infrastructure
-
-## Beame Network Infrastructure
-
-Actions to employ:
- - *Developer* registration using [email-based procedure](https://registration.beameio.net/)
- - Deployment of *Atom* as entity to control access permissions for all devices intended to be a part of the network (customers and clients)
- - Deployment of *Customer Edge Clients*. Each of the hosts, created on this step, shall be used as a Customer’s provisioning entry point. Any *client* that needs to be allowed into the network must undergo registration procedure as described below
- - Provisioning *clients* into *Customer*’s network
+ - *Auth-Server* - Server generating authorization tokens; hosted in cloud and maintained by Beame
+ - *L0 client* - developer level of credentials; publicly accessible host
+ - *L1, L2 clients* - lower level of credentials; publicly accessible hosts
+ - *Edge Server* - maintained by Beame transparent proxy servers
 
 ## Custom Provisioning Workflow
 
