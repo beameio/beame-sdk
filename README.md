@@ -43,11 +43,6 @@ See the example folder to copy-paste and try it for yourself!
 2. Generate credentials and assign your own meaning to them (identity);
 3. Deploy services that are accessible from the Internet or only from your LAN without network reconfiguration.
 
-## Here's how:
-1. You will get a unique hostname under the Beame subdomain;
-2. You will generate your private key locally;
-3. You will get a matching certificate from Beame (signed by a root CA).
-
 :heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
  
 ## System Requirements
@@ -60,28 +55,34 @@ _If you already know how Beame-SDK is working and want to skip the intro, [jump 
 ### Beame-SDK proposes two options to start:
 
 1. Create your own L0
-_You start by requesting a token at https://registration.beameio.net/. Completion of this step, following instructions that you can find below, will create highest level set of credentials._
+_You start by requesting a token at https://registration.beameio.net/. Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
 2. Use existing credentials to create new ones
 _You will use coresponding Beame-SDK cli command, as described below. As a result, you will create a new set of lower level credentials._  
 
 Whichever option you will choose, using Beame-SDK, you will create a full tier of credentials: a RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate.
 Creation of credentials by Beame-SDK, on any level, requires authorization. Beame-SDK is provided along with Auth-Server, that is built to generate encrypted, time-limited authorization tokens, that once validated, allow credentials reception.
 Enterprise clients, that wish to employ their own authorization policy, will integrate an appropriate Beame-SDK-API for token generation into their own environment.  
+
+## Here's how:
+1. You will get auth-token or already have a set of Beame credentials;
+2. You will get a unique hostname under the Beame subdomain;
+3. You will generate your private key locally;
+4. You will get a matching certificate from Beame (signed by a root CA).
+
 Our extended demo ([see it here](#running-test-server)) has two features - chat, or file server:
  - To access the chat, just copy the URL to your browser. (By the way, you can freely send it to other people on other networks. The server is global and the TLS is real).
  - To access the file share function, open the `url/shared`.
 
 ## Quick Start
 
-### Light Configuration *coming soon 
-1. Install the Beame SDK by running `npm install -g beame-sdk` and this will quickly output a URL that will be a hostname for your first HTTPS Server with your new Beame Credentials. 
-
-### Full Configuration: 
-
-1. Register as a developer, by submitting your email at [https://registration.beameio.net/](#https://registration.beameio.net/) 
-2. Install the Beame SDK by running `npm install -g beame-sdk`
-3. Copy the unique activation command from the email you receive, it should look like: `beame creds createDeveloper --developerFqdn ndfxfyerylk6uvra.v1.beameio.net --uid 1d138bfc-4a37-48e7-a60d-0190037fda5f`
-4. Start your first HTTPS server by running `beame servers startFirstBeameNode`. It should print to your console something that looks like `Server started on https://fdddr5ggsyzhk6m8.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net this is a publicly accessible address`
+1. Request authorization token, by submitting a form at [https://registration.beameio.net/](#https://registration.beameio.net/) 
+2. Follow instructions from the registration email, that you will receive as a result of step 1  
+2.1 Install the Beame SDK by running `npm install -g beame-sdk`  
+2.2 Run the command from the email you receive, it should look like:  
+`beame creds getCreds --token IntcInNpZ25lZERhdGFcIjp7XCJjcmVhdGVkX2F0XCI6MTQ3NTgzNTIwMyxcInZhbGlkX3RpbGxcIjoxNDc2MDA4MDAzLFwiZGF0YVwiOlwiNTZkYTg1MzdkYWMwMzE2YWY3ODVmNjU4YjkxYjU2lnbmF0dXJlXCI6XCJKM01PWEU5Qi9URU5FUm5qR2pFeUY1Yk9KOUJmK21zL0QvclJuSXlxOXNVY2ljYzdGWG5OUVNkaFhsM1kvbFN4Tkk5UGZqZCtubEZTbnN6N3Rmd1pqbGFINUMzaXFNRWdVa2huMnhnN09NMWppK3hoNHRIdjFrK0VYSTRFLzlCbmlrNkp2b3krT0NLRFBZcEJtZ0NFOTB5WWpkL0lLTWZNeEZEV21QYUZSUHhJcFQwRnJiTU13Vm9zQnB6SG5BYnNDdlorRHRrMVUvNjY5Vmp3eHFXa3ZUQmVrem9qRkJ1R29SWFZHUEVCdXpVcXdIL081RndPcDJEMEM3M1VHdjlzVEJteDRvSDNPbmQ2WXJJcEFyOXVOaXdCL2kvV0ZNa2NoUUlUaDFnc1dDY3BDNVo3ZzM1WFROK0l5enRIQUxnRFpFUWo2YTMwaFRKSG5Nb2NBVjBEQVE9PVwifSI= --authSrvFqdn asdfghjkl.qwertyuiop.v1.d.beameio.net`  
+3. Start your first HTTPS server by running `beame servers runHelloWorldServer`. It will print to your console something that looks like  
+`[2016-10-08 12:01:28] [SNIServer] INFO: starting server on qwertyuiop.v1.d.beameio.net`  
+`[2016-10-08 12:01:29] [BeameServer] INFO: Server started on qwertyuiop.v1.d.beameio.net`
 
 You now have your public HTTPS server running. Just copy-paste the address to any web browser.
 
@@ -154,7 +155,7 @@ Using "Visual C++ 2015 x64 Native Build Tools Command Prompt" under `C:\Program 
 
 ![high level architecture](img/SDKbuildingBlocks.jpg)
 
-All routable nodes created with the Beame SDK are clients of Beame services. From the application perspective, they are HTTPS servers.
+All routable nodes created with the Beame SDK are clients of Beame services. From the application perspective, they are fully functional HTTPS servers.
 
 ### Elements of the High Level Architecture
  - *Local Client* - hosts that are created with local IP
