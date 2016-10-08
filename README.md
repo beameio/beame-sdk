@@ -48,9 +48,9 @@ See the example folder to copy-paste and try it for yourself!
 _If you already know how Beame-SDK is working and want to skip the intro, [jump directly to start!](#beame-cli)_
 ### Beame-SDK proposes two options to start:
 
-1. Create your own L0
+1. Create your own L0  
 _You start by requesting a token at https://registration.beameio.net/. Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
-2. Use existing credentials to create new ones
+2. Use existing credentials to create new ones  
 _You will use coresponding Beame-SDK cli command, as described below. As a result, you will create a new set of lower level credentials._  
 
 Whichever option you will choose, using Beame-SDK, you will create a full tier of credentials: a RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate.
@@ -68,8 +68,8 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
  - To access the file share function, open the `url/shared`.
 
 ## Quick Start
-
-1. Request authorization token, by submitting a form at [https://registration.beameio.net/](#https://registration.beameio.net/) 
+_Here you will find the instructions, how to create the very first, L0 Beame credentials. In order to request L1 and below, see description of [CLI Credentials getCreds](#credentials)  below._  
+1. Request authorization token, by submitting a form at [https://registration.beameio.net/](#https://registration.beameio.net/)  
 2. Follow instructions from the registration email, that you will receive as a result of step 1  
 2.1 Install the Beame SDK by running `npm install -g beame-sdk`  
 2.2 Run the command from the email you receive, it should look like:  
