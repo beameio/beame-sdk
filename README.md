@@ -178,9 +178,9 @@ The custom provisioning process uses the *Authorization Server* as single author
 ![provisioning flowchart](img/clientProvisionFlowchart.jpg)
 
 ### There are three interleaved flows in the provisioning process:
- - *CPS flow* - process takes place on the *Customer* provisioning station, controls the whole process;
- - *Matching/Auth flow* - background process controlled by Customer’s *Matching/Authorization server*;
- - *Client flow* - process that takes place on the mobile device. Requires corresponding mobile Beame SDK services.
+ - *Clerk Station Flow* - process takes place on the *Customer* provisioning station, controls the whole process;
+ - *Matching/Auth Flow* - background process controlled by Customer’s *Matching/Authorization server*;
+ - *Client Flow* - process that takes place on the mobile device. Requires corresponding mobile Beame SDK services.
 
 # Mastering the Beame-SDK
 
@@ -201,11 +201,11 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame creds shred --fqdn fqdn [--format {text|json}]` - _shred credentials for specified fqdn_
 * `beame creds exportCredentials --fqdn fqdn --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]` - _encrypt specified credentials for particular target host_
 * `beame creds importCredentials --file file` - _decypt and import credentials contained in specified file_
-* `beame creds importLiveCredentials [--fqdn fqdn]` - _import non-Beame credentials to Beame store_
-* `beame creds encrypt --data data [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]` - _encrypt specified data with RSA public key for specific fqdn_
-* `beame creds decrypt --data data` - _decrypt data with local RSA private key_
-* `beame creds sign --data data [--fqdn fqdn] [--format {text|json}]` - _sign data with local private key_
-* `beame creds checkSignature --data data` - _check signature with public key for specified fqdn_
+* `beame creds importLiveCredentials --fqdn fqdn` - _import credentials of any public domain to Beame store, you can see imported credential by calling:_ `beame creds list`
+* `beame creds encrypt --data data [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]` - _encrypt specified data with RSA public key for specific fqdn; output is a json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of data hash_
+* `beame creds decrypt --data data` - _decrypt data (json string of specific format) with local RSA private key, entity that data was encrypted for, is specified in appropriate field in provided data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `beame creds sign --data data --fqdn fqdn [--format {text|json}]` - _sign provided data with private key of specified fqdn, output is json in base64 format_
+* `beame creds checkSignature --data data` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
 
 ### Running test server
 
