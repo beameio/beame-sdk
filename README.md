@@ -168,19 +168,19 @@ All routable nodes created with the Beame SDK are clients of Beame services. Fro
 
 ![provisioning workflow](img/ProvisioningClient.jpg)
 
-*CMPS* (Customer Managed Provisioning Server) credentials are pinned in the *Atom*, during *CMPS* deployment, prior to the first run of the service.
+*CPS* (Customer-managed Provisioning Server) credentials are pinned in the *Authorization Server*, during *CPS* deployment, prior to the first run of the service.
 
-The custom provisioning process requires *Customer* to deploy *Edge Clients* (*CMPS*s) with corresponding permissions under Customer's internal security policy.
+The custom provisioning process requires *Customer* to deploy *CPS*s and *Matching/Auth* servers with corresponding permissions under Customer's internal security policy.
 
-The custom provisioning process uses the *Atom* as single authorization point.
+The custom provisioning process uses the *Authorization Server* as single authorization point.
 
 ## Custom Client Provisioning Flow Chart
 
 ![provisioning flowchart](img/clientProvisionFlowchart.jpg)
 
 ### There are three interleaved flows in the provisioning process:
- - *CMPS flow* - process takes place on the *Customer* provisioning station, controls the whole process;
- - *Atom flow* - background process controlled by Customer’s *Atom*;
+ - *CPS flow* - process takes place on the *Customer* provisioning station, controls the whole process;
+ - *Matching/Auth flow* - background process controlled by Customer’s *Matching/Authorization server*;
  - *Client flow* - process that takes place on the mobile device. Requires corresponding mobile Beame SDK services.
 
 # Mastering the Beame-SDK
