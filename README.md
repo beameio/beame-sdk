@@ -1,7 +1,26 @@
 <img align="right" src="img/beame.png">
 _The Beame SDK allows you to establish a HTTPS session between machines without public IPs. This SDK  allows you to create credentials and use them to identify machines. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for services that host credentials to require users to prove identity._  
-_Beame-SDK employs hierarchical structure. The most top level is the Layer-0 (L0) - network root. L1 considered child of L0. L0 may have any number of children (L1's), each of those, in turn, can have its own "children" L2's and so on. Any lower level "child" can be tracked, by cryptography, up to its L0 parent. This is the base for building proprietary chain of trust._  
-[Click to Get Started Now!](https://registration.beameio.net/)
+[Click to Get Started Now!](https://registration.beameio.net/)  
+
+
+### Table of Contents
+ - [Beame SDK Networking basics](#beame-sdk-networking-basics)
+ - [Common Use for Beame SDK Infrastructure](#common-uses-for-beame-sdk-network-infrastructure)
+ - [System Requirements](#system-requirements)
+ - [Installation Guide](#installation-guide)
+ - [Quick Start](#quick-start)
+ - [Getting Started - Mac](#mac-system-requirements)
+ - [Getting Started - Windows](#windows-system-requirements)
+ - [High Level Architecture](#high-level-architecture)
+ - [Beame Network Infrastructure](#beame-network-infrastructure)
+ - [Custom Provisioning Workflow](#custom-provisioning-workflow)
+ - [Custom Client Provisioning Flow Chart](#custom-client-provisioning-flow-chart)
+ - [Beame CLI (credentials, running test server, encryption)](#beame-cli)
+ - [Beame NodeJS API](#beame-nodejs-api)
+ - [Examples of full-stack of credentials and https server with express support](#sample-https-server)
+
+## Beame SDK Networking basics
+_Beame-SDK, by design, provides full set of tools to implement fully functional, secure private network. Beame-SDK employs hierarchical network structure. The most top level is the Layer-0 (L0) - the network root. L1 is created underneath L0 and considered "child" of L0. L0 may have any number of "children" (L1's), each of those, in turn, can have its own "children" L2's and so on. Any lower level "child" can be tracked, by cryptography, up to its L0 "parent". This is the base for building a private network with proprietary chain of trust._  
 
 ## Common Uses for Beame SDK Network Infrastructure
 
@@ -28,20 +47,6 @@ See the example folder to copy-paste and try it for yourself!
 1. You will get a unique hostname under the Beame subdomain;
 2. You will generate your private key locally;
 3. You will get a matching certificate from Beame (signed by a root CA).
-
-### Table of Contents
- - [System Requirements](#system-requirements)
- - [Installation Guide](#installation-guide)
- - [Quick Start](#quick-start)
- - [Getting Started - Mac](#mac-system-requirements)
- - [Getting Started - Windows](#windows-system-requirements)
- - [High Level Architecture](#high-level-architecture)
- - [Beame Network Infrastructure](#beame-network-infrastructure)
- - [Custom Provisioning Workflow](#custom-provisioning-workflow)
- - [Custom Client Provisioning Flow Chart](#custom-client-provisioning-flow-chart)
- - [Beame CLI (credentials, running test server, encryption)](#beame-cli)
- - [Beame NodeJS API](#beame-nodejs-api)
- - [Examples of full-stack of credentials and https server with express support](#sample-https-server)
 
 :heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
  
