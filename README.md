@@ -45,11 +45,6 @@ See the example folder to copy-paste and try it for yourself!
 
 :heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod` branch](https://github.com/beameio/beame-sdk/tree/prod).**
  
-## System Requirements
-Mac OS or Windows 8.1 (or higher);
-NPM installed on your machine;
-for Mac: See the Mac instructions if current shell version does not support auto-completion.
-
 ## Installation Guide
 _If you already know how Beame-SDK is working and want to skip the intro, [jump directly to start!](#beame-cli)_
 ### Beame-SDK proposes two options to start:
@@ -87,8 +82,12 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
 You now have your public HTTPS server running. Just copy-paste the address to any web browser.  
 <img src="./img/helloworld.png" width="430" height="300"/>
 
+## System Requirements
+Mac OS or Windows 8.1 (or higher);
+NPM installed on your machine;
+for Mac: See the Mac instructions below, if current shell version does not support auto-completion.
 
-## Mac System Requirements
+### Mac System Requirements
 First ensure that your bash version is 4.3 or higher (`echo $BASH_VERSION`). If not - upgrade it.
 Take care to replace 4.3.46 from snippets below by your new bash version:
 ```
@@ -115,7 +114,7 @@ source /usr/local/lib/node_modules/beame-sdk/src/cli/completion.sh
 ```
 Open new terminal and begin using beame-sdk cli with auto-completion.
 
-## Windows System Requirements
+### Windows System Requirements
 
 Before running `npm install -g beame-sdk` please make sure you have OpenSSL installed in `C:\OpenSSL-Win64` . If you you already have OpenSSL installed at that location, skip the instructions below and just issue `npm install -g beame-sdk`. If you don't have OpenSSL in `C:\OpenSSL-Win64`, one of the possible ways of installing OpenSSL is described below (Install Visual C++ Build Tools and Python 2.7, Upgrade NPM, Install Perl, Install OpenSSL). The procedure was tested on Microsoft Windows Server 2012 R2 Standard and Windows 10. We recommend to use your “Windows PowerShell” and run it with administrator rights for the following commands:
 
