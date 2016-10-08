@@ -12,7 +12,6 @@ _The Beame SDK allows you to establish a HTTPS session between machines without 
  - [Getting Started - Mac](#mac-system-requirements)
  - [Getting Started - Windows](#windows-system-requirements)
  - [High Level Architecture](#high-level-architecture)
- - [Beame Network Infrastructure](#beame-network-infrastructure)
  - [Custom Provisioning Workflow](#custom-provisioning-workflow)
  - [Custom Client Provisioning Flow Chart](#custom-client-provisioning-flow-chart)
  - [Beame CLI (credentials, running test server, encryption)](#beame-cli)
@@ -189,25 +188,29 @@ The custom provisioning process uses the *Authorization Server* as single author
 
 If you have completed the ["Quick Start"](#quick-start) above, and know how your future application will look, you can feel free to use all of what's described below.
 At any moment, using beame-sdk, you can see all credentials you currently own by running:
- - `beame creds show`
+ - `beame creds list`
 
-### CLI - credentials
+### Credentials
 
 The following commands are used for acquiring and manipulating certificates.
 
-* `beame creds list [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - list certificates
-* `beame creds show [--type {developer|atom|edgeclient}] [--fqdn fqdn] [--format {text|json}]` - show certificate details
-* `beame creds createAtom --developerFqdn developerFqdn --atomName atomName [--format {text|json}]` - create *atom* entity under current *developer*
-* `beame creds createEdgeClient --atomFqdn atomFqdn [--format {text|json}]` - create *edge client* entity under the given *atom*
-* `beame creds createLocalClient --atomFqdn atomFqdn [--count count] --edgeClientFqdn edgeClientFqdn [--format {text|json}]` - create *local client* entity under the given atom paired to existing *edge client*
-* `beame creds renew [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
-* `beame creds purge [--type {developer|atom|edgeclient}] [--fqdn fqdn]`
+* `beame creds show [--fqdn fqdn] [--format {text|json}]`
+* `beame creds list [--regex regex] [--format {text|json}]`
+* `beame creds getCreds [--token token] [--authSrvFqdn authSrvFqdn] [--fqdn fqdn] [--name name] [--email email] [--format {text|json}]`
+* `beame creds updateMetadata [--fqdn fqdn] [--name name] [--email email] [--format {text|json}]`
+* `beame creds shred [--fqdn fqdn] [--format {text|json}]`
+* `beame creds exportCredentials [--fqdn fqdn] --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]`
+* `beame creds importCredentials [--file file]`
+* `beame creds importLiveCredentials [--fqdn fqdn]`
+* `beame creds encrypt [--data data] [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]`
+* `beame creds decrypt [--data data]`
+* `beame creds sign --data data [--fqdn fqdn] [--format {text|json}]`
+* `beame creds checkSignature --data data`
 
 ### Running test server
 
-* `beame servers launchHelloWorldServer --edgeClientFqdn edgeClientFqdn` - run a "Hello World" HTTPS server for the specified hostname
-* `beame.js servers launchFirstChat [--sharedFolder sharedFolder]` - run chat example for first hostname in creds list
-* `beame.js servers launchChat --edgeClientFqdn edgeClientFqdn [--sharedFolder sharedFolder]` - run chat example for the specified hostname
+* `beame servers runHelloWorldServer --fqdn clientFQDN` - run a "Hello World" HTTPS server for the specified hostname
+* `beame.js servers runChatServer [--sharedFolder sharedFolder]` - run chat example for first hostname in creds list
 
 ### Beame.io CLI - encryption
 
