@@ -33,6 +33,7 @@ class CommonUtils {
 			return typeof obj == "object" ? obj : JSON.parse(obj);
 		}
 		catch (error) {
+			console.error(`Failed to parse data:`,error);
 			return null;
 		}
 

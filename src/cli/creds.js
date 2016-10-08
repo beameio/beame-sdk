@@ -295,25 +295,25 @@ function importLiveCredentials(fqdn) {
 /**
  * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
  * @public
- * @method Crypto.encrypt
+ * @method Creds.encrypt
  * @param {String|Object} data - data to encrypt
- * @param {String} fqdn - entity to encrypt for
+ * @param {String} targetFqdn - entity to encrypt for
  * @param {String} signingFqdn
  * @param {Function} callback
  */
-function encrypt(data, fqdn, signingFqdn, callback) {
+function encrypt(data, targetFqdn, signingFqdn, callback) {
 
 	function _encrypt() {
 		return new Promise((resolve, reject) => {
 				const store = new BeameStore();
-				store.find(fqdn).then(targetCredential=> {
+				store.find(targetFqdn).then(targetCredential=> {
 					if (!targetCredential) {
 						logger.fatal(`Could not find target credential (public key to encrypt for)`);
 					}
 
 					try {
 						let data2Encrypt = CommonUtils.isObject(data) ? CommonUtils.stringify(data, false) : data,
-						    token        = targetCredential.encrypt(fqdn, data2Encrypt, signingFqdn);
+						    token        = targetCredential.encrypt(targetFqdn, data2Encrypt, signingFqdn);
 
 						resolve(CommonUtils.stringify(token, false));
 					}
@@ -333,7 +333,7 @@ encrypt.toText = x=>x;
 /**
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
  * @public
- * @method Crypto.decrypt
+ * @method Creds.decrypt
  * @param {String} data - data to encrypt
  */
 function decrypt(data) {
@@ -344,7 +344,7 @@ function decrypt(data) {
 		let encryptedMessage = CommonUtils.parse(data);
 
 		if (!encryptedMessage) {
-			logger.fatal(`invalid data`);
+			logger.fatal(`invalid data: ${data}`);
 		}
 
 		logger.debug('message token parsed', encryptedMessage);
@@ -365,7 +365,7 @@ function decrypt(data) {
 /**
  * Signs given data. You must have private key of the fqdn.
  * @public
- * @method Crypto.sign
+ * @method Creds.sign
  * @param {String} data - data to sign
  * @param {String} fqdn - sign as this entity
  * @returns {String|null}
@@ -385,7 +385,7 @@ sign.toText = x=>x;
 /**
  * Checks signature.
  * @public
- * @method Crypto.checkSignature
+ * @method Creds.checkSignature
  * @param {String} data => based64 encoded Signature Token
  * @param {Function} callback
  */
