@@ -38,13 +38,14 @@ var parametersSchema = {
 	'localIp':            {required: false},
 	'localPort':          {required: true},
 	'sharedSecret':       {required: false},
+	'secret':             {required: false},
 	// createWithToken
 	'signWithFqdn':       {required: false},
 	'parent_fqdn':        {required: false},
 	'dataToSign':         {required: false},
 	'authSrvFqdn':        {required: false},
-	'authToken':          {required: true, base64:true},
-	'token':              {required: false, base64:true},
+	'authToken':          {required: true, base64: true},
+	'token':              {required: false, base64: true},
 	'name':               {required: false},
 	'email':              {required: false}
 };
@@ -120,7 +121,7 @@ function main() {
 
 		// Optionally decode base64-encoded argument.
 		// Do not decode what appears to be JSON.
-		if(parametersSchema[paramName].base64 && arg[0] != '{' && arg[0] != '"') {
+		if (parametersSchema[paramName].base64 && arg[0] != '{' && arg[0] != '"') {
 			arg = new Buffer(arg, 'base64').toString();
 		}
 
