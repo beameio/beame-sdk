@@ -213,16 +213,14 @@ The following commands are used for acquiring and manipulating certificates.
 
 ### Running test server
 
-* `beame servers runHelloWorldServer --fqdn clientFQDN` - run a "Hello World" HTTPS server for the specified hostname
-* `beame.js servers runChatServer [--sharedFolder sharedFolder]` - run chat example for first hostname in creds list
+* `beame servers runHelloWorldServer --fqdn clientFQDN` - _run a "Hello World" HTTPS server for the specified hostname_
+* `beame.js servers runChatServer [--sharedFolder sharedFolder]` - _run chat example for first hostname in creds list_
 
 ### Beame.io CLI - encryption
 
-* `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity can decrypt it
-* `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be the owner of the given entity
-* `beame crypto sign [--data data] [--fqdn fqdn]` - signs the given data as the specified entity
-* `beame crypto _checkSignature [--fqdn fqdn] [--data data] --signature signature` - verifies the correctness of the signature
-
+* `beame crypto aesEncrypt --data data [--sharedSecret sharedSecret]` - _encrypt given data with symmetric key; if not provided, the key is generated and provided in output json string along with IV; new IV is generated each time aesEncrypt is called_
+* `beame crypto aesDecrypt --data data` - _decrypt 'AES128CBC' value in given data, with key and IV contained in 'SharedCipher' and 'IV' data fields respectively_
+  
 ## Beame NodeJS API
 [Extended JsDoc generated documentation - here](https://beameio.github.io/beame-sdk/index.html)
 
