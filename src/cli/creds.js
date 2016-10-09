@@ -238,7 +238,7 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
  * @param {String} file - path to file with encrypted credentials
  * @returns {String}
  */
-function importCredentials(file) {
+function importCredentials(file, callback) {
 
 	if (!file) {
 		logger.fatal(`path to file for saving credentials required`);
@@ -264,12 +264,14 @@ function importCredentials(file) {
 				let importedCredential = new Credential(store);
 				importedCredential.initFromObject(parsedCreds);
 				importedCredential.saveCredentialsObject();
-				return true;
+				callback(null, true);
+				return;
 			}
 		}
 		catch (error) {
-			logger.fatal(BeameLogger.formatError(error));
+			callback(error, null);
 		}
+		return;
 	};
 
 	try {
@@ -285,27 +287,28 @@ function importCredentials(file) {
 						let sigStatus = signingCreds.checkSignatureToken(data);
 						console.log(`Signature status is ${sigStatus}`);
 						if (!sigStatus) {
-							logger.fatal(`Import credentials signature mismatch ${data.signedBy}, ${data.signature}`);
+							callback(`Import credentials signature mismatch ${data.signedBy}, ${data.signature}`, null);
+							return;
 						}
 						encryptedCredentials = data.signedData;
 					} else {
 						encryptedCredentials = data;
 					}
 
-					return _import(encryptedCredentials);
+					_import(encryptedCredentials);
 
 				}
 			).catch(error=> {
-				logger.error(error);
-				logger.fatal(`signing creds ${data.signedBy} not found`);
+				callback(error, null);
+				return;
 			});
 		}
 		else {
-			return _import(data.signature || data);
+			_import(data.signature || data);
 		}
 	}
 	catch (error) {
-		logger.fatal(BeameLogger.formatError(error));
+		callback(error, null);
 	}
 
 
