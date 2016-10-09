@@ -11,7 +11,7 @@ const BeameLogger = require('../utils/Logger');
 const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require("../services/BeameStoreV2");
-
+const Credential  = require('../services/Credential');
 const path = require('path');
 const fs   = require('fs');
 
@@ -46,7 +46,7 @@ function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 		return;
 	}
 
-	let cred      = new (require('../services/Credential'))(new BeameStore()),
+	let cred      = new Credential(new BeameStore()),
 	    authToken = token ? CommonUtils.parse(token) : null,
 	    promise   = token ? cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email) : cred.createEntityWithLocalCreds(fqdn, name, email);
 
@@ -63,9 +63,7 @@ getCreds.toText = lineToText;
  * @param {Function} callback
  */
 function updateMetadata(fqdn, name, email, callback) {
-	const store = new BeameStore();
-
-	let cred = new (require('../services/Credential'))(store);
+	let cred = new Credential(new BeameStore());
 
 	CommonUtils.promise2callback(cred.updateMetadata(fqdn, name, email), callback);
 }
