@@ -306,7 +306,7 @@ function importLiveCredentials(fqdn) {
  */
 function encrypt(data, targetFqdn, signingFqdn, callback) {
 
-	if (typeof data != 'string') {
+	if(typeof data != 'string') {
 		throw new Error("encrypt(): data must be string");
 	}
 
@@ -322,34 +322,30 @@ function encrypt(data, targetFqdn, signingFqdn, callback) {
 
 	CommonUtils.promise2callback(_encrypt(), callback);
 }
-encrypt.toText = x=>x;
+
+encrypt.toText = obj2base64;
 
 /**
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
  * @public
  * @method Creds.decrypt
- * @param {String} data - data to encrypt
+ * @param {EncryptedMessage} encryptedData - data to decrypt
  */
-function decrypt(data) {
+function decrypt(encryptedData) {
+
 	const store = new BeameStore();
+
 	try {
-
-		/** @type {EncryptedMessage} */
-		let encryptedMessage = CommonUtils.parse(data);
-
-		if (!encryptedMessage) {
-			logger.fatal(`invalid data: ${data}`);
+		logger.debug('message token parsed', encryptedData);
+		if (!encryptedData.encryptedFor) {
+			logger.fatal("Decrypting a wrongly formatted message", encryptedData);
 		}
 
-		logger.debug('message token parsed', encryptedMessage);
-		if (!encryptedMessage.encryptedFor) {
-			logger.fatal("Decrypting a wrongly formatted message", data);
-		}
-
-		let targetFqdn = encryptedMessage.encryptedFor;
+		let targetFqdn = encryptedData.encryptedFor;
+		console.error(`targetFqdn ${targetFqdn}`);
 		let credential = store.getCredential(targetFqdn);
 
-		return credential.decrypt(encryptedMessage);
+		return credential.decrypt(encryptedData);
 	} catch (e) {
 		logger.fatal("decrypt error ", e);
 		return null;
@@ -370,15 +366,12 @@ function sign(data, fqdn) {
 	const store = new BeameStore();
 	let cred    = store.getCredential(fqdn);
 	if (cred) {
-		let token = cred.sign(data);
-
-		return new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+		return cred.sign(data);
 	}
 	logger.error("sign data with fqdn, element not found ");
 	return null;
 }
-sign.toText = x=>x;
-
+sign.toText = obj2base64;
 /**
  * Checks signature.
  * @public
@@ -431,3 +424,7 @@ function checkSignature(data, callback) {
 
 }
 //endregion
+
+function obj2base64(o) {
+	return Buffer(CommonUtils.stringify(o, false)).toString('base64');
+}

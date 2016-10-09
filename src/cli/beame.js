@@ -47,7 +47,8 @@ var parametersSchema = {
 	'authToken':          {required: true, base64: true},
 	'token':              {required: false, base64: true},
 	'name':               {required: false},
-	'email':              {required: false}
+	'email':              {required: false},
+	'encryptedData':      {required: true, base64: true, json: true}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -123,6 +124,10 @@ function main() {
 		// Do not decode what appears to be JSON.
 		if (parametersSchema[paramName].base64 && arg[0] != '{' && arg[0] != '"') {
 			arg = new Buffer(arg, 'base64').toString();
+		}
+
+		if (parametersSchema[paramName].json) {
+			arg = JSON.parse(arg);
 		}
 
 		return arg;
