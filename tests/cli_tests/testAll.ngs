@@ -92,6 +92,11 @@ F prepare_entity_properties() {
 	global entity_email = "$entity_name@example.com"
 }
 
+F must_be_hash_with_fields(x, name:Str, fields:Arr) {
+	x is not Hash throws TestFail("$name data must be hash, not $x")
+	fields.each(F(k) k not in x throws TestFail("Key $k is missing in 'encrypt' output"))
+}
+
 # ---------- Tests ----------
 
 F finished_ok(p:Process) {
@@ -131,8 +136,7 @@ encrypted_data = null
 do_test("Encrypt data", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --format json`
 	enc = encrypted_data.parse()
-	enc is not Hash throws TestFail("Encrypted data must be hash, not $enc")
-	%[rsaCipheredKeys data encryptedFor].each(F(k) k not in enc throws TestFail("Key $k is missing in 'encrypt' output"))
+	enc.must_be_hash_with_fields("Encrypted data", %[rsaCipheredKeys data encryptedFor])
 	enc.encryptedFor != entities[0].fqdn throws TestFail("encryptedFor mismatch")
 	enc
 })
@@ -151,7 +155,7 @@ if entities {
 	do_test("Sign data", F() {
 		global data_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn} --format json`
 		sig = data_signature.decode_json()
-		sig is not Hash throws TestFail("Signature is not a Hash")
+		sig.must_be_hash_with_fields("Signature", %[signedData signature])
 		sig
 	})
 }

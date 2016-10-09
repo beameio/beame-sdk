@@ -325,7 +325,7 @@ function encrypt(data, targetFqdn, signingFqdn, callback) {
 	CommonUtils.promise2callback(_encrypt(), callback);
 }
 
-encrypt.toText = obj => new Buffer(CommonUtils.stringify(obj, false)).toString('base64');
+encrypt.toText = obj2base64;
 
 /**
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
@@ -371,7 +371,7 @@ function sign(data, fqdn) {
 	logger.error("sign data with fqdn, element not found ");
 	return null;
 }
-sign.toText = token => new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+sign.toText = obj2base64;
 /**
  * Checks signature.
  * @public
@@ -422,4 +422,8 @@ function checkSignature(data, callback) {
 
 	CommonUtils.promise2callback(_checkSignature(data), callback);
 
+}
+
+function obj2base64(o) {
+	return Buffer(CommonUtils.stringify(o, false)).toString('base64');
 }
