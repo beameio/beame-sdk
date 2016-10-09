@@ -48,9 +48,9 @@ See the example folder to copy-paste and try it for yourself!
 _If you already know how Beame-SDK is working and want to skip the intro, [jump directly to start!](#beame-cli)_
 ### Beame-SDK proposes two options to start:
 
-1. Create your own L0
+1. Create your own L0  
 _You start by requesting a token at https://registration.beameio.net/. Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
-2. Use existing credentials to create new ones
+2. Use existing credentials to create new ones  
 _You will use coresponding Beame-SDK cli command, as described below. As a result, you will create a new set of lower level credentials._  
 
 Whichever option you will choose, using Beame-SDK, you will create a full tier of credentials: a RSA key pair, a hostname under Beame.io's domain, and a matching publicly trusted x509 certificate.
@@ -68,8 +68,8 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
  - To access the file share function, open the `url/shared`.
 
 ## Quick Start
-
-1. Request authorization token, by submitting a form at [https://registration.beameio.net/](#https://registration.beameio.net/) 
+_Here you will find the instructions, how to create the very first, L0 Beame credentials. In order to request L1 and below, see description of [CLI Credentials getCreds](#credentials)  below._  
+1. Request authorization token, by submitting a form at [https://registration.beameio.net/](#https://registration.beameio.net/)  
 2. Follow instructions from the registration email, that you will receive as a result of step 1  
 2.1 Install the Beame SDK by running `npm install -g beame-sdk`  
 2.2 Run the command from the email you receive, it should look like:  
@@ -178,9 +178,9 @@ The custom provisioning process uses the *Authorization Server* as single author
 ![provisioning flowchart](img/clientProvisionFlowchart.jpg)
 
 ### There are three interleaved flows in the provisioning process:
- - *CPS flow* - process takes place on the *Customer* provisioning station, controls the whole process;
- - *Matching/Auth flow* - background process controlled by Customer’s *Matching/Authorization server*;
- - *Client flow* - process that takes place on the mobile device. Requires corresponding mobile Beame SDK services.
+ - *Clerk Station Flow* - process takes place on the *Customer* provisioning station, controls the whole process;
+ - *Matching/Auth Flow* - background process controlled by Customer’s *Matching/Authorization server*;
+ - *Client Flow* - process that takes place on the mobile device. Requires corresponding mobile Beame SDK services.
 
 # Mastering the Beame-SDK
 
@@ -194,31 +194,33 @@ At any moment, using beame-sdk, you can see all credentials you currently own by
 
 The following commands are used for acquiring and manipulating certificates.
 
-* `beame creds show [--fqdn fqdn] [--format {text|json}]`
-* `beame creds list [--regex regex] [--format {text|json}]`
-* `beame creds getCreds [--token token] [--authSrvFqdn authSrvFqdn] [--fqdn fqdn] [--name name] [--email email] [--format {text|json}]`
-* `beame creds updateMetadata [--fqdn fqdn] [--name name] [--email email] [--format {text|json}]`
-* `beame creds shred [--fqdn fqdn] [--format {text|json}]`
-* `beame creds exportCredentials [--fqdn fqdn] --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]`
-* `beame creds importCredentials [--file file]`
-* `beame creds importLiveCredentials [--fqdn fqdn]`
-* `beame creds encrypt [--data data] [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]`
-* `beame creds decrypt [--data data]`
-* `beame creds sign --data data [--fqdn fqdn] [--format {text|json}]`
-* `beame creds checkSignature --data data`
+* `beame creds show --fqdn fqdn [--format {text|json}]` - _print details for specified hostname(fqdn)_
+* `beame creds list [--regex regex] [--format {text|json}]` - _list details of all credentials on this machine_
+* `beame creds getCreds [--token token] --authSrvFqdn authSrvFqdn [--fqdn fqdn] [--name name] [--email email] [--format {text|json}]` - _request new credentials from Beame; intended to be called in two ways: 1st - by copy-paste a [command](#quick-start) from registration email; 2nd - by providing local fqdn_:  `beame creds getCreds --fqdn x5lidev3ovw302bb.v1.d.beameio.net`
+* `beame creds updateMetadata --fqdn fqdn [--name name] [--email email] [--format {text|json}]` - _update your details for the specified fqdn_
+* `beame creds shred --fqdn fqdn [--format {text|json}]` - _shred credentials for specified fqdn_
+* `beame creds exportCredentials --fqdn fqdn --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]` - _encrypt specified credentials for particular target host_
+* `beame creds importCredentials --file file` - _decypt and import credentials contained in specified file_
+* `beame creds importLiveCredentials --fqdn fqdn` - _import credentials of any public domain to Beame store, you can see imported credential by calling:_ `beame creds list`
+* `beame creds encrypt --data data [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]` - _encrypt specified data with RSA public key for specific fqdn; output is a json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of data hash_
+* `beame creds decrypt --data data` - _decrypt data (json string of specific format) with local RSA private key, entity that data was encrypted for, is specified in appropriate field in provided data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `beame creds sign --data data --fqdn fqdn [--format {text|json}]` - _sign provided data with private key of specified fqdn, output is json in base64 format_
+* `beame creds checkSignature --data data` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+
+### Manipulating Tokens
+* `beame token create --fqdn fqdn --data data [--format {text|json}]` - _generate encrypted Beame auth-token with provided data, encrypt with private key of given fqdn_
+* `beame token validate --authToken authToken [--format {text|json}]` - _verify Beame auth-token, input authToken is the output of `beame token create`_
 
 ### Running test server
 
-* `beame servers runHelloWorldServer --fqdn clientFQDN` - run a "Hello World" HTTPS server for the specified hostname
-* `beame.js servers runChatServer [--sharedFolder sharedFolder]` - run chat example for first hostname in creds list
+* `beame servers runHelloWorldServer --fqdn clientFQDN` - _run a "Hello World" HTTPS server for the specified hostname_
+* `beame.js servers runChatServer [--sharedFolder sharedFolder]` - _run chat example for first hostname in creds list_
 
 ### Beame.io CLI - encryption
 
-* `beame crypto encrypt [--data data] [--fqdn fqdn]` - encrypts the given data so that only the owner of the specified entity can decrypt it
-* `beame crypto decrypt [--fqdn fqdn] [--data data]` - decrypts the given data. You must be the owner of the given entity
-* `beame crypto sign [--data data] [--fqdn fqdn]` - signs the given data as the specified entity
-* `beame crypto _checkSignature [--fqdn fqdn] [--data data] --signature signature` - verifies the correctness of the signature
-
+* `beame crypto aesEncrypt --data data [--sharedSecret sharedSecret]` - _encrypt given data with symmetric key; if not provided, the key is generated and provided in output json string along with IV; new IV is generated each time aesEncrypt is called_
+* `beame crypto aesDecrypt --data data` - _decrypt 'AES128CBC' value in given data, with key and IV contained in 'SharedCipher' and 'IV' data fields respectively_
+  
 ## Beame NodeJS API
 [Extended JsDoc generated documentation - here](https://beameio.github.io/beame-sdk/index.html)
 

@@ -52,7 +52,7 @@ const handlers = {
 		peerCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
 		var encrypted = crypto.aesEncrypt('abc123', sharedSecret);
 
-		return {'type': 'encryptedMessage', payload: {data: encrypted[1].IV + encrypted[0].AES256CBC}};
+		return {'type': 'encryptedMessage', payload: {data: encrypted[1].IV + encrypted[0].AES128CBC}};
 	}
 }
 

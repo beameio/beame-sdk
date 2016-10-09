@@ -17,7 +17,7 @@ var commands = {};
 });
 
 var parametersSchema = {
-	'data':               {required: false},
+	'data':               {required: true},
 	'developerEmail':     {required: true},
 	'developerFqdn':      {required: true},
 	'developerName':      {required: true},

@@ -42,7 +42,7 @@ const handlers = {
 		const IV = data.data.slice(0, 24);
 		const encryptedData = data.data.slice(24);
 		const encryptedStruct = [
-			{AES256CBC: encryptedData},
+			{AES128CBC: encryptedData},
 			{IV: IV, sharedCipher:sharedSecret}
 		];
 		// XXX: continue here
