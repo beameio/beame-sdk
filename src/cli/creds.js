@@ -185,7 +185,7 @@ shred.toText = _lineToText;
  * @param {String} file - path to file
  * @returns {String|null}
  */
-function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
+function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 
 	if (!fqdn) {
 		logger.fatal(`fqdn required`);
@@ -209,24 +209,25 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
 
 	let creds = store.getCredential(fqdn);
 
-	if (creds) {
-		let jsonCredentialObject = CommonUtils.stringify(creds, false);
-		try {
-			encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
-				if (payload) {
-					let p = path.resolve(file);
-					fs.writeFileSync(p, CommonUtils.stringify(payload, false));
-					return p;
-				}
-				logger.fatal(`encryption failed: ${error}`);
-				return null;
-			});
-		} catch (e) {
-			logger.fatal(`Could not encrypt with error `, e);
-		}
+	if(!creds) {
+		callback(`Credentials for ${fqdn} not found`, null);
+		return;
 	}
-	else {
-		logger.fatal(`Credentials for ${fqdn} not found`);
+
+	let jsonCredentialObject = CommonUtils.stringify(creds, false);
+	try {
+		encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
+			if (payload) {
+				let p = path.resolve(file);
+				fs.writeFileSync(p, CommonUtils.stringify(payload, false));
+				callback(null, p);
+				return;
+			}
+			logger.fatal(`encryption failed: ${error}`);
+			return;
+		});
+	} catch (e) {
+		callback(e, null);
 	}
 }
 
@@ -263,13 +264,13 @@ function importCredentials(file) {
 				let importedCredential = new Credential(store);
 				importedCredential.initFromObject(parsedCreds);
 				importedCredential.saveCredentialsObject();
-				return `Successfully imported credentials ${importedCredential.fqdn}`;
+				return true;
 			}
 		}
 		catch (error) {
 			logger.fatal(BeameLogger.formatError(error));
 		}
-	}
+	};
 
 	try {
 
