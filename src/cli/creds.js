@@ -308,25 +308,16 @@ function importLiveCredentials(fqdn) {
  */
 function encrypt(data, targetFqdn, signingFqdn, callback) {
 
+	if(typeof data != 'string') {
+		throw new Error("encrypt(): data must be string");
+	}
+
 	function _encrypt() {
 		return new Promise((resolve, reject) => {
 				const store = new BeameStore();
 				store.find(targetFqdn).then(targetCredential=> {
-					if (!targetCredential) {
-						logger.fatal(`Could not find target credential (public key to encrypt for)`);
-					}
-
-					try {
-						let data2Encrypt = CommonUtils.isObject(data) ? CommonUtils.stringify(data, false) : data,
-						    token        = targetCredential.encrypt(targetFqdn, data2Encrypt, signingFqdn);
-
-						resolve(CommonUtils.stringify(token, false));
-					}
-					catch (error) {
-						reject(error);
-					}
+					resolve(targetCredential.encrypt(targetFqdn, data, signingFqdn));
 				}).catch(reject);
-
 			}
 		);
 	}
