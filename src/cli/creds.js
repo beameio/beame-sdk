@@ -387,53 +387,26 @@ sign.toText = _obj2base64;
  * Checks signature.
  * @public
  * @method Creds.checkSignature
- * @param {String} data => based64 encoded Signature Token
+ * @param {SignatureToken} signedData => based64 encoded Signature Token
  * @param {Function} callback
  */
-function checkSignature(data, callback) {
+function checkSignature(signedData, callback) {
 
 
-	function _checkSignature(data) {
+	function _checkSignature() {
 		return new Promise((resolve, reject) => {
-
-				if (!data) {
-					reject(`Data required`);
-					return;
-				}
-
-				try {
-					const store = new BeameStore();
-					/** @type {SignatureToken} */
-					var token   = CommonUtils.parse(new Buffer(data, 'base64').toString());
-
-					if (!token) {
-						logger.error(`invalid signature data`);
-						reject();
-						return;
-					}
-
-					logger.debug(`token parsed`, token);
-
-					store.find(token.signedBy).then(cred=> {
-						let status = cred.checkSignatureToken(token);
-						resolve(`signature verification status is ${status}`);
-					}).catch(error=> {
-						logger.error(`Credential ${token.signedBy} not found`);
-						reject(error);
-					});
-				}
-				catch (error) {
-					let e = BeameLogger.formatError(error);
-					logger.error(e);
-					reject(e);
-				}
+				const store = new BeameStore();
+				store.find(signedData.signedBy).then(cred=> {
+					resolve(cred.checkSignatureToken(signedData));
+				});
 			}
 		);
 	}
 
-	CommonUtils.promise2callback(_checkSignature(data), callback);
+	CommonUtils.promise2callback(_checkSignature(), callback);
 
 }
+
+checkSignature.toText = x => x?'GOOD SIGNATURE':'BAD SIGNATURE';
+
 //endregion
-
-
