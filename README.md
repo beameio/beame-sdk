@@ -207,6 +207,10 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame creds sign --data data --fqdn fqdn [--format {text|json}]` - _sign provided data with private key of specified fqdn, output is json in base64 format_
 * `beame creds checkSignature --data data` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
 
+### Manipulating Tokens
+* `beame token create --fqdn fqdn --data data [--format {text|json}]` - _generate encrypted Beame auth-token with provided data, encrypt with private key of given fqdn_
+* `beame token validate --authToken authToken [--format {text|json}]` - _verify Beame auth-token, input authToken is the output of `beame token create`_
+
 ### Running test server
 
 * `beame servers runHelloWorldServer --fqdn clientFQDN` - run a "Hello World" HTTPS server for the specified hostname
