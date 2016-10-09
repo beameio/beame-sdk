@@ -237,8 +237,9 @@ class Credential {
 		}
 
 		for (let key in config.MetadataProperties) {
-			if (config.MetadataProperties.hasOwnProperty(key) && importCred.metadata.hasOwnProperty(key)) {
-				this.metadata[config.MetadataProperties[key]] = new Buffer(importCred[config.MetadataProperties[key]]).toString('utf8');
+			let value = config.MetadataProperties[key];
+			if (importCred.metadata.hasOwnProperty(value)) {
+				this.metadata[value] = importCred.metadata[value];
 			}
 		}
 		this.initCryptoKeys();

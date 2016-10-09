@@ -183,7 +183,7 @@ shred.toText = _lineToText;
  * @param {String} targetFqdn - fqdn of the entity to encrypt for
  * @param {String|null} [signingFqdn]
  * @param {String} file - path to file
- * @returns {String|null}
+ * @param {Function} callback
  */
 function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 
@@ -224,7 +224,6 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 				return;
 			}
 			logger.fatal(`encryption failed: ${error}`);
-			return;
 		});
 	} catch (e) {
 		callback(e, null);
@@ -236,7 +235,7 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
  * @public
  * @method Creds.importCredentials
  * @param {String} file - path to file with encrypted credentials
- * @returns {String}
+ * @param {Function} callback
  */
 function importCredentials(file, callback) {
 
@@ -265,14 +264,12 @@ function importCredentials(file, callback) {
 				importedCredential.initFromObject(parsedCreds);
 				importedCredential.saveCredentialsObject();
 				callback(null, true);
-				return;
 			}
 		}
 		catch (error) {
 			callback(error, null);
 		}
-		return;
-	};
+	}
 
 	try {
 
@@ -300,7 +297,6 @@ function importCredentials(file, callback) {
 				}
 			).catch(error=> {
 				callback(error, null);
-				return;
 			});
 		}
 		else {
@@ -392,7 +388,7 @@ function decrypt(encryptedData) {
  * @method Creds.sign
  * @param {String} data - data to sign
  * @param {String} fqdn - sign as this entity
- * @returns {String|null}
+ * @returns {SignatureToken}
  */
 function sign(data, fqdn) {
 	const store = new BeameStore();
@@ -400,8 +396,7 @@ function sign(data, fqdn) {
 	if (cred) {
 		return cred.sign(data);
 	}
-	logger.error("sign data with fqdn, element not found ");
-	return null;
+	logger.fatal("sign data with fqdn, element not found ");
 }
 sign.toText = _obj2base64;
 /**
@@ -419,7 +414,7 @@ function checkSignature(signedData, callback) {
 				const store = new BeameStore();
 				store.find(signedData.signedBy).then(cred=> {
 					resolve(cred.checkSignatureToken(signedData));
-				});
+				}).catch(reject);
 			}
 		);
 	}
