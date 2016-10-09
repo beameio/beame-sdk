@@ -324,7 +324,8 @@ function encrypt(data, targetFqdn, signingFqdn, callback) {
 
 	CommonUtils.promise2callback(_encrypt(), callback);
 }
-encrypt.toText = x=>x;
+
+encrypt.toText = obj => new Buffer(CommonUtils.stringify(obj, false)).toString('base64');
 
 /**
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
@@ -365,14 +366,12 @@ function sign(data, fqdn) {
 	const store = new BeameStore();
 	let cred    = store.getCredential(fqdn);
 	if (cred) {
-		let token = cred.sign(data);
-
-		return new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+		return cred.sign(data);
 	}
 	logger.error("sign data with fqdn, element not found ");
 	return null;
 }
-sign.toText = x=>x;
+sign.toText = token => new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 /**
  * Checks signature.
  * @public

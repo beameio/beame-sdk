@@ -27,6 +27,8 @@ if Path(BEAME_DIR) {
 # ---------- Tests "framework" ----------
 
 TEST_DATA = 'abcd0123~!@#'
+for(i;100) TEST_DATA="${TEST_DATA}xyz"
+
 CREDS_FILE = "/tmp/beame-cli-test-creds-${time()}"
 
 exit_code = 0
@@ -144,15 +146,12 @@ if encrypted_data {
 	})
 }
 
-c_exit(100)
-
-
 data_signature = null
 if entities {
 	do_test("Sign data", F() {
-		global data_signature = `$BEAME_BIN crypto sign --data $TEST_DATA --fqdn ${entities[0].fqdn}`
+		global data_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn} --format json`
 		sig = data_signature.decode_json()
-		sig is not Str throws TestFail("Signature is not a string")
+		sig is not Hash throws TestFail("Signature is not a Hash")
 		sig
 	})
 }
