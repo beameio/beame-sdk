@@ -5,8 +5,16 @@ const CryptoServices = require('../services/Crypto');
 
 require('../../initWin');
 
+/**
+ *
+ * @param data
+ * @param {String} secret
+ * @returns {Array.<AesEncryptedData>}
+ */
+function aesEncrypt(data, secret) {
 
-function aesEncrypt(data, sharedSecret) {
+	let sharedSecret = secret ? new Buffer(secret,'base64') : null;
+
 	return CryptoServices.aesEncrypt(data,sharedSecret);
 
 }
