@@ -78,7 +78,7 @@ class BeameStoreV2 {
 					).catch(reject);
 				}
 				else {
-					reject('Unknown domain')
+					reject('Unknown domain');
 				}
 			}
 		);
@@ -86,7 +86,7 @@ class BeameStoreV2 {
 
 	find(fqdn) {
 
-		return new Promise((resolve, reject) => {
+		return new Promise(resolve => {
 				let cred = this.getCredential(fqdn);
 
 				if (cred) {
@@ -94,7 +94,7 @@ class BeameStoreV2 {
 					return;
 				}
 
-				this.fetch(fqdn).then(resolve).catch(reject);
+				return this.fetch(fqdn);
 			}
 		);
 	}
