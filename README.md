@@ -1,6 +1,6 @@
 <img align="right" src="img/beame.png">
 _The Beame SDK allows you to establish a HTTPS session between machines without public IPs. This SDK  allows you to create credentials and use them to identify machines. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for services that host credentials to require users to prove identity._  
-[Click to Get Started Now!](https://registration.beameio.net/)  
+[Click to Get Started Now!](https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net/)  
 
 
 ### Table of Contents
@@ -49,7 +49,7 @@ _If you already know how Beame-SDK is working and want to skip the intro, [jump 
 ### Beame-SDK proposes two options to start:
 
 1. Create your own L0  
-_You start by requesting a token at https://registration.beameio.net/. Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
+_You start by requesting a token at [Beameio registration page](#ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net). Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
 2. Use existing credentials to create new ones  
 _You will use coresponding Beame-SDK cli command, as described below. As a result, you will create a new set of lower level credentials._  
 
@@ -69,7 +69,7 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
 
 ## Quick Start
 _Here you will find the instructions, how to create the very first, L0 Beame credentials. In order to request L1 and below, see description of [CLI Credentials getCreds](#credentials)  below._  
-1. Request authorization token, by submitting a form at [https://registration.beameio.net/](#https://registration.beameio.net/)  
+1. Request authorization token, by submitting a form at [registration page](#https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net)  
 2. Follow instructions from the registration email, that you will receive as a result of step 1  
 2.1 Install the Beame SDK by running `npm install -g beame-sdk`  
 2.2 Run the command from the email you receive, it should look like:  
@@ -231,20 +231,21 @@ _The idea behind the Node.js SDK APIs is that you can employ functionality provi
 To use any js APIs from beame-sdk include
 `var beameSDK = require ("beame-sdk");`
 
-### Credential manipulation APIs
+### Beame Store APIs
 
+Methods available by declaring BeameStore instance through `beameSDK`.
 Include following code:
-`var creds = beameSDK.creds;`
+`var store = beameSDK.BeameStore;`
 
-#### Available Creds methods
+#### Available [Beame Store](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) methods
 
-* `creds.show(requestedFqdn)` - _outputs details of requested credential in json formatted string.
+* `store.getCredential(requestedFqdn)` - _outputs details of requested credential in json formatted string.
 Use example:_
 ```
 // use example
 var beameSDK = require('beame-sdk');
-var creds = beameSDK.creds;
-console.log(creds.show("x5lidev3ovw302bb.v1.d.beameio.net"));
+var store = beameSDK.BeameStore;
+console.log(store.getCredential("x5lidev3ovw302bb.v1.d.beameio.net"));
 ...
 { fqdn: 'requestedFqdn',
   parent_fqdn: '',							//parentFqdn-if-defined
@@ -255,7 +256,7 @@ console.log(creds.show("x5lidev3ovw302bb.v1.d.beameio.net"));
   email: 'az@beame.io',
   path: '/Users/Az/.beame/v2/x5lidev3ovw302bb.v1.d.beameio.net'}	//path-to-folder-with-credentials
 ```  
-* `creds.list()` - _list details of all credentials on this machine, output is an array of objects, see extended documentation for detailed description_
+* `store.list()` - _list details of all credentials on this machine, output is an array of objects, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for detailed description_
 * `creds.getCreds(token, authSrvFqdn, fqdn, name, email, callback)` - _request new credentials from Beame; intended to be called in two ways: 1st - provide valid authorization token (fqdn set to null); 2nd - by providing local fqdn (pass token as null)_
 ```
 creds.getCreds(token, authSrvFqdn, fqdn, name, email,function(error,data){
@@ -263,25 +264,25 @@ creds.getCreds(token, authSrvFqdn, fqdn, name, email,function(error,data){
 //handle errors if error not null
 });
 ```
-* `creds.updateMetadata(fqdn, name, email, callback(error,data){})` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
-* `creds.shred(fqdn)` - _shred credentials for specified fqdn_
-* `creds.exportCredentials(fqdn, targetFqdn, signingFqdn, file)` - _encrypt given fqdn credentials with targetFqdn public key, signingFqdn is optional, if provided, data will be signed and signature added to it. No return value._
-* `creds.importCredentials(file)` - _decypt and import credentials contained in specified file, will succeed only if corresponding private key is found. No return value._
-* `creds.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
-* `creds.encrypt(data, fqdn, signingFqdn, callback(error, encryptedData){})` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; if error is null, encryptedData contains json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of encryptedData_
-* `creds.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
-* `beame creds sign --data data --fqdn fqdn [--format {text|json}]` - _sign provided data with private key of specified fqdn, output is json in base64 format_
-* `beame creds checkSignature --data data` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+* `cred.shredCredentials(fqdn,cb(error){})` - _deletes local credentials folder for specified fqdn_
 
+### Beame Credential APIs
 
-### Edge Client level commands
-Requires atom credentials (atom fqdn/hostname). atomHostName - app level hostname created in previous step
-To create new edgeClient under current atom:
-```
-   beameSDK.creds.createEdgeClient(atomHostname, amount, function(data){//amount - number of edgeClient to create
-        //edge level hostname returned in: <data.hostname>
-    });
-```
+Methods available by importing
+Include following code:
+`var cred = beameSDK.Credential;`
+
+#### Available [Credential](#https://beameio.github.io/beame-sdk/Credential.html) methods
+
+* `cred.updateMetadata(fqdn, name, email, callback(error,data){})` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
+* `cred.exportCredentials(fqdn, targetFqdn, signingFqdn, file)` - _encrypt given fqdn credentials with targetFqdn public key, signingFqdn is optional, if provided, data will be signed and signature added to it. No return value._
+* `cred.importCredentials(file)` - _decypt and import credentials contained in specified file, will succeed only if corresponding private key is found. No return value._
+* `cred.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
+* `cred.encrypt(data, fqdn, signingFqdn, callback(error, encryptedData){})` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; if error is null, encryptedData contains json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of encryptedData_
+* `cred.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `cred.sign(data, fqdn)` - _sign provided data with private key of specified fqdn, output is json in base64 format_
+* `cred.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+
 
 ## Sample HTTPS Server
 Beame-sdk provides sample https server, that allows Beame client to build and run fully a functional https server with express support and with credentials created in steps described above
