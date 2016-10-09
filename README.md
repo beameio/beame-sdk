@@ -202,8 +202,8 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame creds exportCredentials --fqdn fqdn --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]` - _encrypt specified credentials for particular target host_
 * `beame creds importCredentials --file file` - _decypt and import credentials contained in specified file_
 * `beame creds importLiveCredentials --fqdn fqdn` - _import credentials of any public domain to Beame store, you can see imported credential by calling:_ `beame creds list`
-* `beame creds encrypt --data data [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]` - _encrypt specified data with RSA public key for specific fqdn; output is a json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of data hash_
-* `beame creds decrypt --data data` - _decrypt data (json string of specific format) with local RSA private key, entity that data was encrypted for, is specified in appropriate field in provided data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `beame creds encrypt --data data [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; output is a json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of data hash_
+* `beame creds decrypt --data data` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key, entity that data was encrypted for, is specified in appropriate field in provided data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
 * `beame creds sign --data data --fqdn fqdn [--format {text|json}]` - _sign provided data with private key of specified fqdn, output is json in base64 format_
 * `beame creds checkSignature --data data` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
 
@@ -214,12 +214,12 @@ The following commands are used for acquiring and manipulating certificates.
 ### Running test server
 
 * `beame servers runHelloWorldServer --fqdn clientFQDN` - _run a "Hello World" HTTPS server for the specified hostname_
-* `beame.js servers runChatServer [--sharedFolder sharedFolder]` - _run chat example for first hostname in creds list_
+* `beame servers runChatServer [--fqdn fqdn] [--sharedFolder sharedFolder]` - _run secure chat server_
 
 ### Beame.io CLI - encryption
 
-* `beame crypto aesEncrypt --data data [--sharedSecret sharedSecret]` - _encrypt given data with symmetric key; if not provided, the key is generated and provided in output json string along with IV; new IV is generated each time aesEncrypt is called_
-* `beame crypto aesDecrypt --data data` - _decrypt 'AES128CBC' value in given data, with key and IV contained in 'SharedCipher' and 'IV' data fields respectively_
+* `beame crypto aesEncrypt --data data [--sharedSecret sharedSecret]` - _encrypt given data with symmetric key; if not provided, the key is generated and provided in output json string along with IV; new IV is generated each time aesEncrypt is called. Output is a json string in base64 format_
+* `beame crypto aesDecrypt --data data` - _decrypt 'AES128CBC' value in given data (exact output of `beame crypto aesEncrypt`), with key and IV contained in 'SharedCipher' and 'IV' data fields respectively_
   
 ## Beame NodeJS API
 [Extended JsDoc generated documentation - here](https://beameio.github.io/beame-sdk/index.html)
