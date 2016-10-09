@@ -234,7 +234,7 @@ class BeameStoreV2 {
 				}
 
 				if (parentCreds && parentPublicKey) {
-					if (parentCreds.checkSignatureToken(token)) {
+					if (parentCreds.checkSignature(token)) {
 						loadCred({parent_fqdn: parentFqdn, fqdn: fqdn});
 					}
 				} else {
@@ -248,7 +248,7 @@ class BeameStoreV2 {
 							remoteCred.initFromX509(data.x509, data.metadata);
 							self.addCredential(remoteCred);
 
-							if (remoteCred.checkSignatureToken(token)) {
+							if (remoteCred.checkSignature(token)) {
 								loadCred(data.metadata);
 							}
 

@@ -83,7 +83,7 @@ class AuthToken {
 			return null;
 		}
 
-		const signatureStatus = signerCreds.checkSignatureToken(authToken);
+		const signatureStatus = signerCreds.checkSignature(authToken);
 		if (!signatureStatus) {
 			logger.warn(`Bad signature`);
 			return null;

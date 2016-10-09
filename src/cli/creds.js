@@ -281,7 +281,7 @@ function importCredentials(file, callback) {
 					let encryptedCredentials;
 
 					if (data.signature) {
-						let sigStatus = signingCreds.checkSignatureToken(data);
+						let sigStatus = signingCreds.checkSignature(data);
 						console.log(`Signature status is ${sigStatus}`);
 						if (!sigStatus) {
 							callback(`Import credentials signature mismatch ${data.signedBy}, ${data.signature}`, null);
@@ -413,7 +413,7 @@ function checkSignature(signedData, callback) {
 		return new Promise((resolve, reject) => {
 				const store = new BeameStore();
 				store.find(signedData.signedBy).then(cred=> {
-					resolve(cred.checkSignatureToken(signedData));
+					resolve(cred.checkSignature(signedData));
 				}).catch(reject);
 			}
 		);

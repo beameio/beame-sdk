@@ -43,7 +43,6 @@ class CryptoServices{
 			IV: initializationVector.toString('base64'),
 			sharedCipher: sharedSecret.toString('base64')
 		}];
-
 	}
 
 	/**
