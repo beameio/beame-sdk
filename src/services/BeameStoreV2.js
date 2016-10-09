@@ -205,7 +205,7 @@ class BeameStoreV2 {
 
 	//noinspection JSUnusedGlobalSymbols
 	/**
-	 * @private
+	 * @ignore
 	 * @param {String} fqdn
 	 * @param {String} parentFqdn
 	 * @param {SignatureToken} token
@@ -261,7 +261,7 @@ class BeameStoreV2 {
 
 	/**
 	 * return metadata.json stored in public S3 bucket
-	 * @private
+	 * @ignore
 	 * @param {String} fqdn
 	 * @returns {Promise.<RemoteCreds>}
 	 */

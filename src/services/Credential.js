@@ -115,7 +115,7 @@ class Credential {
 
 	//region Init functions
 	/**
-	 * @private
+	 * @ignore
 	 * @param fqdn
 	 * @param metadata
 	 */
@@ -130,7 +130,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @param fqdn
 	 */
 	initFromData(fqdn) {
@@ -141,7 +141,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 */
 	initCryptoKeys() {
 		if (this.hasKey("X509")) {
@@ -173,7 +173,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @param x509
 	 * @param metadata
 	 */
@@ -205,7 +205,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @param pubKeyDerBase64
 	 */
 	initFromPubKeyDer64(pubKeyDerBase64) {
@@ -214,7 +214,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @param importCred
 	 */
 	initFromObject(importCred) {
@@ -251,7 +251,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 */
 	saveCredentialsObject() {
 		if (!this || !this.metadata || !this.metadata.path) {
@@ -271,7 +271,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 */
 	loadCredentialsObject() {
 		Object.keys(config.CertificateFiles).forEach(keyName => {
@@ -410,7 +410,7 @@ class Credential {
 
 	/**
 	 * Create Auth token
-	 * @private
+	 * @ignore
 	 * @param {String} signWithFqdn
 	 * @param {String|null} [dataToSign]
 	 * @returns {Promise.<String|null>}
@@ -601,7 +601,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @param {String} authToken
 	 * @param {String|null} [authSrvFqdn]
 	 * @param {String|null} [name]
@@ -669,7 +669,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @param {String} authToken
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
@@ -770,7 +770,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @returns {Promise.<String>}
 	 */
 	createCSR() {
@@ -803,7 +803,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @param {String} csr
 	 * @param {SignatureToken} authToken
 	 */
@@ -830,7 +830,7 @@ class Credential {
 	}
 
 	/**
-	 * @private
+	 * @ignore
 	 * @param {String} fqdn
 	 * @returns {Promise}
 	 */
@@ -909,7 +909,7 @@ class Credential {
 
 	//noinspection JSUnusedGlobalSymbols
 	/**
-	 * @private
+	 * @ignore
 	 * @param {String} fqdn
 	 * @returns {Promise}
 	 */
@@ -942,7 +942,7 @@ class Credential {
 
 	// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
 	/**
-	 * @private
+	 * @ignore
 	 * @returns {{key: *, cert: *, ca: *}}
 	 */
 	getHttpsServerOptions() {
