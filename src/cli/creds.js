@@ -186,8 +186,19 @@ shred.toText = _lineToText;
  * @returns {String|null}
  */
 function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
+
+	if (!fqdn) {
+		logger.fatal(`fqdn required`);
+	}
+
 	if (!targetFqdn) {
 		logger.fatal(`target fqdn required`);
+	}
+
+	if(typeof file == "number") {
+		// CLI arguments parser converts to number automatically.
+		// Reversing this conversion.
+		file = file.toString();
 	}
 
 	if (!file) {
@@ -203,13 +214,12 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
 		try {
 			encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
 				if (payload) {
-
 					let p = path.resolve(file);
-					fs.writeFileSync(p, payload);
+					fs.writeFileSync(p, CommonUtils.stringify(payload, false));
 					return p;
-
 				}
-				logger.fatal(`encryption failed`);
+				logger.fatal(`encryption failed: ${error}`);
+				return null;
 			});
 		} catch (e) {
 			logger.fatal(`Could not encrypt with error `, e);
@@ -233,10 +243,18 @@ function importCredentials(file) {
 		logger.fatal(`path to file for saving credentials required`);
 	}
 
+	if(typeof file == "number") {
+		// CLI arguments parser converts to number automatically.
+		// Reversing this conversion.
+		file = file.toString();
+	}
+
+	const store = new BeameStore();
+
 	function _import(encryptedCredentials) {
 
 		try {
-			let decryptedCreds = decrypt(CommonUtils.stringify(encryptedCredentials, false));
+			let decryptedCreds = decrypt(encryptedCredentials);
 
 			if (decryptedCreds && decryptedCreds.length) {
 
@@ -254,7 +272,6 @@ function importCredentials(file) {
 	}
 
 	try {
-		const store = new BeameStore();
 
 		let data = CommonUtils.parse(fs.readFileSync(path.resolve(file)) + "");
 
