@@ -12,8 +12,8 @@ const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require("../services/BeameStoreV2");
 const Credential  = require('../services/Credential');
-const path = require('path');
-const fs   = require('fs');
+const path        = require('path');
+const fs          = require('fs');
 
 module.exports = {
 	show,
@@ -177,19 +177,18 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
 			encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
 				if (payload) {
 					if (!file) {
-						console.log(CommonUtils.stringify(payload));
+						return payload;
 					}
-					else {
-						let p = path.resolve(file);
-						fs.writeFileSync(p, payload);
-						return p;
-					}
-					return payload;
+
+					let p = path.resolve(file);
+					fs.writeFileSync(p, payload);
+					return p;
+
 				}
 				logger.fatal(`encryption failed`);
 			});
 		} catch (e) {
-			logger.error(`Could not encrypt with error `, e);
+			logger.fatal(`Could not encrypt with error `, e);
 		}
 	}
 	else {
@@ -208,40 +207,48 @@ function importCredentials(file) {
 	const store = new BeameStore();
 
 
-	let data    = CommonUtils.parse(fs.readFileSync(path.resolve(file)) + "");
+	let data = CommonUtils.parse(fs.readFileSync(path.resolve(file)) + "");
 
-	store.find(data.signedBy).then(signingCreds=>{
-		let encryptedCredentials;
-
-		if (data.signature) {
-			let sigStatus = signingCreds.checkSignatureToken(data);
-			console.log(`Signature status is ${sigStatus}`);
-			if (!sigStatus) {
-				logger.fatal(`Import credentials signature missmatch ${data.signedBy}, ${data.signature}`);
-			}
-			encryptedCredentials = data.signedData;
-		} else {
-			encryptedCredentials = data;
-		}
-
-		let decryptedCreds = decrypt(CommonUtils.stringify(encryptedCredentials,false));
+	function _import(encryptedCredentials) {
+		let decryptedCreds = decrypt(CommonUtils.stringify(encryptedCredentials, false));
 
 		if (decryptedCreds && decryptedCreds.length) {
 
 			let parsedCreds = CommonUtils.parse(decryptedCreds);
 
-			let importedCredential = new (require('../services/Credential.js'))(store);
+			let importedCredential = new Credential(store);
 			importedCredential.initFromObject(parsedCreds);
 			importedCredential.saveCredentialsObject();
 			return `Successfully imported credentials ${importedCredential.fqdn}`;
 		}
-		}
+	}
 
-	).catch(error=>{
-		logger.error(error);
-		logger.fatal(`signing creds ${data.signedBy} not found`);
-	});
+	if (data.signedBy && data.signature) {
+		store.find(data.signedBy).then(signingCreds=> {
+				let encryptedCredentials;
 
+				if (data.signature) {
+					let sigStatus = signingCreds.checkSignatureToken(data);
+					console.log(`Signature status is ${sigStatus}`);
+					if (!sigStatus) {
+						logger.fatal(`Import credentials signature mismatch ${data.signedBy}, ${data.signature}`);
+					}
+					encryptedCredentials = data.signedData;
+				} else {
+					encryptedCredentials = data;
+				}
+
+				return _import(encryptedCredentials);
+
+			}
+		).catch(error=> {
+			logger.error(error);
+			logger.fatal(`signing creds ${data.signedBy} not found`);
+		});
+	}
+	else {
+		return _import(data.signature || data);
+	}
 
 
 }
