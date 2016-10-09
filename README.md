@@ -233,8 +233,8 @@ To use any js APIs from beame-sdk include
 
 ### Beame Store APIs
 
-Methods available by declaring BeameStore instance through `beameSDK`.
-Include following code:
+To use Beame Store methods, declare BeameStore instance through `beameSDK`.  
+Include following code:  
 `var store = beameSDK.BeameStore;`
 
 #### Available [Beame Store](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) methods
@@ -257,114 +257,25 @@ console.log(store.getCredential("x5lidev3ovw302bb.v1.d.beameio.net"));
   path: '/Users/Az/.beame/v2/x5lidev3ovw302bb.v1.d.beameio.net'}	//path-to-folder-with-credentials
 ```  
 * `store.list()` - _list details of all credentials on this machine, output is an array of objects, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for detailed description_
-* `creds.getCreds(token, authSrvFqdn, fqdn, name, email, callback)` - _request new credentials from Beame; intended to be called in two ways: 1st - provide valid authorization token (fqdn set to null); 2nd - by providing local fqdn (pass token as null)_
+* `store.shredCredentials(fqdn,cb(error){})` - _deletes local credentials folder for specified fqdn_
+
+### Beame Credential APIs
+
+Declare local instance of Beame Credential:  
+`var cred = beameSDK.Credential;`
+
+#### Available [Credential](#https://beameio.github.io/beame-sdk/Credential.html) methods
+* `cred.createEntityWithLocalCreds(parent_fqdn, name, email)` - _request new credentials from Beame;_
 ```
 creds.getCreds(token, authSrvFqdn, fqdn, name, email,function(error,data){
 //if success - data contains new host details, in format like output of creds.show()
 //handle errors if error not null
 });
 ```
-* `cred.shredCredentials(fqdn,cb(error){})` - _deletes local credentials folder for specified fqdn_
-
-### Beame Credential APIs
-
-Methods available by importing
-Include following code:
-`var cred = beameSDK.Credential;`
-
-#### Available [Credential](#https://beameio.github.io/beame-sdk/Credential.html) methods
-
-* `cred.updateMetadata(fqdn, name, email, callback(error,data){})` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
-* `cred.exportCredentials(fqdn, targetFqdn, signingFqdn, file)` - _encrypt given fqdn credentials with targetFqdn public key, signingFqdn is optional, if provided, data will be signed and signature added to it. No return value._
-* `cred.importCredentials(file)` - _decypt and import credentials contained in specified file, will succeed only if corresponding private key is found. No return value._
+* `cred.updateMetadata(fqdn, name, email)` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
 * `cred.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
-* `cred.encrypt(data, fqdn, signingFqdn, callback(error, encryptedData){})` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; if error is null, encryptedData contains json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of encryptedData_
+* `cred.encrypt(fqdn, data, signingFqdn)` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; returns encryptedData that contains json formatted string, containing details about target host. If signingFqdn is specified, return value will contain RSA signature of encryptedData_
 * `cred.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
-* `cred.sign(data, fqdn)` - _sign provided data with private key of specified fqdn, output is json in base64 format_
+* `cred.sign(data, fqdn)` - _sign provided data with private key of specified fqdn, output is json string in base64 format_
 * `cred.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
 
-
-## Sample HTTPS Server
-Beame-sdk provides sample https server, that allows Beame client to build and run fully a functional https server with express support and with credentials created in steps described above
-
-Export environment variable 'BEAME_PROJ_YOURPROJECTNAME' with value of edge-client-hostname (edgeClientFqdn)
-In your server main.js create your server with following command:
-```
-    	var BeameServer = beameSDK.BaseHttpsServer.SampleBeameServer(host, PROJECT_NAME, appExpress,
-        function (data, app) {
-            //your code
-        });
-```
-### Input parameters:
-*`host` - edge hostName (pass <null> if you use environment variable - see below)
-*`PROJECT_NAME` - name of environment variable that contains edgeClient hostname (pass <null> if you provided full hostname in first parameter)
-*`appExpress` - express object. If you don't need express in your application, pass <null>
-*`function(data,app){}` - callback, returned app - created http object
-
-## Copy-paste examples
-
-## Steps to take before you run below code:
-
-1. Create web page with your preferred software (like Keynote -> export HTML on Mac).
-2. Store your new web page in `public` folder in directory of your future web server.
-3. Run `npm init` in project directory (*enter* to all options that *npm* asks)
-4. In same location install `npm install beame-sdk --save`
-5. Install *express* package by `npm install express --save`
-6. Create index.js and copy-paste into it code below.
-```
-"use strict";
-var beameSDK = require ("beame-sdk");
-var express = require('express');
-var devHostname = "put-here-Hostname-you-got-when-creating-developer";
-var appName = "MyBeameTestServer";
-var appExpress = express();
-var edgeHostname;
-appExpress.use(express.static(__dirname + '/public'));
-
-var runTestBeameServer = function(){
-    beameSDK.BaseHttpsServer.SampleBeameServer(edgeHostname, null, appExpress, function (data, app) {
-        console.log('Server started on: https://'+edgeHostname);
-        appExpress.get('/', function(req, res) {
-            res.sendFile(path.join(__dirname + '/index.html'));
-        });
-            // process http events here with <app> if needed
-    });
-};
-
-beameSDK.creds.createAtom(devHostname,appName, 1, function(data){
-	console.log('Just created atom with host:'+data.hostname);
-	beameSDK.creds.createEdgeClient(data.hostname, 1, function(edgeData){
-		edgeHostname = edgeData.hostname;
-		console.log('Congrats! My new hostname is: '+ edgeHostname);
-		setTimeout(runTestBeameServer, 2000);//JIC - wait dns to update
-	});
-});
-```
-7. Run it with `node index.js`
-8. In console output you will see something like:
-`Server started on: https://h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net`
-`{ Hostname: 'h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net' }`
-
-9. Go to web brower and direct it to your new secure web server by copying https://*hostname* from console output
-That's it. You have your own https server running on your local machine, accessible from anywhere in the world :)
-
-### Sample HTTPS server - short
-
-Below code snippet is actually a part of the larger code above. So it requires all needed installations (npm/express/beame-sdk/placing-html-files-in-*public*-folder) to be performed prior to run.
-In order to see credentials that you have created, use `beame creds list` in terminal. *Hostname*, that is listed in row named *edgeclient* ,is the one, that you'll need to provide to *SampleBeameServer* as *hostname*.
-
-```
-"use strict";
-var beameSDK = require ("beame-sdk");
-var express = require('express');
-var appExpress = express();
-var hostname = "h3a6ipg1jz95x35n.v1.r.p.edge.eu-central-1b-1.v1.p.beameio.net";
-appExpress.use(express.static(__dirname + '/public'));
-
-var runTestBeameServer = function(){
-    beameSDK.BaseHttpsServer.SampleBeameServer(hostname, null, appExpress, function (data, app) {
-        console.log('Server started on: https://'+hostname);
-    });
-};
-runTestBeameServer();
-```
