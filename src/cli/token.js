@@ -3,9 +3,6 @@
 
 const Table         = require('cli-table2');
 
-const module_name   = 'Token';
-const BeameLogger   = require('../utils/Logger');
-const logger        = new BeameLogger(module_name);
 const CommonUtils   = require('../utils/CommonUtils');
 const BeameStore    = new (require('../services/BeameStoreV2'))();
 const AuthToken     = require('../services/AuthToken');
@@ -41,11 +38,12 @@ validate.toText = authToken => {
 
 	var ret = {};
 	for(let k in authToken.signedData) {
+		//noinspection JSUnfilteredForInLoop
 		ret['signedData.' + k] = toStr(k, authToken.signedData[k]);
 	}
 	ret.signedBy = authToken.signedBy;
 	ret.signature = authToken.signature.slice(0, 16) + '...';
-	return require('./creds.js').objectToText(ret);
+	return objectToText(ret);
 };
 
 
