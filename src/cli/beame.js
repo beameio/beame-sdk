@@ -48,7 +48,8 @@ var parametersSchema = {
 	'token':              {required: false, base64: true},
 	'name':               {required: false},
 	'email':              {required: false},
-	'encryptedData':      {required: true, base64: true, json: true}
+	'encryptedData':      {required: true, base64: true, json: true},
+	'signedData':         {required: true, base64: true, json: true}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

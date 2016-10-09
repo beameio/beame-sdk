@@ -150,28 +150,33 @@ if encrypted_data {
 	})
 }
 
-data_signature = null
+data_with_signature = null
+bad_data_with_signature = null
 if entities {
 	do_test("Sign data", F() {
-		global data_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn} --format json`
-		sig = data_signature.decode_json()
+		global data_with_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn} --format json`
+		sig = data_with_signature.decode_json()
 		sig.must_be_hash_with_fields("Signature", %[signedData signature])
+		global bad_data_with_signature = {'signedData': "${TEST_DATA}xyz", 'signature': sig.signature}.encode_json()
 		sig
 	})
 }
 
-if data_signature {
-	do_test("Check good signature", F() {
-		 chk = ``$BEAME_BIN crypto checkSignature --data $TEST_DATA --fqdn ${entities[0].fqdn} --signature $data_signature``
-		 chk !== true throws TestFail("Good signature check did not return true but '$chk'")
-		 chk
+if data_with_signature {
+	do_test("Check good signature", {
+		chk = ``$BEAME_BIN creds checkSignature --signedData $data_with_signature --format json``
+		chk !== true throws TestFail("Good signature check did not return true but '$chk'")
+		chk
 	})
-	do_test("Check good signature for tampered data", F() {
-		 chk = ``$BEAME_BIN crypto checkSignature --data ${TEST_DATA+'xyz'} --fqdn ${entities[0].fqdn} --signature $data_signature``
-		 chk !== false throws TestFail("Good signature check did not return false for tampered data but '$chk'")
-		 chk
+	do_test("Check good signature for tampered data", {
+		echo("B $bad_data_with_signature")
+		chk = ``$BEAME_BIN creds checkSignature --signedData $bad_data_with_signature --format json``
+		chk !== false throws TestFail("Good signature check did not return false for tampered data but '$chk'")
+		chk
 	})
 }
+
+c_exit(100)
 
 creds_exported = false
 if entities.len() >= 2 {
