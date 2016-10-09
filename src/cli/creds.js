@@ -48,6 +48,16 @@ function _lineToText(line) {
 }
 
 /**
+ *
+ * @param o
+ * @returns {String|*|string}
+ * @private
+ */
+function _obj2base64(o) {
+	return Buffer(CommonUtils.stringify(o, false)).toString('base64');
+}
+
+/**
  * Return list of credentials
  * @private
  * @param {String|null} [fqdn] entity fqdn
@@ -323,7 +333,7 @@ function encrypt(data, targetFqdn, signingFqdn, callback) {
 	CommonUtils.promise2callback(_encrypt(), callback);
 }
 
-encrypt.toText = obj2base64;
+encrypt.toText = _obj2base64;
 
 /**
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
@@ -371,7 +381,7 @@ function sign(data, fqdn) {
 	logger.error("sign data with fqdn, element not found ");
 	return null;
 }
-sign.toText = obj2base64;
+sign.toText = _obj2base64;
 /**
  * Checks signature.
  * @public
@@ -425,6 +435,4 @@ function checkSignature(data, callback) {
 }
 //endregion
 
-function obj2base64(o) {
-	return Buffer(CommonUtils.stringify(o, false)).toString('base64');
-}
+
