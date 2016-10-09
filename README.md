@@ -189,7 +189,9 @@ The custom provisioning process uses the *Authorization Server* as single author
 If you have completed the ["Quick Start"](#quick-start) above, and know how your future application will look, you can feel free to use all of what's described below.
 At any moment, using beame-sdk, you can see all credentials you currently own by running:
  - `beame creds list`
-
+Check Beame-SDK version by using:  
+ - `beame system checkVersion`  
+ 
 ### Credentials
 
 The following commands are used for acquiring and manipulating certificates.
@@ -214,7 +216,7 @@ The following commands are used for acquiring and manipulating certificates.
 ### Running test server
 
 * `beame servers runHelloWorldServer --fqdn clientFQDN` - _run a "Hello World" HTTPS server for the specified hostname_
-* `beame servers runChatServer [--fqdn fqdn] [--sharedFolder sharedFolder]` - _run secure chat server_
+* `beame servers runChatServer --fqdn clientFQDN [--sharedFolder sharedFolder]` - _run secure chat server, provide optional `--sharedFolder path-to-folder` to share files directrly from your machine_
 
 ### Beame.io CLI - encryption
 
@@ -224,25 +226,54 @@ The following commands are used for acquiring and manipulating certificates.
 ## Beame NodeJS API
 [Extended JsDoc generated documentation - here](https://beameio.github.io/beame-sdk/index.html)
 
-_The idea behind the Node.js SDK APIs is that you can employ Beame CLI functionality in your own Node.js project._
+_The idea behind the Node.js SDK APIs is that you can employ functionality provided by Beame CLI, in your own Node.js project._
 
-Receive publicly trusted cert with a pseudo-random routable hostname and run your new TLS(SSL) server in the same flow (or later, whenever you see it fit).
-
-Current SDK release intends extensive CLI usage (see description above). So Node.js APIs provide a high level of access.
-
-Be aware that API on each level requires credentials created on the previous/higher level:
-
-To use any API from beame-sdk include
+To use any js APIs from beame-sdk include
 `var beameSDK = require ("beame-sdk");`
 
-### Atom level commands
-Requires developer credentials (developer fqdn/hostname) + atomName (your application name)
-To create new atom under current developer:
+### Credential manipulation APIs
+
+Include following code:
+`var creds = beameSDK.creds;`
+
+#### Available Creds methods
+
+* `creds.show(requestedFqdn)` - _outputs details of requested credential in json formatted string.
+Use example:_
 ```
-    beameSDK.creds.createAtom(devHostname, atomName, amount, function(data){//amount - number of atoms to create
-        //atom level hostname returned in: <data.hostname>
-    });
- ```
+// use example
+var beameSDK = require('beame-sdk');
+var creds = beameSDK.creds;
+console.log(creds.show("x5lidev3ovw302bb.v1.d.beameio.net"));
+...
+{ fqdn: 'requestedFqdn',
+  parent_fqdn: '',							//parentFqdn-if-defined
+  level: 0,								//level-according-to-beame-networking-structure
+  local_ip: '',								//local-ip-if-defined
+  edge_fqdn: 'ggkho8pz7n2vvjqy.bqnp2d2beqol13qn.v1.d.beameio.net', 	//tls-tunnel-remote-end
+  name: 'az',
+  email: 'az@beame.io',
+  path: '/Users/Az/.beame/v2/x5lidev3ovw302bb.v1.d.beameio.net'}	//path-to-folder-with-credentials
+```  
+* `creds.list()` - _list details of all credentials on this machine, output is an array of objects, see extended documentation for detailed description_
+* `creds.getCreds(token, authSrvFqdn, fqdn, name, email, callback)` - _request new credentials from Beame; intended to be called in two ways: 1st - provide valid authorization token (fqdn set to null); 2nd - by providing local fqdn (pass token as null)_
+```
+creds.getCreds(token, authSrvFqdn, fqdn, name, email,function(error,data){
+//if success - data contains new host details, in format like output of creds.show()
+//handle errors if error not null
+});
+```
+* `beame creds updateMetadata --fqdn fqdn [--name name] [--email email] [--format {text|json}]` - _update your details for the specified fqdn_
+* `beame creds shred --fqdn fqdn [--format {text|json}]` - _shred credentials for specified fqdn_
+* `beame creds exportCredentials --fqdn fqdn --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]` - _encrypt specified credentials for particular target host_
+* `beame creds importCredentials --file file` - _decypt and import credentials contained in specified file_
+* `beame creds importLiveCredentials --fqdn fqdn` - _import credentials of any public domain to Beame store, you can see imported credential by calling:_ `beame creds list`
+* `beame creds encrypt --data data [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; output is a json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of data hash_
+* `beame creds decrypt --data data` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key, entity that data was encrypted for, is specified in appropriate field in provided data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `beame creds sign --data data --fqdn fqdn [--format {text|json}]` - _sign provided data with private key of specified fqdn, output is json in base64 format_
+* `beame creds checkSignature --data data` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+
+
 ### Edge Client level commands
 Requires atom credentials (atom fqdn/hostname). atomHostName - app level hostname created in previous step
 To create new edgeClient under current atom:
