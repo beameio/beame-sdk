@@ -263,13 +263,13 @@ creds.getCreds(token, authSrvFqdn, fqdn, name, email,function(error,data){
 //handle errors if error not null
 });
 ```
-* `beame creds updateMetadata --fqdn fqdn [--name name] [--email email] [--format {text|json}]` - _update your details for the specified fqdn_
-* `beame creds shred --fqdn fqdn [--format {text|json}]` - _shred credentials for specified fqdn_
-* `beame creds exportCredentials --fqdn fqdn --targetFqdn targetFqdn [--signingFqdn signingFqdn] [--file file]` - _encrypt specified credentials for particular target host_
-* `beame creds importCredentials --file file` - _decypt and import credentials contained in specified file_
-* `beame creds importLiveCredentials --fqdn fqdn` - _import credentials of any public domain to Beame store, you can see imported credential by calling:_ `beame creds list`
-* `beame creds encrypt --data data [--fqdn fqdn] [--signingFqdn signingFqdn] [--format {text|json}]` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; output is a json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of data hash_
-* `beame creds decrypt --data data` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key, entity that data was encrypted for, is specified in appropriate field in provided data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `creds.updateMetadata(fqdn, name, email, callback(error,data){})` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
+* `creds.shred(fqdn)` - _shred credentials for specified fqdn_
+* `creds.exportCredentials(fqdn, targetFqdn, signingFqdn, file)` - _encrypt given fqdn credentials with targetFqdn public key, signingFqdn is optional, if provided, data will be signed and signature added to it. No return value._
+* `creds.importCredentials(file)` - _decypt and import credentials contained in specified file, will succeed only if corresponding private key is found. No return value._
+* `creds.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
+* `creds.encrypt(data, fqdn, signingFqdn, callback(error, encryptedData){})` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; if error is null, encryptedData contains json formatted string, containing details about target host. If signingFqdn is specified, output will contain RSA signature of encryptedData_
+* `creds.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
 * `beame creds sign --data data --fqdn fqdn [--format {text|json}]` - _sign provided data with private key of specified fqdn, output is json in base64 format_
 * `beame creds checkSignature --data data` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
 
