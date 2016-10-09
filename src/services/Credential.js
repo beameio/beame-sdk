@@ -61,19 +61,24 @@ const CryptoServices         = require('../services/Crypto');
  */
 class Credential {
 
+
+
 	constructor(store) {
 		if (store) {
+			//noinspection JSUnresolvedVariable
 			/** @member {BeameStoreV2}*/
 			this.store = store;
 		}
+
+		//noinspection JSUnresolvedVariable
+		/** @member {String} */
+		this.fqdn = null;
 
 		/** @member {MetadataObject} */
 		this.metadata = {};
 
 		/** @member {Array.<Credential>} */
 		this.children = [];
-
-
 
 		// cert files
 		/** @member {Buffer}*/
@@ -120,8 +125,8 @@ class Credential {
 	 * @param metadata
 	 */
 	initWithFqdn(fqdn, metadata) {
-		/** @member {String} */
-		this.fqdn               = fqdn;
+		//noinspection JSUnresolvedVariable
+		this.fqdn = fqdn;
 
 		/** @member {BeameStoreDataServices} */
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store, this.parseMetadata(metadata));
@@ -134,6 +139,7 @@ class Credential {
 	 * @param fqdn
 	 */
 	initFromData(fqdn) {
+		//noinspection JSUnresolvedVariable
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
 		this.loadCredentialsObject();
@@ -151,6 +157,7 @@ class Credential {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
 				this.certData           = err ? null : certData;
+				//noinspection JSUnresolvedVariable
 				this.fqdn               = this.extractCommonName();
 				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
 			});
@@ -184,8 +191,8 @@ class Credential {
 				this.certData           = certData;
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this.store);
 				this.metadata.fqdn      = certData.commonName;
+				//noinspection JSUnresolvedVariable
 				this.fqdn               = certData.commonName;
-
 				this.beameStoreServices.writeObject(config.CertificateFiles.X509, x509);
 			}
 		});
