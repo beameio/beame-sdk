@@ -12,7 +12,7 @@
 
 /**
  * @typedef {Object} AesEncryptedData
- * @property {String} AES256CBC - base64 encoded encrypted data
+ * @property {String} AES128CBC - base64 encoded encrypted data
  * @property {String} IV - base64 encoded initialization vector
  * @property {String} sharedCipher - base64 encoded shared secret
  */
@@ -39,7 +39,7 @@ class CryptoServices{
 		let encrypted = cipher.update(data, 'utf8', 'base64');
 		encrypted += cipher.final('base64');
 
-		return [{AES256CBC: encrypted}, {
+		return [{AES128CBC: encrypted}, {
 			IV: initializationVector.toString('base64'),
 			sharedCipher: sharedSecret.toString('base64')
 		}];
@@ -56,14 +56,14 @@ class CryptoServices{
 	static aesDecrypt(data) {
 		//data = JSON.parse(data);
 		let crypto = require('crypto');
-		if (!(data[1].IV && data[1].sharedCipher && data[0].AES256CBC )) {
+		if (!(data[1].IV && data[1].sharedCipher && data[0].AES128CBC )) {
 			throw new Error('Invalid data passed to aesDecrypt');
 		}
 		let cipher = new Buffer(data[1].sharedCipher, "base64");
 		let IV = new Buffer(data[1].IV, "base64");
 
 		let decipher = crypto.createDecipheriv("aes-128-cbc", cipher, IV);
-		let dec = decipher.update(data[0].AES256CBC, 'base64', 'utf8');
+		let dec = decipher.update(data[0].AES128CBC, 'base64', 'utf8');
 		dec += decipher.final('utf8');
 		return dec;
 	}
