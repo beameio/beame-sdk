@@ -7,9 +7,10 @@ const CommonUtils    = require('../utils/CommonUtils');
 require('../../initWin');
 
 /**
- *
- * @param data
- * @param {String} secret
+ * @public
+ * @method Crypto.aesEncrypt
+ * @param {String} data
+ * @param {String|null} [secret]
  * @returns string
  */
 function aesEncrypt(data, secret) {
@@ -29,6 +30,12 @@ function aesEncrypt(data, secret) {
 
 }
 
+/**
+ * @public
+ * @method Crypto.aesDecrypt
+ * @param {String} data
+ * @returns {String}
+ */
 function aesDecrypt(data) {
 
 	var token   = CommonUtils.parse(new Buffer(data, 'base64').toString());

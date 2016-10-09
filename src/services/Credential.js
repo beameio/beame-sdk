@@ -357,7 +357,7 @@ class Credential {
 	 *
 	 * @param {String} fqdn
 	 * @param {String} data
-	 * @param {String} signingFqdn
+	 * @param {String|null} [signingFqdn]
 	 * @returns {EncryptedMessage}
 	 */
 	encrypt(fqdn, data, signingFqdn) {
@@ -974,6 +974,44 @@ class Credential {
 		};
 	}
 
+	//endregion
+
+	//region live credential
+	static importLiveCredentials(fqdn) {
+		const store = new (require("./BeameStoreV2"))();
+		let tls     = require('tls');
+		try {
+			let ciphers           = tls.getCiphers().filter(cipher => {
+				return cipher.indexOf('ec') < 0;
+
+			});
+			let allowedCiphers    = ciphers.join(':').toUpperCase();
+			let conn              = tls.connect(443, fqdn, {host: fqdn, ciphers: allowedCiphers});
+			let onSecureConnected = function () {
+				//noinspection JSUnresolvedFunction
+				let cert = conn.getPeerCertificate(true);
+				conn.end();
+				let bas64Str    = new Buffer(cert.raw, "hex").toString("base64");
+				let certBody    = "-----BEGIN CERTIFICATE-----\r\n";
+				certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
+				certBody += "-----END CERTIFICATE-----";
+				let credentials = store.addToStore(certBody);
+				credentials.saveCredentialsObject();
+			};
+
+			conn.on('error', function (error) {
+				let msg = error && error.message || error.toString();
+				logger.fatal(msg);
+			});
+
+			conn.once('secureConnect', onSecureConnected);
+
+		}
+		catch (e) {
+			logger.fatal(e.toString());
+		}
+
+	}
 	//endregion
 }
 

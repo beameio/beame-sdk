@@ -30,8 +30,40 @@ module.exports = {
 	checkSignature
 };
 
+
+//region private methods and helpers
+/**
+ * @private
+ * @param line
+ * @returns {*}
+ */
+function _lineToText(line) {
+	let table = new Table();
+	for (let k in line) {
+		//noinspection JSUnfilteredForInLoop
+		table.push({[k]: line[k].toString()});
+	}
+
+	return table;
+}
+
+/**
+ * Return list of credentials
+ * @private
+ * @param {String|null} [fqdn] entity fqdn
+ * @returns {Array<Credential>}
+ */
+function _listCreds(fqdn) {
+	const store = new BeameStore();
+	return store.list(fqdn, {});
+}
+//endregion
+
+//region Entity management
 /**
  * AuthToken(token) or Local Credential(fqdn) required
+ * @public
+ * @method Creds.getCreds
  * @param {String|null} [token]
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [fqdn]
@@ -53,10 +85,11 @@ function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 	CommonUtils.promise2callback(promise, callback);
 
 }
-getCreds.toText = lineToText;
+getCreds.toText = _lineToText;
 
 /**
- *
+ * @public
+ * @method Creds.updateMetadata
  * @param {String} fqdn
  * @param {String|null} [name]
  * @param {String|null} [email]
@@ -67,42 +100,16 @@ function updateMetadata(fqdn, name, email, callback) {
 
 	CommonUtils.promise2callback(cred.updateMetadata(fqdn, name, email), callback);
 }
-updateMetadata.toText = lineToText;
+updateMetadata.toText = _lineToText;
+//endregion
 
-/** private helpers and services **/
-
-/**
- * @private
- * @param line
- * @returns {*}
- */
-function lineToText(line) {
-	let table = new Table();
-	for (let k in line) {
-		//noinspection JSUnfilteredForInLoop
-		table.push({[k]: line[k].toString()});
-	}
-
-	return table;
-}
-
-/**
- * Return list of credentials
- * @private
- * @param {String|null} [fqdn] entity fqdn
- * @returns {Array<Credential>}
- */
-function listCreds(fqdn) {
-	const store = new BeameStore();
-	return store.list(fqdn, {});
-}
-
+//region list/show/shred functions
 /**
  * Return list of certificate properties
  * @public
  * @method Creds.show
- * @param {String|null} [fqdn] entity fqdn
- * @returns {Array.<Credential>}
+ * @param {String} fqdn
+ * @returns {Object}
  */
 function show(fqdn) {
 	const store = new BeameStore();
@@ -113,7 +120,7 @@ function show(fqdn) {
 	return creds.metadata;
 }
 
-show.toText = lineToText;
+show.toText = _lineToText;
 
 /**
  * Return list of credentials
@@ -124,7 +131,7 @@ show.toText = lineToText;
  */
 function list(regex) {
 	logger.debug(`list  ${regex}`);
-	return listCreds(regex || '.');
+	return _listCreds(regex || '.');
 }
 
 list.toText = function (creds) {
@@ -138,6 +145,12 @@ list.toText = function (creds) {
 	return table;
 };
 
+/**
+ * Delete local credential folder
+ * @public
+ * @method Creds.shred
+ * @param {String} fqdn
+ */
 function shred(fqdn) {
 	const store = new BeameStore();
 	if (!fqdn) {
@@ -147,24 +160,27 @@ function shred(fqdn) {
 		return 'fqdn has been erased from store';
 	});
 }
+shred.toText = _lineToText;
+//endregion
 
-shred.toText = lineToText;
-
-
+//region Export/Import
 /**
  * Export credentials from source fqdn to target fqdn
  * @public
  * @method Creds.exportCredentials
  * @param {String} fqdn - fqdn of credentials to export
  * @param {String} targetFqdn - fqdn of the entity to encrypt for
- * @param {String} signingFqdn
+ * @param {String|null} [signingFqdn]
  * @param {String} file - path to file
  * @returns {String|null}
  */
-
 function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
 	if (!targetFqdn) {
 		logger.fatal(`target fqdn required`);
+	}
+
+	if (!file) {
+		logger.fatal(`path to file for saving credentials required`);
 	}
 
 	const store = new BeameStore();
@@ -176,9 +192,6 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
 		try {
 			encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
 				if (payload) {
-					if (!file) {
-						return payload;
-					}
 
 					let p = path.resolve(file);
 					fs.writeFileSync(p, payload);
@@ -200,54 +213,70 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file) {
  * Import credentials exported with exportCredentials method
  * @public
  * @method Creds.importCredentials
- * @param {String|null} [file] - path to file with encrypted credentials
+ * @param {String} file - path to file with encrypted credentials
  * @returns {String}
  */
 function importCredentials(file) {
-	const store = new BeameStore();
 
-
-	let data = CommonUtils.parse(fs.readFileSync(path.resolve(file)) + "");
+	if (!file) {
+		logger.fatal(`path to file for saving credentials required`);
+	}
 
 	function _import(encryptedCredentials) {
-		let decryptedCreds = decrypt(CommonUtils.stringify(encryptedCredentials, false));
 
-		if (decryptedCreds && decryptedCreds.length) {
+		try {
+			let decryptedCreds = decrypt(CommonUtils.stringify(encryptedCredentials, false));
 
-			let parsedCreds = CommonUtils.parse(decryptedCreds);
+			if (decryptedCreds && decryptedCreds.length) {
 
-			let importedCredential = new Credential(store);
-			importedCredential.initFromObject(parsedCreds);
-			importedCredential.saveCredentialsObject();
-			return `Successfully imported credentials ${importedCredential.fqdn}`;
+				let parsedCreds = CommonUtils.parse(decryptedCreds);
+
+				let importedCredential = new Credential(store);
+				importedCredential.initFromObject(parsedCreds);
+				importedCredential.saveCredentialsObject();
+				return `Successfully imported credentials ${importedCredential.fqdn}`;
+			}
+		}
+		catch (error) {
+			logger.fatal(BeameLogger.formatError(error));
 		}
 	}
 
-	if (data.signedBy && data.signature) {
-		store.find(data.signedBy).then(signingCreds=> {
-				let encryptedCredentials;
+	try {
+		const store = new BeameStore();
 
-				if (data.signature) {
-					let sigStatus = signingCreds.checkSignatureToken(data);
-					console.log(`Signature status is ${sigStatus}`);
-					if (!sigStatus) {
-						logger.fatal(`Import credentials signature mismatch ${data.signedBy}, ${data.signature}`);
+		let data = CommonUtils.parse(fs.readFileSync(path.resolve(file)) + "");
+
+
+		if (data.signedBy && data.signature) {
+			store.find(data.signedBy).then(signingCreds=> {
+					let encryptedCredentials;
+
+					if (data.signature) {
+						let sigStatus = signingCreds.checkSignatureToken(data);
+						console.log(`Signature status is ${sigStatus}`);
+						if (!sigStatus) {
+							logger.fatal(`Import credentials signature mismatch ${data.signedBy}, ${data.signature}`);
+						}
+						encryptedCredentials = data.signedData;
+					} else {
+						encryptedCredentials = data;
 					}
-					encryptedCredentials = data.signedData;
-				} else {
-					encryptedCredentials = data;
+
+					return _import(encryptedCredentials);
+
 				}
-
-				return _import(encryptedCredentials);
-
-			}
-		).catch(error=> {
-			logger.error(error);
-			logger.fatal(`signing creds ${data.signedBy} not found`);
-		});
+			).catch(error=> {
+				logger.error(error);
+				logger.fatal(`signing creds ${data.signedBy} not found`);
+			});
+		}
+		else {
+			return _import(data.signature || data);
+		}
 	}
-	else {
-		return _import(data.signature || data);
+	catch (error) {
+		logger.fatal(BeameLogger.formatError(error));
 	}
 
 
@@ -255,60 +284,29 @@ function importCredentials(file) {
 
 /**
  * XXX TODO: use URL not FQDN as parameter
- * Import non Beame credentials by fqdn and save to to ./beame/v{}/remote
+ * Import non Beame credentials by fqdn and save to BeameStore
  * @public
- * @method Creds.importNonBeameCredentials
+ * @method Creds.importLiveCredentials
  * @param {String} fqdn
  */
 function importLiveCredentials(fqdn) {
-	const store = new BeameStore();
-	let tls     = require('tls');
-	try {
-		let ciphers           = tls.getCiphers().filter(cipher => {
-			return cipher.indexOf('ec') < 0;
-
-		});
-		let allowedCiphers    = ciphers.join(':').toUpperCase();
-		let conn              = tls.connect(443, fqdn, {host: fqdn, ciphers: allowedCiphers});
-		let onSecureConnected = function () {
-			//noinspection JSUnresolvedFunction
-			let cert = conn.getPeerCertificate(true);
-			conn.end();
-			let bas64Str    = new Buffer(cert.raw, "hex").toString("base64");
-			let certBody    = "-----BEGIN CERTIFICATE-----\r\n";
-			certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
-			certBody += "-----END CERTIFICATE-----";
-			let credentials = store.addToStore(certBody);
-			credentials.saveCredentialsObject();
-		};
-
-		conn.on('error', function (error) {
-			let msg = error && error.message || error.toString();
-			logger.fatal(msg);
-		});
-
-		conn.once('secureConnect', onSecureConnected);
-
-	}
-	catch (e) {
-		logger.fatal(e.toString());
-	}
-
+	Credential.importLiveCredentials(fqdn);
 }
+//endregion
 
-
+//region Encrypt/Decrypt
 /**
  * Encrypts given data for the given entity. Only owner of that entity's private key can open it. You must have the public key of the fqdn to perform the operation.
  * @public
  * @method Creds.encrypt
- * @param {String|Object} data - data to encrypt
+ * @param {String} data - data to encrypt
  * @param {String} targetFqdn - entity to encrypt for
- * @param {String} signingFqdn
+ * @param {String|null} [signingFqdn]
  * @param {Function} callback
  */
 function encrypt(data, targetFqdn, signingFqdn, callback) {
 
-	if(typeof data != 'string') {
+	if (typeof data != 'string') {
 		throw new Error("encrypt(): data must be string");
 	}
 
@@ -357,7 +355,9 @@ function decrypt(data) {
 		return null;
 	}
 }
+//endregion
 
+//region Sign/Check Signature
 /**
  * Signs given data. You must have private key of the fqdn.
  * @public
@@ -378,6 +378,7 @@ function sign(data, fqdn) {
 	return null;
 }
 sign.toText = x=>x;
+
 /**
  * Checks signature.
  * @public
@@ -429,3 +430,4 @@ function checkSignature(data, callback) {
 	CommonUtils.promise2callback(_checkSignature(data), callback);
 
 }
+//endregion
