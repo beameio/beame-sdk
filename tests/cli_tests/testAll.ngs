@@ -115,7 +115,7 @@ do_test("Run without arguments", {
 do_test("Copy $BEAME_DEV_AUTH_FQDN into store", copy_to_store)
 
 {
-	n_entities = 1
+	n_entities = 2
 	for(i;n_entities) {
 		prepare_entity_properties()
 		do_test("[entity ${i+1}/$n_entities] Create token for an entity", create_token)
@@ -176,11 +176,9 @@ if data_with_signature {
 	})
 }
 
-c_exit(100)
-
 creds_exported = false
 if entities.len() >= 2 {
-	do_test("Export credentials", F() {
+	do_test("Export credentials", {
 		ENV.get('SKIP_EXPORT', false) returns "SKIPPED"
 		exp = ``$BEAME_BIN creds exportCredentials --fqdn ${entities[0].fqdn} --targetFqdn ${entities[1].fqdn} --file $CREDS_FILE``
 		exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
@@ -188,22 +186,21 @@ if entities.len() >= 2 {
 		global creds_exported = true
 		exp
 	})
+
+
 }
-# XXX
-creds_exported = false
 
 if creds_exported {
 	F test_creds_exist() {
-		ls = ``$BEAME_BIN creds list --fqdn ${entities[0].fqdn} --format json``
+		ls = ``$BEAME_BIN creds list --regex ${entities[0].fqdn} --format json``
 		ls is not Arr throws TestFail("Creds list did not return an array")
 		ls.len() != 1 throws TestFail("Creds list length is not 1")
 		ls[0].fqdn != entities[0].fqdn throws TestFail("Creds list returned the wrong item")
 		ls
 	}
 	do_test("[Import credentials] Test credentials exist before deleting them", test_creds_exist)
-	do_test("[Import credentials] Deleting exported credentials", F() {
-		# TODO: CLI command
-		$(rm -rf "$BEAME_DIR/v1/local/${entity.fqdn}/${entities[0].fqdn}")
+	do_test("[Import credentials] Deleting exported credentials", {
+		$(creds shred --fqdn ${entities[0].fqdn})
 		"deleted"
 	})
 	do_test("[Import credentials] Test credentials do not exist before importing", F() {
