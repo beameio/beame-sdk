@@ -128,7 +128,6 @@ encrypted_data = null
 
 do_test("Encrypt data", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --format json`
-	echo("E $encrypted_data")
 	enc = encrypted_data.parse()
 	enc is not Hash throws TestFail("Encrypted data must be hash, not $enc")
 	%[rsaCipheredKeys data encryptedFor].each(F(k) k not in enc throws TestFail("Key $k is missing in 'encrypt' output"))
@@ -137,15 +136,16 @@ do_test("Encrypt data", {
 })
 
 
-c_exit(100)
-
 if encrypted_data {
 	do_test("Decrypt data", F() {
-		dec = ``$BEAME_BIN crypto decrypt --data $encrypted_data``
+		dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
 		dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
 		"Decryped data was same as the original data"
 	})
 }
+
+c_exit(100)
+
 
 data_signature = null
 if entities {

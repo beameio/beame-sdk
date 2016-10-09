@@ -330,28 +330,23 @@ encrypt.toText = x=>x;
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
  * @public
  * @method Creds.decrypt
- * @param {String} data - data to encrypt
+ * @param {EncryptedMessage} encryptedData - data to decrypt
  */
-function decrypt(data) {
+function decrypt(encryptedData) {
+
 	const store = new BeameStore();
+
 	try {
-
-		/** @type {EncryptedMessage} */
-		let encryptedMessage = CommonUtils.parse(data);
-
-		if (!encryptedMessage) {
-			logger.fatal(`invalid data: ${data}`);
+		logger.debug('message token parsed', encryptedData);
+		if (!encryptedData.encryptedFor) {
+			logger.fatal("Decrypting a wrongly formatted message", encryptedData);
 		}
 
-		logger.debug('message token parsed', encryptedMessage);
-		if (!encryptedMessage.encryptedFor) {
-			logger.fatal("Decrypting a wrongly formatted message", data);
-		}
-
-		let targetFqdn = encryptedMessage.encryptedFor;
+		let targetFqdn = encryptedData.encryptedFor;
+		console.error(`targetFqdn ${targetFqdn}`);
 		let credential = store.getCredential(targetFqdn);
 
-		return credential.decrypt(encryptedMessage);
+		return credential.decrypt(encryptedData);
 	} catch (e) {
 		logger.fatal("decrypt error ", e);
 		return null;
