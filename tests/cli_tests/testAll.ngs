@@ -195,27 +195,21 @@ if creds_exported {
 		ls = ``$BEAME_BIN creds list --regex ${entities[0].fqdn} --format json``
 		ls is not Arr throws TestFail("Creds list did not return an array")
 		ls.len() != 1 throws TestFail("Creds list length is not 1")
-		ls[0].fqdn != entities[0].fqdn throws TestFail("Creds list returned the wrong item")
-		ls
+		ls[0].metadata.fqdn != entities[0].fqdn throws TestFail("Creds list returned the wrong item")
+		"Credentials for ${entities[0].fqdn} exist"
 	}
 	do_test("[Import credentials] Test credentials exist before deleting them", test_creds_exist)
 	do_test("[Import credentials] Deleting exported credentials", {
-		$(creds shred --fqdn ${entities[0].fqdn})
+		$($BEAME_BIN creds shred --fqdn ${entities[0].fqdn})
 		"deleted"
 	})
-	do_test("[Import credentials] Test credentials do not exist before importing", F() {
-		ls = ``$BEAME_BIN creds list --fqdn ${entities[0].fqdn} --format json``
+	do_test("[Import credentials] Test credentials do not exist before importing", {
+		ls = ``$BEAME_BIN creds list --regex ${entities[0].fqdn} --format json``
 		ls is not Arr throws TestFail("Creds list did not return an array")
 		ls.len() != 0 throws TestFail("Creds list length is not 0")
-		ls
+		"Credentials for ${entities[0].fqdn} do not exist"
 	})
-	do_test("[Import credentials] Check certificate exists", F() {
-		# https://beameio-net-certs-dev.s3.amazonaws.com/h9dgcv7wdlsff7oo.h7zujy4ch0hg8rgd.v1.beameio.net/x509.pem
-		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${entities[0].fqdn}/x509.pem"
-		$(curl -s $url)
-		"URL $url is available"
-	})
-	do_test("[Import credentials] Import", F() {
+	do_test("[Import credentials] Import", {
 		imp = ``$BEAME_BIN creds importCredentials --file $CREDS_FILE``
 		imp is not Bool throws TestFail("Import result must be a boolean, not '$imp'")
 		not(imp) throws TestFail("Import did not return true")
@@ -224,33 +218,8 @@ if creds_exported {
 	do_test("[Import credentials] Test credentials exist after import", test_creds_exist)
 }
 
-if edge_clients {
-	do_test('HTTPS servers', F() {
-
-		F bad_output(s:Str) 'hello world' not in s
-
-		servers = edge_clients.map(F(edge_client) {
-			echo("  Starting server at https://${edge_client.fqdn}/")
-			Thread(F() $($BEAME_BIN servers HttpsServerTestStart --edgeClientFqdn ${edge_client.fqdn}))
-		})
-		echo("  Waiting 5 seconds for servers to come up")
-		$(sleep 5)
-		echo("  Fetching URLs")
-		outputs = edge_clients.pmap(F(edge_client) {
-			`curl --silent --max-time 10 "https://${edge_client.fqdn}/"`
-		})
-		echo("  Killing servers")
-		$(pkill -f HttpsServerTestStart)
-		servers.join()
-		echo("  Checking outputs")
-		outputs.any(is, ProcessFail) throws TestFail("Some curl processes failed: $outputs")
-		outputs.any(bad_output) throws TestFail("Some outputs were not OK: $outputs")
-		"All ${outputs.len()} outputs were correct"
-	})
-}
-
 do_test("S3 credentials", F() {
-	results = ([entity] + entities + edge_clients).fqdn.map(F(fqdn) {
+	results = entities.fqdn.map(F(fqdn) {
 		echo("  Checking $fqdn")
 		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${entities[0].fqdn}/x509.pem"
 		try {
@@ -270,9 +239,5 @@ if Path(CREDS_FILE) {
 	$(rm $CREDS_FILE)
 }
 
-# echo("")
-# echo("--- info ---")
-# echo("ENTITIES: $entities")
-# echo("EDGE CLIENTS: $edge_clients")
 echo("All tests done. Exit code: $exit_code")
 { exit_code }
