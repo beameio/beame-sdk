@@ -7,6 +7,17 @@
 
 /** @namespace Credential **/
 
+/**
+ * @typedef {Object} MetadataObject
+ * @property {String} fqdn
+ * @property {String|null} [parent_fqdn]
+ * @property {String|null} [name]
+ * @property {String|null} [email]
+ * @property {Number} level
+ * @property {String|null} [local_ip] => local IP address(for future use)
+ * @property {String|null} [edge_fqdn] => edge server FQDN
+ * @property {String} path => path to local creds folder
+ */
 
 /**
  * @typedef {Object} SignedData
@@ -52,11 +63,54 @@ class Credential {
 
 	constructor(store) {
 		if (store) {
-			this._store = store;
+			/** @member {BeameStoreV2}*/
+			this.store = store;
 		}
 
+		/** @member {MetadataObject} */
 		this.metadata = {};
+
+		/** @member {Array.<Credential>} */
 		this.children = [];
+
+
+
+		// cert files
+		/** @member {Buffer}*/
+		this.PRIVATE_KEY = null;
+		/** @member {Buffer}*/
+		this.CA = null;
+		/** @member {Buffer}*/
+		this.X509 = null;
+		/** @member {Buffer}*/
+		this.PKCS7 = null;
+		/** @member {Buffer}*/
+		this.PKCS12 = null;
+		/** @member {Buffer}*/
+		this.P7B = null;
+		/**
+		 * @member {Buffer}
+		 * Password for PKCS12(pfx) file
+		 */
+		this.PWD = null;
+
+		/**
+		 * @member {String}
+		 * Public key as PEM string
+		 */
+		this.publicKeyStr = null;
+
+		/** @member {NodeRSA}*/
+		this.publicKeyNodeRsa = null;
+
+		/** @member {NodeRSA}*/
+		this.privateKeyNodeRsa = null;
+
+		/**
+		 * Object represents X509 properties: issuer {country, state, locality, organization, organizationUnit, commonName, emailAddress}, serial,country,state,locality,organization,organizationUnit, commonName,emailAddress,san and validity
+		 * @member {Object}
+		 */
+		this.certData ={};
 	}
 
 	//region Init functions
@@ -66,8 +120,11 @@ class Credential {
 	 * @param metadata
 	 */
 	initWithFqdn(fqdn, metadata) {
+		/** @member {String} */
 		this.fqdn               = fqdn;
-		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store, this.parseMetadata(metadata));
+
+		/** @member {BeameStoreDataServices} */
+		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store, this.parseMetadata(metadata));
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
 	}
@@ -78,7 +135,7 @@ class Credential {
 	 */
 	initFromData(fqdn) {
 		this.fqdn               = fqdn;
-		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
 		this.loadCredentialsObject();
 		this.initCryptoKeys();
 	}
@@ -95,7 +152,7 @@ class Credential {
 				}
 				this.certData           = err ? null : certData;
 				this.fqdn               = this.extractCommonName();
-				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
+				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
 			});
 
 			pem.getPublicKey(this.getKey("X509") + "", (err, publicKey) => {
@@ -125,7 +182,7 @@ class Credential {
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
 				this.certData           = certData;
-				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this._store);
+				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this.store);
 				this.metadata.fqdn      = certData.commonName;
 				this.fqdn               = certData.commonName;
 
@@ -365,7 +422,7 @@ class Credential {
 					return;
 				}
 
-				var signCred = this._store.getCredential(signWithFqdn);
+				var signCred = this.store.getCredential(signWithFqdn);
 
 				if (!signCred) {
 					reject(`Credential ${signWithFqdn} not found in store`);
@@ -403,7 +460,7 @@ class Credential {
 	encrypt(fqdn, data, signingFqdn) {
 		let signingCredential;
 		if (signingFqdn) {
-			signingCredential = this._store.getCredential(signingFqdn);
+			signingCredential = this.store.getCredential(signingFqdn);
 		}
 		let targetRsaKey = this.getPublicKeyNodeRsa();
 
@@ -439,7 +496,7 @@ class Credential {
 	 */
 	decrypt(encryptedMessage) {
 		if (encryptedMessage.signature) {
-			let signingCredential = this._store.getCredential(encryptedMessage.signedBy);
+			let signingCredential = this.store.getCredential(encryptedMessage.signedBy);
 			if (!signingCredential) {
 				new Error("Signing credential is not found in the local store");
 			}
@@ -489,7 +546,7 @@ class Credential {
 					return;
 				}
 
-				var parentCred = this._store.getCredential(parent_fqdn);
+				var parentCred = this.store.getCredential(parent_fqdn);
 
 				if (!parentCred) {
 					reject(`Parent credential ${parent_fqdn} not found`);
@@ -700,7 +757,7 @@ class Credential {
 	 */
 	_onCertsReceived(fqdn) {
 		return new Promise((resolve, reject) => {
-				let cred = this._store.getCredential(fqdn);
+				let cred = this.store.getCredential(fqdn);
 
 				if (cred == null) {
 					reject(`credential for ${fqdn} not found`);
@@ -781,7 +838,7 @@ class Credential {
 
 		return new Promise((resolve, reject) => {
 
-				var cred = this._store.getCredential(fqdn);
+				var cred = this.store.getCredential(fqdn);
 
 				if (!cred) {
 					reject(`Creds for ${fqdn} not found`);
@@ -819,7 +876,7 @@ class Credential {
 	updateMetadata(fqdn, name, email) {
 		return new Promise((resolve, reject) => {
 
-				let cred = this._store.getCredential(fqdn);
+				let cred = this.store.getCredential(fqdn);
 
 				if (!cred) {
 					reject(`Creds for ${fqdn} not found`);
@@ -859,7 +916,7 @@ class Credential {
 	subscribeForChildRegistration(fqdn) {
 		return new Promise((resolve, reject) => {
 
-				var cred = this._store.getCredential(fqdn);
+				var cred = this.store.getCredential(fqdn);
 
 				if (!cred) {
 					reject(`Creds for ${fqdn} not found`);
@@ -923,7 +980,7 @@ class Credential {
 					return;
 				}
 
-				this._store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
+				this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
 					cred => {
 						cred.createCSR().then(
 							csr => {
@@ -955,7 +1012,7 @@ class Credential {
 		return new Promise((resolve, reject) => {
 				if (!error) {
 					let dirPath           = this.getMetadataKey("path"),
-					    directoryServices = this._store.directoryServices;
+					    directoryServices = this.store.directoryServices;
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
 
@@ -1027,7 +1084,7 @@ class Credential {
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn).then(payload => {
 
-					let cred = this._store.getCredential(fqdn);
+					let cred = this.store.getCredential(fqdn);
 
 					if (!cred) {
 						reject(`Creds for ${fqdn} not found`);
