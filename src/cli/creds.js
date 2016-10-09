@@ -60,17 +60,18 @@ function _obj2base64(o) {
 /**
  * Return list of credentials
  * @private
- * @param {String|null} [fqdn] entity fqdn
+ * @param {String|null} [regex] entity regex
  * @returns {Array<Credential>}
  */
-function _listCreds(fqdn) {
+function _listCreds(regex) {
 	const store = new BeameStore();
-	return store.list(fqdn, {});
+	return store.list(regex, {});
 }
 //endregion
 
 //region Entity management
 /**
+ * Get credentials with Auth Token or for existing local Credential by fqdn
  * AuthToken(token) or Local Credential(fqdn) required
  * @public
  * @method Creds.getCreds

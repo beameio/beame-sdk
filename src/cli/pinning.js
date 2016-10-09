@@ -7,7 +7,7 @@
  */
 
 var x509 = require('x509');
-var store = require("../services/BeameStore")();
+var store = require("../services/BeameStoreV2")();
 
 function getPublicKeyEncodedDer(cert) {
 	var xcert = x509.parseCert(cert + "");
@@ -17,8 +17,7 @@ function getPublicKeyEncodedDer(cert) {
 		var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
 		var midheader = new Buffer("0203", "hex");
 		var exponent = new Buffer("010001", "hex");
-		var buffer = Buffer.concat([header, modulus, midheader, exponent]);
-		return buffer;
+		return Buffer.concat([header, modulus, midheader, exponent]);
 	}
 	return {};
 }
@@ -30,16 +29,13 @@ function getCertificate  (fqdn){
 		certBody = element.X509 + "";
 	}
 	else {
-		certBody = store.getRemoteCertificate(fqdn) + "";
+		certBody = store.getRemoteCreds(fqdn) + "";
 	}
 	return certBody;
-};
+}
 
-var getHashForCert = function(cert){
 
-};
-
-function createPublicKeyPinningHeader(edgeFqdn, pinAtom, pinDeveloper){
+function createPublicKeyPinningHeader(edgeFqdn){
 	var edge = store.search(edgeFqdn)[0];
 	var edgeCertKeyDer= getPublicKeyEncodedDer(edge.X509);
 	var atomCertDer  = getPublicKeyEncodedDer(getCertificate(edge.parent_fqdn));
@@ -50,9 +46,9 @@ function createPublicKeyPinningHeader(edgeFqdn, pinAtom, pinDeveloper){
 	//console.log(edgeHash);
 	return 'pin-sha256="' + edgeHash + '";pin-sha256="'+ atomHash +'"; max-age=315000';
 
-};
+}
 
 module.exports = {
 	createPublicKeyPinningHeader,
 	getCertificate
-}
+};

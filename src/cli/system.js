@@ -1,7 +1,22 @@
 "use strict";
 
+/** @namespace System **/
+
+/**
+ *  @typedef {Object} VersionStatus
+ *  @property {String} installed => installed version
+ *  @property {String} available => latest available version
+ *  @property {Boolean} update-available
+ */
+
 const request = require('sync-request');
 
+/**
+ * Check current SDK version
+ * @public
+ * @method System.checkVersion
+ * @returns {VersionStatus}
+ */
 function checkVersion() {
 	var currentVersion = require("../../package.json");
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSUnresolvedVariable

@@ -3,6 +3,9 @@
 
 'use strict';
 
+/** @namespace BeameStoreV2 **/
+
+
 /**
  * @typedef {Object} RemoteCreds
  * @property {Object} metadata
@@ -31,6 +34,7 @@ const DirectoryServices = require('./DirectoryServices');
 
 let _store = null;
 
+/** Class representing Beame Store*/
 class BeameStoreV2 {
 
 	constructor() {
@@ -46,7 +50,6 @@ class BeameStoreV2 {
 		this.credentials = {};
 		this.init();
 	}
-
 
 	init() {
 
@@ -131,7 +134,9 @@ class BeameStoreV2 {
 	}
 
 	/**
-	 *
+	 * Return credential from local Beame store
+	 * @public
+	 * @method BeameStoreV2.getCredential
 	 * @param {String} fqdn
 	 * @returns {Credential}
 	 */
@@ -140,15 +145,17 @@ class BeameStoreV2 {
 		return results.length == 1 ? results[0] : null;
 	}
 
-	/**
-	 *
-	 * @param fqdn
-	 * @returns {*}
-	 */
+	//noinspection JSUnusedGlobalSymbols
 	search(fqdn) {
 		return BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn);
 	}
 
+	/**
+	 * @public
+	 * @method BeameStoreV2.shredCredentials
+	 * @param {String} fqdn
+	 * @param callback
+	 */
 	shredCredentials(fqdn, callback) {
 		// XXX: Fix callback to getMetadataKey (err, data) instead of (data)
 		// XXX: Fix exit code
@@ -159,7 +166,8 @@ class BeameStoreV2 {
 	}
 
 	/**
-	 *
+	 * @public
+	 * @method BeameStoreV2.list
 	 * @param {String} regex
 	 * @param {Object} options
 	 * @returns {Array}
@@ -183,7 +191,6 @@ class BeameStoreV2 {
 		);
 	}
 
-
 	//noinspection JSUnusedGlobalSymbols
 	addToStore(x509) {
 		let credential = new Credential(this);
@@ -194,7 +201,7 @@ class BeameStoreV2 {
 
 	//noinspection JSUnusedGlobalSymbols
 	/**
-	 *
+	 * @private
 	 * @param {String} fqdn
 	 * @param {String} parentFqdn
 	 * @param {SignatureToken} token
@@ -250,6 +257,7 @@ class BeameStoreV2 {
 
 	/**
 	 * return metadata.json stored in public S3 bucket
+	 * @private
 	 * @param {String} fqdn
 	 * @returns {Promise.<RemoteCreds>}
 	 */

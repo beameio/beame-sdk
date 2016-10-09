@@ -5,6 +5,9 @@
 /*jshint esversion: 6 */
 "use strict";
 
+/** @namespace Credential **/
+
+
 /**
  * @typedef {Object} SignedData
  * @property {Number} created_at
@@ -42,15 +45,11 @@ const CryptoServices         = require('../services/Crypto');
 
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
- * @class {Object} Credential
+ *
  *
  */
 class Credential {
 
-	/**
-	 *
-	 *
-	 */
 	constructor(store) {
 		if (store) {
 			this._store = store;
@@ -61,6 +60,11 @@ class Credential {
 	}
 
 	//region Init functions
+	/**
+	 * @private
+	 * @param fqdn
+	 * @param metadata
+	 */
 	initWithFqdn(fqdn, metadata) {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store, this.parseMetadata(metadata));
@@ -68,6 +72,10 @@ class Credential {
 		this.beameStoreServices.setFolder(this);
 	}
 
+	/**
+	 * @private
+	 * @param fqdn
+	 */
 	initFromData(fqdn) {
 		this.fqdn               = fqdn;
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this._store);
@@ -75,6 +83,9 @@ class Credential {
 		this.initCryptoKeys();
 	}
 
+	/**
+	 * @private
+	 */
 	initCryptoKeys() {
 		if (this.hasKey("X509")) {
 			pem.config({sync: true});
@@ -104,6 +115,11 @@ class Credential {
 		}
 	}
 
+	/**
+	 * @private
+	 * @param x509
+	 * @param metadata
+	 */
 	initFromX509(x509, metadata) {
 		pem.config({sync: true});
 		pem.readCertificateInfo(x509, (err, certData) => {
@@ -131,15 +147,19 @@ class Credential {
 		pem.config({sync: false});
 	}
 
+	/**
+	 * @private
+	 * @param pubKeyDerBase64
+	 */
 	initFromPubKeyDer64(pubKeyDerBase64) {
 		this.publicKeyNodeRsa = new NodeRsa();
 		this.publicKeyNodeRsa.importKey('-----BEGIN PUBLIC KEY-----\n' + pubKeyDerBase64 + '-----END PUBLIC KEY-----\n', "pkcs8-public-pem");
 	}
 
-	//endregion
-
-	//region Save/load services
-
+	/**
+	 * @private
+	 * @param importCred
+	 */
 	initFromObject(importCred) {
 		if (!importCred || !importCred.metadata) {
 			return;
@@ -160,11 +180,22 @@ class Credential {
 		this.initCryptoKeys();
 		this.beameStoreServices.setFolder(this);
 	}
+	//endregion
 
+	//region Save/load services
+	/**
+	 * Delete Credential folder from Beame Store
+	 * @public
+	 * @method Credential.shred
+	 * @param callback
+	 */
 	shred(callback) {
 		this.beameStoreServices.deleteDir(callback);
 	}
 
+	/**
+	 * @private
+	 */
 	saveCredentialsObject() {
 		if (!this || !this.metadata || !this.metadata.path) {
 			return;
@@ -182,6 +213,9 @@ class Credential {
 		}
 	}
 
+	/**
+	 * @private
+	 */
 	loadCredentialsObject() {
 		Object.keys(config.CertificateFiles).forEach(keyName => {
 			try {
@@ -271,7 +305,9 @@ class Credential {
 
 	//region Crypto functions
 	/**
-	 *
+	 * Sign given data with local Beame store Credential
+	 * @public
+	 * @method Credential.sign
 	 * @param {String|Object} data
 	 * @returns {SignatureToken|null}
 	 */
@@ -297,7 +333,27 @@ class Credential {
 	}
 
 	/**
-	 *
+	 * @public
+	 * @method Credential.checkSignatureToken
+	 * @param {SignatureToken} token
+	 * @returns {boolean}
+	 */
+	checkSignatureToken(token) {
+		let rsaKey = this.getPublicKeyNodeRsa();
+		let status = rsaKey.verify(token.signedData, token.signature, "utf8", "base64");
+		if (status) {
+			logger.info(`signature signed by  ${token.signedBy} verified successfully`);
+		}
+		else {
+			logger.warn(`invalid signature signed by ${token.signedBy}`);
+		}
+
+		return status;
+	}
+
+	/**
+	 * Create Auth token
+	 * @private
 	 * @param {String} signWithFqdn
 	 * @param {String|null} [dataToSign]
 	 * @returns {Promise.<String|null>}
@@ -335,26 +391,10 @@ class Credential {
 
 	}
 
-	/**
-	 *
-	 * @param {SignatureToken} token
-	 * @returns {boolean}
-	 */
-	checkSignatureToken(token) {
-		let rsaKey = this.getPublicKeyNodeRsa();
-		let status = rsaKey.verify(token.signedData, token.signature, "utf8", "base64");
-		if (status) {
-			logger.info(`signature signed by  ${token.signedBy} verified successfully`);
-		}
-		else {
-			logger.warn(`invalid signature signed by ${token.signedBy}`);
-		}
-
-		return status;
-	}
 
 	/**
-	 *
+	 * @public
+	 * @method Credential.encrypt
 	 * @param {String} fqdn
 	 * @param {String} data
 	 * @param {String|null} [signingFqdn]
@@ -392,7 +432,8 @@ class Credential {
 	}
 
 	/**
-	 *
+	 * @public
+	 * @method Credential.decrypt
 	 * @param {Object} encryptedMessage
 	 * @returns {*}
 	 */
@@ -503,7 +544,7 @@ class Credential {
 	}
 
 	/**
-	 *
+	 * @private
 	 * @param {String} authToken
 	 * @param {String|null} [authSrvFqdn]
 	 * @param {String|null} [name]
@@ -571,7 +612,7 @@ class Credential {
 	}
 
 	/**
-	 *
+	 * @private
 	 * @param {String} authToken
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
@@ -651,6 +692,12 @@ class Credential {
 
 	}
 
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @returns {Promise}
+	 * @private
+	 */
 	_onCertsReceived(fqdn) {
 		return new Promise((resolve, reject) => {
 				let cred = this._store.getCredential(fqdn);
@@ -665,6 +712,10 @@ class Credential {
 		);
 	}
 
+	/**
+	 * @private
+	 * @returns {Promise.<String>}
+	 */
 	createCSR() {
 		var errMsg;
 
@@ -695,7 +746,7 @@ class Credential {
 	}
 
 	/**
-	 *
+	 * @private
 	 * @param {String} csr
 	 * @param {SignatureToken} authToken
 	 */
@@ -722,7 +773,7 @@ class Credential {
 	}
 
 	/**
-	 *
+	 * @private
 	 * @param {String} fqdn
 	 * @returns {Promise}
 	 */
@@ -756,6 +807,15 @@ class Credential {
 		);
 	}
 
+	/**
+	 * Update Entity metadata: name or email
+	 * @public
+	 * @method Credential.updateMetadata
+	 * @param {String} fqdn
+	 * @param {String|null} [name]
+	 * @param {String|null} [email]
+	 * @returns {Promise}
+	 */
 	updateMetadata(fqdn, name, email) {
 		return new Promise((resolve, reject) => {
 
@@ -792,7 +852,7 @@ class Credential {
 
 	//noinspection JSUnusedGlobalSymbols
 	/**
-	 *
+	 * @private
 	 * @param {String} fqdn
 	 * @returns {Promise}
 	 */
@@ -824,6 +884,10 @@ class Credential {
 	}
 
 	// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
+	/**
+	 * @private
+	 * @returns {{key: *, cert: *, ca: *}}
+	 */
 	getHttpsServerOptions() {
 		let pk  = this.getKey("PRIVATE_KEY"),
 		    p7b = this.getKey("P7B"),
@@ -839,6 +903,13 @@ class Credential {
 		};
 	}
 
+	/**
+	 *
+	 * @param payload
+	 * @param metadata
+	 * @returns {Promise}
+	 * @private
+	 */
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
 
@@ -871,6 +942,13 @@ class Credential {
 		);
 	}
 
+	/**
+	 *
+	 * @param error
+	 * @param payload
+	 * @returns {Promise}
+	 * @private
+	 */
 	_saveCerts(error, payload) {
 		let fqdn = this.fqdn;
 
@@ -977,6 +1055,12 @@ class Credential {
 	//endregion
 
 	//region live credential
+	/**
+	 * Import remote(non-Beame) credentials and save it to store(x509 + metadata)
+	 * @public
+	 * @method  Credential.importLiveCredentials
+	 * @param {String} fqdn
+	 */
 	static importLiveCredentials(fqdn) {
 		const store = new (require("./BeameStoreV2"))();
 		let tls     = require('tls');

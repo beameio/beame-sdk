@@ -1,5 +1,8 @@
 "use strict";
 
+/** @namespace Servers **/
+
+
 const express = require('express');
 const appExpress = express();
 // This require is only cause the example is inside the beame-sdk repository, you will be using require('beame-sdk');
@@ -12,8 +15,12 @@ const path = require('path');
 let defaultSharedFolder = path.resolve(__dirname, "../../examples/public/shared");
 const defaultPublicDir = path.resolve(__dirname, "../../examples/public");
 const beameSDK = new require('../../index.js');
+
+
 /**
  * run sample chat on given fqdn
+ * @public
+ * @method Servers.runChatServer
  * @param {String} fqdn
  * @param {String|null} [sharedFolder]
  */
@@ -67,7 +74,12 @@ function runChatServer(fqdn, sharedFolder) {
 	});
 }
 
-
+/**
+ * Run sample Hello World server on given fqdn
+ * @public
+ * @method Servers.runHelloWorldServer
+ * @param {String} fqdn
+ */
 function runHelloWorldServer(fqdn) {
 
 	new beameSDK.BeameServer(fqdn, (req, resp) =>{
