@@ -228,7 +228,7 @@ The following commands are used for acquiring and manipulating certificates.
 
 _The idea behind the Node.js SDK APIs is that you can employ functionality provided by Beame CLI, in your own Node.js project._
 
-To use any js APIs from beame-sdk include
+To use any js APIs from beame-sdk include  
 `var beameSDK = require ("beame-sdk");`
 
 ### Beame Store APIs
@@ -240,7 +240,7 @@ Include following code:
 #### Available [Beame Store](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) methods
 
 * `store.getCredential(requestedFqdn)` - _outputs details of requested credential in json formatted string.
-Use example:_
+Example:_
 ```
 // use example
 var beameSDK = require('beame-sdk');
