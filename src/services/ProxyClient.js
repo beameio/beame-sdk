@@ -1,6 +1,7 @@
 /**
  * Created by zenit1 on 12/07/2016.
  */
+"use strict";
 
 var _   = require('underscore');
 var net = require('net');
