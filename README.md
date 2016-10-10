@@ -215,7 +215,9 @@ The following commands are used for acquiring and manipulating certificates.
 ### Running test server
 
 * `beame servers runHelloWorldServer --fqdn clientFQDN` - _run a "Hello World" HTTPS server for the specified hostname_
-* `beame servers runChatServer --fqdn clientFQDN [--sharedFolder sharedFolder]` - _run secure chat server, provide optional `--sharedFolder path-to-folder` to share files directrly from your machine_
+* `beame servers runChatServer --fqdn clientFQDN` - _run secure chat server, provide optional `--sharedFolder path-to-folder` to share files directrly from your machine_
+* `beame servers runStaticServer [--fqdn fqdn] [--sharedFolder sharedFolder]` - _share files from __sharedFolder__ _
+
 
 ### Beame.io CLI - encryption
 
@@ -264,15 +266,21 @@ function testList() {
 }
 testList();
 ```
-* `BeameStore.shredCredentials(fqdn,cb(error){})` - _deletes local credentials folder for specified fqdn_
-
+* `BeameStore.shredCredentials(fqdn,cb(){})` - _deletes local folder for specified fqdn, callback is called if corresponding folder successfully deleted_
+```
+function testShred(fqdn) {
+	store.shredCredentials(fqdn, function (){
+		console.log('Local credential data deleted: ',fqdn);
+	});
+}
+testShred('r0jpqu6bljbeb7x2.p6yjtx9wfp9gusaz.v1.d.beameio.net');
+```
 ### Beame Credential APIs
 
 #### Available [Credential](#https://beameio.github.io/beame-sdk/Credential.html) methods
 * `Credential.createEntityWithLocalCreds(parent_fqdn, name, email)` - _request new credentials from Beame;_
 ```
-
-function testGetCred(parent_cred){
+function testCreateEntity(parent_cred){
 	var store = new beameStore();
 
 	var Credential = store.getCredential(parent_cred);
@@ -284,9 +292,9 @@ function testGetCred(parent_cred){
 		console.log(error);
 	});
 }
-testGetCred("kkonuchrnfger26n.v1.d.beameio.net");
+testCreateEntity("kkonuchrnfger26n.v1.d.beameio.net");
 ```
-* `cred.updateMetadata(fqdn, name, email)` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
+* `Credential.updateMetadata(fqdn, name, email)` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
 ```
 function testUpdateMetadata(fqdn){
 	var store = new beameStore();
@@ -301,7 +309,7 @@ function testUpdateMetadata(fqdn){
 }
 testUpdateMetadata('kkonuchrnfger26n.v1.d.beameio.net');
 ```
-* `cred.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
+* `Credential.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
 ```
 function testImportLive(fqdn){
 	var cred = beameSDK.Credential;
