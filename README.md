@@ -260,21 +260,62 @@ console.log(store.getCredential("x5lidev3ovw302bb.v1.d.beameio.net"));
 
 ### Beame Credential APIs
 
-Declare local instance of Beame Credential:  
-`var cred = beameSDK.Credential;`
 
 #### Available [Credential](#https://beameio.github.io/beame-sdk/Credential.html) methods
-* `cred.createEntityWithLocalCreds(parent_fqdn, name, email)` - _request new credentials from Beame;_
+* `Credential.createEntityWithLocalCreds(parent_fqdn, name, email)` - _request new credentials from Beame;_
 ```
-creds.getCreds(token, authSrvFqdn, fqdn, name, email,function(error,data){
-//if success - data contains new host details, in format like output of creds.show()
-//handle errors if error not null
-});
+var beameStore = beameSDK.BeameStore;
+
+function testGetCred(parent_cred){
+	var store = new beameStore();
+	var Credential = store.getCredential(parent_cred);
+	console.log(Credential);
+	Credential.createEntityWithLocalCreds(parent_cred, "az", "az@beame.io").
+	then(metadata => {
+		console.log(`metadata received for ${metadata.name}`, metadata);
+	}).catch(error=> {
+		console.log(error);
+	});
+}
+testGetCred("kkonuchrnfger26n.v1.d.beameio.net");
 ```
 * `cred.updateMetadata(fqdn, name, email)` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
+```
+function testUpdateMetadata(fqdn){
+	var cred = new Credential(store);
+	cred.updateMetadata(fqdn, "azzz", "azzz@beame.io").
+	then(metadata => {
+		console.log(`metadata received for ${metadata.name}`, metadata);
+	}).catch(error=> {
+		console.log(error);
+	});
+}
+testUpdateMetadata('kkonuchrnfger26n.v1.d.beameio.net');
+```
 * `cred.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
+```
+function testImportLive(fqdn){
+	var Credential = beameSDK.Credential;
+	Credential.importLiveCredentials(fqdn);
+}
+testImportLive("www.google.com");
+```
 * `cred.encrypt(fqdn, data, signingFqdn)` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; returns encryptedData that contains json formatted string, containing details about target host. If signingFqdn is specified, return value will contain RSA signature of encryptedData_
 * `cred.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+```
+function testDecrypt(encryptedData){
+	var Credential = beameSDK.Credential;
+	try{
+		var jsonData = JSON.parse(encryptedData);
+		var Credential = store.getCredential(jsonData.encryptedFor);
+		console.log('Decrypting data for:',jsonData.encryptedFor);
+		console.log('Decrypted data: ',Credential.decrypt(jsonData));
+	}
+	catch(e){console.log(e)}
+}
+testDecrypt("{\"rsaCipheredKeys\":\"VrYM+DlYvcSd9P2TvyVIclvyBik9/rq04xIpeSiOAXOXUdnTLIC+FqbDnWIu0x1eJtWXdydNsW0HcnZMqhJqsVgf5ikJ9iiA8msIi/STkvfmzcO3ebGkMIiud0gzZlFQdxVuRf05BUhzi1hn4Zq3S1AvLpBlaysNNovVKBEx1sPtf8AmFET40FKLJzG8eI21BewmLG/TCOfrp79F3qWNnk/YZLaWwgtHHvemeRRyUOw5hjJXE30jDf+hi4or7Dkxj5x7VoSzSGLAB3dYQqtYI3JpMh2y7bE5LJRQNhJH2YD2m0kz5AysmlBzyLk05AUeLovaF8v2oa7zX4zfwNVz2w==\",\"data\":{\"AES128CBC\":\"tK563qocIBbge94y+1uj7w==\"},\"encryptedFor\":\"rbd3coggbrgbfhs5.x5lidev3ovw302bb.v1.d.beameio.net\"}");
+
+```
 * `cred.sign(data, fqdn)` - _sign provided data with private key of specified fqdn, output is json string in base64 format_
 * `cred.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
 
