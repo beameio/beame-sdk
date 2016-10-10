@@ -115,7 +115,7 @@ updateMetadata.toText = _lineToText;
 //endregion
 
 //region list/show/shred functions
-/**
+/**createEntityWithLocalCreds
  * Return list of certificate properties
  * @public
  * @method Creds.show
