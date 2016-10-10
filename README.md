@@ -227,36 +227,44 @@ The following commands are used for acquiring and manipulating certificates.
 
 _The idea behind the Node.js SDK APIs is that you can employ functionality provided by Beame CLI, in your own Node.js project._
 
-To use any js APIs from beame-sdk include  
-`var beameSDK = require ("beame-sdk");`
+To use any js APIs from beame-sdk import beame-sdk and init Beame Store  
+```
+var beameSDK = require ("beame-sdk");
+var beameStore = beameSDK.BeameStore;
+```
 
 ### Beame Store APIs
 
-To use Beame Store methods, declare BeameStore instance through `beameSDK`.  
-Include following code:  
-`var store = beameSDK.BeameStore;`
+BeameStore is a base class that manages access to all Beameio credentials. 
 
 #### Available [Beame Store](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) methods
 
-* `store.getCredential(requestedFqdn)` - _outputs details of requested credential in json formatted string.
-Example:_
+* `BeameStore.getCredential(requestedFqdn)` - _returned "Credential" object, initiated with requestedFqdn, allows access to all Credential methods (see description for __Credential__ below)._
 ```
-// use example
-var beameSDK = require('beame-sdk');
-var store = beameSDK.BeameStore;
-console.log(store.getCredential("x5lidev3ovw302bb.v1.d.beameio.net"));
-...
-{ fqdn: 'requestedFqdn',
-  parent_fqdn: '',							//parentFqdn-if-defined
-  level: 0,								//level-according-to-beame-networking-structure
-  local_ip: '',								//local-ip-if-defined
-  edge_fqdn: 'ggkho8pz7n2vvjqy.bqnp2d2beqol13qn.v1.d.beameio.net', 	//tls-tunnel-remote-end
-  name: 'az',
-  email: 'az@beame.io',
-  path: '/Users/Az/.beame/v2/x5lidev3ovw302bb.v1.d.beameio.net'}	//path-to-folder-with-credentials
+function testGetCredential(fqdn) {
+	var store = new beameStore();
+	console.log(store.getCredential(fqdn));
+}
+testGetCredential('kkonuchrnfger26n.v1.d.beameio.net');
+```
+* `BeameStore.find(requestedFqdn)` - _the method is similar to getCredential, with additional ability to receive fqdn of remote host._
+```
+function testFind(fqdn){
+	store.find(fqdn).
+	then(cred=> {
+		console.log(cred);
+	}).catch(error=>{console.log(error)});
+}
+testFind('kkonuchrnfger26n.v1.d.beameio.net');
 ```  
-* `store.list()` - _list details of all credentials on this machine, output is an array of objects, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for detailed description_
-* `store.shredCredentials(fqdn,cb(error){})` - _deletes local credentials folder for specified fqdn_
+* `BeameStore.list(regex, options)` - _regex - limit output to objects containing provided regex; options - receives {hasPrivateKey:[true|false]} key, to limit output to list details of all credentials on this machine, output is an array of objects, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for output object structure details_
+```
+function testList() {
+	console.log(store.list(null,{'hasPrivateKey':true}));
+}
+testList();
+```
+* `BeameStore.shredCredentials(fqdn,cb(error){})` - _deletes local credentials folder for specified fqdn_
 
 ### Beame Credential APIs
 
@@ -265,7 +273,6 @@ console.log(store.getCredential("x5lidev3ovw302bb.v1.d.beameio.net"));
 ```
 
 function testGetCred(parent_cred){
-	var beameStore = beameSDK.BeameStore;
 	var store = new beameStore();
 
 	var Credential = store.getCredential(parent_cred);
@@ -282,7 +289,6 @@ testGetCred("kkonuchrnfger26n.v1.d.beameio.net");
 * `cred.updateMetadata(fqdn, name, email)` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
 ```
 function testUpdateMetadata(fqdn){
-	var beameStore = beameSDK.BeameStore;
 	var store = new beameStore();
 	
 	var cred = new Credential(store);
@@ -306,7 +312,6 @@ testImportLive("www.google.com");
 * `Credential.encrypt(fqdn, data, signingFqdn)` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; returns encryptedData object, with specifik key-value pairs. If signingFqdn is specified, return value will contain RSA signature of encryptedData_
 ```
 function testEncrypt(targetFqdn, data, signingFqdn){
-	var beameStore = beameSDK.BeameStore;
 	var store = new beameStore();
 	store.find(targetFqdn).
 	then(targetCredential=> {
@@ -318,7 +323,6 @@ testEncrypt("rbd3coggbrgbfhs5.x5lidev3ovw302bb.v1.d.beameio.net","beameio",null)
 * `Credential.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns object containing decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
 ```
 function testDecrypt(encryptedData){
-	var beameStore = beameSDK.BeameStore;
 	var store = new beameStore();
 	var Credential = beameSDK.Credential;
 	try{
@@ -335,7 +339,6 @@ testDecrypt("{\"rsaCipheredKeys\":\"VrYM+DlYvcSd9P2TvyVIclvyBik9/rq04xIpeSiOAXOX
 * `Credential.sign(data, fqdn)` - _sign provided data with private key of specified fqdn, output is an object_
 ```
 function testSign(data, fqdn) {
-	var beameStore = beameSDK.BeameStore;
 	var store = new beameStore();
 	var cred    = store.getCredential(fqdn);
 	if (cred) {
@@ -350,7 +353,6 @@ testSign('beameio','kkonuchrnfger26n.v1.d.beameio.net');
 * `Credential.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
 ```
 function testCheckSignature(signedData){
-	var beameStore = beameSDK.BeameStore;
 	var store = new beameStore();
 	store.find(signedData.signedBy).
 	then(cred=> {
