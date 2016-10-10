@@ -49,9 +49,9 @@ function runChatServer(fqdn, sharedFolder) {
 		var serveIndex = require('serve-index');
 
 		if (fqdn.indexOf(".l.") > 0)
-			logger.info(`\nServer started on local address: \nhttps://${fqdn}:${app.address().port} \n`);
+			logger.info(`Server started on local address: https://${fqdn}:${app.address().port}`);
 		else
-			logger.info(`\nServer started on publicly accessible address: \nhttps://${fqdn} \n`);
+			logger.info(`Server started on publicly accessible address: https://${fqdn}`);
 
 
 		appExpress.use('/shared', express.static(defaultSharedFolder));
