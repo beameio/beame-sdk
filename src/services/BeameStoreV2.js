@@ -87,6 +87,13 @@ class BeameStoreV2 {
 		);
 	}
 
+	/**
+	 * Find local credential or get remote
+	 * @public
+	 * @method BeameStoreV2.find
+	 * @param {String} fqdn
+	 * @returns {Promise.<Credential>}
+	 */
 	find(fqdn) {
 
 		if(!fqdn) {
