@@ -5,6 +5,8 @@
 
 const express = require('express');
 const appExpress = express();
+const router     = express.Router();
+
 // This require is only cause the example is inside the beame-sdk repository, you will be using require('beame-sdk');
 
 const config = require('../../config/Config');
@@ -22,15 +24,9 @@ const beameSDK = new require('../../index.js');
  * @public
  * @method Servers.runChatServer
  * @param {String} fqdn
- * @param {String|null} [sharedFolder]
  */
 
-function runChatServer(fqdn, sharedFolder) {
-
-	if (sharedFolder) {
-		logger.debug("Custom folder specified");
-		defaultSharedFolder = path.normalize(sharedFolder + "/");
-	}
+function runChatServer(fqdn) {
 
 	beameSDK.BeameServer(fqdn,  appExpress, function (data, app) {
 		if (config.PinAtomPKbyDefault) {
@@ -46,17 +42,7 @@ function runChatServer(fqdn, sharedFolder) {
 		//noinspection JSUnresolvedFunction
 		appExpress.use(express.static(defaultPublicDir));
 
-		var serveIndex = require('serve-index');
-
-		if (fqdn.indexOf(".l.") > 0)
-			logger.info(`Server started on local address: https://${fqdn}:${app.address().port}`);
-		else
-			logger.info(`Server started on publicly accessible address: https://${fqdn}`);
-
-
-		appExpress.use('/shared', express.static(defaultSharedFolder));
-		appExpress.use('/shared', serveIndex(defaultSharedFolder, {'icons': true}));
-		logger.debug(`Server Local Directory ${defaultSharedFolder}`);
+		logger.info(`Server started on publicly accessible address: https://${fqdn}`);
 
 
 		//noinspection JSUnusedLocalSymbols
@@ -71,6 +57,36 @@ function runChatServer(fqdn, sharedFolder) {
 
 		var socketio = require('socket.io')(app);
 		var chat = require('../../examples/chat/chatserver.js')(socketio);
+	});
+}
+
+/**
+ * Start file static server for sharing files in given folder
+ * @param {String} fqdn
+ * @param {String|null} [sharedFolder]
+ */
+function runStaticServer(fqdn, sharedFolder) {
+
+	if (sharedFolder) {
+		logger.info(`Custom folder specified on ${sharedFolder}`);
+		defaultSharedFolder = path.normalize(sharedFolder + "/");
+	}
+	var serveIndex = require('serve-index');
+
+	appExpress.use('/', express.static(defaultSharedFolder));
+	appExpress.use('/', serveIndex(defaultSharedFolder, {'icons': true}));
+
+	router.get('/', function (req, res) {
+		res.sendFile(path.join(__dirname + '/../public/insta-ssl.html'));
+	});
+
+	appExpress.use('/', router);
+
+
+	beameSDK.BeameServer(fqdn,  appExpress, () => {
+
+		logger.info(`Server started on publicly accessible address: https://${fqdn}`);
+		logger.debug(`Server Local Directory ${defaultSharedFolder}`);
 	});
 }
 
@@ -99,5 +115,6 @@ function runHelloWorldServer(fqdn) {
 
 module.exports = {
 	runHelloWorldServer,
-	runChatServer
+	runChatServer,
+	runStaticServer
 };
