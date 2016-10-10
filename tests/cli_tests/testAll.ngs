@@ -306,8 +306,8 @@ do_test("File server", {
 })
 
 do_test("importLiveCredentials", {
-	$($BEAME_BIN creds importLiveCredentials google.com)
-	"*.google.com" not in ``$BEAME_BIN creds list`` throws TestFail("importLiveCredentials failed")
+	$($BEAME_BIN creds importLiveCredentials --fqdn google.com)
+	``$BEAME_BIN creds list --format json``.none({A.metadata.fqdn == "*.google.com"}) throws TestFail("importLiveCredentials failed")
 })
 
 
