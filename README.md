@@ -216,7 +216,7 @@ The following commands are used for acquiring and manipulating certificates.
 
 * `beame servers runHelloWorldServer --fqdn clientFQDN` - _run a "Hello World" HTTPS server for the specified hostname_
 * `beame servers runChatServer --fqdn clientFQDN` - _run secure chat server, provide optional `--sharedFolder path-to-folder` to share files directrly from your machine_
-* `beame servers runStaticServer [--fqdn fqdn] [--sharedFolder sharedFolder]` - _share files from __sharedFolder__ _
+* `beame servers runStaticServer [--fqdn fqdn] [--sharedFolder sharedFolder]` - _share files from_ __sharedFolder__
 
 
 ### Beame.io CLI - encryption
@@ -241,7 +241,7 @@ BeameStore is a base class that manages access to all Beameio credentials.
 
 #### Available [Beame Store](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) methods
 
-* `BeameStore.getCredential(requestedFqdn)` - _returned "Credential" object, initiated with requestedFqdn, allows access to all Credential methods (see description for __Credential__ below)._
+* `BeameStore.getCredential(requestedFqdn)` - _returned "Credential" object, initiated with requestedFqdn, allows access to all Credential methods (see description for_ __Credential__ _below)._
 ```
 function testGetCredential(fqdn) {
 	var store = new beameStore();
@@ -259,7 +259,7 @@ function testFind(fqdn){
 }
 testFind('kkonuchrnfger26n.v1.d.beameio.net');
 ```  
-* `BeameStore.list(regex, options)` - _regex - limit output to objects containing provided regex; options - receives {hasPrivateKey:[true|false]} key, to limit output to list details of all credentials on this machine, output is an array of objects, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for output object structure details_
+* `BeameStore.list(regex, options)` - _list details of all credentials on this machine. Parameters:_ __regex__ - _limit output to objects containing provided regex;_ __options__ - _receives {hasPrivateKey:[true|false]} key, to limit output to , output is an array of objects, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for output object structure details_
 ```
 function testList() {
 	console.log(store.list(null,{'hasPrivateKey':true}));
