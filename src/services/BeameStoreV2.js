@@ -194,10 +194,10 @@ class BeameStoreV2 {
 					return false;
 				}
 				//noinspection RedundantIfStatementJS,JSUnresolvedVariable
-				if (options.mustHavePrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
+				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
-				else if(options.mustHavePrivateKey == false && cred.hasKey('PRIVATE_KEY')){
+				else if(options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')){
 					return false;
 				}
 				return true;
