@@ -172,8 +172,8 @@ class BeameStoreV2 {
 	/**
 	 * @public
 	 * @method BeameStoreV2.list
-	 * @param {String} regex
-	 * @param {Object} options
+	 * @param {String|null} [regex]
+	 * @param {Object|null} [options]
 	 * @returns {Array}
 	 */
 	list(regex, options) {
