@@ -20,192 +20,198 @@ var logger        = new (require('../utils/Logger'))(module_name);
  * @property {Function} [onLocalServerCreated]
  */
 
-/**
- * @param {String} serverType
- * @param {String} edgeClientHostname - server endpoint url
- * @param {String} edgeServerHostname - SSL Proxy Server endpoint url
- * @param {String} targetHost
- * @param {Number} targetPort
- * @param {ProxyClientOptions} options
- * @param {HttpsProxyAgent|null|undefined} [agent]
- * @param {ServerCertificates|null} [edgeClientCerts]
- * @constructor
- * @class
- */
-function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetHost, targetPort, options, agent, edgeClientCerts) {
-
-	/** @member {Boolean} */
-	this.connected = false;
-
-	/** @member {Object} */
-	this.clientSockets = {};
-
-	this.type = serverType;
+class ProxyClient {
 
 	/**
-	 * SSL Proxy Server endpoint url
-	 * @member {String} */
-	this.edgeServerHostname = edgeServerHostname;// + ':8443';
-
-	/**
-	 * server endpoint url
-	 * @member {String} */
-	this.hostname = edgeClientHostname;
-
-	/** @member {String} */
-	this.targetHost = targetHost;
-
-	/** @member {Number} */
-	this.targetPort = targetPort;
-
-	logger.debug(`ProxyClient connecting to ${this.edgeServerHostname}`);
-
-	/**
-	 * Connect to ProxyServer
+	 * @param {String} serverType
+	 * @param {String} edgeClientHostname - server endpoint url
+	 * @param {String} edgeServerHostname - SSL Proxy Server endpoint url
+	 * @param {String} targetHost
+	 * @param {Number} targetPort
+	 * @param {ProxyClientOptions} options
+	 * @param {HttpsProxyAgent|null|undefined} [agent]
+	 * @param {ServerCertificates|null} [edgeClientCerts]
+	 * @constructor
+	 * @class
 	 */
+	constructor(serverType, edgeClientHostname, edgeServerHostname, targetHost, targetPort, options, agent, edgeClientCerts) {
 
-	var io_options = {multiplex: false, agent: agent};
-
-	if (edgeClientCerts) {
-		io_options.cert = edgeClientCerts.cert;
-		io_options.key  = edgeClientCerts.key;
-		io_options.ca   = edgeClientCerts.ca;
-
-	}
-
-	this.options  = options;
-	this.socketio = io.connect(this.edgeServerHostname + '/control', io_options);
-
-	this.socketio.on('connect', _.bind(function () {
-		if (this.connected) {
-			return;
-		}
-		logger.debug(`ProxyClient connected => {hostname:${this.hostname}, endpoint:${this.edgeServerHostname}, targetHost:${this.targetHost}, targetPort: ${this.targetPort}}`);
-		this.connected = true;
-		socketUtils.emitMessage(this.socketio, 'register_server', socketUtils.formatMessage(null, {
-			hostname: this.hostname,
-			type:     this.type
-		}));
-
-		this.options && this.options.onConnect && this.options.onConnect();
-
-	}, this));
-
-	this.socketio.on('error', _.bind(function (err) {
-		logger.debug("Could not connect to proxy server", err);
-	}, this));
-
-	this.socketio.on('create_connection', _.bind(function (data) {
-		//noinspection JSUnresolvedVariable
-		this.createLocalServerConnection.call(this, data, this.options && this.options.onConnection);
-	}, this));
-
-	this.socketio.on('hostRegistered', _.bind(function (data) {
-		this.options && this.options.onLocalServerCreated && this.options.onLocalServerCreated.call(null, data);
-		//  this.createLocalServerConnection.call(this, data, this.options && this.options.onLocalServerCreated);
-		logger.debug('hostRegistered', data);
-	}, this));
-
-	this.socketio.on('data', _.bind(function (data) {
-		var socketId = data.socketId;
-		var socket   = this.clientSockets[socketId];
-		if (socket) {
-			socket.id = socketId;
-			//check if connected
-			process.nextTick(function () {
-				socket.write(data.payload);
-			});
-
-		}
-	}, this));
-
-	this.socketio.on('socket_error', _.bind(function (data) {
-		this.deleteSocket(data.socketId);
-	}, this));
-
-	this.socketio.on('_end', _.bind(function (data) {
-		logger.debug("***************Killing the socket ");
-		if (!data || !data.socketId) {
-			return;
-		}
-
-		this.deleteSocket(data.socketId);
-	}, this));
-
-	this.socketio.on('disconnect', _.bind(function () {
+		/** @member {Boolean} */
 		this.connected = false;
-		_.each(this.clientSockets, function (socket) {
-			socket.destroy();
-			this.deleteSocket(socket.id);
-		}, this);
-	}, this));
-}
 
-ProxyClient.prototype.createLocalServerConnection = function (data, callback) {
-	if (!this.socketio) {
-		return;
-	}
+		/** @member {Object} */
+		this.clientSockets = {};
 
-	var serverSideSocketId = data.socketId;
+		this.type = serverType;
 
-	var client                             = new net.Socket();
-	client.serverSideSocketId              = serverSideSocketId;
-	this.clientSockets[serverSideSocketId] = client;
-
-	try {
 		/**
-		 * Connect to local server
+		 * SSL Proxy Server endpoint url
+		 * @member {String} */
+		this.edgeServerHostname = edgeServerHostname;
+
+		/**
+		 * server endpoint url
+		 * @member {String} */
+		this.hostname = edgeClientHostname;
+
+		/** @member {String} */
+		this.targetHost = targetHost;
+
+		/** @member {Number} */
+		this.targetPort = targetPort;
+
+		logger.debug(`ProxyClient connecting to ${this.edgeServerHostname}`);
+
+		/**
+		 * Connect to ProxyServer
 		 */
-		client.connect(this.targetPort, this.targetHost, _.bind(function () {
 
-			client.on('data', _.bind(function (data) {
-				logger.debug('**********Client Proxy on client(Socket) data');
-				socketUtils.emitMessage(this.socketio, 'data', socketUtils.formatMessage(client.serverSideSocketId, data));
+		var io_options = {multiplex: false, agent: agent};
 
-			}, this));
+		if (edgeClientCerts) {
+			io_options.cert = edgeClientCerts.cert;
+			io_options.key  = edgeClientCerts.key;
+			io_options.ca   = edgeClientCerts.ca;
 
-			client.on('close', _.bind(function () {
-				logger.debug("Connection closed by server");
-				socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
+		}
 
-			}, this));
+		//noinspection JSUnresolvedVariable
+		this.options  = options;
 
-			client.on('end', _.bind(function () {
-				logger.debug("Connection end by server");
-				// this.socketio && this.socketio.emit('disconnect_client', {socketId: client.serverSideSocketId});
-			}, this));
+		this.socketio = io.connect(this.edgeServerHostname + '/control', io_options);
+
+		this.socketio.on('connect', _.bind(function () {
+			if (this.connected) {
+				return;
+			}
+			logger.debug(`ProxyClient connected => {hostname:${this.hostname}, endpoint:${this.edgeServerHostname}, targetHost:${this.targetHost}, targetPort: ${this.targetPort}}`);
+			this.connected = true;
+			socketUtils.emitMessage(this.socketio, 'register_server', socketUtils.formatMessage(null, {
+				hostname: this.hostname,
+				type:     this.type
+			}));
+
+			this.options && this.options.onConnect && this.options.onConnect();
+
 		}, this));
 
-		client.on('error', _.bind(function (error) {
-			logger.debug("Socket Error in ProxyClient ", error);
+		this.socketio.on('error', _.bind(function (err) {
+			logger.debug("Could not connect to proxy server", err);
+		}, this));
 
-			if (this.socketio) {
-				socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
+		this.socketio.on('create_connection', _.bind(function (data) {
+			//noinspection JSUnresolvedVariable
+			this.createLocalServerConnection.call(this, data, this.options && this.options.onConnection);
+		}, this));
+
+		this.socketio.on('hostRegistered', _.bind(function (data) {
+			this.options && this.options.onLocalServerCreated && this.options.onLocalServerCreated.call(null, data);
+			//  this.createLocalServerConnection.call(this, data, this.options && this.options.onLocalServerCreated);
+			logger.debug('hostRegistered', data);
+		}, this));
+
+		this.socketio.on('data', _.bind(function (data) {
+			var socketId = data.socketId;
+			var socket   = this.clientSockets[socketId];
+			if (socket) {
+				socket.id = socketId;
+				//check if connected
+				process.nextTick(function () {
+					socket.write(data.payload);
+				});
+
 			}
 		}, this));
 
-	} catch (e) {
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		logger.error('Create Local Server Connection', e)
+		this.socketio.on('socket_error', _.bind(function (data) {
+			this.deleteSocket(data.socketId);
+		}, this));
+
+		this.socketio.on('_end', _.bind(function (data) {
+			logger.debug("***************Killing the socket ");
+			if (!data || !data.socketId) {
+				return;
+			}
+
+			this.deleteSocket(data.socketId);
+		}, this));
+
+		this.socketio.on('disconnect', _.bind(function () {
+			this.connected = false;
+			_.each(this.clientSockets, function (socket) {
+				socket.destroy();
+				this.deleteSocket(socket.id);
+			}, this);
+		}, this));
 	}
 
-	callback && callback(data);
-};
+	createLocalServerConnection(data, callback) {
+		if (!this.socketio) {
+			return;
+		}
 
-ProxyClient.prototype.destroy = function () {
-	if (this.socketio) {
-		this.socketio = null;
-	}
-	return this;
-};
+		var serverSideSocketId = data.socketId;
 
-ProxyClient.prototype.deleteSocket = function (socketId) {
-	if (socketId && this.clientSockets[socketId]) {
-		var obj = this.clientSockets[socketId];
-		obj.end();
-		delete this.clientSockets[socketId];
+		var client                             = new net.Socket();
+		client.serverSideSocketId              = serverSideSocketId;
+		this.clientSockets[serverSideSocketId] = client;
+
+		try {
+			/**
+			 * Connect to local server
+			 */
+			client.connect(this.targetPort, this.targetHost, _.bind(function () {
+
+				client.on('data', _.bind(function (data) {
+					logger.debug('**********Client Proxy on client(Socket) data');
+					socketUtils.emitMessage(this.socketio, 'data', socketUtils.formatMessage(client.serverSideSocketId, data));
+
+				}, this));
+
+				client.on('close', _.bind(function () {
+					logger.debug("Connection closed by server");
+					socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
+
+				}, this));
+
+				client.on('end', _.bind(function () {
+					logger.debug("Connection end by server");
+					// this.socketio && this.socketio.emit('disconnect_client', {socketId: client.serverSideSocketId});
+				}, this));
+			}, this));
+
+			client.on('error', _.bind(function (error) {
+				logger.debug("Socket Error in ProxyClient ", error);
+
+				if (this.socketio) {
+					socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
+				}
+			}, this));
+
+		} catch (e) {
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
+			logger.error('Create Local Server Connection', e)
+		}
+
+		callback && callback(data);
 	}
-};
+
+	destroy() {
+		if (this.socketio) {
+			this.socketio = null;
+		}
+		return this;
+	}
+
+	deleteSocket(socketId) {
+		if (socketId && this.clientSockets[socketId]) {
+			var obj = this.clientSockets[socketId];
+			obj.end();
+			delete this.clientSockets[socketId];
+		}
+	}
+}
+
 
 module.exports = ProxyClient;
 
