@@ -238,17 +238,9 @@ if (argv._[0] == 'complete') {
 	if (argv._[1] == 'switch-value') {
 		var sw = argv._[2];
 		if (sw == 'fqdn') {
-			var fqdnType = argv._[3];
 			var store    = new BeameStore();
-			var results;
-			if (fqdnType) {
-				results = store.list(fqdnType);
-			} else {
-				results = store.list();
-			}
-			console.log(_.map(results, function (r) {
-				return r.hostname;
-			}).join(' '));
+			var results = store.list();
+			console.log(_.map(results, r => r.fqdn).join(' '));
 			process.exit(0);
 		}
 		if (parametersSchema[sw].options) {
