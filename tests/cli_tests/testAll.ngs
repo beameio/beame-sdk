@@ -94,7 +94,7 @@ F prepare_entity_properties() {
 
 F must_be_hash_with_fields(x, name:Str, fields:Arr) {
 	x is not Hash throws TestFail("$name data must be hash, not $x")
-	fields.each(F(k) k not in x throws TestFail("Key $k is missing in 'encrypt' output"))
+	fields.each(F(k) k not in x throws TestFail("Key $k is missing in '$name' output"))
 }
 
 # ---------- Tests ----------
@@ -133,7 +133,7 @@ if entities.len() != n_entities {
 
 encrypted_data = null
 
-do_test("Encrypt data", {
+do_test("Encrypt data / json", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --format json`
 	enc = encrypted_data.parse()
 	enc.must_be_hash_with_fields("Encrypted data", %[rsaCipheredKeys data encryptedFor])
@@ -143,7 +143,23 @@ do_test("Encrypt data", {
 
 
 if encrypted_data {
-	do_test("Decrypt data", F() {
+	do_test("Decrypt data / json", {
+		dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
+		dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
+		"Decryped data was same as the original data"
+	})
+}
+
+encrypted_data = null
+
+do_test("Encrypt data / text", {
+	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn}`
+	encrypted_data
+})
+
+
+if encrypted_data {
+	do_test("Decrypt data / text", {
 		dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
 		dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
 		"Decryped data was same as the original data"
@@ -153,7 +169,7 @@ if encrypted_data {
 data_with_signature = null
 bad_data_with_signature = null
 if entities {
-	do_test("Sign data", F() {
+	do_test("Sign data / json", {
 		global data_with_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn} --format json`
 		sig = data_with_signature.decode_json()
 		sig.must_be_hash_with_fields("Signature", %[signedData signature signedBy])
@@ -163,15 +179,31 @@ if entities {
 }
 
 if data_with_signature {
-	do_test("Check good signature", {
+	do_test("Check good signature / json", {
 		chk = ``$BEAME_BIN creds checkSignature --signedData $data_with_signature --format json``
 		chk !== true throws TestFail("Good signature check did not return true but '$chk'")
 		chk
 	})
-	do_test("Check good signature for tampered data", {
-		echo("B $bad_data_with_signature")
+	do_test("Check good signature for tampered data / json", {
 		chk = ``$BEAME_BIN creds checkSignature --signedData $bad_data_with_signature --format json``
 		chk !== false throws TestFail("Good signature check did not return false for tampered data but '$chk'")
+		chk
+	})
+}
+
+data_with_signature = null
+bad_data_with_signature = null
+if entities {
+	do_test("Sign data / text", {
+		global data_with_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn}`
+		data_with_signature.limit(50, '...')
+	})
+}
+
+if data_with_signature {
+	do_test("Check good signature / text", {
+		chk = `$BEAME_BIN creds checkSignature --signedData $data_with_signature` - MaybeSfx('\n')
+		chk != 'GOOD SIGNATURE' throws TestFail("Good signature check did not return 'GOOD SIGNATURE' but '$chk'")
 		chk
 	})
 }
@@ -218,7 +250,7 @@ if creds_exported {
 	do_test("[Import credentials] Test credentials exist after import", test_creds_exist)
 }
 
-do_test("S3 credentials", F() {
+do_test("S3 credentials", {
 	results = entities.fqdn.map(F(fqdn) {
 		echo("  Checking $fqdn")
 		url = "https://beameio-net-certs-dev.s3.amazonaws.com/${entities[0].fqdn}/x509.pem"
