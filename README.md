@@ -300,8 +300,17 @@ function testImportLive(fqdn){
 }
 testImportLive("www.google.com");
 ```
-* `cred.encrypt(fqdn, data, signingFqdn)` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; returns encryptedData that contains json formatted string, containing details about target host. If signingFqdn is specified, return value will contain RSA signature of encryptedData_
-* `cred.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `Credential.encrypt(fqdn, data, signingFqdn)` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; returns encryptedData that contains json formatted string, containing details about target host. If signingFqdn is specified, return value will contain RSA signature of encryptedData_
+```
+function testEncrypt(targetFqdn, data, signingFqdn){
+	store.find(targetFqdn).
+	then(targetCredential=> {
+		console.log(targetCredential.encrypt(targetFqdn, data, signingFqdn));
+	}).catch(error=>{console.log(error)});
+}
+testEncrypt("rbd3coggbrgbfhs5.x5lidev3ovw302bb.v1.d.beameio.net","beameio",null);
+```
+* `Credential.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
 ```
 function testDecrypt(encryptedData){
 	var Credential = beameSDK.Credential;
