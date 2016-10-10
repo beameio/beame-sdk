@@ -300,7 +300,7 @@ function testImportLive(fqdn){
 }
 testImportLive("www.google.com");
 ```
-* `Credential.encrypt(fqdn, data, signingFqdn)` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; returns encryptedData that contains json formatted string, containing details about target host. If signingFqdn is specified, return value will contain RSA signature of encryptedData_
+* `Credential.encrypt(fqdn, data, signingFqdn)` - _encrypt specified data with AES-128, encrypt session AES key with RSA public key for specific fqdn; returns encryptedData object, with specifik key-velue pairs. If signingFqdn is specified, return value will contain RSA signature of encryptedData_
 ```
 function testEncrypt(targetFqdn, data, signingFqdn){
 	store.find(targetFqdn).
@@ -310,7 +310,7 @@ function testEncrypt(targetFqdn, data, signingFqdn){
 }
 testEncrypt("rbd3coggbrgbfhs5.x5lidev3ovw302bb.v1.d.beameio.net","beameio",null);
 ```
-* `Credential.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `Credential.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns object containing decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
 ```
 function testDecrypt(encryptedData){
 	var Credential = beameSDK.Credential;
@@ -325,6 +325,19 @@ function testDecrypt(encryptedData){
 testDecrypt("{\"rsaCipheredKeys\":\"VrYM+DlYvcSd9P2TvyVIclvyBik9/rq04xIpeSiOAXOXUdnTLIC+FqbDnWIu0x1eJtWXdydNsW0HcnZMqhJqsVgf5ikJ9iiA8msIi/STkvfmzcO3ebGkMIiud0gzZlFQdxVuRf05BUhzi1hn4Zq3S1AvLpBlaysNNovVKBEx1sPtf8AmFET40FKLJzG8eI21BewmLG/TCOfrp79F3qWNnk/YZLaWwgtHHvemeRRyUOw5hjJXE30jDf+hi4or7Dkxj5x7VoSzSGLAB3dYQqtYI3JpMh2y7bE5LJRQNhJH2YD2m0kz5AysmlBzyLk05AUeLovaF8v2oa7zX4zfwNVz2w==\",\"data\":{\"AES128CBC\":\"tK563qocIBbge94y+1uj7w==\"},\"encryptedFor\":\"rbd3coggbrgbfhs5.x5lidev3ovw302bb.v1.d.beameio.net\"}");
 
 ```
-* `cred.sign(data, fqdn)` - _sign provided data with private key of specified fqdn, output is json string in base64 format_
-* `cred.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+* `Credential.sign(data, fqdn)` - _sign provided data with private key of specified fqdn, output is json string in base64 format_
+```
+function testSign(data, fqdn) {
+	var cred    = store.getCredential(fqdn);
+	if (cred) {
+		console.log(cred.sign(data));
+	}
+	else{
+		console.error("sign data with fqdn, host not found ");
+	}
+}
+testSign('beameio','kkonuchrnfger26n.v1.d.beameio.net');
+```
+* `Credential.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+
 
