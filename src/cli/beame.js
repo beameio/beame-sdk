@@ -123,7 +123,7 @@ function main() {
 
 		// Optionally decode base64-encoded argument.
 		// Do not decode what appears to be JSON.
-		if (parametersSchema[paramName].base64 && arg[0] != '{' && arg[0] != '"') {
+		if (parametersSchema[paramName].base64 && arg[0] != '{' && arg[0] != '"' && arg[0] != '[') {
 			arg = new Buffer(arg, 'base64').toString();
 		}
 
