@@ -97,6 +97,31 @@ F must_be_hash_with_fields(x, name:Str, fields:Arr) {
 	fields.each(F(k) k not in x throws TestFail("Key $k is missing in '$name' output"))
 }
 
+doc Waits till hostname becomes resolvable (has DNS record)
+F wait_resolvable(h:Str) {
+	do_test("Waiting for hostname $h to be resolvable", {
+		for(i;45) {
+			resolve = `dig "+short" $h`
+			resolve returns "Resolves to ${resolve.lines()[-1]}"
+			$(sleep 2)
+		}
+		throw TestFail("No resolve for $h")
+	})
+}
+
+doc Tests running site
+F test_server(cmd:Command, url:Str) {
+	threads = [
+		Thread({ $($cmd) })
+	]
+	$(sleep 10)
+	ret = try `curl --silent --max-time 30 $url`
+	$(pkill -f 'beame.js servers')
+	threads.join()
+	ret
+}
+
+
 # ---------- Tests ----------
 
 F finished_ok(p:Process) {
@@ -265,6 +290,26 @@ do_test("S3 credentials", {
 	oks < results.len() throws TestFail("Only $oks out of ${results.len()} certificates are present in S3")
 	"All $oks certificates present in S3"
 })
+
+wait_resolvable(entities[0].fqdn)
+
+do_test("Hello world server", {
+	result = test_server(%($BEAME_BIN servers runHelloWorldServer --fqdn ${entities[0].fqdn}), "https://${entities[0].fqdn}/")
+	'hello world' not in result throws TestFail("Hello world server did not return 'hello world'")
+	"Hello world server is OK"
+})
+
+do_test("File server", {
+	result = test_server(%($BEAME_BIN servers runStaticServer --fqdn ${entities[0].fqdn}), "https://${entities[0].fqdn}/photo1.jpg")
+	result != `cat "../../examples/public/shared/photo1.jpg"` throws TestFail("Chat server failed to serve correct /photo1.jpg")
+	"File server is OK"
+})
+
+do_test("importLiveCredentials", {
+	$($BEAME_BIN creds importLiveCredentials google.com)
+	"*.google.com" not in ``$BEAME_BIN creds list`` throws TestFail("importLiveCredentials failed")
+})
+
 
 if Path(CREDS_FILE) {
 	echo("+ Removing temporary credentials file $CREDS_FILE")
