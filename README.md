@@ -68,7 +68,7 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
 
 ## Quick Start
 _Here you will find the instructions, how to create the very first, L0 Beame credentials. In order to request L1 and below, see description of [CLI Credentials getCreds](#credentials)  below._  
-1. Request authorization token, by submitting a form at [registration page](#https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net)  
+1. Request authorization token, by submitting a form at [registration page](https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net)  
 2. Follow instructions from the registration email, that you will receive as a result of step 1  
 2.1 Install the Beame SDK by running `npm install -g beame-sdk`  
 2.2 Run the command from the email you receive, it should look like:  
