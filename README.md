@@ -48,7 +48,7 @@ _If you already know how Beame-SDK is working and want to skip the intro, [jump 
 ### Beame-SDK proposes two options to start:
 
 1. Create your own L0  
-_You start by requesting a token at [Beameio registration page](ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net). Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
+_You start by requesting a token at [Beameio registration page](https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net). Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
 2. Use existing credentials to create new ones  
 _You will use coresponding Beame-SDK cli command, as described below. As a result, you will create a new set of lower level credentials._  
 
