@@ -259,7 +259,7 @@ function testFind(fqdn){
 }
 testFind('kkonuchrnfger26n.v1.d.beameio.net');
 ```  
-* `BeameStore.list(regex, options)` - _list details of all credentials on this machine. Parameters:_ __regex__ - _limit output to objects containing provided regex;_ __options__ - _receives {hasPrivateKey:[true|false]} key, to limit output to , output is an array of objects, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for output object structure details_
+* `BeameStore.list(regex, options)` - _list details of all credentials on this machine. Parameters:_ __regex__ - _limit output to objects containing provided regex;_ __options__ - _receives {hasPrivateKey:[true|false]} key, to output only data for hosts, that have/don't have private key in local store, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for output object structure details_
 ```
 function testList() {
 	console.log(store.list(null,{'hasPrivateKey':true}));
