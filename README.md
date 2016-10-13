@@ -328,7 +328,7 @@ function testEncrypt(targetFqdn, data, signingFqdn){
 }
 testEncrypt("rbd3coggbrgbfhs5.x5lidev3ovw302bb.v1.d.beameio.net","beameio",null);
 ```
-* `Credential.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns object containing decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `Credential.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, using local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns object containing decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
 ```
 function testDecrypt(encryptedData){
 	var store = new beameStore();
@@ -358,7 +358,7 @@ function testSign(data, fqdn) {
 }
 testSign('beameio','kkonuchrnfger26n.v1.d.beameio.net');
 ```
-* `Credential.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+* `Credential.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn. Input data is an object, that contains specific key-value pairs (exact output of `Credential.sign`)_
 ```
 function testCheckSignature(signedData){
 	var store = new beameStore();
