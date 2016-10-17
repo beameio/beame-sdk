@@ -6,7 +6,6 @@
 /** @namespace BaseHttpsServer */
 
 const fs          = require('fs');
-const _           = require('underscore');
 const https       = require("https");
 const ProxyClient = require("./ProxyClient");
 const SNIServer   = require("./SNIServer");
@@ -14,16 +13,16 @@ const config      = require('../../config/Config');
 const logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
 
 
-
 /**
  * Starts sample HTTPS server. Either instanceHostname or projectName must be specified.
  * @public
  * @method BaseHttpsServer.BaseBeameHttpsServer
- * @param {String|null} [fqdn] - fqdn of the HTTPS server. You must have private key of the entity.
+ * @param {String} fqdn - fqdn of the HTTPS server. You must have private key of the entity.
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
- * @param {Function} hostOnlineCallback
+ * @param {Function|null} [hostOnlineCallback]
+ * @param {Object|null} [options]
  */
-function BaseBeameHttpsServer(fqdn, requestListener, hostOnlineCallback) {
+function BaseBeameHttpsServer(fqdn, requestListener, options, hostOnlineCallback) {
 
 	const beamestore = new (require("./BeameStoreV2"))();
 
@@ -31,18 +30,20 @@ function BaseBeameHttpsServer(fqdn, requestListener, hostOnlineCallback) {
 	var server_entity = beamestore.getCredential(fqdn);
 
 	if (!server_entity) {
-		logger.error(`Could not find certificate for ${fqdn}`);
-		return;
+		logger.fatal(`Could not find certificate for ${fqdn}`);
 	}
 
-	/** @type {ServerCertificates} **/
-	var options = {
-		key:  server_entity.PRIVATE_KEY,
-		cert: server_entity.P7B,
-		ca:   server_entity.CA
-	};
+	if (!server_entity.edge_fqdn) {
+		logger.fatal(`edge server not defined for ${fqdn}`);
+	}
 
-	var app = https.createServer(options, requestListener);
+	var o = options || {};
+
+	o.key  = server_entity.PRIVATE_KEY;
+	o.cert = server_entity.P7B;
+	o.ca   = server_entity.CA;
+
+	var app = https.createServer(o, requestListener);
 
 	app.listen(0, function (options) {
 		function onLocalServerCreated(data) {
@@ -53,10 +54,10 @@ function BaseBeameHttpsServer(fqdn, requestListener, hostOnlineCallback) {
 
 		//noinspection JSUnresolvedVariable
 		new ProxyClient("HTTPS", fqdn,
-			edgeCert.edgeHostname, 'localhost',
+			edgeCert.edge_fqdn, 'localhost',
 			app.address().port, {onLocalServerCreated: onLocalServerCreated},
-			undefined, options);
-	}.bind(null, options));
+			null, options);
+	}.bind(null, o));
 }
 
 module.exports = {BaseBeameHttpsServer};
