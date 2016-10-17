@@ -36,53 +36,27 @@ function BaseBeameHttpsServer(fqdn, requestListener, hostOnlineCallback) {
 	}
 
 	/** @type {ServerCertificates} **/
-	var serverCerts = {
+	var options = {
 		key:  server_entity.PRIVATE_KEY,
 		cert: server_entity.P7B,
 		ca:   server_entity.CA
 	};
 
-	var srv = SNIServer.get(config.SNIServerPort, requestListener);
-	srv.addFqdn(host, serverCerts);
+	var app = https.createServer(options, requestListener);
 
-	var edgeLocals = beamestore.searchEdgeLocals(host);
-	edgeLocals.forEach(edgeLocal => {
-		var edgeLocalData = beamestore.search(edgeLocal.hostname)[0];
-		srv.addFqdn(edgeLocalData.hostname, {
-			key:  edgeLocalData.PRIVATE_KEY,
-			cert: edgeLocalData.P7B,
-			ca:   edgeLocalData.CA
-		});
-	});
-
-	srv.start(function () {
+	app.listen(0, function (options) {
 		function onLocalServerCreated(data) {
 			if (hostOnlineCallback) {
-				hostOnlineCallback(data, srv.getServer());
+				hostOnlineCallback(data, app);
 			}
 		}
 
 		//noinspection JSUnresolvedVariable
-		if (server_entity.level === "edgeclient" || server_entity.level === "remoteclient" || server_entity.level === "atom") {
-
-			if (!server_entity.edgeHostname) {
-				logger.fatal('Edge server hostname required');
-			}
-
-			if (!server_entity.hostname) {
-				logger.fatal('Server hostname required');
-			}
-
-			//noinspection JSUnresolvedVariable
-			new ProxyClient("HTTPS", server_entity.hostname,
-				server_entity.edgeHostname, 'localhost',
-				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
-				null, serverCerts);
-		}
-		else {
-			onLocalServerCreated(null);
-		}
-	});
+		new ProxyClient("HTTPS", fqdn,
+			edgeCert.edgeHostname, 'localhost',
+			app.address().port, {onLocalServerCreated: onLocalServerCreated},
+			undefined, options);
+	}.bind(null, options));
 }
 
 module.exports = {BaseBeameHttpsServer};
