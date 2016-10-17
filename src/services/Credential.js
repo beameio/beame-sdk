@@ -1127,6 +1127,9 @@ class Credential {
 	 * @param {String} fqdn
 	 */
 	static importLiveCredentials(fqdn) {
+		if(!fqdn) {
+			throw new Error('importLiveCredentials: fqdn is a required argument');
+		}
 		const store = new (require("./BeameStoreV2"))();
 		let tls     = require('tls');
 		try {
