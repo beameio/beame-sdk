@@ -33,7 +33,7 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 		logger.fatal(`Could not find certificate for ${fqdn}`);
 	}
 
-	if (!server_entity.edge_fqdn) {
+	if (!server_entity.metadata.edge_fqdn) {
 		logger.fatal(`edge server not defined for ${fqdn}`);
 	}
 
@@ -54,7 +54,7 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 
 		//noinspection JSUnresolvedVariable
 		new ProxyClient("HTTPS", fqdn,
-			edgeCert.edge_fqdn, 'localhost',
+			server_entity.metadata.edge_fqdn, 'localhost',
 			app.address().port, {onLocalServerCreated: onLocalServerCreated},
 			null, options);
 	}.bind(null, o));
