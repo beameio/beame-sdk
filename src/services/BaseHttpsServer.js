@@ -22,7 +22,7 @@ const logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttps
  * @param {Function|null} [hostOnlineCallback]
  * @param {Object|null} [options]
  */
-function BaseBeameHttpsServer(fqdn, requestListener, options, hostOnlineCallback) {
+function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback) {
 
 	const beamestore = new (require("./BeameStoreV2"))();
 

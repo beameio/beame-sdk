@@ -3,20 +3,20 @@
 /** @namespace Servers **/
 
 
-const express = require('express');
+const express    = require('express');
 const appExpress = express();
 const router     = express.Router();
 
 // This require is only cause the example is inside the beame-sdk repository, you will be using require('beame-sdk');
 
-const config = require('../../config/Config');
-const module_name = config.AppModules.BeameServer;
-const BeameLogger = require('../utils/Logger');
-const logger = new BeameLogger(module_name);
-const path = require('path');
+const config            = require('../../config/Config');
+const module_name       = config.AppModules.BeameServer;
+const BeameLogger       = require('../utils/Logger');
+const logger            = new BeameLogger(module_name);
+const path              = require('path');
 let defaultSharedFolder = path.resolve(__dirname, "../../examples/public/shared");
-const defaultPublicDir = path.resolve(__dirname, "../../examples/public");
-const beameSDK = new require('../../index.js');
+const defaultPublicDir  = path.resolve(__dirname, "../../examples/public");
+const beameSDK          = new require('../../index.js');
 
 
 /**
@@ -28,10 +28,10 @@ const beameSDK = new require('../../index.js');
 
 function runChatServer(fqdn) {
 
-	beameSDK.BeameServer(fqdn,  appExpress, function (data, app) {
+	beameSDK.BeameServer(fqdn, appExpress, function (data, app) {
 		if (config.PinAtomPKbyDefault) {
 			var pinning = require('./pinning');
-			var header = pinning.createPublicKeyPinningHeader(fqdn, true, true);
+			var header  = pinning.createPublicKeyPinningHeader(fqdn, true, true);
 
 			appExpress.use(function (req, resp, next) {
 				resp.setHeader('Public-Key-Pins', header);
@@ -56,7 +56,7 @@ function runChatServer(fqdn) {
 		});
 
 		var socketio = require('socket.io')(app);
-		var chat = require('../../examples/chat/chatserver.js')(socketio);
+		var chat     = require('../../examples/chat/chatserver.js')(socketio);
 	});
 }
 
@@ -83,7 +83,7 @@ function runStaticServer(fqdn, sharedFolder) {
 	appExpress.use('/', router);
 
 
-	beameSDK.BeameServer(fqdn,  appExpress, () => {
+	beameSDK.BeameServer(fqdn, appExpress, () => {
 
 		logger.info(`Server started on publicly accessible address: https://${fqdn}`);
 		logger.debug(`Server Local Directory ${defaultSharedFolder}`);
@@ -98,16 +98,16 @@ function runStaticServer(fqdn, sharedFolder) {
  */
 function runHelloWorldServer(fqdn) {
 
-	new beameSDK.BeameServer(fqdn, (req, resp) =>{
+	new beameSDK.BeameServer(fqdn, (req, resp) => {
 		resp.writeHead(200, {'Content-Type': 'text/plain', 'Server': 'Beame.io test server'});
 		resp.end('hello world\n');
 		console.log("On beame server request", {
-			fqdn: fqdn,
-			method: req.method,
-			url: req.url,
+			fqdn:    fqdn,
+			method:  req.method,
+			url:     req.url,
 			headers: req.headers
 		});
-	},  (data) => {
+	}, (data) => {
 		logger.info(`Server started on ${fqdn}`);
 		logger.debug("BeameServer callback got data", data);
 	});
