@@ -60,4 +60,4 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 	}.bind(null, o));
 }
 
-module.exports = {BaseBeameHttpsServer};
+module.exports = BaseBeameHttpsServer;
