@@ -48,7 +48,7 @@ _If you already know how Beame-SDK is working and want to skip the intro, [jump 
 ### Beame-SDK proposes two options to start:
 
 1. Create your own L0  
-_You start by requesting a token at [Beameio registration page](#ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net). Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
+_You start by requesting a token at [Beameio registration page](https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net). Completion of this step, following instructions that you can find below, will create highest level set of credentials._  
 2. Use existing credentials to create new ones  
 _You will use coresponding Beame-SDK cli command, as described below. As a result, you will create a new set of lower level credentials._  
 
@@ -68,7 +68,7 @@ Our extended demo ([see it here](#running-test-server)) has two features - chat,
 
 ## Quick Start
 _Here you will find the instructions, how to create the very first, L0 Beame credentials. In order to request L1 and below, see description of [CLI Credentials getCreds](#credentials)  below._  
-1. Request authorization token, by submitting a form at [registration page](#https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net)  
+1. Request authorization token, by submitting a form at [registration page](https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net)  
 2. Follow instructions from the registration email, that you will receive as a result of step 1  
 2.1 Install the Beame SDK by running `npm install -g beame-sdk`  
 2.2 Run the command from the email you receive, it should look like:  
@@ -215,7 +215,9 @@ The following commands are used for acquiring and manipulating certificates.
 ### Running test server
 
 * `beame servers runHelloWorldServer --fqdn clientFQDN` - _run a "Hello World" HTTPS server for the specified hostname_
-* `beame servers runChatServer --fqdn clientFQDN [--sharedFolder sharedFolder]` - _run secure chat server, provide optional `--sharedFolder path-to-folder` to share files directrly from your machine_
+* `beame servers runChatServer --fqdn clientFQDN` - _run secure chat server, provide optional `--sharedFolder path-to-folder` to share files directrly from your machine_
+* `beame servers runStaticServer [--fqdn fqdn] [--sharedFolder sharedFolder]` - _share files from_ __sharedFolder__
+
 
 ### Beame.io CLI - encryption
 
@@ -239,7 +241,7 @@ BeameStore is a base class that manages access to all Beameio credentials.
 
 #### Available [Beame Store](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) methods
 
-* `BeameStore.getCredential(requestedFqdn)` - _returned "Credential" object, initiated with requestedFqdn, allows access to all Credential methods (see description for __Credential__ below)._
+* `BeameStore.getCredential(requestedFqdn)` - _returned "Credential" object, initiated with requestedFqdn, allows access to all Credential methods (see description for_ __Credential__ _below)._
 ```
 function testGetCredential(fqdn) {
 	var store = new beameStore();
@@ -257,22 +259,28 @@ function testFind(fqdn){
 }
 testFind('kkonuchrnfger26n.v1.d.beameio.net');
 ```  
-* `BeameStore.list(regex, options)` - _regex - limit output to objects containing provided regex; options - receives {hasPrivateKey:[true|false]} key, to limit output to list details of all credentials on this machine, output is an array of objects, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for output object structure details_
+* `BeameStore.list(regex, options)` - _list details of all credentials on this machine. Parameters:_ __regex__ - _limit output to objects containing provided regex;_ __options__ - _receives {hasPrivateKey:[true|false]} key, to output only data for hosts, that have/don't have private key in local store, see [extended documentation](#https://beameio.github.io/beame-sdk/BeameStoreV2.html) for output object structure details_
 ```
 function testList() {
 	console.log(store.list(null,{'hasPrivateKey':true}));
 }
 testList();
 ```
-* `BeameStore.shredCredentials(fqdn,cb(error){})` - _deletes local credentials folder for specified fqdn_
-
+* `BeameStore.shredCredentials(fqdn,cb(){})` - _deletes local folder for specified fqdn, callback is called if corresponding folder successfully deleted_
+```
+function testShred(fqdn) {
+	store.shredCredentials(fqdn, function (){
+		console.log('Local credential data deleted: ',fqdn);
+	});
+}
+testShred('r0jpqu6bljbeb7x2.p6yjtx9wfp9gusaz.v1.d.beameio.net');
+```
 ### Beame Credential APIs
 
 #### Available [Credential](#https://beameio.github.io/beame-sdk/Credential.html) methods
 * `Credential.createEntityWithLocalCreds(parent_fqdn, name, email)` - _request new credentials from Beame;_
 ```
-
-function testGetCred(parent_cred){
+function testCreateEntity(parent_cred){
 	var store = new beameStore();
 
 	var Credential = store.getCredential(parent_cred);
@@ -284,9 +292,9 @@ function testGetCred(parent_cred){
 		console.log(error);
 	});
 }
-testGetCred("kkonuchrnfger26n.v1.d.beameio.net");
+testCreateEntity("kkonuchrnfger26n.v1.d.beameio.net");
 ```
-* `cred.updateMetadata(fqdn, name, email)` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
+* `Credential.updateMetadata(fqdn, name, email)` - _update name and/or email for the specified fqdn, on success returns updated details for specific fqdn_
 ```
 function testUpdateMetadata(fqdn){
 	var store = new beameStore();
@@ -301,7 +309,7 @@ function testUpdateMetadata(fqdn){
 }
 testUpdateMetadata('kkonuchrnfger26n.v1.d.beameio.net');
 ```
-* `cred.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
+* `Credential.importLiveCredentials(fqdn)` - _import credentials of any public domain to Beame store_
 ```
 function testImportLive(fqdn){
 	var cred = beameSDK.Credential;
@@ -320,7 +328,7 @@ function testEncrypt(targetFqdn, data, signingFqdn){
 }
 testEncrypt("rbd3coggbrgbfhs5.x5lidev3ovw302bb.v1.d.beameio.net","beameio",null);
 ```
-* `Credential.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns object containing decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
+* `Credential.decrypt(data)` - _decrypt session AES key and IV from input json string with specific key-value pairs, using local RSA private key; entity that data was encrypted for, is specified in appropriate field in provided data. The function returns object containing decrypted data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
 ```
 function testDecrypt(encryptedData){
 	var store = new beameStore();
@@ -350,7 +358,7 @@ function testSign(data, fqdn) {
 }
 testSign('beameio','kkonuchrnfger26n.v1.d.beameio.net');
 ```
-* `Credential.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+* `Credential.checkSignature(data)` - _check signature contained in provided data, with public key of specific fqdn. Input data is an object, that contains specific key-value pairs (exact output of `Credential.sign`)_
 ```
 function testCheckSignature(signedData){
 	var store = new beameStore();
