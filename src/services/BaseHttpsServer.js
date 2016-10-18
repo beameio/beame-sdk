@@ -8,7 +8,6 @@
 const fs          = require('fs');
 const https       = require("https");
 const ProxyClient = require("./ProxyClient");
-const SNIServer   = require("./SNIServer");
 const config      = require('../../config/Config');
 const logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttpsServer);
 
@@ -51,7 +50,6 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 				hostOnlineCallback(data, app);
 			}
 		}
-
 		//noinspection JSUnresolvedVariable
 		new ProxyClient("HTTPS", fqdn,
 			server_entity.metadata.edge_fqdn, 'localhost',
