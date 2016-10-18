@@ -19,7 +19,7 @@ const logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttps
  * @param {String} fqdn - fqdn of the HTTPS server. You must have private key of the entity.
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function|null} [hostOnlineCallback]
- * @param {Object|null} [options]
+ * @param {Object|null} [options] => https server options
  */
 function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback) {
 
