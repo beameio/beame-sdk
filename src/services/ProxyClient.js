@@ -164,7 +164,7 @@ class ProxyClient {
 			client.connect(this.targetPort, this.targetHost, _.bind(function () {
 
 				client.on('data', _.bind(function (data) {
-					logger.debug('**********Client Proxy on client(Socket) data');
+				//	logger.debug('**********Client Proxy on client(Socket) data');
 					socketUtils.emitMessage(this.socketio, 'data', socketUtils.formatMessage(client.serverSideSocketId, data));
 
 				}, this));
