@@ -1,17 +1,16 @@
 /* Fix user-agent */
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html {
-  font-weight: 300;
-  -webkit-font-smoothing: antialiased;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
 }
 
 html, input {
-  font-family:
-    "HelveticaNeue-Light",
+    font-family: "HelveticaNeue-Light",
     "Helvetica Neue Light",
     "Helvetica Neue",
     Helvetica,
@@ -21,129 +20,155 @@ html, input {
 }
 
 html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 ul {
-  list-style: none;
-  word-wrap: break-word;
+    list-style: none;
+    word-wrap: break-word;
 }
 
 /* Pages */
 
 .pages {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
 }
 
 .page {
-  height: 100%;
-  position: absolute;
-  width: 100%;
+    height: 100%;
+    position: absolute;
+    width: 100%;
 }
 
 /* Login Page */
 
 .login.page {
-  background-color: #000;
+    background-color: #000;
+    padding-top: 50px;
 }
 
 .login.page .form {
-  height: 100px;
-  margin-top: -100px;
-  position: absolute;
+    height: 100px;
+    margin-top: -100px;
+    position: absolute;
 
-  text-align: center;
-  top: 50%;
-  width: 100%;
+    text-align: center;
+    top: 50%;
+    width: 100%;
 }
 
 .login.page .form .usernameInput {
-  background-color: transparent;
-  border: none;
-  border-bottom: 2px solid #fff;
-  outline: none;
-  padding-bottom: 15px;
-  text-align: center;
-  width: 400px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid #fff;
+    outline: none;
+    padding-bottom: 15px;
+    text-align: center;
+    width: 400px;
 }
 
 .login.page .title {
-  font-size: 200%;
+    font-size: 200%;
 }
 
 .login.page .usernameInput {
-  font-size: 200%;
-  letter-spacing: 3px;
+    font-size: 200%;
+    letter-spacing: 3px;
 }
 
 .login.page .title, .login.page .usernameInput {
-  color: #fff;
-  font-weight: 100;
+    color: #fff;
+    font-weight: 100;
 }
 
 /* Chat page */
 
 .chat.page {
-  display: none;
+    display: none;
+    padding-top: 50px;
 }
 
 /* Font */
 
 .messages {
-  font-size: 150%;
+    font-size: 150%;
 }
 
 .inputMessage {
-  font-size: 100%;
+    font-size: 100%;
 }
 
 .log {
-  color: gray;
-  font-size: 70%;
-  margin: 5px;
-  text-align: center;
+    color: gray;
+    font-size: 70%;
+    margin: 5px;
+    text-align: center;
 }
 
 /* Messages */
 
 .chatArea {
-  height: 100%;
-  padding-bottom: 60px;
+    height: 100%;
+    padding-bottom: 60px;
 }
 
 .messages {
-  height: 100%;
-  margin: 0;
-  overflow-y: scroll;
-  padding: 10px 20px 10px 20px;
+    height: 100%;
+    margin: 0;
+    overflow-y: scroll;
+    padding: 10px 20px 10px 20px;
 }
 
 .message.typing .messageBody {
-  color: gray;
+    color: gray;
 }
 
 .username {
-  font-weight: 700;
-  overflow: hidden;
-  padding-right: 15px;
-  text-align: right;
+    font-weight: 700;
+    overflow: hidden;
+    padding-right: 15px;
+    text-align: right;
 }
 
 /* Input */
 
 .inputMessage {
-  border: 10px solid #000;
-  bottom: 0;
-  height: 60px;
-  left: 0;
-  outline: none;
-  padding-left: 10px;
-  position: absolute;
-  right: 0;
-  width: 100%;
+    border: 10px solid #000;
+    bottom: 0;
+    height: 60px;
+    left: 0;
+    outline: none;
+    padding-left: 10px;
+    position: absolute;
+    right: 0;
+    width: 100%;
+}
+/* Logo */
+
+.logo {
+    position: absolute;
+    z-index: 1;
+    width: 60px;
+    height: 33px;
+    top: 20px;
+    left: 50%;
+    margin-left: -30px;
+    background: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+Cjxzdmcgd2lkdGg9IjEwNnB4IiBoZWlnaHQ9IjY0cHgiIHZpZXdCb3g9IjAgMCAxMDYgNjQiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDQwLjMgKDMzODM5KSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5TbGljZSAxPC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGRlZnM+PC9kZWZzPgogICAgPGcgaWQ9IlBhZ2UtMSIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikdyb3VwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzLjAwMDAwMCwgMy4wMDAwMDApIj4KICAgICAgICAgICAgPHBhdGggZD0iTTk2LjksMTkuNyBDOTYuMywxOS4xIDk1LjYsMTguNiA5NC44LDE4LjEgQzkyLjIsMTYuNSA4OS4yLDE1LjcgODUuOCwxNS43IEM4Mi45LDE1LjcgODAuNCwxNi4yIDc4LjUsMTcuMyBDNzYuNSwxOC4zIDc0LjYsMTkuOCA3Mi43LDIxLjggTDcyLjcsNS44IEM3Mi43LDMuOSA3Mi4zLDIuNCA3MS40LDEuNSBDNzAuOSwwLjkgNzAuMiwwLjQgNjkuNCwwLjIgQzY4LjksMCA2OC40LDAgNjcuOCwwIEM2Ni4zLDAgNjUuMSwwLjUgNjQuMywxLjUgQzYzLjksMi4xIDYzLjUsMi44IDYzLjMsMy42IEM2My4xLDQuNCA2Myw1LjIgNjMsNi4yIEw2Myw1MS40IEM2Myw1My4zIDYzLjQsNTQuOCA2NC4yLDU1LjggQzY1LjEsNTYuOCA2Ni4zLDU3LjIgNjcuNyw1Ny4yIEM2OS4xLDU3LjIgNzAuMyw1Ni43IDcxLjIsNTUuOCBDNzIuMiw1NC44IDcyLjcsNTMuMyA3Mi43LDUxLjQgTDcyLjcsNTAuNCBMNzUuNCw1My40IEw3Ny45LDU1LjQgQzc4LjksNTYgODAsNTYuNCA4MS40LDU2LjggQzgyLjgsNTcuMiA4NC4yLDU3LjQgODUuOCw1Ny40IEM4OC4zLDU3LjQgOTAuNyw1Ni45IDkyLjksNTUuOCBDOTQuNCw1NSA5NS44LDU0LjEgOTcsNTIuOSBDOTcuNSw1Mi40IDk3LjksNTEuOSA5OC4zLDUxLjQgQzk5LjgsNDkuNSAxMDEsNDcuMiAxMDEuNyw0NC43IEMxMDIsNDMuOCAxMDIuMiw0Mi45IDEwMi40LDQxLjkgQzEwMi43LDQwLjEgMTAyLjksMzguMiAxMDIuOSwzNi4yIEMxMDIuOSwzNC4xIDEwMi43LDMyLjEgMTAyLjQsMzAuMiBDMTAyLjEsMjguNCAxMDEuNSwyNi44IDEwMC44LDI1LjIgQzk5LjgsMjIuOSA5OC40LDIxLjEgOTYuOSwxOS43IEw5Ni45LDE5LjcgWiBNOTIuNiwzNi4zIEM5Mi42LDQwLjQgOTEuNyw0My43IDg5LjgsNDYgQzg3LjksNDguMiA4NS42LDQ5LjIgODMuMSw0OS4yIEM4MC4xLDQ5LjIgNzcuNyw0OC4xIDc1LjgsNDYgQzc0LDQzLjggNzMsNDAuNyA3MywzNi42IEM3MywzMy45IDczLjQsMzEuNSA3NC4yLDI5LjUgQzc1LjEsMjcuNSA3Ni4zLDI1LjkgNzcuOCwyNC45IEM3OS4zLDIzLjggODEsMjMuMyA4MywyMy4zIEM4NC45LDIzLjMgODYuNiwyMy44IDg4LDI0LjkgQzg5LjQsMjUuOSA5MC41LDI3LjQgOTEuMiwyOS40IEM5Mi4yLDMxLjIgOTIuNiwzMy41IDkyLjYsMzYuMyBMOTIuNiwzNi4zIFoiIGlkPSJMYXllcjBfMF9GSUxMIiBmaWxsPSIjQ0NDQ0NDIj48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik01NC40LDIgTDQxLjcsMiBNNTQuNSwxMi41IEwzNS40LDEyLjUgTTU0LjUsMjMgTDEzLjEsMjMgTTU0LjUsMzMuNSBMNiwzMy41IE01NC41LDQ0IEwxMi4zLDQ0IE01NC41LDU0LjUgTDAsNTQuNSIgaWQ9IkxheWVyMF8wXzFfU1RST0tFUyIgc3Ryb2tlPSIjQ0NDQ0NDIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PC9wYXRoPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+") no-repeat center;
+    background-size: contain;
+}
+
+.logo.logo-left {
+    left: 20px;
+    margin-left: 0;
+}
+
+@media only screen and (max-width: 768px) {
+   .logo.logo-left {
+        display: none;
+    }
 }
