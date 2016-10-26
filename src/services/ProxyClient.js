@@ -164,7 +164,7 @@ class ProxyClient {
 			client.connect(this.targetPort, this.targetHost, _.bind(function () {
 
 				client.on('data', _.bind(function (data) {
-				//	logger.debug('**********Client Proxy on client(Socket) data');
+				  //	logger.debug('**********Client Proxy on client(Socket) data');
 					socketUtils.emitMessage(this.socketio, 'data', socketUtils.formatMessage(client.serverSideSocketId, data));
 
 				}, this));
@@ -176,13 +176,13 @@ class ProxyClient {
 				}, this));
 
 				client.on('end', _.bind(function () {
-				//	logger.debug("Connection end by server");
+				   //logger.debug("Connection end by server");
 					// this.socketio && this.socketio.emit('disconnect_client', {socketId: client.serverSideSocketId});
 				}, this));
 			}, this));
 
 			client.on('error', _.bind(function (error) {
-				logger.error("Socket Error in ProxyClient ", error);
+				//logger.error("Socket Error in ProxyClient ", error);
 
 				if (this.socketio) {
 					socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
