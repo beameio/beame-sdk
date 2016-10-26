@@ -97,7 +97,7 @@ class ProxyClient {
 		}, this));
 
 		this.socketio.on('error', _.bind(function (err) {
-			logger.debug("Could not connect to proxy server", err);
+			//logger.debug("Could not connect to proxy server", err);
 		}, this));
 
 		this.socketio.on('create_connection', _.bind(function (data) {
@@ -108,7 +108,7 @@ class ProxyClient {
 		this.socketio.on('hostRegistered', _.bind(function (data) {
 			this.options && this.options.onLocalServerCreated && this.options.onLocalServerCreated.call(null, data);
 			//  this.createLocalServerConnection.call(this, data, this.options && this.options.onLocalServerCreated);
-			logger.debug('hostRegistered', data);
+			//logger.debug('hostRegistered', data);
 		}, this));
 
 		this.socketio.on('data', _.bind(function (data) {
@@ -129,7 +129,7 @@ class ProxyClient {
 		}, this));
 
 		this.socketio.on('_end', _.bind(function (data) {
-			logger.debug("***************Killing the socket ");
+			//logger.debug("***************Killing the socket ");
 			if (!data || !data.socketId) {
 				return;
 			}
@@ -170,19 +170,19 @@ class ProxyClient {
 				}, this));
 
 				client.on('close', _.bind(function () {
-					logger.debug("Connection closed by server");
+					//logger.debug("Connection closed by server");
 					socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
 
 				}, this));
 
 				client.on('end', _.bind(function () {
-					logger.debug("Connection end by server");
+				//	logger.debug("Connection end by server");
 					// this.socketio && this.socketio.emit('disconnect_client', {socketId: client.serverSideSocketId});
 				}, this));
 			}, this));
 
 			client.on('error', _.bind(function (error) {
-				logger.debug("Socket Error in ProxyClient ", error);
+				logger.error("Socket Error in ProxyClient ", error);
 
 				if (this.socketio) {
 					socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
