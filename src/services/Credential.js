@@ -648,6 +648,8 @@ class Credential {
 					};
 					let api  = new ProvisionApi();
 
+					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, authServerFqdn);
+
 					api.postRequest(
 						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
 						Credential.formatRegisterPostData(metadata),
@@ -663,13 +665,15 @@ class Credential {
 				 * @this {Credential}
 				 */
 				function fqdnResponseReady(error, payload) {
-					logger.debug("createEntityWithAuthServer(): fqdnResponseReady");
+					logger.debug("createEntityWithAuthServer(): fqdnResponseReady", payload);
 					if (error) {
 						reject(error);
 						return;
 					}
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve);
+					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
+
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 				}
 			}
 		);
@@ -745,6 +749,9 @@ class Credential {
 						reject(error);
 						return;
 					}
+
+					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
+
 					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken=> {
 						payload.sign = authToken;
 
@@ -981,17 +988,25 @@ class Credential {
 
 				var sign = CommonUtils.parse(payload.sign);
 
-				logger.debug("_requestCerts()", sign);
+				logger.debug("_requestCerts()", payload);
 
 				if (!sign) {
 					reject('Invalid authorization token');
 					return;
 				}
 
-				this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
+			logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.fqdn);
+
+			this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
 					cred => {
+
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.fqdn);
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingCSR, payload.fqdn);
+
 						cred.createCSR().then(
 							csr => {
+								logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
+
 								cred.getCert(csr, sign).then(() => {
 									metadata.fqdn        = payload.fqdn;
 									metadata.parent_fqdn = payload.parent_fqdn;
@@ -1001,6 +1016,7 @@ class Credential {
 					}).catch(onError);
 
 				function onError(e) {
+					logger.error(BeameLogger.formatError(e),e);
 					reject(e);
 				}
 			}

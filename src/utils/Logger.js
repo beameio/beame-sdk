@@ -31,10 +31,14 @@ const EntityLevel = {
 };
 
 const StandardFlowEvent = {
-	"Registering":     "Registering",
-	"Registered":      "Registered",
-	"RequestingCerts": "RequestingCerts",
-	"ReceivedCerts":   "ReceivedCerts"
+	"Registering":       "Registering",
+	"Registered":        "Registered",
+	"RequestingCerts":   "RequestingCerts",
+	"ReceivedCerts":     "ReceivedCerts",
+	"GettingAuthCreds":  "GettingAuthCreds",
+	"AuthCredsReceived": "AuthCredsReceived",
+	"GeneratingCSR":     "GeneratingCSR",
+	"CSRCreated":        "CSRCreated"
 };
 /**
  * @typedef {Object} LoggerMessage
@@ -82,7 +86,7 @@ class BeameLogger {
 	 */
 	static formatError(error) {
 		let type = typeof error;
-		switch (type){
+		switch (type) {
 			case 'object':
 				let output = CommonUtils.stringify(error);
 				return _.isEmpty(output) ? error.toString() : output;
@@ -178,7 +182,18 @@ class BeameLogger {
 			case StandardFlowEvent.ReceivedCerts:
 				message = `${entity} ${fqdn} certificates received, saving to disk ...`;
 				break;
-
+			case StandardFlowEvent.GettingAuthCreds:
+				message = `${entity} ${fqdn} retrieving auth server creds...`;
+				break;
+			case StandardFlowEvent.AuthCredsReceived:
+				message = `${entity} ${fqdn} auth server creds received...`;
+				break;
+			case StandardFlowEvent.GeneratingCSR:
+				message = `${entity} ${fqdn} generating CSR...`;
+				break;
+			case StandardFlowEvent.CSRCreated:
+				message = `${entity} ${fqdn} CSR created...`;
+				break;
 			default:
 				return;
 		}
