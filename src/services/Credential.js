@@ -779,7 +779,7 @@ class Credential {
 					return;
 				}
 
-				cred._syncMetadata(fqdn).then(resolve);
+				cred._syncMetadata(fqdn).then(resolve).catch(reject);
 			}
 		);
 	}
