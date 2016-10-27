@@ -183,16 +183,16 @@ class BeameLogger {
 				message = `${entity} ${fqdn} certificates received, saving to disk ...`;
 				break;
 			case StandardFlowEvent.GettingAuthCreds:
-				message = `${entity} ${fqdn} retrieving auth server creds...`;
+				message = `${entity} retrieving auth server creds of ${fqdn}...`;
 				break;
 			case StandardFlowEvent.AuthCredsReceived:
-				message = `${entity} ${fqdn} auth server creds received...`;
+				message = `${entity} auth server creds received for ${fqdn} ...`;
 				break;
 			case StandardFlowEvent.GeneratingCSR:
-				message = `${entity} ${fqdn} generating CSR...`;
+				message = `${entity} generating CSR on ${fqdn}...`;
 				break;
 			case StandardFlowEvent.CSRCreated:
-				message = `${entity} ${fqdn} CSR created...`;
+				message = `${entity} CSR for  ${fqdn} created successfully...`;
 				break;
 			default:
 				return;

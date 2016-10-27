@@ -407,7 +407,7 @@ class Credential {
 		let rsaKey = this.getPublicKeyNodeRsa();
 		let status = rsaKey.verify(data.signedData, data.signature, "utf8", "base64");
 		if (status) {
-			logger.info(`signature signed by  ${data.signedBy} verified successfully`);
+			logger.info(`Signature signed by  ${data.signedBy} verified successfully`);
 		}
 		else {
 			logger.warn(`invalid signature signed by ${data.signedBy}`);
@@ -995,12 +995,12 @@ class Credential {
 					return;
 				}
 
-			logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.fqdn);
+			logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.parent_fqdn);
 
 			this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
 					cred => {
 
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.fqdn);
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
 						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingCSR, payload.fqdn);
 
 						cred.createCSR().then(
