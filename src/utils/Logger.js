@@ -38,7 +38,9 @@ const StandardFlowEvent = {
 	"GettingAuthCreds":  "GettingAuthCreds",
 	"AuthCredsReceived": "AuthCredsReceived",
 	"GeneratingCSR":     "GeneratingCSR",
-	"CSRCreated":        "CSRCreated"
+	"CSRCreated":        "CSRCreated",
+	"UpdatingMetadata":  "UpdatingMetadata",
+	"MetadataUpdated":   "MetadataUpdated"
 };
 /**
  * @typedef {Object} LoggerMessage
@@ -193,6 +195,12 @@ class BeameLogger {
 				break;
 			case StandardFlowEvent.CSRCreated:
 				message = `${entity} CSR for  ${fqdn} created successfully...`;
+				break;
+			case StandardFlowEvent.UpdatingMetadata:
+				message = `${entity} updating metadata ${fqdn}...`;
+				break;
+			case StandardFlowEvent.MetadataUpdated:
+				message = `${entity} metadata for ${fqdn} updated successfully...`;
 				break;
 			default:
 				return;

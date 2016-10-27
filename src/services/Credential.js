@@ -865,13 +865,15 @@ class Credential {
 
 				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
 
-				logger.debug(`requesting metadata for ${fqdn}`);
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.UpdatingMetadata, fqdn);
 
 				api.runRestfulAPI(apiData, (error, metadata) => {
 					if (!error) {
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.MetadataUpdated, fqdn);
 						resolve(metadata);
 					}
 					else {
+						logger.error(`Updating metadata for ${fqdn} failed`,error);
 						reject(error);
 					}
 				}, 'GET');
