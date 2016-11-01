@@ -13,8 +13,8 @@ if(!fqdn) {
 const store = new BeameStore();
 const cred = store.getCredential(fqdn);
 
-AuthToken.create({'xyz': 1}, cred)
-	.then(t => AuthToken.validate(t))
-	.then(r => console.log('result', r))
+
+	AuthToken.validate(AuthToken.create({'xyz': 1}, cred))
+		.then(token=>{console.log('result', token)})
 	.catch(e => console.error(e));
 

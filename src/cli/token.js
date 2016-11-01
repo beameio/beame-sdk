@@ -21,9 +21,13 @@ function create(fqdn, data, callback) {
 create.toText = token => new Buffer(CommonUtils.stringify(token,false)).toString('base64');
 
 
-function validate(authToken) {
+function validate(authToken, callback) {
 	const tok = CommonUtils.parse(authToken);
-	return AuthToken.validate(tok);
+	if(!tok){
+		callback(`token validate - token for ${authToken} is invalid`, null);
+		return;
+	}
+	CommonUtils.promise2callback(AuthToken.validate(tok),callback);
 }
 
 validate.toText = authToken => {
