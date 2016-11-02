@@ -206,7 +206,6 @@ class BeameLogger {
 				return;
 		}
 
-
 		console.warn(`${formatPrefix(this.module, LogLevel.Info)} ${message}`);
 	}
 
