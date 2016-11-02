@@ -280,7 +280,7 @@ class ProvApiService {
 		return {
 			api:            endpoint,
 			postData:       postData,
-			answerExpected: answerExpected || true
+			answerExpected: answerExpected? true : false
 		};
 	}
 
