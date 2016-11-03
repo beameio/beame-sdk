@@ -101,17 +101,12 @@ class BeameStoreV2 {
 			throw new Error('Credential#find: fqdn is a required argument');
 		}
 
-		return new Promise((resolve, reject) => {
-				let cred = this._getCredential(fqdn);
+		let cred = this._getCredential(fqdn);
+		if (cred) {
+			return new Promise((resolve, reject) => resolve(cred));
+		}
 
-				if (cred) {
-					resolve(cred);
-					return;
-				}
-
-				this.fetch(fqdn).then(resolve).catch(reject);
-			}
-		);
+		return this.fetch(fqdn);
 	}
 
 	addCredential(credential) {
