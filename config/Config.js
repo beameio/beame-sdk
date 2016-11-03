@@ -37,6 +37,9 @@ const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || "https://may129m1
 
 const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
 
+const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
+const beameForceEdgeIP = process.env.BEAME_FORCE_EDGE_IP || 0;
+
 /** @const {String} **/
 var metadataFileName = "metadata.json";
 
@@ -186,4 +189,6 @@ module.exports = {
 	PinAtomPKbyDefault,
 	MetadataProperties,
 	authServerURL,
+	beameForceEdgeFqdn,
+	beameForceEdgeIP
 };
