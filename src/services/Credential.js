@@ -33,12 +33,12 @@
  * @property {String} signedBy
  * @property {String} signature
  */
-const pem     = require('pem');
-const NodeRsa = require("node-rsa");
-const async   = require('async');
-const _       = require('underscore');
-const url     = require('url');
-
+const pem                    = require('pem');
+const NodeRsa                = require("node-rsa");
+const async                  = require('async');
+const _                      = require('underscore');
+const url                    = require('url');
+const provisionSettings      = require('../../config/ApiConfig.json');
 const config                 = require('../../config/Config');
 const module_name            = config.AppModules.BeameStore;
 const logger_level           = "Credential";
@@ -60,7 +60,6 @@ const CryptoServices         = require('../services/Crypto');
  *
  */
 class Credential {
-
 
 
 	constructor(store) {
@@ -115,7 +114,7 @@ class Credential {
 		 * Object represents X509 properties: issuer {country, state, locality, organization, organizationUnit, commonName, emailAddress}, serial,country,state,locality,organization,organizationUnit, commonName,emailAddress,san and validity
 		 * @member {Object}
 		 */
-		this.certData ={};
+		this.certData = {};
 	}
 
 	//region Init functions
@@ -245,6 +244,7 @@ class Credential {
 		this.initCryptoKeys();
 		this.beameStoreServices.setFolder(this);
 	}
+
 	//endregion
 
 	//region Save/load services
@@ -779,7 +779,28 @@ class Credential {
 					return;
 				}
 
-				cred._syncMetadata(fqdn).then(resolve).catch(reject);
+				const retries = provisionSettings.RetryAttempts + 1,
+				      sleep = 100;
+
+				const _syncMeta = (retries,sleep)=>{
+
+					retries--;
+
+					if(retries == 0){
+						reject(`Metadata of ${fqdn} can't be updated. Please try Later`);
+						return;
+					}
+
+					cred.syncMetadata(fqdn).then(resolve).catch(()=>{
+						sleep = parseInt(sleep * (Math.random() + 1.5));
+
+						setTimeout( () => {
+							_syncMeta(retries,sleep);
+						}, sleep);
+					});
+				};
+
+				_syncMeta(retries,sleep);
 			}
 		);
 	}
@@ -873,7 +894,7 @@ class Credential {
 						resolve(metadata);
 					}
 					else {
-						logger.error(`Updating metadata for ${fqdn} failed`,error);
+						logger.error(`Updating metadata for ${fqdn} failed`, error);
 						reject(error);
 					}
 				}, 'GET');
@@ -917,7 +938,7 @@ class Credential {
 						return;
 					}
 					//set signature to consistent call of new credentials
-					cred._syncMetadata(fqdn).then(resolve).catch(reject);
+					cred.syncMetadata(fqdn).then(resolve).catch(reject);
 
 				});
 			}
@@ -997,9 +1018,9 @@ class Credential {
 					return;
 				}
 
-			logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.parent_fqdn);
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.parent_fqdn);
 
-			this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
+				this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
 					cred => {
 
 						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
@@ -1018,7 +1039,7 @@ class Credential {
 					}).catch(onError);
 
 				function onError(e) {
-					logger.error(BeameLogger.formatError(e),e);
+					logger.error(BeameLogger.formatError(e), e);
 					reject(e);
 				}
 			}
@@ -1103,9 +1124,8 @@ class Credential {
 	 *
 	 * @param fqdn
 	 * @returns {Promise}
-	 * @private
 	 */
-	_syncMetadata(fqdn) {
+	syncMetadata(fqdn) {
 
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn).then(payload => {
@@ -1145,7 +1165,7 @@ class Credential {
 	 * @param {String} fqdn
 	 */
 	static importLiveCredentials(fqdn) {
-		if(!fqdn) {
+		if (!fqdn) {
 			throw new Error('importLiveCredentials: fqdn is a required argument');
 		}
 		const store = new (require("./BeameStoreV2"))();
@@ -1182,6 +1202,7 @@ class Credential {
 		}
 
 	}
+
 	//endregion
 }
 
