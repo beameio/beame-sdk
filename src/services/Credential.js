@@ -780,7 +780,7 @@ class Credential {
 				}
 
 				const retries = provisionSettings.RetryAttempts + 1,
-				      sleep = 100;
+				      sleep = 1000;
 
 				const _syncMeta = (retries,sleep)=>{
 
@@ -792,6 +792,8 @@ class Credential {
 					}
 
 					cred.syncMetadata(fqdn).then(resolve).catch(()=>{
+						logger.debug(`retry on sync meta for ${fqdn}`);
+
 						sleep = parseInt(sleep * (Math.random() + 1.5));
 
 						setTimeout( () => {
@@ -1034,8 +1036,8 @@ class Credential {
 									metadata.fqdn        = payload.fqdn;
 									metadata.parent_fqdn = payload.parent_fqdn;
 									resolve(metadata);
-								});
-							});
+								}).catch(onError);
+							}).catch(onError);
 					}).catch(onError);
 
 				function onError(e) {
