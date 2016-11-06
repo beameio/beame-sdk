@@ -26,9 +26,9 @@ class AuthToken {
 				return null;
 			}
 
-			const now   = Date.now();
+			const now = Date.now();
 
-			let data2sign = data ? (typeof data == "object" ? CommonUtils.stringify(data,false) : data) : null;
+			let data2sign = data ? (typeof data == "object" ? CommonUtils.stringify(data, false) : data) : null;
 
 			/** @type {SignedData} */
 			const token = {
@@ -51,65 +51,73 @@ class AuthToken {
 	/**
 	 *
 	 * @param {SignatureToken|String} token
-	 * @returns {SignatureToken|null}
+	 * @returns {Promise.<SignatureToken|null>}
 	 */
 	static validate(token) {
 		/** @type {SignatureToken} */
-		let authToken = CommonUtils.parse(token);
 
-		if (!authToken) {
-			logger.warn('Could not decode authToken JSON. authToken must be a valid JSON');
-			return null;
-		}
 
-		if (!authToken.signedData) {
-			logger.warn('authToken has no .signedData');
-			return null;
-		}
-		if (!authToken.signedBy) {
-			logger.warn('authToken has no .signedBy');
-			return null;
-		}
-		if (!authToken.signature) {
-			logger.warn('authToken has no .signature');
-			return null;
-		}
+		return new Promise((resolve, reject) => {
+			let authToken = CommonUtils.parse(token);
 
-		const store       = new BeameStore();
-		const signerCreds = store.getCredential(authToken.signedBy);
+			if (!authToken) {
+				logger.warn('Could not decode authToken JSON. authToken must be a valid JSON');
+				reject({message: 'Could not decode authToken JSON. authToken must be a valid JSON'});
+				return;
+			}
 
-		if (!signerCreds) {
-			logger.warn(`Signer (${authToken.signedBy}) credentials were not found`);
-			return null;
-		}
+			if (!authToken.signedData) {
+				logger.warn('authToken has no .signedData');
+				reject({message: 'authToken has no .signedData'});
+				return;
+			}
+			if (!authToken.signedBy) {
+				logger.warn('authToken has no .signedBy');
+				reject({message: 'authToken has no .signedBy'});
+				return;
+			}
+			if (!authToken.signature) {
+				logger.warn('authToken has no .signature');
+				reject({message: 'authToken has no .signature'});
+				return;
+			}
 
-		const signatureStatus = signerCreds.checkSignature(authToken);
-		if (!signatureStatus) {
-			logger.warn(`Bad signature`);
-			return null;
-		}
+			const store = new BeameStore();
 
-		var signedData = CommonUtils.parse(authToken.signedData);
-		if (!signedData) {
-			logger.warn('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
-			return null;
-		}
+			store.find(authToken.signedBy).then(signerCreds=> {
+				const signatureStatus = signerCreds.checkSignature(authToken);
+				if (!signatureStatus) {
+					logger.warn(`Bad signature`);
+					reject({message: `Bad signature`});
+					return;
+				}
 
-		const now = Math.round(Date.now() / 1000);
+				var signedData = CommonUtils.parse(authToken.signedData);
+				if (!signedData) {
+					logger.warn('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
+					reject({message: 'Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON'});
+					return;
+				}
 
-		if (signedData.created_at > now + timeFuzz) {
-			logger.warn(`authToken.signedData.created_at is in future - invalid token or incorrect clock`);
-			return null;
-		}
+				const now = Math.round(Date.now() / 1000);
 
-		if (signedData.valid_till < now - timeFuzz) {
-			logger.warn(`authToken.signedData.valid_till is in the past - token expired`);
-			return null;
-		}
+				if (signedData.created_at > now + timeFuzz) {
+					logger.warn(`authToken.signedData.created_at is in future - invalid token or incorrect clock`);
+					reject({message: `authToken.signedData.created_at is in future - invalid token or incorrect clock`});
+					return;
+				}
 
-		return authToken;
+				if (signedData.valid_till < now - timeFuzz) {
+					logger.warn(`authToken.signedData.valid_till is in the past - token expired`);
+					reject({message: `authToken.signedData.valid_till is in the past - token expired`});
+					return;
+				}
+				resolve(authToken);
+			}).catch(error=> {
+				reject(error);
+			});
+		});
 	}
-
 }
 
 module.exports = AuthToken;
