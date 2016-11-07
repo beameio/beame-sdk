@@ -66,26 +66,33 @@ class BeameStoreV2 {
 
 	//noinspection JSUnusedGlobalSymbols
 	fetch(fqdn) {
-		return new Promise((resolve, reject) => {
-				if (fqdn.indexOf('beameio.net') > 0) {
-					this.getRemoteCreds(fqdn).then(
-						/**
-						 * @param {RemoteCreds} data
-						 */
-						data => {
-							let remoteCred = new Credential(this);
-							remoteCred.initFromX509(data.x509, data.metadata);
-							this.addCredential(remoteCred);
-							remoteCred.saveCredentialsObject();
-							resolve(remoteCred);
-						}
-					).catch(reject);
+
+		if (!fqdn) {
+			return Promise.reject('Credential#find: fqdn is a required argument');
+		}
+
+		/**
+		 * @param {RemoteCreds} data
+		 */
+		const _saveCreds = data => {
+
+			return new Promise(resolve => {
+					let remoteCred = new Credential(this);
+					remoteCred.initFromX509(data.x509, data.metadata);
+					this.addCredential(remoteCred);
+					remoteCred.saveCredentialsObject();
+					resolve(remoteCred);
 				}
-				else {
-					reject('Unknown domain');
-				}
-			}
-		);
+			);
+		};
+
+		if (fqdn.indexOf('beameio.net') > 0) {
+			return this.getRemoteCreds(fqdn).then(_saveCreds);
+		}
+		else {
+			Promise.reject('Unknown domain');
+		}
+
 	}
 
 	/**
@@ -97,16 +104,13 @@ class BeameStoreV2 {
 	 */
 	find(fqdn) {
 
-		if(!fqdn) {
-			throw new Error('Credential#find: fqdn is a required argument');
+		if (!fqdn) {
+			return Promise.reject('Credential#find: fqdn is a required argument');
 		}
 
 		let cred = this._getCredential(fqdn);
-		if (cred) {
-			return new Promise((resolve, reject) => resolve(cred));
-		}
 
-		return this.fetch(fqdn);
+		return cred ? Promise.resolve(cred) : this.fetch(fqdn);
 	}
 
 	addCredential(credential) {
@@ -205,7 +209,7 @@ class BeameStoreV2 {
 				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
-				else if(options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')){
+				else if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
 				return true;
@@ -340,8 +344,8 @@ class BeameStoreV2 {
 }
 
 BeameStoreV2.prototype.getCredential = util.deprecate(
-    BeameStoreV2.prototype.getCredential,
-    'BeameStoreV2#getCredential is deprecated. Use BeameStoreV2#find instead. Use --trace-deprecation NodeJS flag for trace.'
+	BeameStoreV2.prototype.getCredential,
+	'BeameStoreV2#getCredential is deprecated. Use BeameStoreV2#find instead. Use --trace-deprecation NodeJS flag for trace.'
 );
 
 module.exports = BeameStoreV2;
