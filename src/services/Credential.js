@@ -855,7 +855,7 @@ class Credential {
 					    fqdn: fqdn
 				    },
 				    api      = new ProvisionApi(),
-				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData, true);
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
@@ -884,7 +884,7 @@ class Credential {
 				}
 
 				var api     = new ProvisionApi(),
-				    apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
+				    apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {});
 
 				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
 
