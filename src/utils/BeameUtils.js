@@ -116,6 +116,9 @@ module.exports = {
 	 * @param {Function} callback
 	 */
 	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
+		if(!loadBalancerEndpoint){
+			loadBalancerEndpoint = config.loadBalancerURL;
+		}
 		if(config.beameForceEdgeFqdn){
 			var edgeF = {
 				endpoint: config.beameForceEdgeFqdn,
