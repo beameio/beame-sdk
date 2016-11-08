@@ -368,7 +368,9 @@ class ProvApiService {
 	}
 
 	static getRequest(url, callback) {
-		getFromProvisionApi(url, {}, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
+		let options = ProvApiService.setUserAgent({});
+
+		getFromProvisionApi(url, options, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
 	}
 }
 
