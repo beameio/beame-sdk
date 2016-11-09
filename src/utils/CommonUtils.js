@@ -39,6 +39,18 @@ class CommonUtils {
 
 	}
 
+	static randomPassword(length) {
+		var len   = length || 16;
+		var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
+		var pass  = "";
+		for (var x = 0; x < len; x++) {
+			var i = Math.floor(Math.random() * chars.length);
+			pass += chars.charAt(i);
+		}
+
+		return pass;
+	}
+
 	//noinspection JSUnusedGlobalSymbols
 	static randomBytes(len) {
 		const crypto = require('crypto');
