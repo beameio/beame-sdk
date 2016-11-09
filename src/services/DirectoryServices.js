@@ -66,6 +66,7 @@ class DataServices {
 
 	}
 
+
 	/**
 	 * @param {String} dirPath
 	 * @param {Function} callback
@@ -187,14 +188,19 @@ class DataServices {
 	 * @param {Function|null} [cb]
 	 */
 	saveFileAsync(dirPath, data, cb) {
-		fs.writeFile(dirPath, data, function (error) {
-			if (!cb) return;
-			if (error) {
-				cb(error, null);
-				return;
+
+		return new Promise((resolve, reject) => {
+				fs.writeFile(dirPath, data, error => {
+					if (error) {
+						cb && cb(error, null);
+						reject(error);
+						return;
+					}
+					cb && cb(null, true);
+					resolve();
+				});
 			}
-			cb(null, true);
-		});
+		);
 	}
 
 	scanDir(src) {
