@@ -77,6 +77,15 @@ class CommonUtils {
 		return require('crypto').createHash(alg || 'sha256').update(str).digest(dig || 'hex');
 	}
 
+	//noinspection JSUnusedGlobalSymbols
+	/**
+	 * @param {Object} obj
+	 * @returns {boolean}
+	 */
+	static isObjectEmpty(obj){
+		return Object.keys(obj).length === 0;
+	}
+
 	static isObject(obj) {
 		return typeof obj === 'object';
 	}
