@@ -107,7 +107,7 @@ class CommonUtils {
 			if (predicate(k, v)) {
 				ret[k] = v;
 			}
-		};
+		}
 		return ret;
 	}
 }
