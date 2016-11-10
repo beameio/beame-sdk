@@ -14,32 +14,52 @@ const logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttps
  * Starts sample HTTPS server. Either instanceHostname or projectName must be specified.
  * @public
  * @method BaseHttpsServer.SampleBeameServer
- * @param {String|null} [instanceHostname] - fqdn of the HTTPS server. You must have private key of the entity.
+ * @param {String|null} [instanceFqdn] - fqdn of the HTTPS server. You must have private key of the entity.
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function} hostOnlineCallback
+ * @param {Function|null} [errorCallback]
  */
-function BeameServer(instanceHostname, requestListener, hostOnlineCallback) {
+function BeameServer(instanceFqdn, requestListener, hostOnlineCallback, errorCallback) {
 
 	const beamestore = new (require("./BeameStoreV2"))();
 
-	if (!instanceHostname) {
-		logger.error('instance hostname or project name required');
-		return;
+	/**
+	 * @param {String} msg
+	 * @private
+	 */
+	const __onError = (msg) => {
+		if (errorCallback) {
+			errorCallback(msg);
+		}
+		else {
+			logger.fatal(msg);
+		}
+	};
+
+	if (!instanceFqdn) {
+		return __onError('instance hostname or project name required');
 	}
 
+	let fqdn = instanceFqdn;
 
-	let fqdn = instanceHostname;
+	let cred = beamestore.getCredential(fqdn);
 
-	//could be edge client or routable atom
-	let server_entity = beamestore.getCredential(fqdn);
-
-	if (server_entity == null || _.isEmpty(server_entity)) {
-		logger.error("Could not find certificate for " + fqdn);
-		return;
+	if (cred == null || _.isEmpty(cred)) {
+		return __onError(`Could not find certificate for ${fqdn}`);
 	}
 
 	let srv = SNIServer.get(config.SNIServerPort);
-	srv.addFqdn(fqdn, server_entity.getHttpsServerOptions(), requestListener);
+
+	let certs = null;
+
+	try {
+		certs = cred.getHttpsServerOptions();
+	}
+	catch (error) {
+		return __onError(error)
+	}
+
+	srv.addFqdn(fqdn, certs, requestListener);
 
 	srv.start(function () {
 		function onLocalServerCreated(data) {
@@ -48,23 +68,23 @@ function BeameServer(instanceHostname, requestListener, hostOnlineCallback) {
 			}
 		}
 
-		let fqdn      = server_entity.getKey('FQDN'),
-		    local_ip  = server_entity.getMetadataKey('LOCAL_IP'),
-		    edge_fqdn = server_entity.getMetadataKey('EDGE_FQDN');
-
-		if (!fqdn) {
-			logger.fatal('Edge server hostname required');
-		}
+		let fqdn      = cred.getKey('FQDN'),
+		    local_ip  = cred.getMetadataKey('LOCAL_IP'),
+		    edge_fqdn = cred.getMetadataKey('EDGE_FQDN');
 
 		if (!edge_fqdn) {
-			logger.fatal('Server hostname required');
+			return __onError('Edge server hostname required');
+		}
+
+		if (!fqdn) {
+			return __onError('Server hostname required');
 		}
 
 		if (!local_ip) {
 			new ProxyClient("HTTPS", fqdn,
 				edge_fqdn, 'localhost',
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
-				null, server_entity.getHttpsServerOptions());
+				null, certs);
 		}
 		else {
 			onLocalServerCreated(null);

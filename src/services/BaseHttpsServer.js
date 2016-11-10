@@ -19,43 +19,68 @@ const logger      = new (require('../utils/Logger'))(config.AppModules.BaseHttps
  * @param {String} fqdn - fqdn of the HTTPS server. You must have private key of the entity.
  * @param {Function} requestListener - requestListener parameter for https.createServer(), express application for example
  * @param {Function|null} [hostOnlineCallback]
+ * @param {Function|null} [errorCallback]
  * @param {Object|null} [options]
  */
-function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback) {
+function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback, errorCallback) {
 
 	const beamestore = new (require("./BeameStoreV2"))();
 
-	//could be edge client or routable atom
-	var server_entity = beamestore.getCredential(fqdn);
+	/**
+	 * @param {String} msg
+	 * @private
+	 */
+	const __onError = (msg) => {
+		if (errorCallback) {
+			errorCallback(msg);
+		}
+		else {
+			logger.fatal(msg);
+		}
+	};
 
-	if (!server_entity) {
-		logger.fatal(`Could not find certificate for ${fqdn}`);
+	let cred = beamestore.getCredential(fqdn);
+
+	if (!cred) {
+		return __onError(`Could not find certificate for ${fqdn}`);
 	}
 
-	if (!server_entity.metadata.edge_fqdn) {
-		logger.fatal(`edge server not defined for ${fqdn}`);
+	if (!cred.metadata.edge_fqdn) {
+		return __onError(`edge server not defined for ${fqdn}`);
 	}
 
-	var o = options || {};
+	let certs = null;
 
-	o.key  = server_entity.PRIVATE_KEY;
-	o.cert = server_entity.P7B;
-	o.ca   = server_entity.CA;
+	try {
+		certs = cred.getHttpsServerOptions();
+	}
+	catch (error) {
+		return __onError(error)
+	}
 
-	var server = https.createServer(o, requestListener);
+	var serverOptions = Object.assign({}, options || {}, certs);
 
-	server.listen(0, function (options) {
+	var server = https.createServer(serverOptions, requestListener);
+
+	server.listen(0, ()=> {
 		function onLocalServerCreated(data) {
 			if (hostOnlineCallback) {
 				hostOnlineCallback(data, server);
 			}
 		}
+
+		let edge_fqdn = cred.getMetadataKey('EDGE_FQDN');
+
+		if (!edge_fqdn) {
+			return __onError('Edge server hostname required');
+		}
+
 		//noinspection JSUnresolvedVariable
 		new ProxyClient("HTTPS", fqdn,
-			server_entity.metadata.edge_fqdn, 'localhost',
+			edge_fqdn, 'localhost',
 			server.address().port, {onLocalServerCreated: onLocalServerCreated},
-			null, options);
-	}.bind(null, o));
+			null, serverOptions);
+	});
 }
 
 module.exports = BaseBeameHttpsServer;
