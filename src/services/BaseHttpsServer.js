@@ -45,8 +45,10 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 		return __onError(`Could not find certificate for ${fqdn}`);
 	}
 
-	if (!cred.metadata.edge_fqdn) {
-		return __onError(`edge server not defined for ${fqdn}`);
+	let edge_fqdn = cred.getMetadataKey('EDGE_FQDN');
+
+	if (!edge_fqdn) {
+		return __onError('Edge server hostname required');
 	}
 
 	let certs = null;
@@ -67,12 +69,6 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 			if (hostOnlineCallback) {
 				hostOnlineCallback(data, server);
 			}
-		}
-
-		let edge_fqdn = cred.getMetadataKey('EDGE_FQDN');
-
-		if (!edge_fqdn) {
-			return __onError('Edge server hostname required');
 		}
 
 		//noinspection JSUnresolvedVariable
