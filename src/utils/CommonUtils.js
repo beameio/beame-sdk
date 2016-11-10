@@ -99,6 +99,7 @@ class CommonUtils {
 			.catch(error => callback(error, null));
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	static filterHash(obj, predicate) {
 		let ret = {};
 		for (let k in obj) {
