@@ -42,18 +42,18 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 	o.cert = server_entity.P7B;
 	o.ca   = server_entity.CA;
 
-	var app = https.createServer(o, requestListener);
+	var server = https.createServer(o, requestListener);
 
-	app.listen(0, function (options) {
+	server.listen(0, function (options) {
 		function onLocalServerCreated(data) {
 			if (hostOnlineCallback) {
-				hostOnlineCallback(data, app);
+				hostOnlineCallback(data, server);
 			}
 		}
 		//noinspection JSUnresolvedVariable
 		new ProxyClient("HTTPS", fqdn,
 			server_entity.metadata.edge_fqdn, 'localhost',
-			app.address().port, {onLocalServerCreated: onLocalServerCreated},
+			server.address().port, {onLocalServerCreated: onLocalServerCreated},
 			null, options);
 	}.bind(null, o));
 }
