@@ -98,6 +98,17 @@ class CommonUtils {
 			.then(data => callback(null, data))
 			.catch(error => callback(error, null));
 	}
+
+	static filterHash(obj, predicate) {
+		let ret = {};
+		for (let k in obj) {
+			let v = obj[k];
+			if (predicate(k, v)) {
+				ret[k] = v;
+			}
+		};
+		return ret;
+	}
 }
 
 module.exports = CommonUtils;
