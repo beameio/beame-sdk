@@ -599,7 +599,7 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken=> {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve);
+							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 						}).catch(reject);
 
 					});
@@ -755,7 +755,7 @@ class Credential {
 					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken=> {
 						payload.sign = authToken;
 
-						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve);
+						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 					}).catch(reject);
 
 				}
