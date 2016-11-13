@@ -67,6 +67,15 @@ class CommonUtils {
 
 	/**
 	 *
+	 * @param {number|null} [upper]
+	 * @returns {number}
+	 */
+	static randomTimeout(upper){
+		return Math.floor((Math.random() * (upper || 10)) + 1) * 1000 * Math.random()
+	}
+
+	/**
+	 *
 	 * @param data
 	 * @param {String|null} [alg] => hash algorithm
 	 * @param {String|null} [dig] => hash digest
