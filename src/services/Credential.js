@@ -61,8 +61,12 @@ const CryptoServices         = require('../services/Crypto');
  */
 class Credential {
 
-
-	constructor(store) {
+	/**
+	 *
+	 * @param {BeameStoreV2} store
+	 * @param {number|null} [certTimeoutUpper]
+	 */
+	constructor(store, certTimeoutUpper) {
 		if (store) {
 			//noinspection JSUnresolvedVariable
 			/** @member {BeameStoreV2}*/
@@ -78,6 +82,13 @@ class Credential {
 
 		/** @member {Array.<Credential>} */
 		this.children = [];
+
+		/**
+		 * use for request cert request timeout generator
+		 * @type {number}
+		 * @private
+		 */
+		this._certTimeoutUpper = certTimeoutUpper || 10;
 
 		// cert files
 		/** @member {Buffer}*/
@@ -1032,7 +1043,7 @@ class Credential {
 							csr => {
 								logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
 
-								let t = CommonUtils.randomTimeout();
+								let t = CommonUtils.randomTimeout(this._certTimeoutUpper);
 
 								setTimeout(()=>{
 									cred.getCert(csr, sign).then(() => {
