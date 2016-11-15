@@ -110,7 +110,7 @@ module.exports = {
 
 	/**
 	 *
-	 * @param {String} loadBalancerEndpoint
+	 * @param {String|null} [loadBalancerEndpoint]
 	 * @param {Number} retries
 	 * @param {Number} sleep
 	 * @param {Function} callback
