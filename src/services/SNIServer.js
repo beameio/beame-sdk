@@ -34,7 +34,7 @@ class SNIServer {
 
 		for (let host in this.hosts) {
 			//noinspection JSUnfilteredForInLoop
-			logger.debug(`starting server on ${host}`);
+			logger.info(`starting server on ${host}`);
 		}
 
 		this.started = true;
