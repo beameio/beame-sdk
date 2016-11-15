@@ -105,7 +105,7 @@ class ProxyClient {
 			this.createLocalServerConnection.call(this, data, this.options && this.options.onConnection);
 		}, this));
 
-		this.socketio.on('hostRegistered', _.bind(function (data) {
+		this.socketio.once('hostRegistered', _.bind(function (data) {
 			this.options && this.options.onLocalServerCreated && this.options.onLocalServerCreated.call(null, data);
 			//  this.createLocalServerConnection.call(this, data, this.options && this.options.onLocalServerCreated);
 			//logger.debug('hostRegistered', data);
