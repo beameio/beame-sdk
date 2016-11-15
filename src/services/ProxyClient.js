@@ -61,7 +61,7 @@ class ProxyClient {
 		/** @member {Number} */
 		this.targetPort = targetPort;
 
-		logger.debug(`ProxyClient connecting to ${this.edgeServerHostname}`);
+		//logger.debug(`ProxyClient connecting to ${this.edgeServerHostname}`);
 
 		/**
 		 * Connect to ProxyServer
@@ -85,7 +85,7 @@ class ProxyClient {
 			if (this.connected) {
 				return;
 			}
-			logger.debug(`ProxyClient connected => {hostname:${this.hostname}, endpoint:${this.edgeServerHostname}, targetHost:${this.targetHost}, targetPort: ${this.targetPort}}`);
+			//logger.debug(`ProxyClient connected => {hostname:${this.hostname}, endpoint:${this.edgeServerHostname}, targetHost:${this.targetHost}, targetPort: ${this.targetPort}}`);
 			this.connected = true;
 			socketUtils.emitMessage(this.socketio, 'register_server', socketUtils.formatMessage(null, {
 				hostname: this.hostname,
