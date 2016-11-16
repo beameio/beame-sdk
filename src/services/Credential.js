@@ -519,7 +519,7 @@ class Credential {
 			let signingCredential = this.store.getCredential(encryptedMessage.signedBy);
 
 				if (!signingCredential) {
-				new Error("Signing credential is not found in the local store");
+				throw new Error("Signing credential is not found in the local store");
 			}
 
 			if (!signingCredential.checkSignature({
@@ -535,7 +535,7 @@ class Credential {
 
 
 		if (!this.hasKey("PRIVATE_KEY")) {
-			new Error(`private key for ${encryptedMessage.encryptedFor} not found`);
+			throw new Error(`private key for ${encryptedMessage.encryptedFor} not found`);
 
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
@@ -550,7 +550,7 @@ class Credential {
 		]);
 
 		if (!decipheredPayload) {
-			new Error("Decrypting, No message");
+			throw new Error("Decrypting, No message");
 		}
 		return decipheredPayload;
 	}
