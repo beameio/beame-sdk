@@ -100,7 +100,7 @@ class BeameStoreV2 {
 	 * @public
 	 * @method BeameStoreV2.find
 	 * @param {String} fqdn
-	 * @param {Boolean} allowRemote
+	 * @param {Boolean} [allowRemote]
 	 * @returns {Promise.<Credential>}
 	 */
 	find(fqdn, allowRemote) {
