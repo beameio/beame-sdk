@@ -514,11 +514,14 @@ class Credential {
 	 * @returns {*}
 	 */
 	decrypt(encryptedMessage) {
+
 		if (encryptedMessage.signature) {
 			let signingCredential = this.store.getCredential(encryptedMessage.signedBy);
-			if (!signingCredential) {
+
+				if (!signingCredential) {
 				new Error("Signing credential is not found in the local store");
 			}
+
 			if (!signingCredential.checkSignature({
 					signedData: encryptedMessage.signedData,
 					signedBy:   encryptedMessage.signedBy,
@@ -526,12 +529,14 @@ class Credential {
 				})) {
 				return null;
 			}
+
 			encryptedMessage = encryptedMessage.signedData;
 		}
 
 
 		if (!this.hasKey("PRIVATE_KEY")) {
-			logger.fatal(`private key for ${encryptedMessage.encryptedFor} not found`);
+			new Error(`private key for ${encryptedMessage.encryptedFor} not found`);
+
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
 
@@ -539,14 +544,15 @@ class Credential {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let payload          = JSON.parse(decryptedMessage);
 
-		let dechipheredPayload = CryptoServices.aesDecrypt([
+		let decipheredPayload = CryptoServices.aesDecrypt([
 			encryptedMessage.data,
 			payload,
 		]);
-		if (!dechipheredPayload) {
-			logger.fatal("Decrypting, No message");
+
+		if (!decipheredPayload) {
+			new Error("Decrypting, No message");
 		}
-		return dechipheredPayload;
+		return decipheredPayload;
 	}
 
 	//endregion
