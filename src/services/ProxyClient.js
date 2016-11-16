@@ -133,7 +133,7 @@ class ProxyClient {
 			if (!data || !data.socketId) {
 				return;
 			}
-			setTimeout(function () {
+			setTimeout( () => {
 				this.deleteSocket(data.socketId);
 			},1000);
 
@@ -142,7 +142,7 @@ class ProxyClient {
 		this.socketio.on('disconnect', _.bind(function () {
 			this.connected = false;
 			_.each(this.clientSockets, function (socket) {
-				setTimeout(function () {
+				setTimeout( ()=> {
 					socket.destroy();
 					this.deleteSocket(socket.id);
 				},10000);
