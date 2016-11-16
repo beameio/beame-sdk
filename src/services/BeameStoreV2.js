@@ -21,7 +21,6 @@
  */
 
 const path              = require('path');
-const util              = require('util');
 const config            = require('../../config/Config');
 const module_name       = config.AppModules.BeameStore;
 const BeameLogger       = require('../utils/Logger');
@@ -101,12 +100,17 @@ class BeameStoreV2 {
 			throw new Error('Credential#find: fqdn is a required argument');
 		}
 
-		let cred = this._getCredential(fqdn);
-		if (cred) {
-			return new Promise((resolve, reject) => resolve(cred));
-		}
+		return new Promise((resolve, reject) => {
+				let cred = this.getCredential(fqdn);
 
-		return this.fetch(fqdn);
+				if (cred) {
+					resolve(cred);
+					return;
+				}
+
+				this.fetch(fqdn).then(resolve).catch(reject);
+			}
+		);
 	}
 
 	addCredential(credential) {
@@ -142,24 +146,12 @@ class BeameStoreV2 {
 
 	/**
 	 * Return credential from local Beame store
-	 * @deprecated
 	 * @public
 	 * @method BeameStoreV2.getCredential
 	 * @param {String} fqdn
 	 * @returns {Credential}
 	 */
 	getCredential(fqdn) {
-		return this._getCredential(fqdn);
-	}
-
-	/**
-	 * Return credential from local Beame store
-	 * @private
-	 * @method BeameStoreV2._getCredential
-	 * @param {String} fqdn
-	 * @returns {Credential}
-	 */
-	_getCredential(fqdn) {
 		var results = BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn, 1);
 		return results.length == 1 ? results[0] : null;
 	}
@@ -178,7 +170,7 @@ class BeameStoreV2 {
 	shredCredentials(fqdn, callback) {
 		// XXX: Fix callback to getMetadataKey (err, data) instead of (data)
 		// XXX: Fix exit code
-		let item = this._getCredential(fqdn);
+		let item = this.getCredential(fqdn);
 		if (item) {
 			item.shred(callback);
 		}
@@ -338,10 +330,5 @@ class BeameStoreV2 {
 	}
 
 }
-
-BeameStoreV2.prototype.getCredential = util.deprecate(
-    BeameStoreV2.prototype.getCredential,
-    'BeameStoreV2#getCredential is deprecated. Use BeameStoreV2#find instead. Use --trace-deprecation NodeJS flag for trace.'
-);
 
 module.exports = BeameStoreV2;

@@ -101,7 +101,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 
 		logger.debug(`Provision error payload ${payload.toString()}`,payload);
 		logger.debug(`Provision error response ${response.toString()}`,response);
-		logger.debug(errMsg.message, payload);
+		logger.error(errMsg.message, payload, module_name);
 		callback && callback(errMsg, null);
 	}
 
@@ -280,7 +280,7 @@ class ProvApiService {
 		return {
 			api:            endpoint,
 			postData:       postData,
-			answerExpected: answerExpected? true : false
+			answerExpected: answerExpected || true
 		};
 	}
 

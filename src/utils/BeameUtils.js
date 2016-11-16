@@ -116,59 +116,51 @@ module.exports = {
 	 * @param {Function} callback
 	 */
 	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
-		if(config.beameForceEdgeFqdn){
-			var edgeF = {
-				endpoint: config.beameForceEdgeFqdn,
-				publicIp: config.beameForceEdgeIP
-			};
-			callback && callback(null, edgeF);
+		var self       = this;
+		var get        = self.httpGet;
+		var selectBest = self.selectBestProxy;
+
+		if (retries == 0) {
+			callback && callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
 		}
-		else{
-			var self       = this;
-			var get        = self.httpGet;
-			var selectBest = self.selectBestProxy;
+		else {
+			retries--;
 
-			if (retries == 0) {
-				callback && callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
-			}
-			else {
-				retries--;
+			get(loadBalancerEndpoint + "/instance",
+				/**
+				 *
+				 * @param error
+				 * @param {Object} data
+				 */
+				function (error, data) {
+					if (data) {
 
-				get(loadBalancerEndpoint + "/instance",
-					/**
-					 *
-					 * @param error
-					 * @param {Object} data
-					 */
-					function (error, data) {
-						if (data) {
+						//noinspection JSUnresolvedVariable
+						/** @type {EdgeShortData} edge **/
+						var edge = {
+							endpoint: data.instanceData.endpoint,
+							publicIp: data.instanceData.publicipv4
+						};
 
-							//noinspection JSUnresolvedVariable
-							/** @type {EdgeShortData} edge **/
-							var edge = {
-								endpoint: data.instanceData.endpoint,
-								publicIp: data.instanceData.publicipv4
-							};
+						callback && callback(null, edge);
 
-							callback && callback(null, edge);
+					}
+					else {
 
-						}
-						else {
+						sleep = parseInt(sleep * (Math.random() + 1.5));
 
-							sleep = parseInt(sleep * (Math.random() + 1.5));
+						logger.warn("Retry to getMetadataKey lb instance", {
+							"sleep":   sleep,
+							"retries": retries
+						});
 
-							logger.warn("Retry to getMetadataKey lb instance", {
-								"sleep":   sleep,
-								"retries": retries
-							});
-
-							setTimeout(function () {
-								selectBest.call(self, loadBalancerEndpoint, retries, sleep, callback);
-							}, sleep);
-						}
-					});
-			}
+						setTimeout(function () {
+							selectBest.call(self, loadBalancerEndpoint, retries, sleep, callback);
+						}, sleep);
+					}
+				});
 		}
+
 	},
 
 

@@ -140,10 +140,8 @@ class ProxyClient {
 		this.socketio.on('disconnect', _.bind(function () {
 			this.connected = false;
 			_.each(this.clientSockets, function (socket) {
-				setTimeout(function () {
-					socket.destroy();
-					this.deleteSocket(socket.id);
-				},10000);
+				socket.destroy();
+				this.deleteSocket(socket.id);
 			}, this);
 		}, this));
 	}
