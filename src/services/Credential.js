@@ -434,7 +434,7 @@ class Credential {
 	 * @param {String|null} [dataToSign]
 	 * @returns {Promise.<String|null>}
 	 */
-	signWithFqdn(signWithFqdn, dataToSign) {
+	signWithFqdn(signWithFqdn, dataToSign, ttl) {
 		return new Promise((resolve, reject) => {
 				if (!signWithFqdn) {
 					reject('SignedWith FQDN parameter required');
@@ -454,7 +454,7 @@ class Credential {
 				}
 				const AuthToken = require('./AuthToken');
 
-				let authToken = AuthToken.create(dataToSign || Date.now(), signCred, 60 * 5);
+				let authToken = AuthToken.create(dataToSign || Date.now(), signCred, ttl || 60 * 5);
 
 				if (!authToken) {
 					reject(`Sign data failure, please see logs`);
