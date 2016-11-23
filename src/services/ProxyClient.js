@@ -100,10 +100,10 @@ class ProxyClient {
 			//logger.debug("Could not connect to proxy server", err);
 		}, this));
 
-		this.socketio.on('create_connection', _.bind(function (data) {
+		this.socketio.on('create_connection', data => {
 			//noinspection JSUnresolvedVariable
-			this.createLocalServerConnection.call(this, data, this.options && this.options.onConnection);
-		}, this));
+			this.createLocalServerConnection(data, this.options && this.options.onConnection);
+		});
 
 		this.socketio.once('hostRegistered', _.bind(function (data) {
 			this.options && this.options.onLocalServerCreated && this.options.onLocalServerCreated.call(null, data);
