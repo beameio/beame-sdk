@@ -185,17 +185,25 @@ class ProxyClient {
 				}, this));
 			}, this));
 
-			client.on('error', _.bind(function (error) {
-				//logger.error("Socket Error in ProxyClient ", error);
+			client.on('error', error => {
+				logger.error(`Error talking to ${this.targetHost}:${this.targetPort} - ${error}`);
 
 				if (this.socketio) {
+					// TODO: Send this event to be logged on edge server
 					socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
+					if(error.syscall == 'connect' && error.code == 'ECONNREFUSED') {
+						logger.error(`Error connecting to ${this.targetHost}:${this.targetPort} - ${error}. Closing socket.`);
+						socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
+						// client.emit('close'); -- did not work
+						this.deleteSocket(serverSideSocketId);
+						client.destroy();
+					}
 				}
-			}, this));
+			});
 
 		} catch (e) {
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			logger.error('Create Local Server Connection', e)
+			logger.error(`Unexpected error when creating local connection ${e}`);
 		}
 
 		callback && callback(data);
