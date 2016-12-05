@@ -15,6 +15,8 @@ var logger        = new (require('../utils/Logger'))(module_name);
  * @typedef {Object} HttpsProxyAgent
  */
 
+function nop() {}
+
 /**
  * @typedef {Object} ProxyClientOptions
  * @property {Function} [onConnect]
@@ -150,7 +152,7 @@ class ProxyClient {
 		}, this));
 	}
 
-	createLocalServerConnection(data, callback) {
+	createLocalServerConnection(data, callback=nop) {
 		if (!this.socketio) {
 			return;
 		}
@@ -161,52 +163,40 @@ class ProxyClient {
 		client.serverSideSocketId              = serverSideSocketId;
 		this.clientSockets[serverSideSocketId] = client;
 
-		try {
-			/**
-			 * Connect to local server
-			 */
-			client.connect(this.targetPort, this.targetHost, _.bind(function () {
+		/**
+		 * Connect to local server
+		 */
+		client.connect(this.targetPort, this.targetHost);
 
-				client.on('data', _.bind(function (data) {
-				  //	logger.debug('**********Client Proxy on client(Socket) data');
-					socketUtils.emitMessage(this.socketio, 'data', socketUtils.formatMessage(client.serverSideSocketId, data));
+		client.on('data', data => {
+			socketUtils.emitMessage(this.socketio, 'data', socketUtils.formatMessage(client.serverSideSocketId, data));
+		});
 
-				}, this));
+		client.on('close', had_error => {
+			if(had_error) {
+				socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, 'close() reported error'));
+			}
+			socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
+			this.deleteSocket(serverSideSocketId);
+		});
 
-				client.on('close', _.bind(function () {
-					//logger.debug("Connection closed by server");
+		client.on('error', error => {
+			logger.error(`Error talking to ${this.targetHost}:${this.targetPort} - ${error}`);
+
+			if (this.socketio) {
+				// TODO: Send this event to be logged on edge server
+				socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
+				if(error.syscall == 'connect' && error.code == 'ECONNREFUSED') {
+					logger.error(`Error connecting to ${this.targetHost}:${this.targetPort} - ${error}. Closing socket.`);
 					socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
-
-				}, this));
-
-				client.on('end', _.bind(function () {
-				   //logger.debug("Connection end by server");
-					// this.socketio && this.socketio.emit('disconnect_client', {socketId: client.serverSideSocketId});
-				}, this));
-			}, this));
-
-			client.on('error', error => {
-				logger.error(`Error talking to ${this.targetHost}:${this.targetPort} - ${error}`);
-
-				if (this.socketio) {
-					// TODO: Send this event to be logged on edge server
-					socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
-					if(error.syscall == 'connect' && error.code == 'ECONNREFUSED') {
-						logger.error(`Error connecting to ${this.targetHost}:${this.targetPort} - ${error}. Closing socket.`);
-						socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
-						// client.emit('close'); -- did not work
-						this.deleteSocket(serverSideSocketId);
-						client.destroy();
-					}
+					// client.emit('close'); -- did not work
+					this.deleteSocket(serverSideSocketId);
+					client.destroy();
 				}
-			});
+			}
+		});
 
-		} catch (e) {
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			logger.error(`Unexpected error when creating local connection ${e}`);
-		}
-
-		callback && callback(data);
+		callback(data);
 	}
 
 	destroy() {

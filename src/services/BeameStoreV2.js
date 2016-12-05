@@ -134,7 +134,7 @@ class BeameStoreV2 {
 			logger.fatal(`Credentials for fqdn ${fqdn} are already present`);
 		}
 
-		let parentNode = parent_fqdn && this.getCredential(parent_fqdn);
+		let parentNode = parent_fqdn && this._getCredential(parent_fqdn);
 		if (parentNode) {
 			parentNode.children.push(credential);
 			credential.parent = parentNode;
