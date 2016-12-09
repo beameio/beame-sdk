@@ -191,13 +191,13 @@ class ProxyClient {
 				if (this.socketio) {
 					// TODO: Send this event to be logged on edge server
 					socketUtils.emitMessage(this.socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
-					if(error.syscall == 'connect' && error.code == 'ECONNREFUSED') {
-						logger.error(`Error connecting to ${this.targetHost}:${this.targetPort} - ${error}. Closing socket.`);
-						socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
-						// client.emit('close'); -- did not work
-						this.deleteSocket(serverSideSocketId);
-						client.destroy();
-					}
+					// if(error.syscall == 'connect' && error.code == 'ECONNREFUSED') {
+					// 	logger.error(`Error connecting to ${this.targetHost}:${this.targetPort} - ${error}. Closing socket.`);
+					// 	socketUtils.emitMessage(this.socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
+					// 	// client.emit('close'); -- did not work
+					// 	this.deleteSocket(serverSideSocketId);
+					// 	client.destroy();
+					// }
 				}
 			});
 
