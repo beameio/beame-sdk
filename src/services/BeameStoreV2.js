@@ -256,7 +256,7 @@ class BeameStoreV2 {
 				let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
 
 				const loadCred = (metadata) => {
-					let newCred = new Credential(self);
+					let newCred = new Credential(this);
 
 					newCred.initWithFqdn(fqdn, metadata);
 
@@ -282,7 +282,7 @@ class BeameStoreV2 {
 						 * @returns {*}
 						 */
 						data => {
-							let remoteCred = new Credential(self);
+							let remoteCred = new Credential(this);
 							remoteCred.initFromX509(data.x509, data.metadata);
 							this.addCredential(remoteCred);
 
