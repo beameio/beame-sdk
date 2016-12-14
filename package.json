@@ -1,6 +1,6 @@
 {
   "name": "beame-sdk",
-  "version": "2.0.5",
+  "version": "2.0.4",
   "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "index.js",
   "engine": "node >= 4.4.0",
