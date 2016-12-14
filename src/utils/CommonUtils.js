@@ -39,6 +39,18 @@ class CommonUtils {
 
 	}
 
+	static randomPassword(length) {
+		var len   = length || 16;
+		var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
+		var pass  = "";
+		for (var x = 0; x < len; x++) {
+			var i = Math.floor(Math.random() * chars.length);
+			pass += chars.charAt(i);
+		}
+
+		return pass;
+	}
+
 	//noinspection JSUnusedGlobalSymbols
 	static randomBytes(len) {
 		const crypto = require('crypto');
@@ -55,6 +67,15 @@ class CommonUtils {
 
 	/**
 	 *
+	 * @param {number|null} [upper]
+	 * @returns {number}
+	 */
+	static randomTimeout(upper){
+		return Math.floor((Math.random() * (upper || 10)) + 1) * 1000 * Math.random()
+	}
+
+	/**
+	 *
 	 * @param data
 	 * @param {String|null} [alg] => hash algorithm
 	 * @param {String|null} [dig] => hash digest
@@ -63,6 +84,15 @@ class CommonUtils {
 	static generateDigest(data,alg,dig) {
 		let str = CommonUtils.isObject(data) ? CommonUtils.stringify(data, false) : data;
 		return require('crypto').createHash(alg || 'sha256').update(str).digest(dig || 'hex');
+	}
+
+	//noinspection JSUnusedGlobalSymbols
+	/**
+	 * @param {Object} obj
+	 * @returns {boolean}
+	 */
+	static isObjectEmpty(obj){
+		return Object.keys(obj).length === 0;
 	}
 
 	static isObject(obj) {
@@ -76,6 +106,18 @@ class CommonUtils {
 		promise
 			.then(data => callback(null, data))
 			.catch(error => callback(error, null));
+	}
+
+	//noinspection JSUnusedGlobalSymbols
+	static filterHash(obj, predicate) {
+		let ret = {};
+		for (let k in obj) {
+			let v = obj[k];
+			if (predicate(k, v)) {
+				ret[k] = v;
+			}
+		}
+		return ret;
 	}
 }
 

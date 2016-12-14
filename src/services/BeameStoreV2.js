@@ -66,26 +66,33 @@ class BeameStoreV2 {
 
 	//noinspection JSUnusedGlobalSymbols
 	fetch(fqdn) {
-		return new Promise((resolve, reject) => {
-				if (fqdn.indexOf('beameio.net') > 0) {
-					this.getRemoteCreds(fqdn).then(
-						/**
-						 * @param {RemoteCreds} data
-						 */
-						data => {
-							let remoteCred = new Credential(this);
-							remoteCred.initFromX509(data.x509, data.metadata);
-							this.addCredential(remoteCred);
-							remoteCred.saveCredentialsObject();
-							resolve(remoteCred);
-						}
-					).catch(reject);
+
+		if (!fqdn) {
+			return Promise.reject('Credential#find: fqdn is a required argument');
+		}
+
+		/**
+		 * @param {RemoteCreds} data
+		 */
+		const _saveCreds = data => {
+
+			return new Promise(resolve => {
+					let remoteCred = new Credential(this);
+					remoteCred.initFromX509(data.x509, data.metadata);
+					this.addCredential(remoteCred);
+					remoteCred.saveCredentialsObject();
+					resolve(remoteCred);
 				}
-				else {
-					reject('Unknown domain');
-				}
-			}
-		);
+			);
+		};
+
+		if (fqdn.indexOf('beameio.net') > 0) {
+			return this.getRemoteCreds(fqdn).then(_saveCreds);
+		}
+		else {
+			Promise.reject('Unknown domain');
+		}
+
 	}
 
 	/**
@@ -93,17 +100,27 @@ class BeameStoreV2 {
 	 * @public
 	 * @method BeameStoreV2.find
 	 * @param {String} fqdn
+	 * @param {Boolean} [allowRemote]
 	 * @returns {Promise.<Credential>}
 	 */
-	find(fqdn) {
+	find(fqdn, allowRemote) {
 
-		if(!fqdn) {
-			throw new Error('Credential#find: fqdn is a required argument');
+		if (!fqdn) {
+			return Promise.reject('Credential#find: fqdn is a required argument');
 		}
 
 		let cred = this._getCredential(fqdn);
+
 		if (cred) {
-			return new Promise((resolve, reject) => resolve(cred));
+			return Promise.resolve(cred);
+		}
+
+		if (typeof allowRemote === 'undefined') {
+			allowRemote = true;
+		}
+
+		if(!allowRemote) {
+			return Promise.reject(`Credential ${fqdn} was not found locally and allowRemote is false`);
 		}
 
 		return this.fetch(fqdn);
@@ -117,7 +134,7 @@ class BeameStoreV2 {
 			logger.fatal(`Credentials for fqdn ${fqdn} are already present`);
 		}
 
-		let parentNode = parent_fqdn && this.getCredential(parent_fqdn);
+		let parentNode = parent_fqdn && this._getCredential(parent_fqdn);
 		if (parentNode) {
 			parentNode.children.push(credential);
 			credential.parent = parentNode;
@@ -205,7 +222,7 @@ class BeameStoreV2 {
 				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
-				else if(options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')){
+				else if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
 				return true;

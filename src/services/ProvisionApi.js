@@ -99,8 +99,8 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 			"message": msg || payload
 		}, config.MessageCodes.ApiRestError);
 
-		logger.debug(`Provision error payload ${payload.toString()}`,payload);
-		logger.debug(`Provision error response ${response.toString()}`,response);
+		logger.debug(`Provision error payload ${payload.toString()}`, payload);
+		logger.debug(`Provision error response ${response.toString()}`, response);
 		logger.debug(errMsg.message, payload);
 		callback && callback(errMsg, null);
 	}
@@ -143,6 +143,7 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
 			}, config.MessageCodes.ApiRestError), null);
 		}
 		else {
+
 			request.post(
 				url,
 				options,
@@ -256,46 +257,47 @@ class ProvApiService {
 		this.provApiEndpoint = baseUrl || provisionSettings.Endpoints.BaseUrl;
 	}
 
-	//noinspection JSUnusedGlobalSymbols
-	/**
-	 * @param {String} baseDir
-	 * @param {String} path2Pk
-	 * @param {String} path2X509
-	 * @returns {typeof AuthData}
-	 */
-	static getAuthToken(baseDir, path2Pk, path2X509) {
-		return {
-			pk:   path.join(baseDir, path2Pk),
-			x509: path.join(baseDir, path2X509)
-		};
-	}
 
 	/**
 	 * @param {String} endpoint
 	 * @param {Object} postData
-	 * @param {boolean} [answerExpected]
 	 * @returns {typeof ApiData}
 	 */
-	static getApiData(endpoint, postData, answerExpected) {
+	static getApiData(endpoint, postData) {
 		return {
-			api:            endpoint,
-			postData:       postData,
-			answerExpected: answerExpected? true : false
+			api:      endpoint,
+			postData: postData
 		};
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+	/**
+	 * @param {Object} options
+	 */
+	static setUserAgent(options) {
+		const os             = require('os');
+		let headers          = options.headers || {},
+		      agent          = {
+			      sdk:    {
+				      type:    'NodeJS',
+				      version: require("../../package.json").version
+			      },
+			      platform: {
+				      type:    os.platform(),
+				      version: os.release()
+			      }
+		      };
+
+		headers['X-BeameUserAgent'] = CommonUtils.stringify(agent);
+
+		options.headers = headers;
+		return options;
+	}
+
 	/**
 	 *
-	 * @param {AuthData} authData
+	 * @param {Buffer} pk
+	 * @param {Buffer} cert
 	 */
-	setAuthData(authData) {
-		this.options = {
-			key:  fs.readFileSync(authData.pk),
-			cert: fs.readFileSync(authData.x509)
-		};
-	}
-
 	setClientCerts(pk, cert) {
 		this.options = {
 			key:  pk,
@@ -325,6 +327,8 @@ class ProvApiService {
 		var apiEndpoint = this.provApiEndpoint + apiData.api;
 		logger.debug(`Api call to : ${apiEndpoint}`);
 		var _method = method || 'POST';
+
+		options = ProvApiService.setUserAgent(options);
 
 		switch (_method) {
 			case 'POST' :
@@ -358,11 +362,15 @@ class ProvApiService {
 			};
 		}
 
+		options = ProvApiService.setUserAgent(options);
+
 		postToProvisionApi(url, options, "custom_post", retries || provisionSettings.RetryAttempts, 1000, callback);
 	}
 
 	static getRequest(url, callback) {
-		getFromProvisionApi(url, {}, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
+		let options = ProvApiService.setUserAgent({});
+
+		getFromProvisionApi(url, options, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
 	}
 }
 

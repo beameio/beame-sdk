@@ -6,7 +6,7 @@ const path     = require('path');
 const exec     = require('child_process').exec;
 const execFile = require('child_process').execFile;
 
-
+const CommonUtils = require('./CommonUtils');
 const config      = require('../../config/Config');
 const module_name = config.AppModules.OpenSSL;
 var logger        = new (require('../utils/Logger'))(module_name);
@@ -100,7 +100,7 @@ class OpenSSLWrapper {
 	}
 
 	createPfxCert(dirPath) {
-		let pwd    = OpenSSLWrapper._randomPassword(),
+		let pwd    = CommonUtils.randomPassword(),
 		    action = "openssl",
 		    args   = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.X509), "-certfile", path.join(dirPath, config.CertFileNames.CA), "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath, config.CertFileNames.PKCS12)];
 
@@ -120,18 +120,6 @@ class OpenSSLWrapper {
 			}
 		);
 
-	}
-
-	static _randomPassword(length) {
-		var len   = length || 16;
-		var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
-		var pass  = "";
-		for (var x = 0; x < len; x++) {
-			var i = Math.floor(Math.random() * chars.length);
-			pass += chars.charAt(i);
-		}
-
-		return pass;
 	}
 
 }

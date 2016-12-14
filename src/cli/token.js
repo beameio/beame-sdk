@@ -7,7 +7,7 @@ const CommonUtils   = require('../utils/CommonUtils');
 const BeameStore    = new (require('../services/BeameStoreV2'))();
 const AuthToken     = require('../services/AuthToken');
 
-function create(fqdn, data, callback) {
+function create(fqdn, data, ttl, callback) {
 	const cred = BeameStore.getCredential(fqdn);
 
 	if(!cred) {
@@ -15,7 +15,7 @@ function create(fqdn, data, callback) {
 		return;
 	}
 
-	CommonUtils.promise2callback(cred.signWithFqdn(fqdn, data), callback);
+	CommonUtils.promise2callback(cred.signWithFqdn(fqdn, data, ttl), callback);
 }
 
 create.toText = token => new Buffer(CommonUtils.stringify(token,false)).toString('base64');

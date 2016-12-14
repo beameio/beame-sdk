@@ -61,8 +61,12 @@ const CryptoServices         = require('../services/Crypto');
  */
 class Credential {
 
-
-	constructor(store) {
+	/**
+	 *
+	 * @param {BeameStoreV2} store
+	 * @param {number|null} [certTimeoutUpper]
+	 */
+	constructor(store, certTimeoutUpper) {
 		if (store) {
 			//noinspection JSUnresolvedVariable
 			/** @member {BeameStoreV2}*/
@@ -78,6 +82,13 @@ class Credential {
 
 		/** @member {Array.<Credential>} */
 		this.children = [];
+
+		/**
+		 * use for request cert request timeout generator
+		 * @type {number}
+		 * @private
+		 */
+		this._certTimeoutUpper = certTimeoutUpper || 10;
 
 		// cert files
 		/** @member {Buffer}*/
@@ -423,7 +434,7 @@ class Credential {
 	 * @param {String|null} [dataToSign]
 	 * @returns {Promise.<String|null>}
 	 */
-	signWithFqdn(signWithFqdn, dataToSign) {
+	signWithFqdn(signWithFqdn, dataToSign, ttl) {
 		return new Promise((resolve, reject) => {
 				if (!signWithFqdn) {
 					reject('SignedWith FQDN parameter required');
@@ -443,7 +454,7 @@ class Credential {
 				}
 				const AuthToken = require('./AuthToken');
 
-				let authToken = AuthToken.create(dataToSign || Date.now(), signCred, 60 * 5);
+				let authToken = AuthToken.create(dataToSign || Date.now(), signCred, ttl || 60 * 5);
 
 				if (!authToken) {
 					reject(`Sign data failure, please see logs`);
@@ -503,11 +514,14 @@ class Credential {
 	 * @returns {*}
 	 */
 	decrypt(encryptedMessage) {
+
 		if (encryptedMessage.signature) {
 			let signingCredential = this.store.getCredential(encryptedMessage.signedBy);
-			if (!signingCredential) {
-				new Error("Signing credential is not found in the local store");
+
+				if (!signingCredential) {
+				throw new Error("Signing credential is not found in the local store");
 			}
+
 			if (!signingCredential.checkSignature({
 					signedData: encryptedMessage.signedData,
 					signedBy:   encryptedMessage.signedBy,
@@ -515,12 +529,14 @@ class Credential {
 				})) {
 				return null;
 			}
+
 			encryptedMessage = encryptedMessage.signedData;
 		}
 
 
 		if (!this.hasKey("PRIVATE_KEY")) {
-			logger.fatal(`private key for ${encryptedMessage.encryptedFor} not found`);
+			throw new Error(`private key for ${encryptedMessage.encryptedFor} not found`);
+
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
 
@@ -528,14 +544,15 @@ class Credential {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let payload          = JSON.parse(decryptedMessage);
 
-		let dechipheredPayload = CryptoServices.aesDecrypt([
+		let decipheredPayload = CryptoServices.aesDecrypt([
 			encryptedMessage.data,
 			payload,
 		]);
-		if (!dechipheredPayload) {
-			logger.fatal("Decrypting, No message");
+
+		if (!decipheredPayload) {
+			throw new Error("Decrypting, No message");
 		}
-		return dechipheredPayload;
+		return decipheredPayload;
 	}
 
 	//endregion
@@ -599,7 +616,7 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken=> {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve);
+							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 						}).catch(reject);
 
 					});
@@ -755,7 +772,7 @@ class Credential {
 					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken=> {
 						payload.sign = authToken;
 
-						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve);
+						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 					}).catch(reject);
 
 				}
@@ -855,7 +872,7 @@ class Credential {
 					    fqdn: fqdn
 				    },
 				    api      = new ProvisionApi(),
-				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData, true);
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
@@ -884,7 +901,7 @@ class Credential {
 				}
 
 				var api     = new ProvisionApi(),
-				    apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {}, false);
+				    apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {});
 
 				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
 
@@ -1032,11 +1049,16 @@ class Credential {
 							csr => {
 								logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
 
-								cred.getCert(csr, sign).then(() => {
-									metadata.fqdn        = payload.fqdn;
-									metadata.parent_fqdn = payload.parent_fqdn;
-									resolve(metadata);
-								}).catch(onError);
+								let t = CommonUtils.randomTimeout(this._certTimeoutUpper);
+
+								setTimeout(()=>{
+									cred.getCert(csr, sign).then(() => {
+										metadata.fqdn        = payload.fqdn;
+										metadata.parent_fqdn = payload.parent_fqdn;
+										resolve(metadata);
+									}).catch(onError);
+								},t);
+
 							}).catch(onError);
 					}).catch(onError);
 
