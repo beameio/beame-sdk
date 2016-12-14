@@ -90,7 +90,7 @@ class BeameStoreV2 {
 			return this.getRemoteCreds(fqdn).then(_saveCreds);
 		}
 		else {
-			Promise.reject('Unknown domain');
+			return Promise.reject('Unknown domain');
 		}
 
 	}
@@ -119,7 +119,7 @@ class BeameStoreV2 {
 			allowRemote = true;
 		}
 
-		if(!allowRemote) {
+		if (!allowRemote) {
 			return Promise.reject(`Credential ${fqdn} was not found locally and allowRemote is false`);
 		}
 
@@ -177,7 +177,7 @@ class BeameStoreV2 {
 	 * @returns {Credential}
 	 */
 	_getCredential(fqdn) {
-		var results = BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn, 1);
+		let results = BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn, 1);
 		return results.length == 1 ? results[0] : null;
 	}
 
@@ -222,8 +222,10 @@ class BeameStoreV2 {
 				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
-				else if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
-					return false;
+				else { //noinspection JSUnresolvedVariable
+					if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
+						return false;
+					}
 				}
 				return true;
 			}
@@ -247,26 +249,27 @@ class BeameStoreV2 {
 	 * @returns {Promise.<Credential>}
 	 */
 	getNewCredentials(fqdn, parentFqdn, token) {
-		var self = this;
 
 		return new Promise((resolve, reject) => {
+				//noinspection JSDeprecatedSymbols
 				let parentCreds     = this.getCredential(parentFqdn);
 				let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
 
-				function loadCred(metadata) {
+				const loadCred = (metadata) => {
 					let newCred = new Credential(self);
 
 					newCred.initWithFqdn(fqdn, metadata);
 
-					self.addCredential(newCred);
+					this.addCredential(newCred);
 
 					newCred.saveCredentialsObject();
 
-					var cred = self.getCredential(fqdn);
+					//noinspection JSDeprecatedSymbols
+					let cred = this.getCredential(fqdn);
 
 					cred ? resolve(cred) : reject(`Credential not loaded`);
 
-				}
+				};
 
 				if (parentCreds && parentPublicKey) {
 					if (parentCreds.checkSignature(token)) {
@@ -281,7 +284,7 @@ class BeameStoreV2 {
 						data => {
 							let remoteCred = new Credential(self);
 							remoteCred.initFromX509(data.x509, data.metadata);
-							self.addCredential(remoteCred);
+							this.addCredential(remoteCred);
 
 							if (remoteCred.checkSignature(token)) {
 								loadCred(data.metadata);
@@ -305,7 +308,7 @@ class BeameStoreV2 {
 		return new Promise((resolve, reject) => {
 
 				/** @type {RemoteCreds} */
-				var payload = {
+				let payload = {
 					metadata: null,
 					x509:     null
 				};
@@ -313,7 +316,7 @@ class BeameStoreV2 {
 				async.parallel(
 					[
 						function (callback) {
-							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
+							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
 							ProvisionApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
 									payload.metadata = typeof(data) == "object" ? data : CommonUtils.parse(data);
@@ -325,7 +328,7 @@ class BeameStoreV2 {
 							});
 						},
 						function (callback) {
-							var requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
+							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
 							ProvisionApi.getRequest(requestPath, function (error, data) {
 								if (!error) {
 									payload.x509 = typeof(data) == "object" && data.hasOwnProperty("message") ? data.message : data;
@@ -356,6 +359,7 @@ class BeameStoreV2 {
 
 }
 
+//noinspection JSDeprecatedSymbols
 BeameStoreV2.prototype.getCredential = util.deprecate(
 	BeameStoreV2.prototype.getCredential,
 	'BeameStoreV2#getCredential is deprecated. Use BeameStoreV2#find instead. Use --trace-deprecation NodeJS flag for trace.'

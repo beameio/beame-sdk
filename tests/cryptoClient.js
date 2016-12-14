@@ -19,7 +19,7 @@ const creds     = store2.getCredential(fqdn);
 
 // exampleSocket.send(JSON.stringify({'type':'key','payload':arrayBufferToBase64String(keyPair.publicKey)}));
 // exampleSocket.send(JSON.stringify({'type':'key','payload':{'key':arrayBufferToBase64String(keyPair.publicKey), 'token': {'signedData':'key','signedBy':'signedBy','signature':'signature'}}}));
-io.emit('event', {type: 'key', payload: {data: creds.getPublicKeyDER64()}});
+io.emit('event', {_type: 'key', payload: {data: creds.getPublicKeyDER64()}});
 
 var sharedSecret = crypto.randomBytes(16);
 var peerPubKeyDerBase64 = null;
@@ -36,7 +36,7 @@ const handlers = {
 		var encryptedSharedSecret = peerCreds.encrypt('encrypted-to-fqdn-doesnt-matter@example.com', sharedSecret.toString('base64'));
 		// console.log('sharedSecret %j encryptedSharedSecret %j', sharedSecret, encryptedSharedSecret);
 
-		return {type: 'aesKey', payload: {encryptedSharedSecret}};
+		return {_type: 'aesKey', payload: {encryptedSharedSecret}};
 	},
 	encryptedMessage(data) {
 		const IV = data.data.slice(0, 24);
@@ -54,15 +54,15 @@ const handlers = {
 io.on('event', data => {
 	var result;
 	console.log('SocketIO event: %j', data);
-	if(!data.type) {
+	if(!data._type) {
 		console.error('Data has no type field');
 		return;
 	}
-	if(!handlers[data.type]) {
-		console.error('Unknown data type', data.type);
+	if(!handlers[data._type]) {
+		console.error('Unknown data type', data._type);
 		return;
 	}
-	result = handlers[data.type](data.payload);
+	result = handlers[data._type](data.payload);
 	console.log('SocketIO result: %j', result);
 	if(result) {
 		io.emit('event', result);

@@ -84,7 +84,7 @@ class AuthToken {
 
 			const store = new BeameStore();
 
-			store.find(authToken.signedBy).then(signerCreds=> {
+			store.find(authToken.signedBy).then(signerCreds => {
 				const signatureStatus = signerCreds.checkSignature(authToken);
 				if (!signatureStatus) {
 					logger.warn(`Bad signature`);
@@ -92,7 +92,7 @@ class AuthToken {
 					return;
 				}
 
-				var signedData = CommonUtils.parse(authToken.signedData);
+				let signedData = CommonUtils.parse(authToken.signedData);
 				if (!signedData) {
 					logger.warn('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
 					reject({message: 'Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON'});
@@ -113,7 +113,7 @@ class AuthToken {
 					return;
 				}
 				resolve(authToken);
-			}).catch(error=> {
+			}).catch(error => {
 				reject(error);
 			});
 		});

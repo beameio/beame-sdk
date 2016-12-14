@@ -5,12 +5,10 @@
  * @property {String} parent_fqdn
  * @property {Number} level
  */
-
-
-var path         = require('path');
-var os           = require('os');
-var home         = os.homedir();
-var npmPrefix    = require('npm-prefix');
+const path       = require('path');
+const os         = require('os');
+const home       = os.homedir();
+const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
 
 
@@ -19,14 +17,14 @@ const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 /** @const {String} **/
-var rootDir                     = process.env.BEAME_DIR || path.join(home, '.beame');
+const rootDir    = process.env.BEAME_DIR || path.join(home, '.beame');
 
 
 /** @const {String} **/
-var remotePKsDirV1 = path.join(rootDir, 'pki');
+const remotePKsDirV1 = path.join(rootDir, 'pki');
 
 
-var localCertsDirV2 = path.join(rootDir, 'v2');
+const localCertsDirV2 = path.join(rootDir, 'v2');
 
 
 /** @const {String} **/
@@ -41,19 +39,19 @@ const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
 const beameForceEdgeIP = process.env.BEAME_FORCE_EDGE_IP || 0;
 
 /** @const {String} **/
-var metadataFileName = "metadata.json";
+const metadataFileName = "metadata.json";
 
 /** @const {String} **/
-var s3MetadataFileName = "metadata.json";
+const s3MetadataFileName = "metadata.json";
 
 /** @const {String} **/
-var PKsFileName = "PKs.json";
+const PKsFileName = "PKs.json";
 
 /**
  * Certificate file names
  *  @enum {string}
  */
-var CertFileNames = {
+const CertFileNames = {
 	"PRIVATE_KEY":      "private_key.pem",
 	"TEMP_PRIVATE_KEY": "temp_private_key.pem",
 	"X509":             "x509.pem",
@@ -69,7 +67,7 @@ var CertFileNames = {
  * Certificate file names
  *  @enum {string}
  */
-var CertificateFiles = {
+const CertificateFiles = {
 	"PRIVATE_KEY": "private_key.pem",
 	"X509":        "x509.pem",
 	"CA":          "ca.pem",
@@ -79,7 +77,7 @@ var CertificateFiles = {
 	"PWD":         "pwd.txt"
 };
 
-var MetadataProperties = {
+const MetadataProperties = {
 	LEVEL:       "level",
 	FQDN:        "fqdn",
 	UID:         "uid",
@@ -93,7 +91,7 @@ var MetadataProperties = {
  * Certificate response fields
  *  @enum {string}
  */
-var CertResponseFields = {
+const CertResponseFields = {
 	"x509":  "x509",
 	"pkcs7": "pkcs7",
 	"ca":    "ca"
@@ -104,7 +102,7 @@ var CertResponseFields = {
  * System Modules
  *  @enum {string}
  */
-var AppModules = {
+const AppModules = {
 	"BeameEntity":      "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
 	"BeameCreds":       "BeameCreds",
@@ -130,7 +128,7 @@ var AppModules = {
  * Message Codes
  *  @enum {string}
  */
-var MessageCodes = {
+const MessageCodes = {
 	"DebugInfo":           "DebugInfo",
 	"EdgeLbError":         "EdgeLbError",
 	"OpenSSLError":        "OpenSSLError",
@@ -144,7 +142,7 @@ var MessageCodes = {
 };
 
 
-var ResponseKeys = {
+const ResponseKeys = {
 	"NodeFiles":                 [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
 	"EntityMetadataKeys":        ["fqdn", "parent_fqdn", "name", "email", "level", "local_ip", "edge_fqdn"],
 	"EntityCreateResponseKeys":  ["fqdn"],
@@ -156,7 +154,7 @@ var ResponseKeys = {
  * Time units
  *  @enum {string}
  */
-var TimeUnits = {
+const TimeUnits = {
 	"Second": "s",
 	"Minute": "m",
 	"Hour":   "h",
@@ -164,7 +162,7 @@ var TimeUnits = {
 };
 
 
-var SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
+const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
 	rootDir,

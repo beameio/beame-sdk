@@ -15,7 +15,7 @@
     "beame": "src/cli/beame.js"
   },
   "repository": {
-    "type": "git",
+    "_type": "git",
     "url": "git@github.com:beameio/beame-sdk.git"
   },
   "keywords": [

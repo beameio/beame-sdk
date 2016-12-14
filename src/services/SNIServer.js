@@ -53,14 +53,14 @@ class SNIServer {
 			this.hosts[fqdn] = {};
 		}
 		this.hosts[fqdn].certs = certs;
-		if(listener) {
+		if (listener) {
 			this.addListener(fqdn, listener);
 		}
 	}
 
 	requestHandler(req, res) {
-		var host = req.headers.host.replace(portRegex, '');
-		if(!this.hosts[host]) {
+		let host = req.headers.host.replace(portRegex, '');
+		if (!this.hosts[host]) {
 			return null;
 		}
 		return this.hosts[host].listener(req, res);

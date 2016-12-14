@@ -33,18 +33,18 @@ class CommonUtils {
 			return typeof obj == "object" ? obj : JSON.parse(obj);
 		}
 		catch (error) {
-			console.error(`Failed to parse data:`,error);
+			console.error(`Failed to parse data:`, error);
 			return null;
 		}
 
 	}
 
 	static randomPassword(length) {
-		var len   = length || 16;
-		var chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
-		var pass  = "";
-		for (var x = 0; x < len; x++) {
-			var i = Math.floor(Math.random() * chars.length);
+		let len     = length || 16;
+		const chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
+		let pass    = "";
+		for (let x = 0; x < len; x++) {
+			let i = Math.floor(Math.random() * chars.length);
 			pass += chars.charAt(i);
 		}
 
@@ -70,7 +70,7 @@ class CommonUtils {
 	 * @param {number|null} [upper]
 	 * @returns {number}
 	 */
-	static randomTimeout(upper){
+	static randomTimeout(upper) {
 		return Math.floor((Math.random() * (upper || 10)) + 1) * 1000 * Math.random()
 	}
 
@@ -81,7 +81,7 @@ class CommonUtils {
 	 * @param {String|null} [dig] => hash digest
 	 * @returns {*}
 	 */
-	static generateDigest(data,alg,dig) {
+	static generateDigest(data, alg, dig) {
 		let str = CommonUtils.isObject(data) ? CommonUtils.stringify(data, false) : data;
 		return require('crypto').createHash(alg || 'sha256').update(str).digest(dig || 'hex');
 	}
@@ -91,7 +91,7 @@ class CommonUtils {
 	 * @param {Object} obj
 	 * @returns {boolean}
 	 */
-	static isObjectEmpty(obj){
+	static isObjectEmpty(obj) {
 		return Object.keys(obj).length === 0;
 	}
 
@@ -100,7 +100,7 @@ class CommonUtils {
 	}
 
 	static promise2callback(promise, callback) {
-		if(!callback) {
+		if (!callback) {
 			return;
 		}
 		promise
@@ -112,8 +112,9 @@ class CommonUtils {
 	static filterHash(obj, predicate) {
 		let ret = {};
 		for (let k in obj) {
-			let v = obj[k];
-			if (predicate(k, v)) {
+			//noinspection JSUnfilteredForInLoop
+			let v = obj[k];//noinspection JSUnfilteredForInLoop
+			if (predicate(k, v)) {//noinspection JSUnfilteredForInLoop
 				ret[k] = v;
 			}
 		}

@@ -9,18 +9,18 @@ const execFile = require('child_process').execFile;
 const CommonUtils = require('./CommonUtils');
 const config      = require('../../config/Config');
 const module_name = config.AppModules.OpenSSL;
-var logger        = new (require('../utils/Logger'))(module_name);
-var csrSubj       = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
+const logger      = new (require('../utils/Logger'))(module_name);
+const csrSubj     = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
 
 class OpenSSLWrapper {
 
 	createPrivateKey() {
 		return new Promise((resolve, reject) => {
-			var errMsg;
+			let errMsg;
 
 			/* --------- generate RSA key: ------------------------------------------------*/
-			var cmd = "openssl genrsa 2048";
+			const cmd = "openssl genrsa 2048";
 
 			logger.debug("generating private key with", {"cmd": cmd});
 
@@ -46,8 +46,8 @@ class OpenSSLWrapper {
 
 	createCSR(fqdn, pkFile) {
 		return new Promise((resolve, reject) => {
-			var errMsg;
-			var cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (csrSubj + fqdn) + "\"";
+			let errMsg,
+			    cmd = "openssl req -key " + pkFile + " -new -subj \"/" + (csrSubj + fqdn) + "\"";
 			logger.debug("generating CSR with", {"cmd": cmd});
 			try {
 				exec(cmd,

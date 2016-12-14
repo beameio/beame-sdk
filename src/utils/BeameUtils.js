@@ -41,7 +41,8 @@ const CommonUtils = require('../utils/CommonUtils');
  */
 function iterateTree(node, callback) {
 	callback(node);
-	for(let k in node.children) {
+	for (let k in node.children) {
+		//noinspection JSUnfilteredForInLoop
 		iterateTree(node.children[k], callback);
 	}
 }
@@ -56,25 +57,27 @@ function iterateTree(node, callback) {
  */
 function findInTree(node, predicate, limit) {
 
-	var result = [];
+	let result = [];
 
-	function allFoundException() {}
+	function allFoundException() {
+	}
 
 	function matchFound(x) {
 		result.push(x);
-		if(limit && result.length >= limit) {
+		if (limit && result.length >= limit) {
+			//noinspection JSPotentiallyInvalidConstructorUsage
 			throw new allFoundException();
 		}
 	}
 
 	try {
 		iterateTree(node, x => {
-			if(predicate(x)) {
+			if (predicate(x)) {
 				matchFound(x);
 			}
 		});
-	} catch(e) {
-		if(!(e instanceof allFoundException)) {
+	} catch (e) {
+		if (!(e instanceof allFoundException)) {
 			throw e;
 		}
 	}
@@ -116,20 +119,19 @@ module.exports = {
 	 * @param {Function} callback
 	 */
 	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
-		if(!loadBalancerEndpoint){
+		if (!loadBalancerEndpoint) {
 			loadBalancerEndpoint = config.loadBalancerURL;
 		}
-		if(config.beameForceEdgeFqdn){
-			var edgeF = {
+		if (config.beameForceEdgeFqdn) {
+			let edgeF = {
 				endpoint: config.beameForceEdgeFqdn,
 				publicIp: config.beameForceEdgeIP
 			};
 			callback && callback(null, edgeF);
 		}
-		else{
-			var self       = this;
-			var get        = self.httpGet;
-			var selectBest = self.selectBestProxy;
+		else {
+			let get        = this.httpGet,
+			    selectBest = this.selectBestProxy;
 
 			if (retries == 0) {
 				callback && callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
@@ -143,12 +145,12 @@ module.exports = {
 					 * @param error
 					 * @param {Object} data
 					 */
-					function (error, data) {
+					(error, data) => {
 						if (data) {
 
-							//noinspection JSUnresolvedVariable
+							//noinspection JSUnresolvedVariable,JSValidateTypes
 							/** @type {EdgeShortData} edge **/
-							var edge = {
+							let edge = {
 								endpoint: data.instanceData.endpoint,
 								publicIp: data.instanceData.publicipv4
 							};
@@ -166,7 +168,7 @@ module.exports = {
 							});
 
 							setTimeout(function () {
-								selectBest.call(self, loadBalancerEndpoint, retries, sleep, callback);
+								selectBest.call(this, loadBalancerEndpoint, retries, sleep, callback);
 							}, sleep);
 						}
 					});
@@ -181,9 +183,9 @@ module.exports = {
 	 * @returns {String}
 	 */
 	randomString: function (length) {
-		var chars  = "abcdefghijklmnopqrstufwxyzABCDEFGHIJKLMNOPQRSTUFWXYZ1234567890";
-		var result = '';
-		for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+		const chars = "abcdefghijklmnopqrstufwxyzABCDEFGHIJKLMNOPQRSTUFWXYZ1234567890";
+		let result  = '';
+		for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
 		return result;
 	},
 
@@ -207,9 +209,8 @@ module.exports = {
 	getLocalActiveInterfaces: function () {
 		return new Promise(function (resolve, reject) {
 
-			var addresses = [];
-
-			var ifaces = os.networkInterfaces();
+			let addresses = [],
+			    ifaces    = os.networkInterfaces();
 
 			Object.keys(ifaces).forEach(function (ifname) {
 
@@ -227,7 +228,7 @@ module.exports = {
 	},
 
 	isAmazon: function () {
-		return process.env.NODE_ENV ? true : false;
+		return !!process.env.NODE_ENV;
 	},
 
 	iterateTree,
