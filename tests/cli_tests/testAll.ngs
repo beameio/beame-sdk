@@ -301,7 +301,7 @@ do_test("Hello world server", {
 
 do_test("File server", {
 	result = test_server(%($BEAME_BIN servers runStaticServer --fqdn ${entities[0].fqdn}), "https://${entities[0].fqdn}/photo1.jpg")
-	result != `cat "../../examples/public/shared/photo1.jpg"` throws TestFail("Chat server failed to serve correct /photo1.jpg")
+	result != `cat "../../examples/public/shared/photo1.jpg"` throws TestFail("File server failed to serve correct /photo1.jpg")
 	"File server is OK"
 })
 

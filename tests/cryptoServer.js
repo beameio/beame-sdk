@@ -40,7 +40,7 @@ const handlers = {
 		console.log(encryptedKey);
 		// io.emit('event', {type: 'key', payload: {key: creds.getPublicKeyDER64()}});
 
-		return {type: 'keyResponse', payload: {encryptedKey}};
+		return {_type: 'keyResponse', payload: {encryptedKey}};
 	},
 	aesKey(payload) {
 		// XXX continue here.
@@ -52,7 +52,7 @@ const handlers = {
 		peerCreds.initFromPubKeyDer64(peerPubKeyDerBase64);
 		var encrypted = crypto.aesEncrypt('abc123', sharedSecret);
 
-		return {'type': 'encryptedMessage', payload: {data: encrypted[1].IV + encrypted[0].AES128CBC}};
+		return {"_type": 'encryptedMessage', payload: {data: encrypted[1].IV + encrypted[0].AES128CBC}};
 	}
 }
 
@@ -62,15 +62,15 @@ io.on('connection', client => {
 	client.on('event', data => {
 		var result;
 		console.log('SocketIO event: %j', data);
-		if(!data.type) {
+		if(!data._type) {
 			console.error('Data has no type field');
 			return;
 		}
-		if(!handlers[data.type]) {
-			console.error('Unknown data type', data.type);
+		if(!handlers[data._type]) {
+			console.error('Unknown data type', data._type);
 			return;
 		}
-		result = handlers[data.type](data.payload);
+		result = handlers[data._type](data.payload);
 		console.log('SocketIO result: %j', result);
 		client.emit('event', result);
 	});

@@ -53,18 +53,15 @@ const StandardFlowEvent = {
 
 /**
  * Return a timestamp with the format "m/d/yy h:MM:ss TT"
- * @type {String}
  */
-
-
-var formatJSON = function (data) {
+const formatJSON = (data) => {
 	return util.inspect(data, {
 		showHidden: true,
 		colors:     true
 	})
 };
 
-var formatPrefix = function (module, level) {
+const formatPrefix = (module, level) => {
 	return `[${CommonUtils.timeStamp()}] [${module}] ${level}:`;
 };
 
@@ -110,9 +107,9 @@ class BeameLogger {
 	 */
 	formatErrorMessage(message, module, data, error_code) {
 		return {
-			        message,
+			message,
 			module: module || this.module,
-			        data,
+			data,
 			code:   error_code
 		}
 	}
@@ -124,17 +121,16 @@ class BeameLogger {
 	 */
 	printLogMessage(level, logMessage) {
 
-		var shouldPrint = () => {
+		let shouldPrint = () => {
 			return LogLevelVerbosity[level] <= LogLevelVerbosity[this.currentLogLevel];
 		};
 
 		if (!shouldPrint())  return;
 
-		var message = logMessage.message;
-		var data    = logMessage.data || {};
-		var module  = logMessage.module || this.module;
-
-		var prefix = formatPrefix(module, level);
+		let message = logMessage.message,
+		    data    = logMessage.data || {},
+		    module  = logMessage.module || this.module,
+		    prefix  = formatPrefix(module, level);
 
 		switch (level) {
 			case LogLevel.Info:
@@ -170,7 +166,7 @@ class BeameLogger {
 	 */
 	printStandardEvent(entity, event, fqdn) {
 
-		var message;
+		let message;
 		switch (event) {
 			case StandardFlowEvent.Registering:
 				message = `Registering ${entity.toLowerCase()} ${fqdn} ...`;
@@ -216,7 +212,7 @@ class BeameLogger {
 	 */
 	info(message, data) {
 		/** @type {typeof LoggerMessage} **/
-		var log = {
+		let log = {
 			message,
 			data
 		};
@@ -230,7 +226,7 @@ class BeameLogger {
 	 */
 	debug(message, data) {
 		/** @type {typeof LoggerMessage} **/
-		var log = {
+		let log = {
 			message,
 			data
 		};
@@ -244,7 +240,7 @@ class BeameLogger {
 	 */
 	warn(message, data) {
 		/** @type {typeof LoggerMessage} **/
-		var log = {
+		let log = {
 			message,
 			data
 		};
@@ -259,9 +255,9 @@ class BeameLogger {
 	 */
 	error(message, data, module) {
 		/** @type {typeof LoggerMessage} **/
-		var log = {
-			        message,
-			        data,
+		let log = {
+			message,
+			data,
 			module: module || this.module
 		};
 
@@ -275,7 +271,7 @@ class BeameLogger {
 	 */
 	fatal(message, data, module) {
 		/** @type {typeof LoggerMessage} **/
-		var log = {
+		let log = {
 			message,
 			data,
 			module
@@ -285,10 +281,12 @@ class BeameLogger {
 	}
 
 
+	//noinspection JSUnusedGlobalSymbols
 	static get LogLevel() {
 		return LogLevel
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	static get EntityLevel() {
 		return EntityLevel
 	}

@@ -42,6 +42,7 @@ function BeameServer(instanceFqdn, requestListener, hostOnlineCallback, errorCal
 
 	let fqdn = instanceFqdn;
 
+	//noinspection JSDeprecatedSymbols
 	let cred = beamestore.getCredential(fqdn);
 
 	if (cred == null || _.isEmpty(cred)) {

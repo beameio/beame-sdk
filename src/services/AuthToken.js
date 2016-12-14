@@ -51,7 +51,7 @@ class AuthToken {
 	/**
 	 *
 	 * @param {SignatureToken|String} token
-	 * @returns {SignatureToken|null}
+	 * @returns {Promise.<SignatureToken|null>}
 	 */
 	static validate(token) {
 		/** @type {SignatureToken} */
@@ -81,7 +81,9 @@ class AuthToken {
 				reject({message:'authToken has no .signature'});
 				return;
 			}
-			const store       = new BeameStore();
+
+			const store = new BeameStore();
+
 			store.find(authToken.signedBy).then(signerCreds=> {
 				const signatureStatus = signerCreds.checkSignature(authToken);
 				if (!signatureStatus) {
@@ -90,7 +92,7 @@ class AuthToken {
 					return;
 				}
 
-				var signedData = CommonUtils.parse(authToken.signedData);
+				let signedData = CommonUtils.parse(authToken.signedData);
 				if (!signedData) {
 					logger.warn('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
 					reject({message:'Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON'});

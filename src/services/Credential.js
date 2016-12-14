@@ -247,6 +247,7 @@ class Credential {
 		}
 
 		for (let key in config.MetadataProperties) {
+			//noinspection JSUnfilteredForInLoop
 			let value = config.MetadataProperties[key];
 			if (importCred.metadata.hasOwnProperty(value)) {
 				this.metadata[value] = importCred.metadata[value];
@@ -432,6 +433,7 @@ class Credential {
 	 * @ignore
 	 * @param {String} signWithFqdn
 	 * @param {String|null} [dataToSign]
+	 * @param {Number|null|undefined} [ttl]
 	 * @returns {Promise.<String|null>}
 	 */
 	signWithFqdn(signWithFqdn, dataToSign, ttl) {
@@ -440,8 +442,8 @@ class Credential {
 					reject('SignedWith FQDN parameter required');
 					return;
 				}
-
-				var signCred = this.store.getCredential(signWithFqdn);
+				//noinspection JSDeprecatedSymbols
+				let signCred = this.store.getCredential(signWithFqdn);
 
 				if (!signCred) {
 					reject(`Credential ${signWithFqdn} not found in store`);
@@ -479,6 +481,7 @@ class Credential {
 	encrypt(fqdn, data, signingFqdn) {
 		let signingCredential;
 		if (signingFqdn) {
+			//noinspection JSDeprecatedSymbols
 			signingCredential = this.store.getCredential(signingFqdn);
 		}
 		let targetRsaKey = this.getPublicKeyNodeRsa();
@@ -516,9 +519,10 @@ class Credential {
 	decrypt(encryptedMessage) {
 
 		if (encryptedMessage.signature) {
+			//noinspection JSDeprecatedSymbols
 			let signingCredential = this.store.getCredential(encryptedMessage.signedBy);
 
-				if (!signingCredential) {
+			if (!signingCredential) {
 				throw new Error("Signing credential is not found in the local store");
 			}
 
@@ -570,8 +574,8 @@ class Credential {
 					reject('Parent Fqdn required');
 					return;
 				}
-
-				var parentCred = this.store.getCredential(parent_fqdn);
+				//noinspection JSDeprecatedSymbols
+				let parentCred = this.store.getCredential(parent_fqdn);
 
 				if (!parentCred) {
 					reject(`Parent credential ${parent_fqdn} not found`);
@@ -587,7 +591,7 @@ class Credential {
 					}
 				});
 
-				var metadata;
+				let metadata;
 
 				function onEdgeServerSelected(edge) {
 
@@ -613,7 +617,7 @@ class Credential {
 							return;
 						}
 						//set signature to consistent call of new credentials
-						this.signWithFqdn(parent_fqdn, payload).then(authToken=> {
+						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
 							payload.sign = authToken;
 
 							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
@@ -634,7 +638,7 @@ class Credential {
 	 */
 	createEntityWithAuthServer(authToken, authSrvFqdn, name, email) {
 		return new Promise((resolve, reject) => {
-				var metadata;
+				let metadata;
 
 				if (!authToken) {
 					reject('Auth token required');
@@ -706,7 +710,7 @@ class Credential {
 	 */
 	createEntityWithAuthToken(authToken, name, email) {
 		return new Promise((resolve, reject) => {
-				var metadata;
+				let metadata;
 
 				if (!authToken) {
 					reject('Auth token required');
@@ -769,7 +773,7 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken=> {
+					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken => {
 						payload.sign = authToken;
 
 						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
@@ -789,6 +793,7 @@ class Credential {
 	 */
 	_onCertsReceived(fqdn) {
 		return new Promise((resolve, reject) => {
+				//noinspection JSDeprecatedSymbols
 				let cred = this.store.getCredential(fqdn);
 
 				if (cred == null) {
@@ -797,29 +802,29 @@ class Credential {
 				}
 
 				const retries = provisionSettings.RetryAttempts + 1,
-				      sleep = 1000;
+				      sleep   = 1000;
 
-				const _syncMeta = (retries,sleep)=>{
+				const _syncMeta = (retries, sleep) => {
 
 					retries--;
 
-					if(retries == 0){
+					if (retries == 0) {
 						reject(`Metadata of ${fqdn} can't be updated. Please try Later`);
 						return;
 					}
 
-					cred.syncMetadata(fqdn).then(resolve).catch(()=>{
+					cred.syncMetadata(fqdn).then(resolve).catch(() => {
 						logger.debug(`retry on sync meta for ${fqdn}`);
 
 						sleep = parseInt(sleep * (Math.random() + 1.5));
 
-						setTimeout( () => {
-							_syncMeta(retries,sleep);
+						setTimeout(() => {
+							_syncMeta(retries, sleep);
 						}, sleep);
 					});
 				};
 
-				_syncMeta(retries,sleep);
+				_syncMeta(retries, sleep);
 			}
 		);
 	}
@@ -829,16 +834,16 @@ class Credential {
 	 * @returns {Promise.<String>}
 	 */
 	createCSR() {
-		var errMsg;
+		let errMsg;
 
-		var fqdn       = this.fqdn,
-		    dirPath    = this.getMetadataKey("path"),
-		    pkFileName = config.CertFileNames.PRIVATE_KEY;
+		const fqdn       = this.fqdn,
+		      dirPath    = this.getMetadataKey("path"),
+		      pkFileName = config.CertFileNames.PRIVATE_KEY;
 
 		return new Promise(function (resolve, reject) {
 
 
-			OpenSSlWrapper.createPrivateKey().then(pk=> {
+			OpenSSlWrapper.createPrivateKey().then(pk => {
 				DirectoryServices.saveFile(dirPath, pkFileName, pk, error => {
 					if (!error) {
 						let pkFile = beameUtils.makePath(dirPath, pkFileName);
@@ -892,16 +897,16 @@ class Credential {
 	getMetadata(fqdn) {
 
 		return new Promise((resolve, reject) => {
-
-				var cred = this.store.getCredential(fqdn);
+//noinspection JSDeprecatedSymbols
+				let cred = this.store.getCredential(fqdn);
 
 				if (!cred) {
 					reject(`Creds for ${fqdn} not found`);
 					return;
 				}
 
-				var api     = new ProvisionApi(),
-				    apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {});
+				const api     = new ProvisionApi(),
+				      apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {});
 
 				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
 
@@ -932,7 +937,7 @@ class Credential {
 	 */
 	updateMetadata(fqdn, name, email) {
 		return new Promise((resolve, reject) => {
-
+//noinspection JSDeprecatedSymbols
 				let cred = this.store.getCredential(fqdn);
 
 				if (!cred) {
@@ -940,7 +945,7 @@ class Credential {
 					return;
 				}
 
-				var api = new ProvisionApi();
+				const api = new ProvisionApi();
 
 				let postData = {
 					    name,
@@ -972,8 +977,8 @@ class Credential {
 	 */
 	subscribeForChildRegistration(fqdn) {
 		return new Promise((resolve, reject) => {
-
-				var cred = this.store.getCredential(fqdn);
+//noinspection JSDeprecatedSymbols
+				let cred = this.store.getCredential(fqdn);
 
 				if (!cred) {
 					reject(`Creds for ${fqdn} not found`);
@@ -1028,7 +1033,7 @@ class Credential {
 		return new Promise((resolve, reject) => {
 
 
-				var sign = CommonUtils.parse(payload.sign);
+				let sign = CommonUtils.parse(payload.sign);
 
 				logger.debug("_requestCerts()", payload);
 
@@ -1051,13 +1056,13 @@ class Credential {
 
 								let t = CommonUtils.randomTimeout(this._certTimeoutUpper);
 
-								setTimeout(()=>{
+								setTimeout(() => {
 									cred.getCert(csr, sign).then(() => {
 										metadata.fqdn        = payload.fqdn;
 										metadata.parent_fqdn = payload.parent_fqdn;
 										resolve(metadata);
 									}).catch(onError);
-								},t);
+								}, t);
 
 							}).catch(onError);
 					}).catch(onError);
@@ -1093,7 +1098,7 @@ class Credential {
 							[
 								function (callback) {
 
-									OpenSSlWrapper.createP7BCert(dirPath).then(p7b=> {
+									OpenSSlWrapper.createP7BCert(dirPath).then(p7b => {
 										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.P7B), p7b, (error, data) => {
 											if (!error) {
 												callback(null, data)
@@ -1109,7 +1114,7 @@ class Credential {
 								},
 								function (callback) {
 
-									OpenSSlWrapper.createPfxCert(dirPath).then(pwd=> {
+									OpenSSlWrapper.createPfxCert(dirPath).then(pwd => {
 										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
 											if (!error) {
 												callback(null, data)
@@ -1153,7 +1158,7 @@ class Credential {
 
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn).then(payload => {
-
+//noinspection JSDeprecatedSymbols
 					let cred = this.store.getCredential(fqdn);
 
 					if (!cred) {

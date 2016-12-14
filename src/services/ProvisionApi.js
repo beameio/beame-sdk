@@ -28,14 +28,14 @@ const CommonUtils       = require('../utils/CommonUtils');
  */
 
 
-var _       = require('underscore');
-var request = require('request');
-var fs      = require('fs');
+const _       = require('underscore');
+const request = require('request');
+const fs      = require('fs');
 
 
 function clearJSON(json) {
 
-	var jsonCleaned = {};
+	let jsonCleaned = {};
 
 	Object.keys(json).map(function (k) {
 		if (k === '$id') return;
@@ -43,7 +43,7 @@ function clearJSON(json) {
 			jsonCleaned[k] = json[k];
 		}
 
-		var jsonProp = json[k];
+		let jsonProp = json[k];
 		delete jsonProp['$id'];
 		jsonCleaned[k] = jsonProp;
 
@@ -53,7 +53,7 @@ function clearJSON(json) {
 }
 
 //private helpers
-var parseProvisionResponse = function (error, response, body, type, callback) {
+const parseProvisionResponse = (error, response, body, type, callback) => {
 
 	if (!response) {
 		callback && callback(logger.formatErrorMessage("Provision Api => empty response", module_name, error, config.MessageCodes.ApiRestError), null);
@@ -67,7 +67,7 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 
 	/** @type {Object|null|undefined} */
-	var payload;
+	let payload;
 
 	if (body) {
 		try {
@@ -93,8 +93,8 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		var msg    = payload.Message || payload.message || (payload.body && payload.body.message);
-		var errMsg = logger.formatErrorMessage(msg || "Provision Api response error", module_name, {
+		let msg    = payload.Message || payload.message || (payload.body && payload.body.message);
+		let errMsg = logger.formatErrorMessage(msg || "Provision Api response error", module_name, {
 			"status":  response.statusCode,
 			"message": msg || payload
 		}, config.MessageCodes.ApiRestError);
@@ -116,11 +116,11 @@ var parseProvisionResponse = function (error, response, body, type, callback) {
  * @param {Number} sleep
  * @param {Function} callback
  */
-var postToProvisionApi = function (url, options, type, retries, sleep, callback) {
+const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 	retries--;
 
-	var onApiError = function (error) {
+	let onApiError = function (error) {
 		logger.warn("Provision Api post error", {
 			"error": error,
 			"url":   url
@@ -186,12 +186,12 @@ var postToProvisionApi = function (url, options, type, retries, sleep, callback)
  * @param {Number} sleep
  * @param {Function} callback
  */
-var getFromProvisionApi = function (url, options, type, retries, sleep, callback) {
+const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 
 	retries--;
 
-	var onApiError = function (error) {
+	let onApiError = function (error) {
 		logger.warn(`Provision Api GET error on ${url}`, {
 			"error": error,
 			"url":   url
@@ -274,10 +274,10 @@ class ProvApiService {
 	 * @param {Object} options
 	 */
 	static setUserAgent(options) {
-		const os             = require('os');
-		let headers          = options.headers || {},
-		      agent          = {
-			      sdk:    {
+		const os    = require('os');
+		let headers = options.headers || {},
+		      agent = {
+			      sdk:      {
 				      type:    'NodeJS',
 				      version: require("../../package.json").version
 			      },
@@ -316,7 +316,7 @@ class ProvApiService {
 
 		this.options = this.options || {};
 
-		var options = _.extend(this.options, {form: apiData.postData});
+		let options = _.extend(this.options, {form: apiData.postData});
 
 		if (signature) {
 			this.options.headers = {
@@ -324,9 +324,9 @@ class ProvApiService {
 			};
 		}
 
-		var apiEndpoint = this.provApiEndpoint + apiData.api;
+		const apiEndpoint = this.provApiEndpoint + apiData.api;
 		logger.debug(`Api call to : ${apiEndpoint}`);
-		var _method = method || 'POST';
+		let _method = method || 'POST';
 
 		options = ProvApiService.setUserAgent(options);
 
@@ -353,7 +353,7 @@ class ProvApiService {
 	 * @param {Number|null} [retries]
 	 */
 	postRequest(url, postData, callback, authToken, retries) {
-		var options     = _.extend(this.options || {}, {"form": postData});
+		let options     = _.extend(this.options || {}, {"form": postData});
 		options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
 
 		if (authToken) {

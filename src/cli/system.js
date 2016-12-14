@@ -18,11 +18,11 @@ const request = require('sync-request');
  * @returns {VersionStatus}
  */
 function checkVersion() {
-	var currentVersion = require("../../package.json");
+	const currentVersion = require("../../package.json");
 	//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSUnresolvedVariable
-	var npmStatus      = JSON.parse(request('GET', 'https://registry.npmjs.org/beame-sdk/').body);
+	let npmStatus      = JSON.parse(request('GET', 'https://registry.npmjs.org/beame-sdk/').body);
 
-	//noinspection JSUnresolvedVariable
+	//noinspection JSUnresolvedVariable,JSValidateTypes
 	return {
 		'installed':        currentVersion.version,
 		'available':        npmStatus['dist-tags'].latest,

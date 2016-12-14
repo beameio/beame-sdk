@@ -76,8 +76,8 @@ class DataServices {
 	}
 
 	static readMetadataSync(dir, fqdn) {
-		let p         = BeameUtils.makePath(dir, fqdn, config.metadataFileName);
-		var metadata  = DataServices.readJSON(p);
+		let p         = BeameUtils.makePath(dir, fqdn, config.metadataFileName),
+		    metadata  = DataServices.readJSON(p);
 		metadata.path = BeameUtils.makePath(dir, fqdn);
 		return metadata;
 	}
@@ -112,7 +112,7 @@ class DataServices {
 	static readJSON(dirPath) {
 		if (DataServices.doesPathExists(dirPath)) {
 			try {
-				var file = fs.readFileSync(dirPath);
+				let file = fs.readFileSync(dirPath);
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				return JSON.parse(file);
 			}
@@ -130,18 +130,17 @@ class DataServices {
 	 * @param {OrderPemResponse} payload
 	 */
 	saveCerts(dirPath, payload) {
-		let self = this,
-		    errMsg;
+		let errMsg;
 
 
-		var saveCert = function (responseField, targetName, callback) {
+		const saveCert = (responseField, targetName, callback) => {
 			if (!payload.hasOwnProperty(responseField)) {
 				errMsg = logger.formatErrorMessage(`${responseField} missing in API response on ${dirPath}`, module_name, null, config.MessageCodes.ApiRestError);
 				callback(errMsg, null);
 			}
 
 			//save cert
-			self.saveFileAsync(path.join(dirPath, targetName), payload[responseField], function (error) {
+			this.saveFileAsync(path.join(dirPath, targetName), payload[responseField], (error) => {
 				if (error) {
 					errMsg = logger.formatErrorMessage(`Saving ${responseField} failed on path ${dirPath}`, module_name);
 					callback(errMsg, null);

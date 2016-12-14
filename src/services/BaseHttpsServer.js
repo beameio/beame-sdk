@@ -40,6 +40,7 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 		}
 	};
 
+	//noinspection JSDeprecatedSymbols
 	let cred = beamestore.getCredential(fqdn);
 
 	if (!cred) {
@@ -61,11 +62,10 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 		return __onError(error)
 	}
 
-	var serverOptions = Object.assign({}, options || {}, certs);
+	let serverOptions = Object.assign({}, options || {}, certs),
+	    server        = https.createServer(serverOptions, requestListener);
 
-	var server = https.createServer(serverOptions, requestListener);
-
-	server.listen(0, ()=> {
+	server.listen(0, () => {
 		function onLocalServerCreated(data) {
 			if (hostOnlineCallback) {
 				hostOnlineCallback(data, server);

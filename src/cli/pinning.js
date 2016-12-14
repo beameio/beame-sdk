@@ -6,25 +6,25 @@
  * We will use existing x509 parse cert function that is located in crypto js.
  */
 
-var x509 = require('x509');
-var store = require("../services/BeameStoreV2")();
+const x509 = require('x509');
+const store = require("../services/BeameStoreV2")();
 
 function getPublicKeyEncodedDer(cert) {
-	var xcert = x509.parseCert(cert + "");
+	let xcert = x509.parseCert(cert + "");
 	if (xcert) {
-		var publicKey = xcert.publicKey;
-		var modulus = new Buffer(publicKey.n, 'hex');
-		var header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64");
-		var midheader = new Buffer("0203", "hex");
-		var exponent = new Buffer("010001", "hex");
+		let publicKey = xcert.publicKey,
+		    modulus = new Buffer(publicKey.n, 'hex'),
+		    header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64"),
+		    midheader = new Buffer("0203", "hex"),
+		    exponent = new Buffer("010001", "hex");
 		return Buffer.concat([header, modulus, midheader, exponent]);
 	}
 	return {};
 }
 
 function getCertificate  (fqdn){
-	var element = store.search(fqdn)[0];
-	var certBody;
+	let element = store.search(fqdn)[0],
+	    certBody;
 	if (element) {
 		certBody = element.X509 + "";
 	}
@@ -36,13 +36,13 @@ function getCertificate  (fqdn){
 
 
 function createPublicKeyPinningHeader(edgeFqdn){
-	var edge = store.search(edgeFqdn)[0];
-	var edgeCertKeyDer= getPublicKeyEncodedDer(edge.X509);
-	var atomCertDer  = getPublicKeyEncodedDer(getCertificate(edge.parent_fqdn));
+	let edge = store.search(edgeFqdn)[0],
+	    edgeCertKeyDer= getPublicKeyEncodedDer(edge.X509),
+	    atomCertDer  = getPublicKeyEncodedDer(getCertificate(edge.parent_fqdn));
 
 
-	var edgeHash = require('crypto').createHash('sha256').update(edgeCertKeyDer).digest("base64");
-	var atomHash = require('crypto').createHash('sha256').update(atomCertDer).digest("base64");
+	let edgeHash = require('crypto').createHash('sha256').update(edgeCertKeyDer).digest("base64"),
+	    atomHash = require('crypto').createHash('sha256').update(atomCertDer).digest("base64");
 	//console.log(edgeHash);
 	return 'pin-sha256="' + edgeHash + '";pin-sha256="'+ atomHash +'"; max-age=315000';
 

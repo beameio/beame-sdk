@@ -21,7 +21,7 @@ function _obj2base64(o) {
  * @method Crypto.aesEncrypt
  * @param {String} data
  * @param {String|null} [secret]
- * @returns string
+ * @returns Array.<AesEncryptedData>
  */
 function aesEncrypt(data, secret) {
 	let sharedSecret = secret ? new Buffer(secret, 'base64') : null;
