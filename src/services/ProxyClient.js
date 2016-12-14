@@ -90,8 +90,8 @@ class ProxyClient {
 			//logger.debug(`ProxyClient connected => {hostname:${this.hostname}, endpoint:${this.edgeServerHostname}, targetHost:${this.targetHost}, targetPort: ${this.targetPort}}`);
 			this._connected = true;
 			socketUtils.emitMessage(this._socketio, 'register_server', socketUtils.formatMessage(null, {
-				_hostname: this._hostname,
-				_type:     this._type
+				hostname: this._hostname,
+				type:     this._type
 			}));
 
 			this._options && this._options.onConnect && this._options.onConnect();

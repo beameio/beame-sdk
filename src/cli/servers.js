@@ -30,8 +30,8 @@ function runChatServer(fqdn) {
 
 	beameSDK.BeameServer(fqdn, appExpress, function (data, app) {
 		if (config.PinAtomPKbyDefault) {
-			var pinning = require('./pinning');
-			var header  = pinning.createPublicKeyPinningHeader(fqdn, true, true);
+			const pinning = require('./pinning');
+			let header  = pinning.createPublicKeyPinningHeader(fqdn, true, true);
 
 			appExpress.use(function (req, resp, next) {
 				resp.setHeader('Public-Key-Pins', header);
@@ -55,8 +55,8 @@ function runChatServer(fqdn) {
 			logger.debug("On upgrade", {_hostname: fqdn, method: req.method, url: req.url, headers: req.headers});
 		});
 
-		var socketio = require('socket.io')(app);
-		var chat     = require('../../examples/chat/chatserver.js')(socketio);
+		const socketio = require('socket.io')(app);
+		const chat     = require('../../examples/chat/chatserver.js')(socketio);
 	});
 }
 
@@ -71,7 +71,7 @@ function runStaticServer(fqdn, sharedFolder) {
 		logger.info(`Custom folder specified on ${sharedFolder}`);
 		defaultSharedFolder = path.normalize(sharedFolder + "/");
 	}
-	var serveIndex = require('serve-index');
+	const serveIndex = require('serve-index');
 
 	appExpress.use('/', express.static(defaultSharedFolder));
 	appExpress.use('/', serveIndex(defaultSharedFolder, {'icons': true}));

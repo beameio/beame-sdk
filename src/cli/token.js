@@ -8,6 +8,7 @@ const BeameStore    = new (require('../services/BeameStoreV2'))();
 const AuthToken     = require('../services/AuthToken');
 
 function create(fqdn, data, ttl, callback) {
+	//noinspection JSDeprecatedSymbols
 	const cred = BeameStore.getCredential(fqdn);
 
 	if(!cred) {
@@ -40,7 +41,7 @@ validate.toText = authToken => {
 		}
 	}
 
-	var ret = {};
+	let ret = {};
 	for(let k in authToken.signedData) {
 		//noinspection JSUnfilteredForInLoop
 		ret['signedData.' + k] = toStr(k, authToken.signedData[k]);

@@ -124,6 +124,7 @@ updateMetadata.toText = _lineToText;
  */
 function show(fqdn) {
 	const store = new BeameStore();
+	//noinspection JSDeprecatedSymbols
 	let creds   = store.getCredential(fqdn);
 	if (!creds) {
 		throw new Error(`show: fqdn ${fqdn} was not found`);
@@ -207,6 +208,7 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 
 	const store = new BeameStore();
 
+	//noinspection JSDeprecatedSymbols
 	let creds = store.getCredential(fqdn);
 
 	if(!creds) {
@@ -371,6 +373,7 @@ function decrypt(encryptedData) {
 
 		let targetFqdn = encryptedData.encryptedFor;
 		console.error(`targetFqdn ${targetFqdn}`);
+		//noinspection JSDeprecatedSymbols
 		let credential = store.getCredential(targetFqdn);
 
 		return credential.decrypt(encryptedData);
@@ -392,6 +395,7 @@ function decrypt(encryptedData) {
  */
 function sign(data, fqdn) {
 	const store = new BeameStore();
+	//noinspection JSDeprecatedSymbols
 	let cred    = store.getCredential(fqdn);
 	if (cred) {
 		return cred.sign(data);

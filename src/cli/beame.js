@@ -2,21 +2,21 @@
 
 "use strict";
 
-var argv = require('minimist')(process.argv.slice(2));
-var _    = require('underscore');
+const argv = require('minimist')(process.argv.slice(2));
+const _      = require('underscore');
 
-var BeameStore    = require("../services/BeameStoreV2");
-var config        = require('../../config/Config');
+const BeameStore = require("../services/BeameStoreV2");
+const config = require('../../config/Config');
 const module_name = config.AppModules.BeameSDKCli;
-var BeameLogger   = require('../utils/Logger');
-var logger        = new BeameLogger(module_name);
+const BeameLogger = require('../utils/Logger');
+const logger = new BeameLogger(module_name);
 
-var commands = {};
+let commands = {};
 ['creds', 'token', 'crypto', 'servers', 'system'].forEach(cmdName => {
 	commands[cmdName] = require('./' + cmdName + '.js');
 });
 
-var parametersSchema = {
+const parametersSchema = {
 	'data':               {required: true},
 	'developerEmail':     {required: true},
 	'developerFqdn':      {required: true},
@@ -62,11 +62,11 @@ function InvalidArgv(message) {
 InvalidArgv.prototype = Error.prototype;
 
 function getParamsNames(fun) {
-	var names       = fun.toString().match(/^[\s(]*function[^(]*\(([^)]*)\)/)[1]
+	const names     = fun.toString().match(/^[\s(]*function[^(]*\(([^)]*)\)/)[1]
 		.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
 		.replace(/\s+/g, '').split(',');
-	var ret         = (names.length == 1 && !names[0] ? [] : names);
-	var useCallback = false;
+	let ret         = (names.length == 1 && !names[0] ? [] : names),
+	    useCallback = false;
 
 	ret             = ret.filter(paramName => {
 		if (paramName == 'callback') {
@@ -82,10 +82,9 @@ function getParamsNames(fun) {
 }
 
 function main() {
-	var cmdName    = argv._[0];
-	var subCmdName = argv._[1];
-
-	var cmd = commands[cmdName];
+	let cmdName    = argv._[0],
+	    subCmdName = argv._[1],
+	    cmd = commands[cmdName];
 
 	if (!cmd) {
 		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + Object.keys(commands));
@@ -97,8 +96,8 @@ function main() {
 
 	// TODO: handle boolean such as in "--fqdn --some-other-switch" or "--no-fqdn"
 	// Validate argv and build arguments for the function
-	var paramsNames = getParamsNames(commands[cmdName][subCmdName]);
-	var args        = _.map(paramsNames, function (paramName) {
+	let paramsNames = getParamsNames(commands[cmdName][subCmdName]),
+	    args        = _.map(paramsNames, function (paramName) {
 
 		// Required parameter missing
 		if (parametersSchema[paramName].required && !_.has(argv, paramName)) {
@@ -120,7 +119,7 @@ function main() {
 			}
 		}
 
-		var arg = argv[paramName];
+		let arg = argv[paramName];
 
 		// Optionally decode base64-encoded argument.
 		// Do not decode what appears to be JSON.
@@ -129,6 +128,7 @@ function main() {
 		}
 
 		if (parametersSchema[paramName].json) {
+			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			arg = JSON.parse(arg);
 		}
 
@@ -165,23 +165,23 @@ function main() {
 		args.push(commandResultsReady);
 		commands[cmdName][subCmdName].apply(null, args);
 	} else {
-		var output = commands[cmdName][subCmdName].apply(null, args);
+		let output = commands[cmdName][subCmdName].apply(null, args);
 		commandResultsReady(null, output);
 	}
 }
 
 function usage() {
-	var path   = require('path');
-	var myname = 'beame.js';
+	const path   = require('path'),
+	      myname = 'beame.js';
 	console.log("Usage:");
 	_.each(commands, function (subCommands, cmdName) {
 		_.each(subCommands, function (subCmdFunc, subCmdName) {
-			var paramsNames = getParamsNames(subCmdFunc);
+			let paramsNames = getParamsNames(subCmdFunc);
 			if (paramsNames.hasFormat) {
 				paramsNames.push('format');
 			}
-			var params = paramsNames.map(function (paramName) {
-				var ret = '--' + paramName;
+			let params = paramsNames.map(function (paramName) {
+				let ret = '--' + paramName;
 				if (!parametersSchema[paramName]) {
 					console.log(`Internal coding error: missing ${paramName} in parametersSchema`);
 					throw new Error(`Internal coding error: missing ${paramName} in parametersSchema`);
@@ -225,22 +225,22 @@ if (argv._[0] == 'complete') {
 		process.exit(0);
 	}
 	if (argv._[1] == 'switches') {
-		var f           = commands[argv._[2]][argv._[3]];
-		var paramsNames = getParamsNames(f);
+		let f           = commands[argv._[2]][argv._[3]],
+		    paramsNames = getParamsNames(f);
 		if (paramsNames.hasFormat) {
 			paramsNames.push('format');
 		}
-		var switches = paramsNames.map(function (p) {
+		let switches = paramsNames.map(function (p) {
 			return "--" + p;
 		}).join(' ');
 		console.log(switches);
 		process.exit(0);
 	}
 	if (argv._[1] == 'switch-value') {
-		var sw = argv._[2];
+		let sw = argv._[2];
 		if (sw == 'fqdn') {
-			var store    = new BeameStore();
-			var results = store.list();
+			let store    = new BeameStore();
+			let results = store.list();
 			console.log(_.map(results, r => r.fqdn).join(' '));
 			process.exit(0);
 		}
