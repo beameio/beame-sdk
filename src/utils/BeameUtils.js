@@ -167,7 +167,7 @@ module.exports = {
 								"retries": retries
 							});
 
-							setTimeout(function () {
+							setTimeout(() => {
 								selectBest.call(this, loadBalancerEndpoint, retries, sleep, callback);
 							}, sleep);
 						}
