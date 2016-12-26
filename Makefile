@@ -6,6 +6,6 @@ build:
 
 test:
 	rm -r ~/.beame || true
-	./tests/cli_tests/testAll.ngs
+	cd tests/cli_tests && ./testAll.ngs
 
 # TODO: gulp doc
