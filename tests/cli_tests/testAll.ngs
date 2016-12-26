@@ -13,7 +13,10 @@ if 'BEAME_DIR' in ENV {
 HOME = ENV.HOME
 
 BEAME_DIR = HOME / '.beame'
-BEAME_BIN = [HOME / 'beame-sdk/src/cli/beame.js', 'src/cli/beame.js'].first({ $(test -f $A) })
+BEAME_BIN = '../../src/cli/beame.js'
+if not(File(BEAME_BIN)) {
+   die("Could not find beame binary. Please make sure you are running this script from the tests/cli_tests directory")
+}
 BEAME_DEV_AUTH_FQDN = 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net'
 
 if Path(BEAME_DIR) {
