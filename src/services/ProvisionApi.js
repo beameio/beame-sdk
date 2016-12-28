@@ -99,8 +99,8 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 			"message": msg || payload
 		}, config.MessageCodes.ApiRestError);
 
-		logger.debug(`Provision error payload ${payload.toString()}`, payload);
-		logger.debug(`Provision error response ${response.toString()}`, response);
+		//logger.debug(`Provision error payload ${payload.toString()}`, payload);
+		//logger.debug(`Provision error response ${response.toString()}`, response);
 		logger.debug(errMsg.message, payload);
 		callback && callback(errMsg, null);
 	}

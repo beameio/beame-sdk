@@ -66,6 +66,9 @@ class DataServices {
 
 	}
 
+	static readFile (path) {
+		return fs.readFileSync(path, 'utf8');
+	};
 
 	/**
 	 * @param {String} dirPath
@@ -161,7 +164,24 @@ class DataServices {
 							saveCert(config.CertResponseFields.ca, config.CertFileNames.CA, callback);
 						},
 						function (callback) {
-							saveCert(config.CertResponseFields.pkcs7, config.CertFileNames.PKCS7, callback);
+							//hvca save file
+							if (payload.hasOwnProperty(config.CertResponseFields.ca_g2) && payload[config.CertResponseFields.ca_g2].length) {
+								saveCert(config.CertResponseFields.ca_g2, config.CertFileNames.CA_G2, callback);
+							}
+							else{
+								callback(null);
+							}
+						},
+						function (callback) {
+
+							//hvca skip file
+							if (!payload.hasOwnProperty(config.CertResponseFields.pkcs7) || !payload[config.CertResponseFields.pkcs7].length) {
+								callback(null);
+							}
+							else{
+								saveCert(config.CertResponseFields.pkcs7, config.CertFileNames.PKCS7, callback);
+							}
+
 						}
 
 					],

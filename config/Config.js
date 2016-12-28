@@ -17,7 +17,7 @@ const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 /** @const {String} **/
-const rootDir    = process.env.BEAME_DIR || path.join(home, '.beame');
+const rootDir                   = process.env.BEAME_DIR || path.join(home, '.beame');
 
 
 /** @const {String} **/
@@ -36,7 +36,7 @@ const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || "https://may129m1
 const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
 
 const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
-const beameForceEdgeIP = process.env.BEAME_FORCE_EDGE_IP || 0;
+const beameForceEdgeIP   = process.env.BEAME_FORCE_EDGE_IP || 0;
 
 /** @const {String} **/
 const metadataFileName = "metadata.json";
@@ -44,23 +44,36 @@ const metadataFileName = "metadata.json";
 /** @const {String} **/
 const s3MetadataFileName = "metadata.json";
 
-/** @const {String} **/
-const PKsFileName = "PKs.json";
+/**
+ * Registration sources
+ * DON'T TOUCH, should by synchronized with backend services
+ * @readonly
+ * @enum {Number}
+ */
+const RegistrationSource = {
+	"Unknown":        0,
+	"NodeJSSDK":      1,
+	"InstaSSL":       2,
+	"InstaServerSDK": 3,
+	"IOSSDK":         4
+};
 
 /**
  * Certificate file names
  *  @enum {string}
  */
 const CertFileNames = {
-	"PRIVATE_KEY":      "private_key.pem",
-	"TEMP_PRIVATE_KEY": "temp_private_key.pem",
-	"X509":             "x509.pem",
-	"CA":               "ca.pem",
-	"PKCS7":            "pkcs7.pem",
-	"P7B":              "p7b.cer",
-	"PKCS12":           "cert.pfx",
-	"PWD":              "pwd.txt",
-	"RECOVERY":         "recovery"
+	"PRIVATE_KEY":        "private_key.pem",
+	"PUBLIC_KEY":         "public_key.pem",
+	"BACKUP_PRIVATE_KEY": "private_key_bk.pem",
+	"BACKUP_PUBLIC_KEY":  "public_key_bk.pem",
+	"X509":               "x509.pem",
+	"CA":                 "ca.pem",
+	"CA_G2":              "ca_g2.pem",
+	"PKCS7":              "pkcs7.pem",
+	"P7B":                "p7b.cer",
+	"PKCS12":             "cert.pfx",
+	"PWD":                "pwd.txt"
 };
 
 /**
@@ -71,6 +84,7 @@ const CertificateFiles = {
 	"PRIVATE_KEY": "private_key.pem",
 	"X509":        "x509.pem",
 	"CA":          "ca.pem",
+	"CA_G2":       "ca_g2.pem",
 	"PKCS7":       "pkcs7.pem",
 	"P7B":         "p7b.cer",
 	"PKCS12":      "cert.pfx",
@@ -94,7 +108,8 @@ const MetadataProperties = {
 const CertResponseFields = {
 	"x509":  "x509",
 	"pkcs7": "pkcs7",
-	"ca":    "ca"
+	"ca":    "ca",
+	"ca_g2": "ca_g2"
 };
 
 
@@ -181,12 +196,12 @@ module.exports = {
 	ResponseKeys,
 	TimeUnits,
 	SNIServerPort,
-	PKsFileName,
 	CertEndpoint,
 	InitFirstRemoteEdgeClient,
 	PinAtomPKbyDefault,
 	MetadataProperties,
 	authServerURL,
 	beameForceEdgeFqdn,
-	beameForceEdgeIP
+	beameForceEdgeIP,
+	RegistrationSource
 };

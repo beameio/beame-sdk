@@ -73,6 +73,7 @@ class BeameLogger {
 		if (module) {
 			this.module = module;
 		}
+
 		/** @member {LogLevel} **/
 		this.currentLogLevel = process.env.BEAME_LOG_LEVEL || LogLevel.Error;
 	}

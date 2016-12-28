@@ -15,7 +15,7 @@ class AuthToken {
 	/**
 	 * @param {Object|String} data
 	 * @param {Credential}signingCreds
-	 * @param {Number} ttl => seconds
+	 * @param {Number|null|undefined} [ttl] => seconds
 	 * @returns {string | null}
 	 */
 	static create(data, signingCreds, ttl) {

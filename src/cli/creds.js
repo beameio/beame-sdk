@@ -12,6 +12,7 @@ const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require("../services/BeameStoreV2");
 const Credential  = require('../services/Credential');
+const AuthToken   = require('../services/AuthToken');
 const path        = require('path');
 const fs          = require('fs');
 
@@ -19,6 +20,7 @@ module.exports = {
 	show,
 	list,
 	getCreds,
+	getRegToken,
 	updateMetadata,
 	shred,
 	exportCredentials,
@@ -97,6 +99,49 @@ function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 
 }
 getCreds.toText = _lineToText;
+
+
+function getRegToken(fqdn, name, email, authSrvFqdn, ttl, src, callback) {
+
+	if (!fqdn) {
+		logger.fatal(`Fqdn required`);
+		return;
+	}
+
+
+	function _get() {
+		return new Promise((resolve, reject) => {
+
+				let cred = new Credential(new BeameStore());
+
+				cred.createRegistrationWithLocalCreds(fqdn, name, email,  src).then(data => {
+
+					let payload = data.payload,
+					    parent_cred = data.parentCred;
+
+					let sha = CommonUtils.generateDigest(payload);
+
+					let authToken = AuthToken.create(sha, parent_cred, ttl || 60 * 60 * 24 * 2),
+					    token = {
+						    authToken:   authToken,
+						    name:        name,
+						    email:       email,
+						    authSrvFqdn: authSrvFqdn,
+						    src:         src
+					    },
+						str = new Buffer(CommonUtils.stringify(token,false)).toString('base64');
+
+					resolve(str);
+				}).catch(reject);
+			}
+		);
+	}
+
+	CommonUtils.promise2callback(_get(), callback);
+
+}
+getRegToken.toText = x=>x;
+
 
 /**
  * @public
@@ -196,7 +241,7 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 		logger.fatal(`target fqdn required`);
 	}
 
-	if(typeof file == "number") {
+	if (typeof file == "number") {
 		// CLI arguments parser converts to number automatically.
 		// Reversing this conversion.
 		file = file.toString();
@@ -211,14 +256,14 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 	//noinspection JSDeprecatedSymbols
 	let creds = store.getCredential(fqdn);
 
-	if(!creds) {
+	if (!creds) {
 		callback(`Credentials for ${fqdn} not found`, null);
 		return;
 	}
 
 	let jsonCredentialObject = CommonUtils.stringify(creds, false);
 	try {
-		encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
+		encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload) => {
 			if (payload) {
 				let p = path.resolve(file);
 				fs.writeFileSync(p, CommonUtils.stringify(payload, false));
@@ -245,7 +290,7 @@ function importCredentials(file, callback) {
 		logger.fatal(`path to file for saving credentials required`);
 	}
 
-	if(typeof file == "number") {
+	if (typeof file == "number") {
 		// CLI arguments parser converts to number automatically.
 		// Reversing this conversion.
 		file = file.toString();
@@ -279,7 +324,7 @@ function importCredentials(file, callback) {
 
 
 		if (data.signedBy && data.signature) {
-			store.find(data.signedBy).then(signingCreds=> {
+			store.find(data.signedBy).then(signingCreds => {
 					let encryptedCredentials;
 
 					if (data.signature) {
@@ -297,7 +342,7 @@ function importCredentials(file, callback) {
 					_import(encryptedCredentials);
 
 				}
-			).catch(error=> {
+			).catch(error => {
 				callback(error, null);
 			});
 		}
@@ -336,14 +381,14 @@ function importLiveCredentials(fqdn) {
  */
 function encrypt(data, targetFqdn, signingFqdn, callback) {
 
-	if(typeof data != 'string') {
+	if (typeof data != 'string') {
 		throw new Error("encrypt(): data must be string");
 	}
 
 	function _encrypt() {
 		return new Promise((resolve, reject) => {
 				const store = new BeameStore();
-				store.find(targetFqdn).then(targetCredential=> {
+				store.find(targetFqdn).then(targetCredential => {
 					resolve(targetCredential.encrypt(targetFqdn, data, signingFqdn));
 				}).catch(reject);
 			}
@@ -416,7 +461,7 @@ function checkSignature(signedData, callback) {
 	function _checkSignature() {
 		return new Promise((resolve, reject) => {
 				const store = new BeameStore();
-				store.find(signedData.signedBy).then(cred=> {
+				store.find(signedData.signedBy).then(cred => {
 					resolve(cred.checkSignature(signedData));
 				}).catch(reject);
 			}
@@ -427,6 +472,6 @@ function checkSignature(signedData, callback) {
 
 }
 
-checkSignature.toText = x => x?'GOOD SIGNATURE':'BAD SIGNATURE';
+checkSignature.toText = x => x ? 'GOOD SIGNATURE' : 'BAD SIGNATURE';
 
 //endregion

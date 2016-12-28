@@ -64,9 +64,8 @@ class Credential {
 	/**
 	 *
 	 * @param {BeameStoreV2} store
-	 * @param {number|null} [certTimeoutUpper]
 	 */
-	constructor(store, certTimeoutUpper) {
+	constructor(store) {
 		if (store) {
 			//noinspection JSUnresolvedVariable
 			/** @member {BeameStoreV2}*/
@@ -83,12 +82,6 @@ class Credential {
 		/** @member {Array.<Credential>} */
 		this.children = [];
 
-		/**
-		 * use for request cert request timeout generator
-		 * @type {number}
-		 * @private
-		 */
-		this._certTimeoutUpper = certTimeoutUpper || 10;
 
 		// cert files
 		/** @member {Buffer}*/
@@ -298,7 +291,7 @@ class Credential {
 			try {
 				this[keyName] = this.beameStoreServices.readObject(config.CertFileNames[keyName]);
 			} catch (e) {
-				console.log(`exception ${e}`);
+				//console.log(`exception ${e}`);
 			}
 		});
 
@@ -629,6 +622,66 @@ class Credential {
 		);
 	}
 
+
+	/**
+	 * Create entity service with local credentials
+	 * @param {String} parent_fqdn => required
+	 * @param {String|null} [name]
+	 * @param {String|null} [email]
+	 * @param {String|null} [src]
+	 */
+	createRegistrationWithLocalCreds(parent_fqdn, name, email, src) {
+		return new Promise((resolve, reject) => {
+				if (!parent_fqdn) {
+					reject('Parent Fqdn required');
+					return;
+				}
+				//noinspection JSDeprecatedSymbols
+				let parentCred = this.store.getCredential(parent_fqdn);
+
+				if (!parentCred) {
+					reject(`Parent credential ${parent_fqdn} not found`);
+					return;
+				}
+
+
+				let metadata = {
+					parent_fqdn,
+					name,
+					email,
+					src : src || config.RegistrationSource.Unknown
+				};
+
+				let postData = Credential.formatRegisterPostData(metadata),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+				    api      = new ProvisionApi();
+
+				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				api.runRestfulAPI(apiData, (error, payload) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+
+					if (src) {
+						payload.src = src;
+					}
+
+					resolve({
+						parentCred,
+						payload
+					});
+
+				});
+
+			}
+		);
+	}
+
 	/**
 	 * @ignore
 	 * @param {String} authToken
@@ -785,6 +838,7 @@ class Credential {
 
 	}
 
+
 	/**
 	 *
 	 * @param {String} fqdn
@@ -831,50 +885,20 @@ class Credential {
 
 	/**
 	 * @ignore
-	 * @returns {Promise.<String>}
-	 */
-	createCSR() {
-		let errMsg;
-
-		const fqdn       = this.fqdn,
-		      dirPath    = this.getMetadataKey("path"),
-		      pkFileName = config.CertFileNames.PRIVATE_KEY;
-
-		return new Promise(function (resolve, reject) {
-
-
-			OpenSSlWrapper.createPrivateKey().then(pk => {
-				DirectoryServices.saveFile(dirPath, pkFileName, pk, error => {
-					if (!error) {
-						let pkFile = beameUtils.makePath(dirPath, pkFileName);
-						OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
-					}
-					else {
-						errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
-						reject(errMsg);
-					}
-				})
-			}).catch(function (error) {
-				reject(error);
-			});
-
-
-		});
-	}
-
-	/**
-	 * @ignore
 	 * @param {String} csr
 	 * @param {SignatureToken} authToken
+	 * @param {Object} pubKeys
 	 */
-	getCert(csr, authToken) {
+	getCert(csr, authToken, pubKeys) {
 		let fqdn = this.fqdn;
 
 
 		return new Promise((resolve, reject) => {
 				let postData = {
-					    csr:  csr,
-					    fqdn: fqdn
+					    csr:      csr,
+					    fqdn:     fqdn,
+					    validity: 60 * 60 * 24 * 30,
+					    pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
@@ -1022,6 +1046,90 @@ class Credential {
 		};
 	}
 
+
+	_createInitialKeyPairs(dirPath) {
+		let errMsg;
+
+		return new Promise((resolve, reject) => {
+
+				const _saveKeyPair = (private_key_name, public_key_name, cb) => {
+					OpenSSlWrapper.createPrivateKey().then(pk =>
+						DirectoryServices.saveFile(dirPath, private_key_name, pk, error => {
+							if (!error) {
+								let pkFile  = beameUtils.makePath(dirPath, private_key_name),
+								    pubFile = beameUtils.makePath(dirPath, public_key_name);
+								OpenSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+									cb(null);
+								}).catch(error => {
+									cb(error)
+								});
+							}
+							else {
+								errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
+								cb(errMsg);
+							}
+						})
+					).catch(error => {
+						cb(error);
+					})
+				};
+
+				async.parallel([
+						cb => {
+							_saveKeyPair(config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY, cb);
+						},
+						cb => {
+							_saveKeyPair(config.CertFileNames.BACKUP_PRIVATE_KEY, config.CertFileNames.BACKUP_PUBLIC_KEY, cb);
+						}
+					],
+					error => {
+						if (error) {
+							logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
+							reject(error);
+						}
+
+						resolve();
+					})
+
+			}
+		);
+	}
+
+	/**
+	 *  @ignore
+	 * @returns {Promise.<String>}
+	 */
+	createCSR(cred, dirPath) {
+
+		const fqdn       = this.fqdn,
+		      pkFileName = config.CertFileNames.PRIVATE_KEY;
+
+		return new Promise(function (resolve, reject) {
+
+			cred._createInitialKeyPairs(dirPath).then(() => {
+				let pkFile = beameUtils.makePath(dirPath, pkFileName);
+				OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+			}).catch(reject);
+
+
+			// OpenSSlWrapper.createPrivateKey().then(pk => {
+			// 	DirectoryServices.saveFile(dirPath, pkFileName, pk, error => {
+			// 		if (!error) {
+			// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
+			// 			OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+			// 		}
+			// 		else {
+			// 			errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
+			// 			reject(errMsg);
+			// 		}
+			// 	})
+			// }).catch(function (error) {
+			// 	reject(error);
+			// });
+
+		});
+	}
+
 	/**
 	 *
 	 * @param payload
@@ -1050,21 +1158,29 @@ class Credential {
 						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
 						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingCSR, payload.fqdn);
 
-						cred.createCSR().then(
-							csr => {
-								logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
+						let dirPath = cred.getMetadataKey("path");
 
-								let t = CommonUtils.randomTimeout(this._certTimeoutUpper);
+						cred.createCSR(cred, dirPath).then(csr => {
+							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
 
-								setTimeout(() => {
-									cred.getCert(csr, sign).then(() => {
-										metadata.fqdn        = payload.fqdn;
-										metadata.parent_fqdn = payload.parent_fqdn;
-										resolve(metadata);
-									}).catch(onError);
-								}, t);
+							OpenSSlWrapper.getPublicKeySignature(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY).then(signature => {
+
+								let pubKeys = {
+									pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
+									pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
+									signature
+								};
+
+								cred.getCert(csr, sign, pubKeys).then(() => {
+									metadata.fqdn        = payload.fqdn;
+									metadata.parent_fqdn = payload.parent_fqdn;
+									resolve(metadata);
+								}).catch(onError);
 
 							}).catch(onError);
+
+
+						}).catch(onError);
 					}).catch(onError);
 
 				function onError(e) {
@@ -1098,18 +1214,32 @@ class Credential {
 							[
 								function (callback) {
 
-									OpenSSlWrapper.createP7BCert(dirPath).then(p7b => {
-										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.P7B), p7b, (error, data) => {
-											if (!error) {
-												callback(null, data)
-											}
-											else {
-												callback(error, null)
-											}
-										})
-									}).catch(function (error) {
-										callback(error, null);
-									});
+									const saveP7B = () => {
+										OpenSSlWrapper.createP7BCert(dirPath).then(p7b => {
+											directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.P7B), p7b, (error, data) => {
+												if (!error) {
+													callback(null, data)
+												}
+												else {
+													callback(error, null)
+												}
+											})
+										}).catch(function (error) {
+											callback(error, null);
+										});
+									};
+
+									//old api flow
+									if (DirectoryServices.doesPathExists(beameUtils.makePath(dirPath, config.CertFileNames.PKCS7))) {
+										saveP7B();
+									}
+									else {
+										//hvca flow
+										OpenSSlWrapper.createPKCS7Cert(dirPath).then(saveP7B).catch(error => {
+											callback(error, null);
+										});
+									}
+
 
 								},
 								function (callback) {
