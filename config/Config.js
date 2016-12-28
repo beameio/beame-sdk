@@ -60,6 +60,7 @@ const RegistrationSource = {
 
 const RequestType = {
 	"RequestWithFqdn" : "RequestWithFqdn",
+	"RequestWithParentFqdn" : "RequestWithParentFqdn",
 	"RequestWithAuthServer" : "RequestWithAuthServer",
 };
 

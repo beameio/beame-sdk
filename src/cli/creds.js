@@ -21,7 +21,6 @@ module.exports = {
 	list,
 	getCreds,
 	getRegToken,
-	getCredsWithToken,
 	updateMetadata,
 	shred,
 	exportCredentials,
@@ -74,10 +73,45 @@ function _listCreds(regex) {
 
 //region Entity management
 /**
+ *
+ * @param {Object}token
+ * @returns {*}
+ * @private
+ */
+const _getCreds = (token) => {
+	let type = token.type || config.RequestType.RequestWithAuthServer;
+	let cred = new Credential(new BeameStore());
+
+	switch (type) {
+		case config.RequestType.RequestWithAuthServer:
+			return cred.createEntityWithAuthServer(token.authToken, token.authSrvFqdn, token.name, token.email);
+		case config.RequestType.RequestWithParentFqdn:
+			return cred.createEntityWithAuthToken(token.authToken, token.name, token.email);
+		case config.RequestType.RequestWithFqdn:
+
+			let aut        = CommonUtils.parse(token.authToken),
+			    signedData = CommonUtils.parse(aut.signedData.data),
+			    payload    = {
+				    fqdn:        signedData.fqdn,
+				    parent_fqdn: aut.signedBy,
+				    sign:        token.authToken
+			    },
+			    metadata   = {
+				    name:  token.name,
+				    email: token.email
+			    };
+
+			return cred.requestCerts(payload, metadata);
+		default:
+			return Promise.reject(`Unknown request type`);
+	}
+};
+/**
  * Get credentials with Auth Token or for existing local Credential by fqdn
  * AuthToken(token) or Local Credential(fqdn) required
  * @public
  * @method Creds.getCreds
+ * @param {Object} authToken
  * @param {String|null} [token]
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [fqdn]
@@ -86,47 +120,30 @@ function _listCreds(regex) {
  * @param {Function} callback
  */
 
-function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
+function getCreds(authToken, token, authSrvFqdn, fqdn, name, email, callback) {
 
-	if (!token && !fqdn) {
+	if (!token && !fqdn && !authToken) {
 		logger.fatal(`Auth Token or Fqdn required`);
 		return;
 	}
 
-	let cred      = new Credential(new BeameStore()),
-	    authToken = token ? CommonUtils.parse(token) : null,
-	    promise   = token ? cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email) : cred.createEntityWithLocalCreds(fqdn, name, email);
+	let promise,
+	    cred            = new Credential(new BeameStore()),
+	    parsedToken     = token ? CommonUtils.parse(token) : null,
+	    parsedAuthToken = authToken ? CommonUtils.parse(authToken) : null;
+
+	if (parsedAuthToken) {
+		promise = _getCreds(parsedAuthToken);
+	}
+	else if (parsedToken) {
+		promise = cred.createEntityWithAuthServer(parsedToken, authSrvFqdn, name, email);
+	}
+	else if (fqdn) {
+		promise = cred.createEntityWithLocalCreds(fqdn, name, email);
+	}
 
 	CommonUtils.promise2callback(promise, callback);
 }
-
-
-function getCredsWithToken(authToken, callback) {
-
-
-	let token =authToken ? CommonUtils.parse(authToken) : null;
-	if (!token) {
-		logger.fatal(`Auth Token or Fqdn required`);
-		return;
-	}
-	function _getCreds() {
-		let type = token.type || config.RequestType.RequestWithAuthServer;
-		let cred      = new Credential(new BeameStore());
-		
-		switch (type){
-			case config.RequestType.RequestWithAuthServer:
-				return cred.createEntityWithAuthServer(token.authToken, token.authSrvFqdn, token.name, token.email);
-			case config.RequestType.RequestWithFqdn:
-				return cred.createEntityWithAuthToken(token.authToken, token.name, token.email);
-			default:
-				return Promis.reject(`Unknown request type`);
-		}
-	}
-
-
-	CommonUtils.promise2callback(_getCreds(), callback);
-}
-
 getCreds.toText = _lineToText;
 
 

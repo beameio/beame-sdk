@@ -1130,12 +1130,19 @@ class Credential {
 		});
 	}
 
+	requestCerts(payload, metadata) {
+		return new Promise((resolve, reject) => {
+				this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
+			}
+		);
+	}
+
+
 	/**
-	 *
+	 * @private
 	 * @param payload
 	 * @param metadata
 	 * @returns {Promise}
-	 * @private
 	 */
 	_requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
@@ -1190,6 +1197,47 @@ class Credential {
 			}
 		);
 	}
+
+	// requestCerts(payload,metadata,sign){
+	// 	return new Promise((resolve, reject) => {
+	// 		this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
+	// 			cred => {
+	//
+	// 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
+	// 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingCSR, payload.fqdn);
+	//
+	// 				let dirPath = cred.getMetadataKey("path");
+	//
+	// 				cred.createCSR(cred, dirPath).then(csr => {
+	// 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
+	//
+	// 					OpenSSlWrapper.getPublicKeySignature(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY).then(signature => {
+	//
+	// 						let pubKeys = {
+	// 							pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
+	// 							pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
+	// 							signature
+	// 						};
+	//
+	// 						cred.getCert(csr, sign, pubKeys).then(() => {
+	// 							metadata.fqdn        = payload.fqdn;
+	// 							metadata.parent_fqdn = payload.parent_fqdn;
+	// 							resolve(metadata);
+	// 						}).catch(onError);
+	//
+	// 					}).catch(onError);
+	//
+	//
+	// 				}).catch(onError);
+	// 			}).catch(onError);
+	//
+	// 		function onError(e) {
+	// 			logger.error(BeameLogger.formatError(e), e);
+	// 			reject(e);
+	// 		}
+	// 		}
+	// 	);
+	// }
 
 	/**
 	 *
