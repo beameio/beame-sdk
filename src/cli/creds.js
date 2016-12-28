@@ -101,7 +101,7 @@ function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 getCreds.toText = _lineToText;
 
 
-function getRegToken(fqdn, name, email, authSrvFqdn, ttl, src, callback) {
+function getRegToken(fqdn, name, email, ttl, src, callback) {
 
 	if (!fqdn) {
 		logger.fatal(`Fqdn required`);
@@ -114,22 +114,21 @@ function getRegToken(fqdn, name, email, authSrvFqdn, ttl, src, callback) {
 
 				let cred = new Credential(new BeameStore());
 
-				cred.createRegistrationWithLocalCreds(fqdn, name, email,  src).then(data => {
+				cred.createRegistrationWithLocalCreds(fqdn, name, email, src).then(data => {
 
-					let payload = data.payload,
+					let payload     = data.payload,
 					    parent_cred = data.parentCred;
 
-					let sha = CommonUtils.generateDigest(payload);
 
-					let authToken = AuthToken.create(sha, parent_cred, ttl || 60 * 60 * 24 * 2),
-					    token = {
-						    authToken:   authToken,
-						    name:        name,
-						    email:       email,
-						    authSrvFqdn: authSrvFqdn,
-						    src:         src
+					let authToken = AuthToken.create({fqdn: payload.fqdn}, parent_cred, ttl || 60 * 60 * 24 * 2),
+					    token     = {
+						    authToken: authToken,
+						    name:      name,
+						    email:     email,
+						    src:       src,
+						    type:      config.RequestType.RequestWithFqdn
 					    },
-						str = new Buffer(CommonUtils.stringify(token,false)).toString('base64');
+					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 
 					resolve(str);
 				}).catch(reject);
@@ -140,7 +139,7 @@ function getRegToken(fqdn, name, email, authSrvFqdn, ttl, src, callback) {
 	CommonUtils.promise2callback(_get(), callback);
 
 }
-getRegToken.toText = x=>x;
+getRegToken.toText = x => x;
 
 
 /**

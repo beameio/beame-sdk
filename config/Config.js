@@ -58,6 +58,11 @@ const RegistrationSource = {
 	"IOSSDK":         4
 };
 
+const RequestType = {
+	"RequestWithFqdn" : "RequestWithFqdn",
+	"RequestWithAuthServer" : "RequestWithAuthServer",
+};
+
 /**
  * Certificate file names
  *  @enum {string}
@@ -203,5 +208,6 @@ module.exports = {
 	authServerURL,
 	beameForceEdgeFqdn,
 	beameForceEdgeIP,
-	RegistrationSource
+	RegistrationSource,
+	RequestType
 };
