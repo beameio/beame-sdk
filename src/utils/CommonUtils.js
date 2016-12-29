@@ -120,6 +120,10 @@ class CommonUtils {
 		}
 		return ret;
 	}
+
+	static isResponseSuccess(statusCode){
+		return statusCode >= 200 && statusCode < 300;
+	}
 }
 
 module.exports = CommonUtils;

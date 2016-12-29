@@ -1,6 +1,7 @@
 {
     "Endpoints": {
-        "BaseUrl": "https://prov-staging.beameio.net"
+        "BaseUrl": "https://prov-staging.beameio.net",
+        "BaseDNSUrl":"https://t24w58ow5jkkmkhu.mpk3nobb568nycf5.v1.d.beameio.net"
     },
     "RetryAttempts": 10,
     "Actions": {
@@ -24,6 +25,14 @@
         "AuthServerApi": {
             "RegisterEntity": {
                     "endpoint": "/node/auth/register"
+            }
+        },
+        "DnsApi": {
+            "Set":{
+                "endpoint":"/v1/dns/host/"
+            },
+            "Get":{
+                "endpoint":"/v1/dns/host/"
             }
         }
     }

@@ -87,7 +87,7 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 	}
 
 
-	if (response.statusCode == 200) {
+	if (CommonUtils.isResponseSuccess(response.statusCode)) {
 
 		callback && callback(null, payload);
 	}

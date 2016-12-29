@@ -575,24 +575,15 @@ class Credential {
 					return;
 				}
 
-				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
-					if (!error) {
-						onEdgeServerSelected.call(this, payload);
-					}
-					else {
-						reject(error);
-					}
-				});
+				let metadata, edge_fqdn;
 
-				let metadata;
-
-				function onEdgeServerSelected(edge) {
-
-					metadata = {
+				const onEdgeServerSelected = edge => {
+					edge_fqdn = edge.endpoint;
+					metadata  = {
 						parent_fqdn,
 						name,
 						email,
-						edge_fqdn: edge.endpoint
+						edge_fqdn
 					};
 
 					let postData = Credential.formatRegisterPostData(metadata),
@@ -613,11 +604,13 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
+							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 						}).catch(reject);
 
 					});
-				}
+				};
+
+				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
 			}
 		);
 	}
@@ -649,7 +642,7 @@ class Credential {
 					parent_fqdn,
 					name,
 					email,
-					src : src || config.RegistrationSource.Unknown
+					src: src || config.RegistrationSource.Unknown
 				};
 
 				let postData = Credential.formatRegisterPostData(metadata),
@@ -691,7 +684,7 @@ class Credential {
 	 */
 	createEntityWithAuthServer(authToken, authSrvFqdn, name, email) {
 		return new Promise((resolve, reject) => {
-				let metadata;
+				let metadata, edge_fqdn;
 
 				if (!authToken) {
 					reject('Auth token required');
@@ -700,25 +693,17 @@ class Credential {
 
 				logger.debug("createEntityWithAuthServer(): Selecting proxy");
 
-				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
-					if (!error) {
-						onEdgeServerSelected.call(this, payload);
-					}
-					else {
-						reject(error);
-					}
-				});
-
-
-				function onEdgeServerSelected(edge) {
+				const onEdgeServerSelected = edge => {
 
 					logger.debug("createEntityWithAuthServer(): onEdgeServerSelected");
 					let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || config.authServerURL;
 
+					edge_fqdn = edge.endpoint;
+
 					metadata = {
 						name,
 						email,
-						edge_fqdn: edge.endpoint
+						edge_fqdn
 					};
 					let api  = new ProvisionApi();
 
@@ -731,14 +716,14 @@ class Credential {
 						authToken,
 						5
 					);
-				}
+				};
 
 				/**
 				 * @param error
 				 * @param payload
 				 * @this {Credential}
 				 */
-				function fqdnResponseReady(error, payload) {
+				const fqdnResponseReady = (error, payload) => {
 					logger.debug("createEntityWithAuthServer(): fqdnResponseReady", payload);
 					if (error) {
 						reject(error);
@@ -747,11 +732,28 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
-				}
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+				};
+
+				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
 			}
 		);
 
+	}
+
+	_selectEdge() {
+
+		return new Promise((resolve, reject) => {
+				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
+					if (!error) {
+						resolve(payload);
+					}
+					else {
+						reject(error);
+					}
+				});
+			}
+		);
 	}
 
 	/**
@@ -763,7 +765,7 @@ class Credential {
 	 */
 	createEntityWithAuthToken(authToken, name, email) {
 		return new Promise((resolve, reject) => {
-				let metadata;
+				let metadata, edge_fqdn;
 
 				if (!authToken) {
 					reject('Auth token required');
@@ -779,23 +781,15 @@ class Credential {
 
 				logger.debug("createEntityWithAuthToken(): Selecting proxy");
 
-				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
-					if (!error) {
-						onEdgeServerSelected.call(this, payload);
-					}
-					else {
-						reject(error);
-					}
-				});
+				const onEdgeServerSelected = edge => {
 
-
-				function onEdgeServerSelected(edge) {
+					edge_fqdn = edge.endpoint;
 
 					metadata = {
 						name,
 						email,
 						parent_fqdn: tokenObj.signedBy,
-						edge_fqdn:   edge.endpoint,
+						edge_fqdn,
 					};
 
 
@@ -810,14 +804,14 @@ class Credential {
 						'POST',
 						authToken
 					);
-				}
+				};
 
 				/**
 				 * @param error
 				 * @param payload
 				 * @this {Credential}
 				 */
-				function fqdnResponseReady(error, payload) {
+				const fqdnResponseReady = (error, payload) => {
 					logger.debug("createEntityWithAuthServer(): fqdnResponseReady");
 					if (error) {
 						reject(error);
@@ -829,10 +823,13 @@ class Credential {
 					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken => {
 						payload.sign = authToken;
 
-						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
+						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 					}).catch(reject);
 
-				}
+				};
+
+
+				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
 			}
 		);
 
@@ -842,46 +839,78 @@ class Credential {
 	/**
 	 *
 	 * @param {String} fqdn
+	 * @param {String} edge_fqdn
 	 * @returns {Promise}
 	 * @private
 	 */
-	_onCertsReceived(fqdn) {
+	_onCertsReceived(fqdn, edge_fqdn) {
 		return new Promise((resolve, reject) => {
-				//noinspection JSDeprecatedSymbols
-				let cred = this.store.getCredential(fqdn);
 
-				if (cred == null) {
-					reject(`credential for ${fqdn} not found`);
-					return;
-				}
+				const dnsServices = new(require('./DnsServices'))();
 
-				const retries = provisionSettings.RetryAttempts + 1,
-				      sleep   = 1000;
+				async.parallel([
 
-				const _syncMeta = (retries, sleep) => {
-
-					retries--;
-
-					if (retries == 0) {
-						reject(`Metadata of ${fqdn} can't be updated. Please try Later`);
-						return;
+					callback => {
+						this._syncMetadataOnCertReceived(fqdn).then(()=>{callback()}).catch(error => {
+							callback(error)
+						})
+					},
+					callback => {
+						dnsServices.saveDns(fqdn, edge_fqdn).then(()=>{callback()}).catch(error => {
+							callback(error)
+						})
 					}
 
-					cred.syncMetadata(fqdn).then(resolve).catch(() => {
-						logger.debug(`retry on sync meta for ${fqdn}`);
+				], error => {
+					if (error) {
+						reject(error);
+					}
+					else {
+						resolve();
+					}
+				});
 
-						sleep = parseInt(sleep * (Math.random() + 1.5));
-
-						setTimeout(() => {
-							_syncMeta(retries, sleep);
-						}, sleep);
-					});
-				};
-
-				_syncMeta(retries, sleep);
 			}
 		);
 	}
+
+	_syncMetadataOnCertReceived(fqdn) {
+		return new Promise((resolve, reject) => {
+				this.store.find(fqdn, false).then(cred => {
+					if (cred == null) {
+						reject(`credential for ${fqdn} not found`);
+						return;
+					}
+
+					const retries = provisionSettings.RetryAttempts + 1,
+					      sleep   = 1000;
+
+					const _syncMeta = (retries, sleep) => {
+
+						retries--;
+
+						if (retries == 0) {
+							reject(`Metadata of ${fqdn} can't be updated. Please try Later`);
+							return;
+						}
+
+						cred.syncMetadata(fqdn).then(resolve).catch(() => {
+							logger.debug(`retry on sync meta for ${fqdn}`);
+
+							sleep = parseInt(sleep * (Math.random() + 1.5));
+
+							setTimeout(() => {
+								_syncMeta(retries, sleep);
+							}, sleep);
+						});
+					};
+
+					_syncMeta(retries, sleep);
+				}).catch(reject);
+			}
+		);
+	}
+
 
 	/**
 	 * @ignore
@@ -1132,7 +1161,14 @@ class Credential {
 
 	requestCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
-				this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
+
+				const onEdgeServerSelected = edge => {
+					metadata.edge_fqdn = edge.endpoint;
+
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn,edge.endpoint)).then(resolve).catch(reject);
+				};
+
+				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
 			}
 		);
 	}

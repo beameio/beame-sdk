@@ -148,7 +148,6 @@ getCreds.toText = _lineToText;
 
 
 function getRegToken(fqdn, name, email, ttl, src, callback) {
-
 	if (!fqdn) {
 		logger.fatal(`Fqdn required`);
 		return;
