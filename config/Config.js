@@ -44,6 +44,8 @@ const metadataFileName = "metadata.json";
 /** @const {String} **/
 const s3MetadataFileName = "metadata.json";
 
+const ApprovedZones = ['beameio.net','beame.io'];
+
 /**
  * Registration sources
  * DON'T TOUCH, should by synchronized with backend services
@@ -210,5 +212,6 @@ module.exports = {
 	beameForceEdgeFqdn,
 	beameForceEdgeIP,
 	RegistrationSource,
-	RequestType
+	RequestType,
+	ApprovedZones
 };

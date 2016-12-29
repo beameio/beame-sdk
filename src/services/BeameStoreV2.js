@@ -86,7 +86,7 @@ class BeameStoreV2 {
 			);
 		};
 
-		if (fqdn.indexOf('beameio.net') > 0) {
+		if (config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name))) {
 			return this.getRemoteCreds(fqdn).then(_saveCreds);
 		}
 		else {
