@@ -926,8 +926,9 @@ class Credential {
 				let postData = {
 					    csr:      csr,
 					    fqdn:     fqdn,
-					    validity: 60 * 60 * 24 * 30,
-					    pub:      pubKeys
+					 //TODO uncomment for hvca
+					  //  validity: 60 * 60 * 24 * 30,
+					  //  pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
@@ -1165,7 +1166,7 @@ class Credential {
 				const onEdgeServerSelected = edge => {
 					metadata.edge_fqdn = edge.endpoint;
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn,edge.endpoint)).then(resolve).catch(reject);
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn,edge.endpoint)).then(()=>{resolve(metadata)}).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
