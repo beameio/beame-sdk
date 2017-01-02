@@ -42,8 +42,9 @@ module.exports = {
 function _lineToText(line) {
 	let table = new Table();
 	for (let k in line) {
-		//noinspection JSUnfilteredForInLoop
-		table.push({[k]: line[k].toString()});
+			//noinspection JSUnfilteredForInLoop
+			table.push({[k]: line[k] ? line[k].toString() : null});
+
 	}
 
 	return table;
@@ -111,10 +112,10 @@ const _getCreds = (token) => {
  * AuthToken(token) or Local Credential(fqdn) required
  * @public
  * @method Creds.getCreds
- * @param {Object} authToken
+ * @param {Object|null} [authToken]
  * @param {String|null} [token]
- * @param {String|null} [authSrvFqdn]
  * @param {String|null} [fqdn]
+ * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
  * @param {Function} callback
