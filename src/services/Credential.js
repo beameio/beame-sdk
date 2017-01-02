@@ -412,10 +412,10 @@ class Credential {
 		let rsaKey = this.getPublicKeyNodeRsa();
 		let status = rsaKey.verify(data.signedData, data.signature, "utf8", "base64");
 		if (status) {
-			logger.info(`Signature signed by  ${data.signedBy} verified successfully`);
+			logger.info(`Signature signed by ${data.signedBy} verified successfully`);
 		}
 		else {
-			logger.warn(`invalid signature signed by ${data.signedBy}`);
+			logger.warn(`Invalid signature signed by ${data.signedBy}`);
 		}
 
 		return status;
