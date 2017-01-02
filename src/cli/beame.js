@@ -144,7 +144,10 @@ function main() {
 	function commandResultsReady(error, output) {
 
 		if (error) {
-			logger.fatal(error.message, error.data, error.module)
+			if(typeof error == 'string') {
+				logger.fatal(error);
+			}
+			logger.fatal(error.message, error.data, error.module);
 		}
 
 		if (output === undefined) {
