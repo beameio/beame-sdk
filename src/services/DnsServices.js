@@ -16,6 +16,7 @@ class DnsServices {
 		return new Promise((resolve, reject) => {
 				this._saveDns(fqdn, edge_fqdn).then(()=>{
 					logger.info(`DNS update record for ${fqdn} requested`);
+					resolve();
 				}).catch(reject);
 			}
 		);

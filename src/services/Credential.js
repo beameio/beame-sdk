@@ -604,7 +604,9 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(()=>{resolve(metadata)}).catch(reject);
+							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(() => {
+								resolve(metadata)
+							}).catch(reject);
 						}).catch(reject);
 
 					});
@@ -732,7 +734,9 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(()=>{resolve(metadata)}).catch(reject);
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(() => {
+						resolve(metadata)
+					}).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
@@ -823,7 +827,9 @@ class Credential {
 					this.signWithFqdn(metadata.parent_fqdn, CommonUtils.generateDigest(payload)).then(authToken => {
 						payload.sign = authToken;
 
-						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(()=>{resolve(metadata)}).catch(reject);
+						this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(() => {
+							resolve(metadata)
+						}).catch(reject);
 					}).catch(reject);
 
 				};
@@ -846,17 +852,21 @@ class Credential {
 	_onCertsReceived(fqdn, edge_fqdn) {
 		return new Promise((resolve, reject) => {
 
-				const dnsServices = new(require('./DnsServices'))();
+				const dnsServices = new (require('./DnsServices'))();
 
 				async.parallel([
 
 					callback => {
-						this._syncMetadataOnCertReceived(fqdn).then(()=>{callback()}).catch(error => {
+						this._syncMetadataOnCertReceived(fqdn).then(() => {
+							callback();
+						}).catch(error => {
 							callback(error)
 						})
 					},
 					callback => {
-						dnsServices.saveDns(fqdn, edge_fqdn).then(()=>{callback()}).catch(error => {
+						dnsServices.saveDns(fqdn, edge_fqdn).then(() => {
+							callback();
+						}).catch(error => {
 							callback(error)
 						})
 					}
@@ -924,11 +934,11 @@ class Credential {
 
 		return new Promise((resolve, reject) => {
 				let postData = {
-					    csr:      csr,
-					    fqdn:     fqdn,
-					 //TODO uncomment for hvca
-					  //  validity: 60 * 60 * 24 * 30,
-					  //  pub:      pubKeys
+					    csr:  csr,
+					    fqdn: fqdn,
+					    //TODO uncomment for hvca
+					    //  validity: 60 * 60 * 24 * 30,
+					    //  pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
@@ -1166,7 +1176,9 @@ class Credential {
 				const onEdgeServerSelected = edge => {
 					metadata.edge_fqdn = edge.endpoint;
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn,edge.endpoint)).then(()=>{resolve(metadata)}).catch(reject);
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(() => {
+						resolve(metadata)
+					}).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
