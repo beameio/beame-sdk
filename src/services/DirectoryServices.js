@@ -233,18 +233,13 @@ class DataServices {
 	 */
 	saveFileSync(dirPath, data, cb = nop) {
 
-		return new Promise((resolve, reject) => {
-				fs.writeFileSync(dirPath, data, error => {
-					if (error) {
-						cb(error, null);
-						reject(error);
-						return;
-					}
-					cb(null, true);
-					resolve();
-				});
+		fs.writeFileSync(dirPath, data, error => {
+			if (error) {
+				cb(error, null);
+				return;
 			}
-		);
+			cb(null, true);
+		});
 	}
 
 	scanDir(src) {
