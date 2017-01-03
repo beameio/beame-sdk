@@ -462,6 +462,19 @@ class Credential {
 
 	}
 
+	/**
+	 * @public
+	 * @method Credential.encryptWithRSA
+	 * @param {String} data
+	 * @returns {EncryptedMessage}
+	 */
+	encryptWithRSA(data){
+		let targetRsaKey = this.getPublicKeyNodeRsa();
+		if (!targetRsaKey) {
+			throw new Error("encrypt failure, public key not found");
+		}
+		return targetRsaKey.encrypt(data, "base64", "utf8");
+	}
 
 	/**
 	 * @public
@@ -477,11 +490,6 @@ class Credential {
 			//noinspection JSDeprecatedSymbols
 			signingCredential = this.store.getCredential(signingFqdn);
 		}
-		let targetRsaKey = this.getPublicKeyNodeRsa();
-
-		if (!targetRsaKey) {
-			throw new Error("encrypt failure, public key not found");
-		}
 
 		let sharedCiphered = CryptoServices.aesEncrypt(data);
 
@@ -492,7 +500,7 @@ class Credential {
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		/** @type {EncryptedMessage} */
 		let encryptedUnsignedMessage = {
-			rsaCipheredKeys: targetRsaKey.encrypt(symmetricCipherElement, "base64", "utf8"),
+			rsaCipheredKeys: this.encryptWithRSA(symmetricCipherElement),
 			data:            sharedCiphered[0],
 			encryptedFor:    fqdn
 		};
@@ -501,6 +509,21 @@ class Credential {
 		}
 
 		return encryptedUnsignedMessage;
+	}
+
+	/**
+	 * @public
+	 * @method Credential.decryptWithRSA
+	 * @param {String} data
+	 * @returns {EncryptedMessage}
+	 */
+	decryptWithRSA(data){
+		if (!this.hasKey("PRIVATE_KEY")) {
+			throw new Error(`private key for ${this.fqdn} not found`);
+		}
+		let rsaKey = this.getPrivateKeyNodeRsa();
+
+		return rsaKey.decrypt(data);
 	}
 
 	/**
@@ -530,14 +553,7 @@ class Credential {
 			encryptedMessage = encryptedMessage.signedData;
 		}
 
-
-		if (!this.hasKey("PRIVATE_KEY")) {
-			throw new Error(`private key for ${encryptedMessage.encryptedFor} not found`);
-
-		}
-		let rsaKey = this.getPrivateKeyNodeRsa();
-
-		let decryptedMessage = rsaKey.decrypt(encryptedMessage.rsaCipheredKeys);
+		let decryptedMessage = this.decryptWithRSA(encryptedMessage.rsaCipheredKeys);
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
 		let payload          = JSON.parse(decryptedMessage);
 
