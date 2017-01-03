@@ -15,6 +15,8 @@ const BeameUtils  = require('../utils/BeameUtils');
 /** @const {String} */
 
 
+function nop(){}
+
 /**
  *
  * @constructor
@@ -216,6 +218,29 @@ class DataServices {
 						return;
 					}
 					cb && cb(null, true);
+					resolve();
+				});
+			}
+		);
+	}
+
+	//noinspection JSUnusedGlobalSymbols
+	/**
+	 *
+	 * @param {String} dirPath
+	 * @param {Object} data
+	 * @param {Function|null} [cb]
+	 */
+	saveFileSync(dirPath, data, cb = nop) {
+
+		return new Promise((resolve, reject) => {
+				fs.writeFileSync(dirPath, data, error => {
+					if (error) {
+						cb(error, null);
+						reject(error);
+						return;
+					}
+					cb(null, true);
 					resolve();
 				});
 			}
