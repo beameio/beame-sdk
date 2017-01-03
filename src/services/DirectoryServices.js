@@ -231,15 +231,15 @@ class DataServices {
 	 * @param {Object} data
 	 * @param {Function|null} [cb]
 	 */
-	saveFileSync(dirPath, data, cb = nop) {
+	static saveFileSync(dirPath, data, cb = nop) {
 
-		fs.writeFileSync(dirPath, data, error => {
-			if (error) {
-				cb(error, null);
-				return;
-			}
+		try {
+			fs.writeFileSync(dirPath, data);
 			cb(null, true);
-		});
+		}
+		catch (error) {
+			cb(error, null);
+		}
 	}
 
 	scanDir(src) {
