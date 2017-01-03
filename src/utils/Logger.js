@@ -88,14 +88,20 @@ class BeameLogger {
 		let type = typeof error;
 		switch (type) {
 			case 'object':
-				let output = CommonUtils.stringify(error);
-				return _.isEmpty(output) ? error.toString() : output;
+				if(error instanceof Error){
+					return error.message || error.toString();
+				}
+
+				if(error.message){
+					return error.message;
+				}
+
+				return CommonUtils.isObjectEmpty(error) ? CommonUtils.stringify(error) : error.toString();
 			case 'array':
 				return error[0].toString();
 			default:
 				return error.toString();
 		}
-
 	}
 
 	/**
