@@ -640,8 +640,11 @@ class Credential {
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
 	 * @param {String|null} [src]
+	 * @param {String|null} [serviceName]
+	 * @param {String|null} [serviceId]
+	 * @param {String|null} [matchingFqdn]
 	 */
-	createRegistrationWithLocalCreds(parent_fqdn, name, email, src) {
+	createRegistrationWithLocalCreds(parent_fqdn, name, email, src, serviceName, serviceId, matchingFqdn) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -660,6 +663,9 @@ class Credential {
 					parent_fqdn,
 					name,
 					email,
+					serviceName,
+					serviceId,
+					matchingFqdn,
 					src: src || config.RegistrationSource.Unknown
 				};
 
@@ -1423,7 +1429,10 @@ class Credential {
 			name:        metadata.name,
 			email:       metadata.email,
 			parent_fqdn: metadata.parent_fqdn,
-			edge_fqdn:   metadata.edge_fqdn
+			edge_fqdn:   metadata.edge_fqdn,
+			service_name:metadata.serviceName,
+			service_id:  metadata.serviceId,
+			matching_fqdn:metadata.matchingFqdn
 		};
 	}
 

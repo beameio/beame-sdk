@@ -51,7 +51,10 @@ const parametersSchema = {
 	'encryptedData':      {required: true, base64: true, json: true},
 	'signedData':         {required: true, base64: true, json: true},
 	'ttl':                {required: false, default: 300},
-	'src':                {required: false}
+	'src':                {required: false},
+	'serviceName':        {required: false},
+	'matchingFqdn':       {required: false},
+	'serviceId':          {required: false}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

@@ -148,7 +148,7 @@ function getCreds(authToken, token, authSrvFqdn, fqdn, name, email, callback) {
 getCreds.toText = _lineToText;
 
 
-function getRegToken(fqdn, name, email, ttl, src, callback) {
+function getRegToken(fqdn, name, email, ttl, src, serviceName, serviceId, matchingFqdn, callback) {
 	if (!fqdn) {
 		logger.fatal(`Fqdn required`);
 		return;
@@ -160,7 +160,7 @@ function getRegToken(fqdn, name, email, ttl, src, callback) {
 
 				let cred = new Credential(new BeameStore());
 
-				cred.createRegistrationWithLocalCreds(fqdn, name, email, src).then(data => {
+				cred.createRegistrationWithLocalCreds(fqdn, name, email, src, serviceName, serviceId, matchingFqdn).then(data => {
 
 					let payload     = data.payload,
 					    parent_cred = data.parentCred;
@@ -172,6 +172,9 @@ function getRegToken(fqdn, name, email, ttl, src, callback) {
 						    name:      name,
 						    email:     email,
 						    src:       src,
+						    serviceName: serviceName,
+						    serviceId: serviceId,
+						    matchingFqdn:matchingFqdn,
 						    type:      config.RequestType.RequestWithFqdn
 					    },
 					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
