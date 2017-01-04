@@ -26,6 +26,18 @@
  * @property {Object|String|null} data
  */
 
+/** @typedef {Object} RegistrationTokenOptionsToken
+ *  @property {String} fqdn
+ *  @property {String|null|undefined} [name]
+ *  @property {String|null|undefined} [email]
+ *  @property {String|null|undefined} [userId]
+ *  @property {Number|null|undefined} [ttl]
+ *  @property {String|null|undefined} [src]
+ *  @property {String|null|undefined} [serviceName]
+ *  @property {String|null|undefined} [serviceId]
+ *  @property {String|null|undefined} [matchingFqdn]
+ */
+
 /**
  * signature token structure , used as AuthorizationToken in Provision
  * @typedef {Object} SignatureToken
@@ -468,7 +480,7 @@ class Credential {
 	 * @param {String} data
 	 * @returns {EncryptedMessage}
 	 */
-	encryptWithRSA(data){
+	encryptWithRSA(data) {
 		let targetRsaKey = this.getPublicKeyNodeRsa();
 		if (!targetRsaKey) {
 			throw new Error("encrypt failure, public key not found");
@@ -517,7 +529,7 @@ class Credential {
 	 * @param {String} data
 	 * @returns {EncryptedMessage}
 	 */
-	decryptWithRSA(data){
+	decryptWithRSA(data) {
 		if (!this.hasKey("PRIVATE_KEY")) {
 			throw new Error(`private key for ${this.fqdn} not found`);
 		}
@@ -697,6 +709,44 @@ class Credential {
 
 			}
 		);
+	}
+
+	/**
+	 * Create registration token for child of given fqdn
+	 * @param {RegistrationTokenOptionsToken} options
+	 * @returns {Promise}
+	 */
+	createRegistrationToken(options) {
+
+		return new Promise((resolve, reject) => {
+
+				const AuthToken = require('./AuthToken');
+
+				this.createRegistrationWithLocalCreds(options.fqdn, options.name, options.email, options.src, options.serviceName, options.serviceId, options.matchingFqdn).then(data => {
+
+					let payload     = data.payload,
+					    parent_cred = data.parentCred;
+
+
+					let authToken = AuthToken.create({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2),
+					    token     = {
+						    authToken:    authToken,
+						    name:         options.name,
+						    email:        options.email,
+						    usrId:        options.userId,
+						    src:          options.src,
+						    serviceName:  options.serviceName,
+						    serviceId:    options.serviceId,
+						    matchingFqdn: options.matchingFqdn,
+						    type:         config.RequestType.RequestWithFqdn
+					    },
+					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+
+					resolve(str);
+				}).catch(reject);
+			}
+		);
+
 	}
 
 	/**
@@ -1426,13 +1476,13 @@ class Credential {
 
 	static formatRegisterPostData(metadata) {
 		return {
-			name:        metadata.name,
-			email:       metadata.email,
-			parent_fqdn: metadata.parent_fqdn,
-			edge_fqdn:   metadata.edge_fqdn,
-			service_name:metadata.serviceName,
-			service_id:  metadata.serviceId,
-			matching_fqdn:metadata.matchingFqdn
+			name:          metadata.name,
+			email:         metadata.email,
+			parent_fqdn:   metadata.parent_fqdn,
+			edge_fqdn:     metadata.edge_fqdn,
+			service_name:  metadata.serviceName,
+			service_id:    metadata.serviceId,
+			matching_fqdn: metadata.matchingFqdn
 		};
 	}
 

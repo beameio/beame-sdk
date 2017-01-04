@@ -147,8 +147,19 @@ function getCreds(authToken, token, authSrvFqdn, fqdn, name, email, callback) {
 }
 getCreds.toText = _lineToText;
 
-
-function getRegToken(fqdn, name, email, ttl, src, serviceName, serviceId, matchingFqdn, callback) {
+/**
+ * @param fqdn
+ * @param {String|null|undefined} [name]
+ * @param {String|null|undefined} [email]
+ * @param {String|null|undefined} [userId]
+ * @param {Number|null|undefined} [ttl]
+ * @param {String|null|undefined} [src]
+ * @param {String|null|undefined} [serviceName]
+ * @param {String|null|undefined} [serviceId]
+ * @param {String|null|undefined} [matchingFqdn]
+ * @param {Function} callback
+ */
+function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId, matchingFqdn, callback) {
 	if (!fqdn) {
 		logger.fatal(`Fqdn required`);
 		return;
@@ -160,27 +171,7 @@ function getRegToken(fqdn, name, email, ttl, src, serviceName, serviceId, matchi
 
 				let cred = new Credential(new BeameStore());
 
-				cred.createRegistrationWithLocalCreds(fqdn, name, email, src, serviceName, serviceId, matchingFqdn).then(data => {
-
-					let payload     = data.payload,
-					    parent_cred = data.parentCred;
-
-
-					let authToken = AuthToken.create({fqdn: payload.fqdn}, parent_cred, ttl || 60 * 60 * 24 * 2),
-					    token     = {
-						    authToken: authToken,
-						    name:      name,
-						    email:     email,
-						    src:       src,
-						    serviceName: serviceName,
-						    serviceId: serviceId,
-						    matchingFqdn:matchingFqdn,
-						    type:      config.RequestType.RequestWithFqdn
-					    },
-					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
-
-					resolve(str);
-				}).catch(reject);
+				cred.createRegistrationToken({fqdn, name, email, userId, ttl, src, serviceName, serviceId, matchingFqdn}).then(resolve).catch(reject);
 			}
 		);
 	}

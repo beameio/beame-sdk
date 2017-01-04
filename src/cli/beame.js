@@ -54,7 +54,8 @@ const parametersSchema = {
 	'src':                {required: false},
 	'serviceName':        {required: false},
 	'matchingFqdn':       {required: false},
-	'serviceId':          {required: false}
+	'serviceId':          {required: false},
+	'userId':             {required: false}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
