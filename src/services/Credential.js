@@ -583,6 +583,7 @@ class Credential {
 	//endregion
 
 	//region Entity manage
+	//region create entity
 	/**
 	 * Create entity service with local credentials
 	 * @param {String} parent_fqdn => required
@@ -644,7 +645,6 @@ class Credential {
 			}
 		);
 	}
-
 
 	/**
 	 * Create entity service with local credentials
@@ -709,44 +709,6 @@ class Credential {
 
 			}
 		);
-	}
-
-	/**
-	 * Create registration token for child of given fqdn
-	 * @param {RegistrationTokenOptionsToken} options
-	 * @returns {Promise}
-	 */
-	createRegistrationToken(options) {
-
-		return new Promise((resolve, reject) => {
-
-				const AuthToken = require('./AuthToken');
-
-				this.createRegistrationWithLocalCreds(options.fqdn, options.name, options.email, options.src, options.serviceName, options.serviceId, options.matchingFqdn).then(data => {
-
-					let payload     = data.payload,
-					    parent_cred = data.parentCred;
-
-
-					let authToken = AuthToken.create({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2),
-					    token     = {
-						    authToken:    authToken,
-						    name:         options.name,
-						    email:        options.email,
-						    usrId:        options.userId,
-						    src:          options.src,
-						    serviceName:  options.serviceName,
-						    serviceId:    options.serviceId,
-						    matchingFqdn: options.matchingFqdn,
-						    type:         config.RequestType.RequestWithFqdn
-					    },
-					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
-
-					resolve(str);
-				}).catch(reject);
-			}
-		);
-
 	}
 
 	/**
@@ -815,21 +777,6 @@ class Credential {
 			}
 		);
 
-	}
-
-	_selectEdge() {
-
-		return new Promise((resolve, reject) => {
-				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
-					if (!error) {
-						resolve(payload);
-					}
-					else {
-						reject(error);
-					}
-				});
-			}
-		);
 	}
 
 	/**
@@ -913,86 +860,116 @@ class Credential {
 
 	}
 
-
 	/**
-	 *
-	 * @param {String} fqdn
-	 * @param {String} edge_fqdn
+	 * Create registration token for child of given fqdn
+	 * @param {RegistrationTokenOptionsToken} options
 	 * @returns {Promise}
-	 * @private
 	 */
-	_onCertsReceived(fqdn, edge_fqdn) {
+	createRegistrationToken(options) {
+
 		return new Promise((resolve, reject) => {
 
-				const dnsServices = new (require('./DnsServices'))();
+				const AuthToken = require('./AuthToken');
 
-				async.parallel([
+				this.createRegistrationWithLocalCreds(options.fqdn, options.name, options.email, options.src, options.serviceName, options.serviceId, options.matchingFqdn).then(data => {
 
-					callback => {
-						this._syncMetadataOnCertReceived(fqdn).then(() => {
-							callback();
-						}).catch(error => {
-							callback(error)
-						})
-					},
-					callback => {
-						dnsServices.saveDns(fqdn, edge_fqdn).then(() => {
-							callback();
-						}).catch(error => {
-							callback(error)
-						})
-					}
+					let payload     = data.payload,
+					    parent_cred = data.parentCred;
 
-				], error => {
-					if (error) {
-						reject(error);
-					}
-					else {
-						resolve();
-					}
-				});
 
-			}
-		);
-	}
+					let authToken = AuthToken.create({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2),
+					    token     = {
+						    authToken: authToken,
+						    name:      options.name,
+						    email:     options.email,
+						    type:      config.RequestType.RequestWithFqdn
+					    },
+					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 
-	_syncMetadataOnCertReceived(fqdn) {
-		return new Promise((resolve, reject) => {
-				this.store.find(fqdn, false).then(cred => {
-					if (cred == null) {
-						reject(`credential for ${fqdn} not found`);
-						return;
-					}
-
-					const retries = provisionSettings.RetryAttempts + 1,
-					      sleep   = 1000;
-
-					const _syncMeta = (retries, sleep) => {
-
-						retries--;
-
-						if (retries == 0) {
-							reject(`Metadata of ${fqdn} can't be updated. Please try Later`);
-							return;
-						}
-
-						cred.syncMetadata(fqdn).then(resolve).catch(() => {
-							logger.debug(`retry on sync meta for ${fqdn}`);
-
-							sleep = parseInt(sleep * (Math.random() + 1.5));
-
-							setTimeout(() => {
-								_syncMeta(retries, sleep);
-							}, sleep);
-						});
-					};
-
-					_syncMeta(retries, sleep);
+					resolve(str);
 				}).catch(reject);
 			}
 		);
+
 	}
 
+	//noinspection JSUnusedGlobalSymbols
+	/**
+	 * Create registration token for child of given fqdn
+	 * @param {RegistrationTokenOptionsToken} options
+	 * @returns {Promise}
+	 */
+	createMobileRegistrationToken(options) {
+
+		return new Promise((resolve, reject) => {
+
+				const AuthToken = require('./AuthToken');
+
+				this.createRegistrationWithLocalCreds(options.fqdn, options.name, options.email, options.src, options.serviceName, options.serviceId, options.matchingFqdn).then(data => {
+
+					let payload     = data.payload,
+					    parent_cred = data.parentCred;
+
+
+					let authToken = AuthToken.create({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2),
+					    token     = {
+						    authToken:    authToken,
+						    name:         options.name,
+						    email:        options.email,
+						    usrId:        options.userId,
+						    src:          options.src,
+						    level:        payload.level,
+						    serviceName:  options.serviceName,
+						    serviceId:    options.serviceId,
+						    matchingFqdn: options.matchingFqdn,
+						    type:         config.RequestType.RequestWithFqdn
+					    },
+					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+
+					resolve(str);
+				}).catch(reject);
+			}
+		);
+
+	}
+
+	//endregion
+
+	//region certs
+	/**
+	 *  @ignore
+	 * @returns {Promise.<String>}
+	 */
+	createCSR(cred, dirPath) {
+
+		const fqdn       = this.fqdn,
+		      pkFileName = config.CertFileNames.PRIVATE_KEY;
+
+		return new Promise(function (resolve, reject) {
+
+			cred._createInitialKeyPairs(dirPath).then(() => {
+				let pkFile = beameUtils.makePath(dirPath, pkFileName);
+				OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+			}).catch(reject);
+
+
+			// OpenSSlWrapper.createPrivateKey().then(pk => {
+			// 	DirectoryServices.saveFile(dirPath, pkFileName, pk, error => {
+			// 		if (!error) {
+			// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
+			// 			OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+			// 		}
+			// 		else {
+			// 			errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
+			// 			reject(errMsg);
+			// 		}
+			// 	})
+			// }).catch(function (error) {
+			// 	reject(error);
+			// });
+
+		});
+	}
 
 	/**
 	 * @ignore
@@ -1021,6 +998,50 @@ class Credential {
 				api.runRestfulAPI(apiData, (error, payload) => {
 					this._saveCerts(error, payload).then(resolve).catch(reject);
 				}, 'POST', JSON.stringify(authToken));
+			}
+		);
+	}
+
+	requestCerts(payload, metadata) {
+		return new Promise((resolve, reject) => {
+
+				const onEdgeServerSelected = edge => {
+					metadata.edge_fqdn = edge.endpoint;
+
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(() => {
+						resolve(metadata)
+					}).catch(reject);
+				};
+
+				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+			}
+		);
+	}
+
+	//endregion
+
+	//region metadata
+	/**
+	 *
+	 * @param fqdn
+	 * @returns {Promise}
+	 */
+	syncMetadata(fqdn) {
+
+		return new Promise((resolve, reject) => {
+				this.getMetadata(fqdn).then(payload => {
+//noinspection JSDeprecatedSymbols
+					let cred = this.store.getCredential(fqdn);
+
+					if (!cred) {
+						reject(`Creds for ${fqdn} not found`);
+						return;
+					}
+
+					cred.beameStoreServices.writeMetadataSync(payload);
+					resolve(payload);
+
+				}).catch(reject);
 			}
 		);
 	}
@@ -1105,6 +1126,45 @@ class Credential {
 		);
 	}
 
+	/**
+	 * @ignore
+	 * @param fqdn
+	 * @param edge_fqdn
+	 * @returns {Promise}
+	 */
+	updateEntityEdge(fqdn, edge_fqdn) {
+		return new Promise((resolve, reject) => {
+
+				this.store.find(fqdn).then(cred => {
+
+					const api = new ProvisionApi();
+
+					let postData = {
+						    edge_fqdn
+					    },
+					    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntityEdge.endpoint, postData);
+
+					api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+
+					//noinspection ES6ModulesDependencies,NodeModulesDependencies
+					api.runRestfulAPI(apiData, (error) => {
+						if (error) {
+							reject(error);
+							return;
+						}
+						resolve();
+
+					});
+				}).catch(reject);
+
+
+			}
+		);
+	}
+
+	//endregion
+
+	//region common helpers
 	//noinspection JSUnusedGlobalSymbols
 	/**
 	 * @ignore
@@ -1158,6 +1218,84 @@ class Credential {
 		};
 	}
 
+	//endregion
+
+	//region private helpers
+	_selectEdge() {
+
+		return new Promise((resolve, reject) => {
+				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
+					if (!error) {
+						resolve(payload);
+					}
+					else {
+						reject(error);
+					}
+				});
+			}
+		);
+	}
+
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @param {String} edge_fqdn
+	 * @returns {Promise}
+	 * @private
+	 */
+	_onCertsReceived(fqdn, edge_fqdn) {
+		const dnsServices = new (require('./DnsServices'))();
+
+		const _updateEntityEdge = () => {
+			return this.updateEntityEdge(fqdn, edge_fqdn);
+		};
+
+		const _updateEntityMeta = () => {
+			return this._syncMetadataOnCertReceived(fqdn);
+		};
+
+		return dnsServices.saveDns(fqdn, edge_fqdn)
+			.then(_updateEntityEdge.bind(this))
+			.then(_updateEntityMeta.bind(this));
+	}
+
+
+	_syncMetadataOnCertReceived(fqdn) {
+		return new Promise((resolve, reject) => {
+				this.store.find(fqdn, false).then(cred => {
+					if (cred == null) {
+						reject(`credential for ${fqdn} not found`);
+						return;
+					}
+
+					const retries = provisionSettings.RetryAttempts + 1,
+					      sleep   = 1000;
+
+					const _syncMeta = (retries, sleep) => {
+
+						retries--;
+
+						if (retries == 0) {
+							reject(`Metadata of ${fqdn} can't be updated. Please try Later`);
+							return;
+						}
+
+						cred.syncMetadata(fqdn).then(resolve).catch(() => {
+							logger.debug(`retry on sync meta for ${fqdn}`);
+
+							sleep = parseInt(sleep * (Math.random() + 1.5));
+
+							setTimeout(() => {
+								_syncMeta(retries, sleep);
+							}, sleep);
+						});
+					};
+
+					_syncMeta(retries, sleep);
+				}).catch(reject);
+			}
+		);
+	}
 
 	_createInitialKeyPairs(dirPath) {
 		let errMsg;
@@ -1206,58 +1344,6 @@ class Credential {
 			}
 		);
 	}
-
-	/**
-	 *  @ignore
-	 * @returns {Promise.<String>}
-	 */
-	createCSR(cred, dirPath) {
-
-		const fqdn       = this.fqdn,
-		      pkFileName = config.CertFileNames.PRIVATE_KEY;
-
-		return new Promise(function (resolve, reject) {
-
-			cred._createInitialKeyPairs(dirPath).then(() => {
-				let pkFile = beameUtils.makePath(dirPath, pkFileName);
-				OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
-			}).catch(reject);
-
-
-			// OpenSSlWrapper.createPrivateKey().then(pk => {
-			// 	DirectoryServices.saveFile(dirPath, pkFileName, pk, error => {
-			// 		if (!error) {
-			// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
-			// 			OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
-			// 		}
-			// 		else {
-			// 			errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
-			// 			reject(errMsg);
-			// 		}
-			// 	})
-			// }).catch(function (error) {
-			// 	reject(error);
-			// });
-
-		});
-	}
-
-	requestCerts(payload, metadata) {
-		return new Promise((resolve, reject) => {
-
-				const onEdgeServerSelected = edge => {
-					metadata.edge_fqdn = edge.endpoint;
-
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(() => {
-						resolve(metadata)
-					}).catch(reject);
-				};
-
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
-			}
-		);
-	}
-
 
 	/**
 	 * @private
@@ -1318,47 +1404,6 @@ class Credential {
 			}
 		);
 	}
-
-	// requestCerts(payload,metadata,sign){
-	// 	return new Promise((resolve, reject) => {
-	// 		this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
-	// 			cred => {
-	//
-	// 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
-	// 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingCSR, payload.fqdn);
-	//
-	// 				let dirPath = cred.getMetadataKey("path");
-	//
-	// 				cred.createCSR(cred, dirPath).then(csr => {
-	// 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
-	//
-	// 					OpenSSlWrapper.getPublicKeySignature(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY).then(signature => {
-	//
-	// 						let pubKeys = {
-	// 							pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
-	// 							pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
-	// 							signature
-	// 						};
-	//
-	// 						cred.getCert(csr, sign, pubKeys).then(() => {
-	// 							metadata.fqdn        = payload.fqdn;
-	// 							metadata.parent_fqdn = payload.parent_fqdn;
-	// 							resolve(metadata);
-	// 						}).catch(onError);
-	//
-	// 					}).catch(onError);
-	//
-	//
-	// 				}).catch(onError);
-	// 			}).catch(onError);
-	//
-	// 		function onError(e) {
-	// 			logger.error(BeameLogger.formatError(e), e);
-	// 			reject(e);
-	// 		}
-	// 		}
-	// 	);
-	// }
 
 	/**
 	 *
@@ -1448,31 +1493,7 @@ class Credential {
 		);
 	}
 
-	/**
-	 *
-	 * @param fqdn
-	 * @returns {Promise}
-	 */
-	syncMetadata(fqdn) {
-
-		return new Promise((resolve, reject) => {
-				this.getMetadata(fqdn).then(payload => {
-//noinspection JSDeprecatedSymbols
-					let cred = this.store.getCredential(fqdn);
-
-					if (!cred) {
-						reject(`Creds for ${fqdn} not found`);
-						return;
-					}
-
-					cred.beameStoreServices.writeMetadataSync(payload);
-					resolve(payload);
-
-				}).catch(reject);
-			}
-		);
-	}
-
+	//endregion
 
 	static formatRegisterPostData(metadata) {
 		return {
