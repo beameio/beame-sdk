@@ -124,6 +124,11 @@ class CommonUtils {
 	static isResponseSuccess(statusCode){
 		return statusCode >= 200 && statusCode < 300;
 	}
+
+	static getSequelizeBinaryPath(){
+		const path = require('path');
+		return  path.join(path.dirname(path.dirname(require.resolve('sequelize'))), '.bin', 'sequelize');
+	}
 }
 
 module.exports = CommonUtils;
