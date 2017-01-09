@@ -85,6 +85,9 @@ class BeameLogger {
 	 * @returns {*|string|String}
 	 */
 	static formatError(error) {
+		if(error instanceof Error) {
+			return error.message;
+		}
 		let type = typeof error;
 		switch (type) {
 			case 'object':
@@ -267,7 +270,11 @@ class BeameLogger {
 			module: module || this.module
 		};
 
-		this.printLogMessage(LogLevel.Error, log);
+		if(message instanceof Error) {
+			message.stack.split('\n').forEach(line => this.error(line, null, module));
+		} else {
+			this.printLogMessage(LogLevel.Error, log);
+		}
 	}
 
 	/**

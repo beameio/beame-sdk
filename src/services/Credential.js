@@ -66,6 +66,11 @@ const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.Au
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
 
+const timeFuzz               = 5*1000; // 5 seconds
+
+class CertificateValidityError extends Error {
+}
+
 /**
  * You should never initiate this class directly, but rather always access it through the beameStore.
  *
@@ -1502,6 +1507,28 @@ class Credential {
 
 	//endregion
 
+	checkValidity() {
+		return new Promise((resolve, reject) => {
+			const validity = this.certData.validity;
+			logger.debug('checkValidity: fqdn, start, end', this.fqdn, validity.start, validity.end);
+			// validity.end = 0;
+			const now = Date.now();
+			if (validity.start > now + timeFuzz) {
+				reject(new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`));
+				return;
+			}
+			if (validity.end < now - timeFuzz) {
+				reject(new CertificateValidityError(`Certificate ${this.fqdn} has expired`));
+				return;
+			}
+			resolve(this);
+		});
+	}
+
+	static checkValidityPromiseHelper(cred) {
+		return cred.checkValidity();
+	}
+
 	//region live credential
 	/**
 	 * Import remote(non-Beame) credentials and save it to store(x509 + metadata)
@@ -1550,5 +1577,7 @@ class Credential {
 
 	//endregion
 }
+
+Credential.CertificateValidityError = CertificateValidityError;
 
 module.exports = Credential;

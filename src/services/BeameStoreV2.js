@@ -103,7 +103,9 @@ class BeameStoreV2 {
 	 * @param {Boolean} [allowRemote]
 	 * @returns {Promise.<Credential>}
 	 */
-	find(fqdn, allowRemote) {
+	find(fqdn, allowRemote=true) {
+
+		let ret;
 
 		if (!fqdn) {
 			return Promise.reject('Credential#find: fqdn is a required argument');
@@ -112,18 +114,15 @@ class BeameStoreV2 {
 		let cred = this._getCredential(fqdn);
 
 		if (cred) {
-			return Promise.resolve(cred);
+			ret = Promise.resolve(cred);
+		} else {
+			if(!allowRemote) {
+				return Promise.reject(`Credential ${fqdn} was not found locally and allowRemote is false`);
+			}
+			ret = this.fetch(fqdn);
 		}
 
-		if (typeof allowRemote === 'undefined') {
-			allowRemote = true;
-		}
-
-		if (!allowRemote) {
-			return Promise.reject(`Credential ${fqdn} was not found locally and allowRemote is false`);
-		}
-
-		return this.fetch(fqdn);
+		return ret.then(Credential.checkValidityPromiseHelper);
 	}
 
 	addCredential(credential) {

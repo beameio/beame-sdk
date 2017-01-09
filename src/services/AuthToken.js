@@ -113,9 +113,7 @@ class AuthToken {
 					return;
 				}
 				resolve(authToken);
-			}).catch(error => {
-				reject(error);
-			});
+			}).catch(reject);
 		});
 	}
 }
