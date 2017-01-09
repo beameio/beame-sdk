@@ -64,7 +64,7 @@ F create_entity() {
 	entity = ``$BEAME_BIN creds getCreds --token ${registration.authToken.encode_json()} --format json``
 	entity is not Hash throws TestFail("Entity must be hash, not '$entity'")
 	entity.get('parent_fqdn', null) throws TestFail("Entity has parent FQDN: ${entity.parent_fqdn}")
-	entity.level !=0 throws TestFail("Entity has non-zero level: ${entity.level}")
+	entity.level != 0 throws TestFail("Entity has non-zero level: ${entity.level}")
 	entity.email != entity_email throws TestFail("Entity email mismatch")
 	entity.name != entity_name throws TestFail("Entity name mismatch")
 	entities.push(entity)
@@ -74,11 +74,6 @@ F create_entity() {
 F prepare_entity_properties() {
 	global entity_name = "sdk-test-${time()}"
 	global entity_email = "$entity_name@example.com"
-}
-
-F must_be_hash_with_fields(x, name:Str, fields:Arr) {
-	x is not Hash throws TestFail("$name data must be hash, not $x")
-	fields.each(F(k) k not in x throws TestFail("Key $k is missing in '$name' output"))
 }
 
 doc Tests running site
@@ -134,7 +129,7 @@ encrypted_data = null
 test("Encrypt data / json", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --format json`
 	enc = encrypted_data.parse()
-	enc.must_be_hash_with_fields("Encrypted data", %[rsaCipheredKeys data encryptedFor])
+	enc.assert_hash_keys(%[rsaCipheredKeys data encryptedFor], "Encrypted data hash keys")
 	enc.encryptedFor != entities[0].fqdn throws TestFail("encryptedFor mismatch")
 	enc
 })
@@ -170,7 +165,7 @@ if entities {
 	test("Sign data / json", {
 		global data_with_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn} --format json`
 		sig = data_with_signature.decode_json()
-		sig.must_be_hash_with_fields("Signature", %[signedData signature signedBy])
+		sig.assert_hash_keys(%[signedData signature signedBy], "Signature hash keys")
 		global bad_data_with_signature = {'signedData': "${TEST_DATA}xyz", 'signature': sig.signature, 'signedBy': sig.signedBy}.encode_json()
 		sig
 	})
