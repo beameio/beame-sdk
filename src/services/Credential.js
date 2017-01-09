@@ -771,8 +771,6 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					payload.parent_fqdn = authSrvFqdn || config.authServerURL;
-
 					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 				};
 
