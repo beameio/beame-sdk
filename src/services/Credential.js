@@ -633,9 +633,7 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(() => {
-								resolve(metadata)
-							}).catch(reject);
+							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 						}).catch(reject);
 
 					});
@@ -768,9 +766,9 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(() => {
-						resolve(metadata)
-					}).catch(reject);
+					payload.parent_fqdn = authSrvFqdn || config.authServerURL;
+
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
@@ -845,9 +843,7 @@ class Credential {
 
 					payload.sign = authToken;
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(() => {
-						resolve(metadata)
-					}).catch(reject);
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 
 				};
 
@@ -1006,9 +1002,7 @@ class Credential {
 				const onEdgeServerSelected = edge => {
 					metadata.edge_fqdn = edge.endpoint;
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(() => {
-						resolve(metadata)
-					}).catch(reject);
+					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(resolve).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
@@ -1384,8 +1378,9 @@ class Credential {
 								};
 
 								cred.getCert(csr, sign, pubKeys).then(() => {
-									metadata.fqdn        = payload.fqdn;
-									metadata.parent_fqdn = payload.parent_fqdn;
+									//TODO wait for tests
+									// metadata.fqdn        = payload.fqdn;
+									// metadata.parent_fqdn = payload.parent_fqdn;
 									resolve(metadata);
 								}).catch(onError);
 
