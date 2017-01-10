@@ -84,7 +84,7 @@ class ProxyClient {
 		this._socketio = io.connect(this._edgeServerHostname + '/control', io_options);
 
 		this._socketio.on('connect', _.bind(function () {
-console.log('SOCKETIO CONNECT');
+
 			if (this._connected) {
 				return;
 			}
@@ -100,18 +100,16 @@ console.log('SOCKETIO CONNECT');
 		}, this));
 
 		this._socketio.on('error', _.bind(function (err) {
-console.log('SOCKETIO ERROR');
 			//logger.debug("Could not connect to proxy server", err);
 		}, this));
 
 		this._socketio.on('create_connection', data => {
-// console.log('SOCKETIO CREATE_CONNECTION');
+
 			//noinspection JSUnresolvedVariable
 			this.createLocalServerConnection(data, this._options && this._options.onConnection);
 		});
 
 		this._socketio.once('hostRegistered', _.bind(function (data) {
-console.log('SOCKETIO HOST REGISTERED');
 			this._options && this._options.onLocalServerCreated && this._options.onLocalServerCreated.call(null, data);
 			//  this.createLocalServerConnection.call(this, data, this._options && this._options.onLocalServerCreated);
 			//logger.debug('hostRegistered', data);
@@ -131,12 +129,10 @@ console.log('SOCKETIO HOST REGISTERED');
 		}, this));
 
 		this._socketio.on('socket_error', _.bind(function (data) {
-console.log('SOCKETIO SOCKET_ERROR');
 			this.deleteSocket(data.socketId);
 		}, this));
 
 		this._socketio.on('_end', _.bind(function (data) {
-// console.log('SOCKETIO _END');
 			//logger.debug("***************Killing the socket ");
 			if (!data || !data.socketId) {
 				return;
@@ -148,7 +144,7 @@ console.log('SOCKETIO SOCKET_ERROR');
 		}, this));
 
 		this._socketio.on('disconnect', _.bind(function () {
-console.log('DISCONNECT');
+
 			this._connected = false;
 			_.each(this._clientSockets, function (socket) {
 				setTimeout(() => {
@@ -180,7 +176,6 @@ console.log('DISCONNECT');
 		});
 
 		client.on('close', had_error => {
-// console.log('SOCKETIO CONNECT');
 			if (had_error) {
 				socketUtils.emitMessage(this._socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, new Error('close() reported error')));
 			}
@@ -189,7 +184,7 @@ console.log('DISCONNECT');
 		});
 
 		client.on('error', error => {
-console.log('SOCKETIO ERROR');
+
 			logger.error(`Error talking to ${this._targetHost}:${this._targetPort} - ${error}`);
 
 			if (this._socketio) {
