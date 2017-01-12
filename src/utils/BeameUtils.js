@@ -12,6 +12,7 @@ const BeameLogger = require('../utils/Logger');
 const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
 
+function nop() {}
 
 /**
  * @typedef {Object} AuthData
@@ -96,17 +97,17 @@ module.exports = {
 	 * @param {String} url
 	 * @param {Function|null} callback
 	 */
-	httpGet: function (url, callback) {
+	httpGet: function (url, callback=nop) {
 		request({
 			url:  url,
 			json: true
 		}, function (error, response, body) {
 
 			if (!error && response.statusCode === 200) {
-				callback && callback(null, body);
+				callback(null, body);
 			}
 			else {
-				callback && callback(error, null);
+				callback(error, null);
 			}
 		})
 	},
@@ -118,7 +119,7 @@ module.exports = {
 	 * @param {Number} sleep
 	 * @param {Function} callback
 	 */
-	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
+	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback=nop) {
 		if (!loadBalancerEndpoint) {
 			loadBalancerEndpoint = config.loadBalancerURL;
 		}
@@ -127,19 +128,16 @@ module.exports = {
 				endpoint: config.beameForceEdgeFqdn,
 				publicIp: config.beameForceEdgeIP
 			};
-			callback && callback(null, edgeF);
+			callback(null, edgeF);
 		}
 		else {
-			let get        = this.httpGet,
-			    selectBest = this.selectBestProxy;
-
 			if (retries == 0) {
-				callback && callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
+				callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
 			}
 			else {
 				retries--;
 
-				get(loadBalancerEndpoint + "/instance",
+				this.httpGet(loadBalancerEndpoint + "/instance",
 					/**
 					 *
 					 * @param error
@@ -155,7 +153,7 @@ module.exports = {
 								publicIp: data.instanceData.publicipv4
 							};
 
-							callback && callback(null, edge);
+							callback(null, edge);
 
 						}
 						else {
@@ -168,7 +166,7 @@ module.exports = {
 							});
 
 							setTimeout(() => {
-								selectBest.call(this, loadBalancerEndpoint, retries, sleep, callback);
+								this.selectBestProxy(loadBalancerEndpoint, retries, sleep, callback);
 							}, sleep);
 						}
 					});
