@@ -35,6 +35,7 @@ function nop() {}
  * @property {String} publicIp
  */
 
+//region Tree utilities
 /**
  *
  * @param {Object} node
@@ -85,6 +86,7 @@ function findInTree(node, predicate, limit) {
 
 	return result;
 }
+//endregion
 
 //noinspection JSUnusedGlobalSymbols
 module.exports = {
@@ -112,6 +114,7 @@ module.exports = {
 		})
 	},
 
+	//region selectBestProxy()
 	/**
 	 *
 	 * @param {String|null} [loadBalancerEndpoint]
@@ -173,6 +176,7 @@ module.exports = {
 			}
 		}
 	},
+	//endregion
 
 
 	/**
