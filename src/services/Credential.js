@@ -919,7 +919,8 @@ class Credential {
 						    serviceName:  options.serviceName,
 						    serviceId:    options.serviceId,
 						    matchingFqdn: options.matchingFqdn,
-						    type:         config.RequestType.RequestWithFqdn
+						    type:         config.RequestType.RequestWithFqdn,
+						    imageRequired:options.imageRequired
 					    },
 					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 
