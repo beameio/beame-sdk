@@ -98,16 +98,7 @@ class DataServices {
 	 * @returns {Object}
 	 */
 	static readObject(filename) {
-		if (DataServices.doesPathExists(filename)) {
-			try {
-				return fs.readFileSync(filename);
-			}
-			catch (error) {
-				return {};
-			}
-		}
-
-		return {};
+		return fs.readFileSync(filename);
 	}
 
 	/**
