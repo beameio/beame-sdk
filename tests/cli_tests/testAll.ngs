@@ -224,10 +224,10 @@ test("[Registration token] Generate") do {
 }
 
 test("[Registration token] Use") do {
-	child_entity = ``$BEAME_BIN creds getCreds --authToken $reg_token --format json``
+	child_entity = ``$BEAME_BIN creds getCreds --regToken $reg_token --format json``
 	expected = {
 		'parent_fqdn': entities[0].fqdn
-		'level': 1
+		'level': entities[0].level + 1
 		'name': child_entity_name
 		'email': child_entity_email
 	}
