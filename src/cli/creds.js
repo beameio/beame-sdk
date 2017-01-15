@@ -81,7 +81,6 @@ function _listCreds(regex) {
  */
 const _getCreds = (token) => {
 	let type = token.type || config.RequestType.RequestWithAuthServer;
-	console.error('TOKEN TYPE', type);
 	let cred = new Credential(new BeameStore());
 
 	switch (type) {

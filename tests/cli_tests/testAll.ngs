@@ -74,6 +74,8 @@ F create_entity() {
 F prepare_entity_properties() {
 	global entity_name = "sdk-test-${time()}"
 	global entity_email = "$entity_name@example.com"
+	global child_entity_name = "${entity_name}-child"
+	global child_entity_email = "$child_entity_name@example.com"
 }
 
 doc Tests running site
@@ -107,22 +109,13 @@ test("Run without arguments", {
 })
 test("Copy $BEAME_DEV_AUTH_FQDN into store", copy_to_store)
 
-{
-	n_entities = 2
-	for(i;n_entities) {
-		prepare_entity_properties()
-		test("[entity ${i+1}/$n_entities] Create token for an entity", create_token)
-		test("[entity ${i+1}/$n_entities] Emulate site registration", register_on_site)
-		test("[entity ${i+1}/$n_entities] Create test entity", create_entity);
-	}
+n_entities = 2
+for(i;n_entities) {
+	prepare_entity_properties()
+	test("[entity ${i+1}/$n_entities] Create token for an entity", create_token)
+	test("[entity ${i+1}/$n_entities] Emulate site registration", register_on_site)
+	test("[entity ${i+1}/$n_entities] Create test entity", create_entity);
 }
-
-if entities.len() != n_entities {
-	error("Could not create entities")
-	c_exit(3)
-}
-
-
 
 encrypted_data = null
 
@@ -135,13 +128,11 @@ test("Encrypt data / json", {
 })
 
 
-if encrypted_data {
-	test("Decrypt data / json", {
-		dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
-		dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
-		"Decryped data was same as the original data"
-	})
-}
+test("Decrypt data / json", {
+	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
+	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
+	"Decryped data was same as the original data"
+})
 
 encrypted_data = null
 
@@ -151,47 +142,39 @@ test("Encrypt data / text", {
 })
 
 
-if encrypted_data {
-	test("Decrypt data / text", {
-		dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
-		dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
-		"Decryped data was same as the original data"
-	})
-}
+test("Decrypt data / text", {
+	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
+	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
+	"Decryped data was same as the original data"
+})
 
 data_with_signature = null
 bad_data_with_signature = null
-if entities {
-	test("Sign data / json", {
-		global data_with_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn} --format json`
-		sig = data_with_signature.decode_json()
-		sig.assert_hash_keys(%[signedData signature signedBy], "Signature hash keys")
-		global bad_data_with_signature = {'signedData': "${TEST_DATA}xyz", 'signature': sig.signature, 'signedBy': sig.signedBy}.encode_json()
-		sig
-	})
-}
+test("Sign data / json", {
+	global data_with_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn} --format json`
+	sig = data_with_signature.decode_json()
+	sig.assert_hash_keys(%[signedData signature signedBy], "Signature hash keys")
+	global bad_data_with_signature = {'signedData': "${TEST_DATA}xyz", 'signature': sig.signature, 'signedBy': sig.signedBy}.encode_json()
+	sig
+})
 
-if data_with_signature {
-	test("Check good signature / json", {
-		chk = ``$BEAME_BIN creds checkSignature --signedData $data_with_signature --format json``
-		chk !== true throws TestFail("Good signature check did not return true but '$chk'")
-		chk
-	})
-	test("Check good signature for tampered data / json", {
-		chk = ``$BEAME_BIN creds checkSignature --signedData $bad_data_with_signature --format json``
-		chk !== false throws TestFail("Good signature check did not return false for tampered data but '$chk'")
-		chk
-	})
-}
+test("Check good signature / json", {
+	chk = ``$BEAME_BIN creds checkSignature --signedData $data_with_signature --format json``
+	chk !== true throws TestFail("Good signature check did not return true but '$chk'")
+	chk
+})
+test("Check good signature for tampered data / json", {
+	chk = ``$BEAME_BIN creds checkSignature --signedData $bad_data_with_signature --format json``
+	chk !== false throws TestFail("Good signature check did not return false for tampered data but '$chk'")
+	chk
+})
 
 data_with_signature = null
 bad_data_with_signature = null
-if entities {
-	test("Sign data / text", {
-		global data_with_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn}`
-		data_with_signature.limit(50, '...')
-	})
-}
+test("Sign data / text", {
+	global data_with_signature = `$BEAME_BIN creds sign --data $TEST_DATA --fqdn ${entities[0].fqdn}`
+	data_with_signature.limit(50, '...')
+})
 
 if data_with_signature {
 	test("Check good signature / text", {
@@ -201,46 +184,54 @@ if data_with_signature {
 	})
 }
 
-creds_exported = false
-if entities.len() >= 2 {
-	test("Export credentials", {
-		ENV.get('SKIP_EXPORT', false) returns "SKIPPED"
-		exp = ``$BEAME_BIN creds exportCredentials --fqdn ${entities[0].fqdn} --targetFqdn ${entities[1].fqdn} --file $CREDS_FILE``
-		exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
-		exp != CREDS_FILE throws TestFail("exportCredentials returned '$exp', not the expected file $CREDS_FILE")
-		global creds_exported = true
-		exp
-	})
+test("Export credentials", {
+	ENV.get('SKIP_EXPORT', false) returns "SKIPPED"
+	exp = ``$BEAME_BIN creds exportCredentials --fqdn ${entities[0].fqdn} --targetFqdn ${entities[1].fqdn} --file $CREDS_FILE``
+	exp is not Str throws TestFail("exportCredentials did not return a string but '$exp'")
+	exp != CREDS_FILE throws TestFail("exportCredentials returned '$exp', not the expected file $CREDS_FILE")
+	exp
+})
 
+F test_creds_exist() {
+	ls = ``$BEAME_BIN creds list --regex ${entities[0].fqdn} --format json``
+	ls is not Arr throws TestFail("Creds list did not return an array")
+	ls.len() != 1 throws TestFail("Creds list length is not 1")
+	ls[0].metadata.fqdn != entities[0].fqdn throws TestFail("Creds list returned the wrong item")
+	"Credentials for ${entities[0].fqdn} exist"
+}
+test("[Import credentials] Test credentials exist before deleting them", test_creds_exist)
+test("[Import credentials] Deleting exported credentials", {
+	$($BEAME_BIN creds shred --fqdn ${entities[0].fqdn})
+	"deleted"
+})
+test("[Import credentials] Test credentials do not exist before importing", {
+	ls = ``$BEAME_BIN creds list --regex ${entities[0].fqdn} --format json``
+	ls is not Arr throws TestFail("Creds list did not return an array")
+	ls.len() != 0 throws TestFail("Creds list length is not 0")
+	"Credentials for ${entities[0].fqdn} do not exist"
+})
+test("[Import credentials] Import", {
+	imp = ``$BEAME_BIN creds importCredentials --file $CREDS_FILE``
+	imp is not Bool throws TestFail("Import result must be a boolean, not '$imp'")
+	not(imp) throws TestFail("Import did not return true")
+	imp
+})
+test("[Import credentials] Test credentials exist after import", test_creds_exist)
 
+# TODO: add checks
+test("[Registration token] Generate") do {
+	global reg_token = `$BEAME_BIN creds getRegToken --fqdn ${entities[0].fqdn} --name $child_entity_name --email $child_entity_email`
 }
 
-if creds_exported {
-	F test_creds_exist() {
-		ls = ``$BEAME_BIN creds list --regex ${entities[0].fqdn} --format json``
-		ls is not Arr throws TestFail("Creds list did not return an array")
-		ls.len() != 1 throws TestFail("Creds list length is not 1")
-		ls[0].metadata.fqdn != entities[0].fqdn throws TestFail("Creds list returned the wrong item")
-		"Credentials for ${entities[0].fqdn} exist"
+test("[Registration token] Use") do {
+	child_entity = ``$BEAME_BIN creds getCreds --authToken $reg_token --format json``
+	expected = {
+		'parent_fqdn': entities[0].fqdn
+		'level': 1
+		'name': child_entity_name
+		'email': child_entity_email
 	}
-	test("[Import credentials] Test credentials exist before deleting them", test_creds_exist)
-	test("[Import credentials] Deleting exported credentials", {
-		$($BEAME_BIN creds shred --fqdn ${entities[0].fqdn})
-		"deleted"
-	})
-	test("[Import credentials] Test credentials do not exist before importing", {
-		ls = ``$BEAME_BIN creds list --regex ${entities[0].fqdn} --format json``
-		ls is not Arr throws TestFail("Creds list did not return an array")
-		ls.len() != 0 throws TestFail("Creds list length is not 0")
-		"Credentials for ${entities[0].fqdn} do not exist"
-	})
-	test("[Import credentials] Import", {
-		imp = ``$BEAME_BIN creds importCredentials --file $CREDS_FILE``
-		imp is not Bool throws TestFail("Import result must be a boolean, not '$imp'")
-		not(imp) throws TestFail("Import did not return true")
-		imp
-	})
-	test("[Import credentials] Test credentials exist after import", test_creds_exist)
+	assert_hash_keys_values(child_entity, expected, "Correct values in child_entity")
 }
 
 test("S3 credentials", {
