@@ -151,6 +151,9 @@ function main() {
 			if(typeof error == 'string') {
 				logger.fatal(error);
 			}
+			if(error instanceof Error) {
+				logger.error(error.stack);
+			}
 			logger.fatal(error.message, error.data, error.module);
 		}
 
