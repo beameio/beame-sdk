@@ -40,7 +40,7 @@ exit_code = 0
 
 doc Copies Beame test requests signing credential into store for L0 entity creation
 F copy_to_store() {
-	$(cp -a "$HOME/$BEAME_AUTH_FQDN" "$HOME/.beame/v2/$BEAME_DEV_AUTH_FQDN")
+	$(cp -a "$HOME/$BEAME_AUTH_FQDN" "$HOME/.beame/v2/$BEAME_AUTH_FQDN")
 	'Copied'
 }
 
