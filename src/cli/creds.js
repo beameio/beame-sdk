@@ -12,6 +12,7 @@ const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require("../services/BeameStoreV2");
 const Credential  = require('../services/Credential');
+const AuthToken   = require('../services/AuthToken');
 const path        = require('path');
 const fs          = require('fs');
 
@@ -19,6 +20,7 @@ module.exports = {
 	show,
 	list,
 	getCreds,
+	getRegToken,
 	updateMetadata,
 	shred,
 	exportCredentials,
@@ -40,8 +42,9 @@ module.exports = {
 function _lineToText(line) {
 	let table = new Table();
 	for (let k in line) {
-		//noinspection JSUnfilteredForInLoop
-		table.push({[k]: line[k].toString()});
+			//noinspection JSUnfilteredForInLoop
+			table.push({[k]: line[k] ? line[k].toString() : null});
+
 	}
 
 	return table;
@@ -71,32 +74,92 @@ function _listCreds(regex) {
 
 //region Entity management
 /**
+ *
+ * @param {Object}token
+ * @returns {*}
+ * @private
+ */
+const _getCreds = (token) => {
+
+	let cred = new Credential(new BeameStore());
+
+	return cred.createEntityWithRegistrationToken(token);
+
+};
+/**
  * Get credentials with Auth Token or for existing local Credential by fqdn
  * AuthToken(token) or Local Credential(fqdn) required
  * @public
  * @method Creds.getCreds
+ * @param {Object|null} [regToken]
  * @param {String|null} [token]
- * @param {String|null} [authSrvFqdn]
  * @param {String|null} [fqdn]
+ * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
  * @param {Function} callback
  */
-function getCreds(token, authSrvFqdn, fqdn, name, email, callback) {
 
-	if (!token && !fqdn) {
+function getCreds(regToken, token, authSrvFqdn, fqdn, name, email, callback) {
+
+	if (!token && !fqdn && !regToken) {
 		logger.fatal(`Auth Token or Fqdn required`);
 		return;
 	}
 
-	let cred      = new Credential(new BeameStore()),
-	    authToken = token ? CommonUtils.parse(token) : null,
-	    promise   = token ? cred.createEntityWithAuthServer(authToken, authSrvFqdn, name, email) : cred.createEntityWithLocalCreds(fqdn, name, email);
+	let promise,
+	    cred            = new Credential(new BeameStore()),
+	    parsedToken     = token ? CommonUtils.parse(token) : null,
+	    parsedAuthToken = regToken ? CommonUtils.parse(regToken) : null;
+
+	if (parsedAuthToken) {
+		promise = _getCreds(parsedAuthToken);
+	}
+	else if (parsedToken) {
+		promise = cred.createEntityWithAuthServer(parsedToken, authSrvFqdn, name, email);
+	}
+	else if (fqdn) {
+		promise = cred.createEntityWithLocalCreds(fqdn, name, email);
+	}
 
 	CommonUtils.promise2callback(promise, callback);
-
 }
 getCreds.toText = _lineToText;
+
+/**
+ * @param fqdn
+ * @param {String|null|undefined} [name]
+ * @param {String|null|undefined} [email]
+ * @param {String|null|undefined} [userId]
+ * @param {Number|null|undefined} [ttl]
+ * @param {String|null|undefined} [src]
+ * @param {String|null|undefined} [serviceName]
+ * @param {String|null|undefined} [serviceId]
+ * @param {String|null|undefined} [matchingFqdn]
+ * @param {Function} callback
+ */
+function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId, matchingFqdn, callback) {
+	if (!fqdn) {
+		logger.fatal(`Fqdn required`);
+		return;
+	}
+
+
+	function _get() {
+		return new Promise((resolve, reject) => {
+
+				let cred = new Credential(new BeameStore());
+
+				cred.createRegistrationToken({fqdn, name, email, userId, ttl, src, serviceName, serviceId, matchingFqdn}).then(resolve).catch(reject);
+			}
+		);
+	}
+
+	CommonUtils.promise2callback(_get(), callback);
+
+}
+getRegToken.toText = x => x;
+
 
 /**
  * @public
@@ -196,7 +259,7 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 		logger.fatal(`target fqdn required`);
 	}
 
-	if(typeof file == "number") {
+	if (typeof file == "number") {
 		// CLI arguments parser converts to number automatically.
 		// Reversing this conversion.
 		file = file.toString();
@@ -211,14 +274,14 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 	//noinspection JSDeprecatedSymbols
 	let creds = store.getCredential(fqdn);
 
-	if(!creds) {
+	if (!creds) {
 		callback(`Credentials for ${fqdn} not found`, null);
 		return;
 	}
 
 	let jsonCredentialObject = CommonUtils.stringify(creds, false);
 	try {
-		encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload)=> {
+		encrypt(jsonCredentialObject, targetFqdn, signingFqdn, (error, payload) => {
 			if (payload) {
 				let p = path.resolve(file);
 				fs.writeFileSync(p, CommonUtils.stringify(payload, false));
@@ -245,7 +308,7 @@ function importCredentials(file, callback) {
 		logger.fatal(`path to file for saving credentials required`);
 	}
 
-	if(typeof file == "number") {
+	if (typeof file == "number") {
 		// CLI arguments parser converts to number automatically.
 		// Reversing this conversion.
 		file = file.toString();
@@ -279,7 +342,7 @@ function importCredentials(file, callback) {
 
 
 		if (data.signedBy && data.signature) {
-			store.find(data.signedBy).then(signingCreds=> {
+			store.find(data.signedBy).then(signingCreds => {
 					let encryptedCredentials;
 
 					if (data.signature) {
@@ -297,7 +360,7 @@ function importCredentials(file, callback) {
 					_import(encryptedCredentials);
 
 				}
-			).catch(error=> {
+			).catch(error => {
 				callback(error, null);
 			});
 		}
@@ -336,14 +399,14 @@ function importLiveCredentials(fqdn) {
  */
 function encrypt(data, targetFqdn, signingFqdn, callback) {
 
-	if(typeof data != 'string') {
+	if (typeof data != 'string') {
 		throw new Error("encrypt(): data must be string");
 	}
 
 	function _encrypt() {
 		return new Promise((resolve, reject) => {
 				const store = new BeameStore();
-				store.find(targetFqdn).then(targetCredential=> {
+				store.find(targetFqdn).then(targetCredential => {
 					resolve(targetCredential.encrypt(targetFqdn, data, signingFqdn));
 				}).catch(reject);
 			}
@@ -416,7 +479,7 @@ function checkSignature(signedData, callback) {
 	function _checkSignature() {
 		return new Promise((resolve, reject) => {
 				const store = new BeameStore();
-				store.find(signedData.signedBy).then(cred=> {
+				store.find(signedData.signedBy).then(cred => {
 					resolve(cred.checkSignature(signedData));
 				}).catch(reject);
 			}
@@ -427,6 +490,6 @@ function checkSignature(signedData, callback) {
 
 }
 
-checkSignature.toText = x => x?'GOOD SIGNATURE':'BAD SIGNATURE';
+checkSignature.toText = x => x ? 'GOOD SIGNATURE' : 'BAD SIGNATURE';
 
 //endregion

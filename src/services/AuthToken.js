@@ -15,7 +15,7 @@ class AuthToken {
 	/**
 	 * @param {Object|String} data
 	 * @param {Credential}signingCreds
-	 * @param {Number} ttl => seconds
+	 * @param {Number|null|undefined} [ttl] => seconds
 	 * @returns {string | null}
 	 */
 	static create(data, signingCreds, ttl) {
@@ -26,9 +26,9 @@ class AuthToken {
 				return null;
 			}
 
-			const now   = Date.now();
+			const now = Date.now();
 
-			let data2sign = data ? (typeof data == "object" ? CommonUtils.stringify(data,false) : data) : null;
+			let data2sign = data ? (typeof data == "object" ? CommonUtils.stringify(data, false) : data) : null;
 
 			/** @type {SignedData} */
 			const token = {
@@ -57,45 +57,45 @@ class AuthToken {
 		/** @type {SignatureToken} */
 
 
-		return new Promise((resolve, reject) =>{
+		return new Promise((resolve, reject) => {
 			let authToken = CommonUtils.parse(token);
 
 			if (!authToken) {
 				logger.warn('Could not decode authToken JSON. authToken must be a valid JSON');
-				reject({message:'Could not decode authToken JSON. authToken must be a valid JSON'});
+				reject({message: 'Could not decode authToken JSON. authToken must be a valid JSON'});
 				return;
 			}
 
 			if (!authToken.signedData) {
 				logger.warn('authToken has no .signedData');
-				reject({message:'authToken has no .signedData'});
+				reject({message: 'authToken has no .signedData'});
 				return;
 			}
 			if (!authToken.signedBy) {
 				logger.warn('authToken has no .signedBy');
-				reject({message:'authToken has no .signedBy'});
+				reject({message: 'authToken has no .signedBy'});
 				return;
 			}
 			if (!authToken.signature) {
 				logger.warn('authToken has no .signature');
-				reject({message:'authToken has no .signature'});
+				reject({message: 'authToken has no .signature'});
 				return;
 			}
 
 			const store = new BeameStore();
 
-			store.find(authToken.signedBy).then(signerCreds=> {
+			store.find(authToken.signedBy).then(signerCreds => {
 				const signatureStatus = signerCreds.checkSignature(authToken);
 				if (!signatureStatus) {
 					logger.warn(`Bad signature`);
-					reject({message:`Bad signature`});
+					reject({message: `Bad signature`});
 					return;
 				}
 
 				let signedData = CommonUtils.parse(authToken.signedData);
 				if (!signedData) {
 					logger.warn('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
-					reject({message:'Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON'});
+					reject({message: 'Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON'});
 					return;
 				}
 
@@ -103,19 +103,17 @@ class AuthToken {
 
 				if (signedData.created_at > now + timeFuzz) {
 					logger.warn(`authToken.signedData.created_at is in future - invalid token or incorrect clock`);
-					reject({message:`authToken.signedData.created_at is in future - invalid token or incorrect clock`});
+					reject({message: `authToken.signedData.created_at is in future - invalid token or incorrect clock`});
 					return;
 				}
 
 				if (signedData.valid_till < now - timeFuzz) {
 					logger.warn(`authToken.signedData.valid_till is in the past - token expired`);
-					reject({message:`authToken.signedData.valid_till is in the past - token expired`});
+					reject({message: `authToken.signedData.valid_till is in the past - token expired`});
 					return;
 				}
 				resolve(authToken);
-			}).catch(error=> {
-				reject(error);
-			});
+			}).catch(reject);
 		});
 	}
 }

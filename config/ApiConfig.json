@@ -1,6 +1,7 @@
 {
     "Endpoints": {
-        "BaseUrl": "https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net"
+        "BaseUrl": "https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net",
+        "BaseDNSUrl":"https://lcram0sj9ox726l1.tl5h1ipgobrdqsj6.v1.p.beameio.net"
     },
     "RetryAttempts": 10,
     "Actions": {
@@ -14,6 +15,9 @@
             "UpdateEntity": {
                 "endpoint": "/api/v1/node/update"
             },
+            "UpdateEntityEdge": {
+                "endpoint": "/api/v1/node/update/edge"
+            },
             "GetMetadata": {
                 "endpoint": "/api/v1/node/get/meta"
             },
@@ -24,6 +28,14 @@
         "AuthServerApi": {
             "RegisterEntity": {
                     "endpoint": "/node/auth/register"
+            }
+        },
+        "DnsApi": {
+            "Set":{
+                "endpoint":"/v1/dns/host/"
+            },
+            "Get":{
+                "endpoint":"/v1/dns/host/"
             }
         }
     }

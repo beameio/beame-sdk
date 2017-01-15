@@ -84,6 +84,7 @@ class ProxyClient {
 		this._socketio = io.connect(this._edgeServerHostname + '/control', io_options);
 
 		this._socketio.on('connect', _.bind(function () {
+
 			if (this._connected) {
 				return;
 			}
@@ -103,6 +104,7 @@ class ProxyClient {
 		}, this));
 
 		this._socketio.on('create_connection', data => {
+
 			//noinspection JSUnresolvedVariable
 			this.createLocalServerConnection(data, this._options && this._options.onConnection);
 		});
@@ -142,6 +144,7 @@ class ProxyClient {
 		}, this));
 
 		this._socketio.on('disconnect', _.bind(function () {
+
 			this._connected = false;
 			_.each(this._clientSockets, function (socket) {
 				setTimeout(() => {
@@ -181,6 +184,7 @@ class ProxyClient {
 		});
 
 		client.on('error', error => {
+
 			logger.error(`Error talking to ${this._targetHost}:${this._targetPort} - ${error}`);
 
 			if (this._socketio) {

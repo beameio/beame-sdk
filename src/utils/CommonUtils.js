@@ -33,7 +33,7 @@ class CommonUtils {
 			return typeof obj == "object" ? obj : JSON.parse(obj);
 		}
 		catch (error) {
-			console.error(`Failed to parse data:`, error);
+			console.error(`CommonUtils::parse - failed to parse data:`, error);
 			return null;
 		}
 
@@ -119,6 +119,16 @@ class CommonUtils {
 			}
 		}
 		return ret;
+	}
+
+	static isResponseSuccess(statusCode){
+		return statusCode >= 200 && statusCode < 300;
+	}
+
+	//noinspection JSUnusedGlobalSymbols
+	static getSequelizeBinaryPath(){
+		const path = require('path');
+		return  path.join(path.dirname(path.dirname(require.resolve('sequelize'))), '.bin', 'sequelize');
 	}
 }
 

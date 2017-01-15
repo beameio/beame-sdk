@@ -3,13 +3,13 @@
 "use strict";
 
 const argv = require('minimist')(process.argv.slice(2));
-const _      = require('underscore');
+const _    = require('underscore');
 
-const BeameStore = require("../services/BeameStoreV2");
-const config = require('../../config/Config');
+const BeameStore  = require("../services/BeameStoreV2");
+const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameSDKCli;
 const BeameLogger = require('../utils/Logger');
-const logger = new BeameLogger(module_name);
+const logger      = new BeameLogger(module_name);
 
 let commands = {};
 ['creds', 'token', 'crypto', 'servers', 'system'].forEach(cmdName => {
@@ -45,12 +45,18 @@ const parametersSchema = {
 	'dataToSign':         {required: false},
 	'authSrvFqdn':        {required: false},
 	'authToken':          {required: true, base64: true},
+	'regToken':           {required: false, base64: true},
 	'token':              {required: false, base64: true},
 	'name':               {required: false},
 	'email':              {required: false},
 	'encryptedData':      {required: true, base64: true, json: true},
 	'signedData':         {required: true, base64: true, json: true},
-	'ttl':                {required: false, default:300}
+	'ttl':                {required: false, default: 300},
+	'src':                {required: false},
+	'serviceName':        {required: false},
+	'matchingFqdn':       {required: false},
+	'serviceId':          {required: false},
+	'userId':             {required: false}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -62,11 +68,11 @@ function InvalidArgv(message) {
 InvalidArgv.prototype = Error.prototype;
 
 function getParamsNames(fun) {
-	const names     = fun.toString().match(/^[\s(]*function[^(]*\(([^)]*)\)/)[1]
+	const names       = fun.toString().match(/^[\s(]*function[^(]*\(([^)]*)\)/)[1]
 		.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
 		.replace(/\s+/g, '').split(',');
-	let ret         = (names.length == 1 && !names[0] ? [] : names),
-	    useCallback = false;
+	let ret           = (names.length == 1 && !names[0] ? [] : names),
+	      useCallback = false;
 
 	ret             = ret.filter(paramName => {
 		if (paramName == 'callback') {
@@ -84,7 +90,7 @@ function getParamsNames(fun) {
 function main() {
 	let cmdName    = argv._[0],
 	    subCmdName = argv._[1],
-	    cmd = commands[cmdName];
+	    cmd        = commands[cmdName];
 
 	if (!cmd) {
 		logger.fatal("Command '" + cmdName + "' not found. Valid top-level commands are: " + Object.keys(commands));
@@ -99,41 +105,41 @@ function main() {
 	let paramsNames = getParamsNames(commands[cmdName][subCmdName]),
 	    args        = _.map(paramsNames, function (paramName) {
 
-		// Required parameter missing
-		if (parametersSchema[paramName].required && !_.has(argv, paramName)) {
-			logger.fatal("Command '" + cmdName + ' ' + subCmdName + "' - required argument '" + paramName + "' is missing.");
-		}
+		    // Required parameter missing
+		    if (parametersSchema[paramName].required && !_.has(argv, paramName)) {
+			    logger.fatal("Command '" + cmdName + ' ' + subCmdName + "' - required argument '" + paramName + "' is missing.");
+		    }
 
-		// Optional parameter missing
-		if (!parametersSchema[paramName].required && !_.has(argv, paramName)) {
-			if (parametersSchema[paramName].default) {
-				return parametersSchema[paramName].default;
-			}
-			return null;
-		}
+		    // Optional parameter missing
+		    if (!parametersSchema[paramName].required && !_.has(argv, paramName)) {
+			    if (parametersSchema[paramName].default) {
+				    return parametersSchema[paramName].default;
+			    }
+			    return null;
+		    }
 
-		// Parameter must be one of the specified values ("options")
-		if (parametersSchema[paramName].options) {
-			if (_.indexOf(parametersSchema[paramName].options, argv[paramName]) == -1) {
-				logger.fatal("Command '" + cmdName + ' ' + subCmdName + "' - argument '" + paramName + "' must be one of: " + parametersSchema[paramName].options.join(','));
-			}
-		}
+		    // Parameter must be one of the specified values ("options")
+		    if (parametersSchema[paramName].options) {
+			    if (_.indexOf(parametersSchema[paramName].options, argv[paramName]) == -1) {
+				    logger.fatal("Command '" + cmdName + ' ' + subCmdName + "' - argument '" + paramName + "' must be one of: " + parametersSchema[paramName].options.join(','));
+			    }
+		    }
 
-		let arg = argv[paramName];
+		    let arg = argv[paramName];
 
-		// Optionally decode base64-encoded argument.
-		// Do not decode what appears to be JSON.
-		if (parametersSchema[paramName].base64 && arg[0] != '{' && arg[0] != '"' && arg[0] != '[') {
-			arg = new Buffer(arg, 'base64').toString();
-		}
+		    // Optionally decode base64-encoded argument.
+		    // Do not decode what appears to be JSON.
+		    if (parametersSchema[paramName].base64 && arg[0] != '{' && arg[0] != '"' && arg[0] != '[') {
+			    arg = new Buffer(arg, 'base64').toString();
+		    }
 
-		if (parametersSchema[paramName].json) {
-			//noinspection ES6ModulesDependencies,NodeModulesDependencies
-			arg = JSON.parse(arg);
-		}
+		    if (parametersSchema[paramName].json) {
+			    //noinspection ES6ModulesDependencies,NodeModulesDependencies
+			    arg = JSON.parse(arg);
+		    }
 
-		return arg;
-	});
+		    return arg;
+	    });
 
 	/**
 	 *
@@ -143,7 +149,13 @@ function main() {
 	function commandResultsReady(error, output) {
 
 		if (error) {
-			logger.fatal(error.message, error.data, error.module)
+			if(typeof error == 'string') {
+				logger.fatal(error);
+			}
+			if(error instanceof Error) {
+				logger.error(error.stack);
+			}
+			logger.fatal(error.message, error.data, error.module);
 		}
 
 		if (output === undefined) {
@@ -239,7 +251,7 @@ if (argv._[0] == 'complete') {
 	if (argv._[1] == 'switch-value') {
 		let sw = argv._[2];
 		if (sw == 'fqdn') {
-			let store    = new BeameStore();
+			let store   = new BeameStore();
 			let results = store.list();
 			console.log(_.map(results, r => r.fqdn).join(' '));
 			process.exit(0);

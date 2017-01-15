@@ -1,12 +1,15 @@
 /**
  * Created by zenit1 on 25/09/2016.
  */
+"use strict";
+
+
 process.env.BEAME_LOG_LEVEL = "DEBUG";
 
-var chai   = require('chai');
-var assert = chai.assert;
+const chai   = require('chai');
+const assert = chai.assert;
 
-var options = {};
+const options = {};
 
 exports.options      = options;
 exports.chai         = chai;

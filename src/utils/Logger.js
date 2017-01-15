@@ -73,6 +73,7 @@ class BeameLogger {
 		if (module) {
 			this.module = module;
 		}
+
 		/** @member {LogLevel} **/
 		this.currentLogLevel = process.env.BEAME_LOG_LEVEL || LogLevel.Error;
 	}
@@ -84,17 +85,26 @@ class BeameLogger {
 	 * @returns {*|string|String}
 	 */
 	static formatError(error) {
+		if(error instanceof Error) {
+			return error.message;
+		}
 		let type = typeof error;
 		switch (type) {
 			case 'object':
-				let output = CommonUtils.stringify(error);
-				return _.isEmpty(output) ? error.toString() : output;
+				if(error instanceof Error){
+					return error.message || error.toString();
+				}
+
+				if(error.message){
+					return error.message;
+				}
+
+				return CommonUtils.isObjectEmpty(error) ? CommonUtils.stringify(error) : error.toString();
 			case 'array':
 				return error[0].toString();
 			default:
 				return error.toString();
 		}
-
 	}
 
 	/**
@@ -261,7 +271,11 @@ class BeameLogger {
 			module: module || this.module
 		};
 
-		this.printLogMessage(LogLevel.Error, log);
+		if(message instanceof Error) {
+			message.stack.split('\n').forEach(line => this.error(line, null, module));
+		} else {
+			this.printLogMessage(LogLevel.Error, log);
+		}
 	}
 
 	/**
