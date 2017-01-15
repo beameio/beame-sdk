@@ -80,39 +80,18 @@ function _listCreds(regex) {
  * @private
  */
 const _getCreds = (token) => {
-	let type = token.type || config.RequestType.RequestWithAuthServer;
+
 	let cred = new Credential(new BeameStore());
 
-	switch (type) {
-		case config.RequestType.RequestWithAuthServer:
-			return cred.createEntityWithAuthServer(token.authToken, token.authSrvFqdn, token.name, token.email);
-		case config.RequestType.RequestWithParentFqdn:
-			return cred.createEntityWithAuthToken(token.authToken, token.name, token.email);
-		case config.RequestType.RequestWithFqdn:
+	return cred.createEntityWithRegistrationToken(token);
 
-			let aut        = CommonUtils.parse(token.authToken),
-			    signedData = CommonUtils.parse(aut.signedData.data),
-			    payload    = {
-				    fqdn:        signedData.fqdn,
-				    parent_fqdn: aut.signedBy,
-				    sign:        token.authToken
-			    },
-			    metadata   = {
-				    name:  token.name,
-				    email: token.email
-			    };
-
-			return cred.requestCerts(payload, metadata);
-		default:
-			return Promise.reject(`Unknown request type`);
-	}
 };
 /**
  * Get credentials with Auth Token or for existing local Credential by fqdn
  * AuthToken(token) or Local Credential(fqdn) required
  * @public
  * @method Creds.getCreds
- * @param {Object|null} [authToken]
+ * @param {Object|null} [regToken]
  * @param {String|null} [token]
  * @param {String|null} [fqdn]
  * @param {String|null} [authSrvFqdn]
@@ -121,9 +100,9 @@ const _getCreds = (token) => {
  * @param {Function} callback
  */
 
-function getCreds(authToken, token, authSrvFqdn, fqdn, name, email, callback) {
+function getCreds(regToken, token, authSrvFqdn, fqdn, name, email, callback) {
 
-	if (!token && !fqdn && !authToken) {
+	if (!token && !fqdn && !regToken) {
 		logger.fatal(`Auth Token or Fqdn required`);
 		return;
 	}
@@ -131,7 +110,7 @@ function getCreds(authToken, token, authSrvFqdn, fqdn, name, email, callback) {
 	let promise,
 	    cred            = new Credential(new BeameStore()),
 	    parsedToken     = token ? CommonUtils.parse(token) : null,
-	    parsedAuthToken = authToken ? CommonUtils.parse(authToken) : null;
+	    parsedAuthToken = regToken ? CommonUtils.parse(regToken) : null;
 
 	if (parsedAuthToken) {
 		promise = _getCreds(parsedAuthToken);

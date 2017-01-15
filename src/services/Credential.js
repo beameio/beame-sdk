@@ -857,6 +857,34 @@ class Credential {
 
 	}
 
+	createEntityWithRegistrationToken(token){
+		let type = token.type || config.RequestType.RequestWithAuthServer;
+
+		switch (type) {
+			case config.RequestType.RequestWithAuthServer:
+				return this.createEntityWithAuthServer(token.authToken, token.authSrvFqdn, token.name, token.email);
+			case config.RequestType.RequestWithParentFqdn:
+				return this.createEntityWithAuthToken(token.authToken, token.name, token.email);
+			case config.RequestType.RequestWithFqdn:
+
+				let aut        = CommonUtils.parse(token.authToken),
+				    signedData = CommonUtils.parse(aut.signedData.data),
+				    payload    = {
+					    fqdn:        signedData.fqdn,
+					    parent_fqdn: aut.signedBy,
+					    sign:        token.authToken
+				    },
+				    metadata   = {
+					    name:  token.name,
+					    email: token.email
+				    };
+
+				return this.requestCerts(payload, metadata);
+			default:
+				return Promise.reject(`Unknown request type`);
+		}
+	}
+
 	/**
 	 * Create registration token for child of given fqdn
 	 * @param {RegistrationTokenOptionsToken} options
