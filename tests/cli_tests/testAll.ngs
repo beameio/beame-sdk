@@ -14,7 +14,7 @@ HOME = ENV.HOME
 
 BEAME_DIR = HOME / '.beame'
 BEAME_BIN = HOME / 'beame-sdk/src/cli/beame.js'
-BEAME_AUTH_FQDN = ENV.get('BEAME_AUTH_FQDN', 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net')
+BEAME_DEV_AUTH_FQDN = 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net'
 
 if Path(BEAME_DIR) {
 	throw Error("Beame directory exists ($BEAME_DIR). Will not run tests.")
@@ -56,13 +56,13 @@ F do_test(name:Str, f:Fun) {
 
 doc Copies Beame test requests signing credential into store for L0 entity creation
 F copy_to_store() {
-	$(cp -a "$HOME/$BEAME_AUTH_FQDN" "$HOME/.beame/v2/$BEAME_AUTH_FQDN")
+	$(cp -a "$HOME/$BEAME_DEV_AUTH_FQDN" "$HOME/.beame/v2/$BEAME_DEV_AUTH_FQDN")
 	'Copied'
 }
 
 doc Creates token needed for signing request for level 0 entity
 F create_token() {
-	global token = ``$BEAME_BIN token create --fqdn $BEAME_AUTH_FQDN --data NONE --format json``
+	global token = ``$BEAME_BIN token create --fqdn $BEAME_DEV_AUTH_FQDN --data NONE --format json``
 	assert(token is Str, "Token expected to be a string")
 	token
 }
@@ -137,7 +137,7 @@ do_test("Run without arguments", {
 	'beame.js creds list' not in out throws TestFail("Expected text not found")
 	"OK"
 })
-do_test("Copy $BEAME_AUTH_FQDN into store", copy_to_store)
+do_test("Copy $BEAME_DEV_AUTH_FQDN into store", copy_to_store)
 
 {
 	n_entities = 2
