@@ -192,7 +192,7 @@ class ProxyClient {
 				socketUtils.emitMessage(this._socketio, '_error', socketUtils.formatMessage(client.serverSideSocketId, null, error));
 				if (error.syscall == 'connect' && error.code == 'ECONNREFUSED') {
 					logger.error(`Error connecting to ${this._targetHost}:${this._targetPort} - ${error}. Closing socket.`);
-					socketUtils.emitMessage(this._socketio, 'disconnect_client', socketUtils.formatMessage(client.serverSideSocketId));
+					socketUtils.emitMessage(this._socketio, 'cut_client', socketUtils.formatMessage(client.serverSideSocketId));
 					// client.emit('close'); -- did not work
 					this.deleteSocket(serverSideSocketId);
 					client.destroy();
