@@ -638,7 +638,7 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+							this.orderCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 						}).catch(reject);
 
 					});
@@ -771,7 +771,7 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+					this.orderCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
@@ -846,7 +846,7 @@ class Credential {
 
 					payload.sign = authToken;
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+					this.orderCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 
 				};
 
@@ -1013,7 +1013,7 @@ class Credential {
 					    fqdn: fqdn,
 					    //TODO uncomment for hvca
 					    //  validity: 60 * 60 * 24 * 30,
-					    //  pub:      pubKeys
+					     // pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
@@ -1034,7 +1034,7 @@ class Credential {
 				const onEdgeServerSelected = edge => {
 					metadata.edge_fqdn = edge.endpoint;
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(resolve).catch(reject);
+					this.orderCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(resolve).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
@@ -1370,18 +1370,17 @@ class Credential {
 	}
 
 	/**
-	 * @private
 	 * @param payload
 	 * @param metadata
 	 * @returns {Promise}
 	 */
-	_requestCerts(payload, metadata) {
+	orderCerts(payload, metadata) {
 		return new Promise((resolve, reject) => {
 
 
 				let sign = CommonUtils.parse(payload.sign);
 
-				logger.debug("_requestCerts()", payload);
+				logger.debug("orderCerts()", payload);
 
 				if (!sign) {
 					reject('Invalid authorization token');
