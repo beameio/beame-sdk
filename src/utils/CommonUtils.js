@@ -131,7 +131,7 @@ class CommonUtils {
 	}
 	
 	//noinspection JSUnusedGlobalSymbols
-	static runSequilizeCmd(args,) {
+	static runSequilizeCmd(args) {
 		const os = require('os');
 		const execFile = require('child_process').execFile;
 		
