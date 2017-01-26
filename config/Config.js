@@ -76,6 +76,7 @@ const CertFileNames = {
 	"BACKUP_PRIVATE_KEY": "private_key_bk.pem",
 	"BACKUP_PUBLIC_KEY":  "public_key_bk.pem",
 	"X509":               "x509.pem",
+	"BEAME_CA":           "beame_ca.pem",
 	"CA":                 "ca.pem",
 	"CA_G2":              "ca_g2.pem",
 	"PKCS7":              "pkcs7.pem",
@@ -116,6 +117,7 @@ const MetadataProperties = {
 const CertResponseFields = {
 	"x509":  "x509",
 	"pkcs7": "pkcs7",
+	"beame_ca": "beame_ca",
 	"ca":    "ca",
 	"ca_g2": "ca_g2"
 };
