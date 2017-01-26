@@ -1012,8 +1012,8 @@ class Credential {
 					    csr:  csr,
 					    fqdn: fqdn,
 					    //TODO uncomment for hvca
-					    validity: 60 * 60 * 24 * 30,
-					    pub:      pubKeys
+					   // validity: 60 * 60 * 24 * 30,
+					    // pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
