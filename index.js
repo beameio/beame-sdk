@@ -12,6 +12,8 @@ module.exports = {
 	EC2AuthInfo:       require('./src/services/EC2AuthInfo'),
 	Logger:            require('./src/utils/Logger'),
 	ProvApi:           require('./src/services/ProvisionApi'),
-	ProxyClient:       require('./src/services/ProxyClient')
+	ProxyClient:       require('./src/services/ProxyClient'),
+	OpenSSlWrapper:    require('./src/utils/OpenSSLWrapper'),
+	DnsServices:       require('./src/services/DnsServices')
 };
 

@@ -166,6 +166,15 @@ class DataServices {
 							}
 						},
 						function (callback) {
+							//hvca save file
+							if (payload.hasOwnProperty(config.CertResponseFields.beame_ca) && payload[config.CertResponseFields.beame_ca].length) {
+								saveCert(config.CertResponseFields.beame_ca, config.CertFileNames.BEAME_CA, callback);
+							}
+							else{
+								callback(null);
+							}
+						},
+						function (callback) {
 
 							//hvca skip file
 							if (!payload.hasOwnProperty(config.CertResponseFields.pkcs7) || !payload[config.CertResponseFields.pkcs7].length) {

@@ -304,7 +304,7 @@ class Credential {
 	 * @ignore
 	 */
 	loadCredentialsObject() {
-		Object.keys(config.CertificateFiles).forEach(keyName => {
+		Object.keys(config.CertFileNames).forEach(keyName => {
 			try {
 				this[keyName] = this.beameStoreServices.readObject(config.CertFileNames[keyName]);
 			} catch (e) {
@@ -624,7 +624,7 @@ class Credential {
 					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 					    api      = new ProvisionApi();
 
-					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
+					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -688,7 +688,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("X509"));
+				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -1012,8 +1012,8 @@ class Credential {
 					    csr:  csr,
 					    fqdn: fqdn,
 					    //TODO uncomment for hvca
-					    //  validity: 60 * 60 * 24 * 30,
-					    //  pub:      pubKeys
+					   // validity: 60 * 60 * 24 * 30,
+					    // pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
@@ -1089,7 +1089,7 @@ class Credential {
 				const api     = new ProvisionApi(),
 				      apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {});
 
-				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.UpdatingMetadata, fqdn);
 
@@ -1134,7 +1134,7 @@ class Credential {
 				    },
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntity.endpoint, postData);
 
-				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error) => {
@@ -1168,7 +1168,7 @@ class Credential {
 					    },
 					    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntityEdge.endpoint, postData);
 
-					api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+					api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
 
 					//noinspection ES6ModulesDependencies,NodeModulesDependencies
 					api.runRestfulAPI(apiData, (error) => {
@@ -1208,7 +1208,7 @@ class Credential {
 				let apiData = ProvisionApi.getApiData(apiEntityActions.SubscribeRegistration.endpoint, {}),
 				    api     = new ProvisionApi();
 
-				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("X509"));
+				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error) => {
@@ -1370,7 +1370,6 @@ class Credential {
 	}
 
 	/**
-	 * @private
 	 * @param payload
 	 * @param metadata
 	 * @returns {Promise}
@@ -1381,7 +1380,7 @@ class Credential {
 
 				let sign = CommonUtils.parse(payload.sign);
 
-				logger.debug("_requestCerts()", payload);
+				logger.debug("orderCerts()", payload);
 
 				if (!sign) {
 					reject('Invalid authorization token');

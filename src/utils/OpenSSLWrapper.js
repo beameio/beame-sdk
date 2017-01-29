@@ -205,7 +205,7 @@ class OpenSSLWrapper {
 
 	createPKCS7Cert(dirPath) {
 		let action = "openssl",
-		    args   = ["crl2pkcs7", "-inform" , "PEM" , "-certfile", path.join(dirPath, config.CertFileNames.X509),"-certfile", path.join(dirPath, config.CertFileNames.CA_G2),"-certfile", path.join(dirPath, config.CertFileNames.CA), "-outform","PEM","-out",path.join(dirPath, config.CertFileNames.PKCS7),"-nocrl"];
+		    args   = ["crl2pkcs7", "-inform" , "PEM" , "-certfile", path.join(dirPath, config.CertFileNames.X509), "-certfile", path.join(dirPath, config.CertFileNames.BEAME_CA), "-certfile", path.join(dirPath, config.CertFileNames.CA_G2),"-certfile", path.join(dirPath, config.CertFileNames.CA), "-outform","PEM","-out",path.join(dirPath, config.CertFileNames.PKCS7),"-nocrl"];
 
 		return new Promise((resolve, reject) => {
 				try {
