@@ -983,20 +983,17 @@ class Credential {
 
 	/**
 	 * @ignore
-	 * @param {String} csr
 	 * @param {SignatureToken} authToken
 	 * @param {Object} pubKeys
 	 */
-	getCert(csr, authToken, pubKeys) {
+	getCert(authToken, pubKeys) {
 		let fqdn = this.fqdn;
 
 
 		return new Promise((resolve, reject) => {
 				let postData = {
-					    csr:  csr,
 					    fqdn: fqdn,
-					    //TODO uncomment for hvca
-					    validity: 60 * 60 * 24 * 30 * 2,
+					    validity: config.defaultValidityPeriod,
 					    pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
@@ -1392,7 +1389,7 @@ class Credential {
 									signature
 								};
 
-								cred.getCert(csr, sign, pubKeys).then(() => {
+								cred.getCert(sign, pubKeys).then(() => {
 									//TODO wait for tests
 									// metadata.fqdn        = payload.fqdn;
 									// metadata.parent_fqdn = payload.parent_fqdn;
