@@ -30,7 +30,7 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 	 * @param {String} msg
 	 * @private
 	 */
-	const __onError = (msg) => {
+	const _onError = (msg) => {
 		if (errorCallback) {
 			errorCallback(msg);
 		}
@@ -43,13 +43,13 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 	let cred = beamestore.getCredential(fqdn);
 
 	if (!cred) {
-		return __onError(`Could not find certificate for ${fqdn}`);
+		return _onError(`Could not find certificate for ${fqdn}`);
 	}
 
 	let edge_fqdn = cred.getMetadataKey('EDGE_FQDN');
 
 	if (!edge_fqdn) {
-		return __onError('Edge server hostname required');
+		return _onError('Edge server hostname required');
 	}
 
 	let certs = null;
@@ -58,7 +58,7 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 		certs = cred.getHttpsServerOptions();
 	}
 	catch (error) {
-		return __onError(error)
+		return _onError(error)
 	}
 
 	let serverOptions = Object.assign({}, options || {}, certs),

@@ -213,7 +213,7 @@ class Credential {
 				this.metadata.fqdn      = certData.commonName;
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = certData.commonName;
-				this.beameStoreServices.writeObject(config.CertificateFiles.X509, x509);
+				this.beameStoreServices.writeObject(config.CertFileNames.X509, x509);
 			}
 		});
 		pem.getPublicKey(x509, (err, publicKey) => {
@@ -288,7 +288,7 @@ class Credential {
 			return;
 		}
 
-		Object.keys(config.CertificateFiles).forEach(keyName => {
+		Object.keys(config.CertFileNames).forEach(keyName => {
 			this[keyName] && this.beameStoreServices.writeObject(config.CertFileNames[keyName], this[keyName]);
 		});
 
@@ -1012,8 +1012,8 @@ class Credential {
 					    csr:  csr,
 					    fqdn: fqdn,
 					    //TODO uncomment for hvca
-					   // validity: 60 * 60 * 24 * 30,
-					    // pub:      pubKeys
+					    validity: 60 * 60 * 24 * 30 * 2,
+					    pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
@@ -1229,16 +1229,16 @@ class Credential {
 	 */
 	getHttpsServerOptions() {
 		let pk  = this.getKey("PRIVATE_KEY"),
-		    p7b = this.getKey("P7B"),
-		    ca  = this.getKey("CA");
+		    p7b = this.getKey("P7B");
+		    //ca  = this.getKey("CA");
 
-		if (!pk || !p7b || !ca) {
+		if (!pk || !p7b) {
 			throw new Error(`Credential#getHttpsServerOptions: fqdn ${this.fqdn} does not have required fields for running HTTPS server using this credential`);
 		}
 		return {
 			key:  pk,
-			cert: p7b,
-			ca:   ca
+			cert: p7b
+			//ca:   ca
 		};
 	}
 
@@ -1450,36 +1450,6 @@ class Credential {
 
 						async.parallel(
 							[
-								function (callback) {
-
-									const saveP7B = () => {
-										OpenSSlWrapper.createP7BCert(dirPath).then(p7b => {
-											directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.P7B), p7b, (error, data) => {
-												if (!error) {
-													callback(null, data)
-												}
-												else {
-													callback(error, null)
-												}
-											})
-										}).catch(function (error) {
-											callback(error, null);
-										});
-									};
-
-									//old api flow
-									if (DirectoryServices.doesPathExists(beameUtils.makePath(dirPath, config.CertFileNames.PKCS7))) {
-										saveP7B();
-									}
-									else {
-										//hvca flow
-										OpenSSlWrapper.createPKCS7Cert(dirPath).then(saveP7B).catch(error => {
-											callback(error, null);
-										});
-									}
-
-
-								},
 								function (callback) {
 
 									OpenSSlWrapper.createPfxCert(dirPath).then(pwd => {

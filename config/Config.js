@@ -76,29 +76,16 @@ const CertFileNames = {
 	"BACKUP_PRIVATE_KEY": "private_key_bk.pem",
 	"BACKUP_PUBLIC_KEY":  "public_key_bk.pem",
 	"X509":               "x509.pem",
-	"BEAME_CA":           "beame_ca.pem",
-	"CA":                 "ca.pem",
-	"CA_G2":              "ca_g2.pem",
-	"PKCS7":              "pkcs7.pem",
 	"P7B":                "p7b.cer",
 	"PKCS12":             "cert.pfx",
 	"PWD":                "pwd.txt"
+	// "BEAME_CA":           "beame_ca.pem",
+	// "CA":                 "ca.pem",
+	// "CA_G2":              "ca_g2.pem",
+	//"PKCS7":              "pkcs7.pem",
+	
 };
 
-/**
- * Certificate file names
- *  @enum {string}
- */
-const CertificateFiles = {
-	"PRIVATE_KEY": "private_key.pem",
-	"X509":        "x509.pem",
-	"CA":          "ca.pem",
-	"CA_G2":       "ca_g2.pem",
-	"PKCS7":       "pkcs7.pem",
-	"P7B":         "p7b.cer",
-	"PKCS12":      "cert.pfx",
-	"PWD":         "pwd.txt"
-};
 
 const MetadataProperties = {
 	LEVEL:       "level",
@@ -116,10 +103,11 @@ const MetadataProperties = {
  */
 const CertResponseFields = {
 	"x509":  "x509",
-	"pkcs7": "pkcs7",
-	"beame_ca": "beame_ca",
-	"ca":    "ca",
-	"ca_g2": "ca_g2"
+	"p7b": "p7b",
+	"ca":    "ca"
+	//"pkcs7": "pkcs7",
+	// ,"beame_ca": "beame_ca"
+	// ,"ca_g2": "ca_g2"
 };
 
 
@@ -199,7 +187,6 @@ module.exports = {
 	metadataFileName,
 	s3MetadataFileName,
 	CertFileNames,
-	CertificateFiles,
 	CertResponseFields,
 	AppModules,
 	MessageCodes,
