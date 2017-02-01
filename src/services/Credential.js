@@ -978,22 +978,6 @@ class Credential {
 				OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
 			}).catch(reject);
 
-
-			// OpenSSlWrapper.createPrivateKey().then(pk => {
-			// 	DirectoryServices.saveFile(dirPath, pkFileName, pk, error => {
-			// 		if (!error) {
-			// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
-			// 			OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
-			// 		}
-			// 		else {
-			// 			errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
-			// 			reject(errMsg);
-			// 		}
-			// 	})
-			// }).catch(function (error) {
-			// 	reject(error);
-			// });
-
 		});
 	}
 
@@ -1397,7 +1381,7 @@ class Credential {
 
 						let dirPath = cred.getMetadataKey("path");
 
-						cred.createCSR(cred, dirPath).then(csr => {
+						cred._createInitialKeyPairs(dirPath).then(csr => {
 							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
 
 							OpenSSlWrapper.getPublicKeySignature(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY).then(signature => {
