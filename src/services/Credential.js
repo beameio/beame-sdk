@@ -1264,7 +1264,6 @@ class Credential {
 			.then(_updateEntityMeta.bind(this));
 	}
 
-
 	_syncMetadataOnCertReceived(fqdn) {
 		return new Promise((resolve, reject) => {
 				this.store.find(fqdn, false).then(cred => {
