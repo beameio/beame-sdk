@@ -23,6 +23,12 @@
             },
             "SubscribeRegistration": {
                 "endpoint": "/api/v1/node/subscribe/registration"
+            },
+            "CertRevoke": {
+                "endpoint": "/api/v1/node/cert/revoke"
+            },
+            "CertRenew": {
+                "endpoint": "/api/v1/node/cert/renew"
             }
         },
         "AuthServerApi": {
