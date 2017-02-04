@@ -367,6 +367,19 @@ class ProvApiService {
 		postToProvisionApi(url, options, "custom_post", retries || provisionSettings.RetryAttempts, 1000, callback);
 	}
 
+	//noinspection JSUnusedGlobalSymbols
+	makeGetRequest(url, data, callback, authToken, retries) {
+		let options     = _.extend(this.options || {}, {"form": data});
+		options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+
+		if (authToken) {
+			options.headers = {
+				"X-BeameAuthToken": authToken
+			};
+		}
+		getFromProvisionApi(url, options, "custom_get", retries || provisionSettings.RetryAttempts, 1000, callback);
+	}
+
 	static getRequest(url, callback) {
 		let options = ProvApiService.setUserAgent({});
 
