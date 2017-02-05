@@ -38,6 +38,8 @@ const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "am53rz8o6cjsm0xm.
 const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
 const beameForceEdgeIP   = process.env.BEAME_FORCE_EDGE_IP || 0;
 
+const defaultValidityPeriod = process.env.BEAME_CERT_VALIDITY_PERIOD || 60 * 60 * 24 * 30 * 2;
+
 /** @const {String} **/
 const metadataFileName = "metadata.json";
 
@@ -76,29 +78,16 @@ const CertFileNames = {
 	"BACKUP_PRIVATE_KEY": "private_key_bk.pem",
 	"BACKUP_PUBLIC_KEY":  "public_key_bk.pem",
 	"X509":               "x509.pem",
-	"BEAME_CA":           "beame_ca.pem",
-	"CA":                 "ca.pem",
-	"CA_G2":              "ca_g2.pem",
-	"PKCS7":              "pkcs7.pem",
 	"P7B":                "p7b.cer",
 	"PKCS12":             "cert.pfx",
 	"PWD":                "pwd.txt"
+	// "BEAME_CA":           "beame_ca.pem",
+	// "CA":                 "ca.pem",
+	// "CA_G2":              "ca_g2.pem",
+	//"PKCS7":              "pkcs7.pem",
+
 };
 
-/**
- * Certificate file names
- *  @enum {string}
- */
-const CertificateFiles = {
-	"PRIVATE_KEY": "private_key.pem",
-	"X509":        "x509.pem",
-	"CA":          "ca.pem",
-	"CA_G2":       "ca_g2.pem",
-	"PKCS7":       "pkcs7.pem",
-	"P7B":         "p7b.cer",
-	"PKCS12":      "cert.pfx",
-	"PWD":         "pwd.txt"
-};
 
 const MetadataProperties = {
 	LEVEL:       "level",
@@ -116,10 +105,11 @@ const MetadataProperties = {
  */
 const CertResponseFields = {
 	"x509":  "x509",
-	"pkcs7": "pkcs7",
-	"beame_ca": "beame_ca",
-	"ca":    "ca",
-	"ca_g2": "ca_g2"
+	"p7b": "p7b",
+	"ca":    "ca"
+	//"pkcs7": "pkcs7",
+	// ,"beame_ca": "beame_ca"
+	// ,"ca_g2": "ca_g2"
 };
 
 
@@ -199,7 +189,6 @@ module.exports = {
 	metadataFileName,
 	s3MetadataFileName,
 	CertFileNames,
-	CertificateFiles,
 	CertResponseFields,
 	AppModules,
 	MessageCodes,
@@ -215,5 +204,6 @@ module.exports = {
 	beameForceEdgeIP,
 	RegistrationSource,
 	RequestType,
-	ApprovedZones
+	ApprovedZones,
+	defaultValidityPeriod
 };

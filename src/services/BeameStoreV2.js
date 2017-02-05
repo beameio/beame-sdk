@@ -356,4 +356,5 @@ class BeameStoreV2 {
 
 }
 
+
 module.exports = BeameStoreV2;

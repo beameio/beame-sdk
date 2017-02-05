@@ -154,38 +154,14 @@ class DataServices {
 							saveCert(config.CertResponseFields.x509, config.CertFileNames.X509, callback);
 						},
 						function (callback) {
-							saveCert(config.CertResponseFields.ca, config.CertFileNames.CA, callback);
-						},
-						function (callback) {
-							//hvca save file
-							if (payload.hasOwnProperty(config.CertResponseFields.ca_g2) && payload[config.CertResponseFields.ca_g2].length) {
-								saveCert(config.CertResponseFields.ca_g2, config.CertFileNames.CA_G2, callback);
-							}
-							else{
-								callback(null);
-							}
-						},
-						function (callback) {
-							//hvca save file
-							if (payload.hasOwnProperty(config.CertResponseFields.beame_ca) && payload[config.CertResponseFields.beame_ca].length) {
-								saveCert(config.CertResponseFields.beame_ca, config.CertFileNames.BEAME_CA, callback);
-							}
-							else{
-								callback(null);
-							}
-						},
-						function (callback) {
-
-							//hvca skip file
-							if (!payload.hasOwnProperty(config.CertResponseFields.pkcs7) || !payload[config.CertResponseFields.pkcs7].length) {
+							
+							if (!payload.hasOwnProperty(config.CertResponseFields.p7b) || !payload[config.CertResponseFields.p7b].length) {
 								callback(null);
 							}
 							else{
-								saveCert(config.CertResponseFields.pkcs7, config.CertFileNames.PKCS7, callback);
+								saveCert(config.CertResponseFields.p7b, config.CertFileNames.P7B, callback);
 							}
-
 						}
-
 					],
 					function (error) {
 						if (error) {
@@ -198,8 +174,6 @@ class DataServices {
 				);
 			}
 		);
-
-
 	}
 
 	/**

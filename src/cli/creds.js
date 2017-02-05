@@ -29,7 +29,9 @@ module.exports = {
 	encrypt,
 	decrypt,
 	sign,
-	checkSignature
+	checkSignature,
+	revokeCert,
+	renewCert
 };
 
 
@@ -175,6 +177,52 @@ function updateMetadata(fqdn, name, email, callback) {
 	CommonUtils.promise2callback(cred.updateMetadata(fqdn, name, email), callback);
 }
 updateMetadata.toText = _lineToText;
+
+/**
+ * @public
+ * @method Creds.revokeCert
+ * @param {String} signerFqdn
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
+function revokeCert(signerFqdn,fqdn, callback) {
+	let cred = new Credential(new BeameStore());
+
+	CommonUtils.promise2callback(cred.revokeCert(signerFqdn,fqdn), callback);
+}
+revokeCert.toText = _lineToText;
+
+/**
+ * @public
+ * @method Creds.revokeCert
+ * @param {String} signerAuthToken
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
+function renewCert(signerAuthToken,fqdn, callback) {
+
+	if(!signerAuthToken && !fqdn){
+		throw new Error(`signerAuthToken or fqdn required`);
+	}
+
+	let authToken;
+
+	if(signerAuthToken){
+		let parsed = CommonUtils.parse(signerAuthToken,false);
+
+		if(typeof parsed == "object"){
+			authToken = parse;
+		}
+		else{
+			authToken = CommonUtils.parse(parsed,false);
+		}
+	}
+
+	let cred = new Credential(new BeameStore());
+
+	CommonUtils.promise2callback(cred.renewCert(authToken,fqdn), callback);
+}
+renewCert.toText = _lineToText;
 //endregion
 
 //region list/show/shred functions

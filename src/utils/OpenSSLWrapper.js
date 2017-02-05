@@ -228,7 +228,8 @@ class OpenSSLWrapper {
 	createPfxCert(dirPath) {
 		let pwd    = CommonUtils.randomPassword(),
 		    action = "openssl",
-		    args   = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.X509), "-certfile", path.join(dirPath, config.CertFileNames.CA), "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath, config.CertFileNames.PKCS12)];
+		    args   = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.P7B),  "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath, config.CertFileNames.PKCS12)];
+			//"-certfile", path.join(dirPath, config.CertFileNames.CA),
 
 		return new Promise((resolve, reject) => {
 				try {
