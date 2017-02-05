@@ -4,16 +4,16 @@
 "use strict";
 
 class CommonUtils {
-	
+
 	static timeStamp() {
 		function pad(n) {
 			return n < 10 ? "0" + n : n;
 		}
-		
+
 		let d = new Date(),
 			dash = "-",
 			colon = ":";
-		
+
 		return d.getFullYear() + dash +
 			pad(d.getMonth() + 1) + dash +
 			pad(d.getDate()) + " " +
@@ -21,12 +21,29 @@ class CommonUtils {
 			pad(d.getMinutes()) + colon +
 			pad(d.getSeconds());
 	}
-	
+
+
+	//noinspection JSUnusedGlobalSymbols
+	static timeStampShort() {
+		function pad(n) {
+			return n < 10 ? "0" + n : n;
+		}
+
+		let d = new Date();
+
+		return d.getFullYear() +
+			pad(d.getMonth() + 1)  +
+			pad(d.getDate())  +
+			pad(d.getHours()) +
+			pad(d.getMinutes()) +
+			pad(d.getSeconds());
+	}
+
 	static stringify(obj, format) {
 		//noinspection NodeModulesDependencies,ES6ModulesDependencies
 		return format ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
 	}
-	
+
 	static parse(obj) {
 		try {
 			//noinspection NodeModulesDependencies,ES6ModulesDependencies
@@ -36,9 +53,9 @@ class CommonUtils {
 			console.error(`CommonUtils::parse - failed to parse data:`, error);
 			return null;
 		}
-		
+
 	}
-	
+
 	static randomPassword(length) {
 		let len = length || 16;
 		const chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
@@ -47,14 +64,14 @@ class CommonUtils {
 			let i = Math.floor(Math.random() * chars.length);
 			pass += chars.charAt(i);
 		}
-		
+
 		return pass;
 	}
-	
+
 	//noinspection JSUnusedGlobalSymbols
 	static randomBytes(len) {
 		const crypto = require('crypto');
-		
+
 		crypto.randomBytes(len || 256, (error, buf) => {
 				if (error) {
 					return null;
@@ -62,9 +79,9 @@ class CommonUtils {
 				return buf.toString('hex');
 			}
 		);
-		
+
 	}
-	
+
 	/**
 	 *
 	 * @param {number|null} [upper]
@@ -73,7 +90,7 @@ class CommonUtils {
 	static randomTimeout(upper) {
 		return Math.floor((Math.random() * (upper || 10)) + 1) * 1000 * Math.random()
 	}
-	
+
 	/**
 	 *
 	 * @param data
@@ -85,7 +102,7 @@ class CommonUtils {
 		let str = CommonUtils.isObject(data) ? CommonUtils.stringify(data, false) : data;
 		return require('crypto').createHash(alg || 'sha256').update(str).digest(dig || 'hex');
 	}
-	
+
 	//noinspection JSUnusedGlobalSymbols
 	/**
 	 * @param {Object} obj
@@ -94,11 +111,11 @@ class CommonUtils {
 	static isObjectEmpty(obj) {
 		return Object.keys(obj).length === 0;
 	}
-	
+
 	static isObject(obj) {
 		return typeof obj === 'object';
 	}
-	
+
 	static promise2callback(promise, callback) {
 		if (!callback) {
 			return;
@@ -107,7 +124,7 @@ class CommonUtils {
 			.then(data => callback(null, data))
 			.catch(error => callback(error, null));
 	}
-	
+
 	//noinspection JSUnusedGlobalSymbols
 	static filterHash(obj, predicate) {
 		let ret = {};
@@ -120,28 +137,28 @@ class CommonUtils {
 		}
 		return ret;
 	}
-	
+
 	static isResponseSuccess(statusCode) {
 		return statusCode >= 200 && statusCode < 300;
 	}
-	
+
 	static getSequelizeBinaryPath() {
 		const path = require('path');
 		return path.join(path.dirname(path.dirname(require.resolve('sequelize'))), '.bin', 'sequelize');
 	}
-	
+
 	//noinspection JSUnusedGlobalSymbols
 	static runSequilizeCmd(args) {
 		const os = require('os');
 		const execFile = require('child_process').execFile;
-		
+
 		return new Promise((resolve, reject) => {
 			if (os.platform() == 'win32') {
-				
+
 				let cmdArgs = ["/c", this.getSequelizeBinaryPath()],
 					allArgs = cmdArgs.concat(args);
-				
-				
+
+
 				execFile('cmd', allArgs, (error) => {
 					if (error) {
 						reject(error);
@@ -151,7 +168,7 @@ class CommonUtils {
 				});
 			}
 			else {
-				
+
 				execFile(this.getSequelizeBinaryPath(), args, (error) => {
 					if (error) {
 						reject(error);
