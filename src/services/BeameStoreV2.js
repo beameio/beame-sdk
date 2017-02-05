@@ -358,10 +358,5 @@ class BeameStoreV2 {
 
 }
 
-//noinspection JSDeprecatedSymbols
-BeameStoreV2.prototype.getCredential = util.deprecate(
-	BeameStoreV2.prototype.getCredential,
-	'BeameStoreV2#getCredential is deprecated. Use BeameStoreV2#find instead. Use --trace-deprecation NodeJS flag for trace.'
-);
 
 module.exports = BeameStoreV2;
