@@ -648,6 +648,59 @@ class Credential {
 			}
 		);
 	}
+	
+	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn) {
+		return new Promise((resolve, reject) => {
+				if (!parent_fqdn) {
+					reject('Parent Fqdn required');
+					return;
+				}
+				//noinspection JSDeprecatedSymbols
+				let parentCred = this.store.getCredential(parent_fqdn);
+
+				if (!parentCred) {
+					reject(`Parent credential ${parent_fqdn} not found`);
+					return;
+				}
+
+				let metadata, edge_fqdn;
+
+				const onEdgeServerSelected = edge => {
+					edge_fqdn = edge.endpoint;
+					metadata  = {
+						parent_fqdn,
+						custom_fqdn : custom_fqdn,
+						edge_fqdn
+					};
+
+					let postData = Credential.formatRegisterPostData(metadata),
+					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+					    api      = new ProvisionApi();
+
+					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+
+					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+					//noinspection ES6ModulesDependencies,NodeModulesDependencies
+					api.runRestfulAPI(apiData, (error, payload) => {
+						if (error) {
+							reject(error);
+							return;
+						}
+						//set signature to consistent call of new credentials
+						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
+							payload.sign = authToken;
+
+							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+						}).catch(reject);
+
+					});
+				};
+
+				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+			}
+		);
+	}
 
 	/**
 	 * Create entity service with local credentials
@@ -1557,7 +1610,9 @@ class Credential {
 			edge_fqdn:     metadata.edge_fqdn,
 			service_name:  metadata.serviceName,
 			service_id:    metadata.serviceId,
-			matching_fqdn: metadata.matchingFqdn
+			matching_fqdn: metadata.matchingFqdn,
+			custom_fqdn: metadata.custom_fqdn
+			
 		};
 	}
 
