@@ -648,8 +648,8 @@ class Credential {
 			}
 		);
 	}
-	
-	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn) {
+
+	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn,name, email) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -669,6 +669,8 @@ class Credential {
 					edge_fqdn = edge.endpoint;
 					metadata  = {
 						parent_fqdn,
+						name,
+						email,
 						custom_fqdn : custom_fqdn,
 						edge_fqdn
 					};
@@ -1612,7 +1614,7 @@ class Credential {
 			service_id:    metadata.serviceId,
 			matching_fqdn: metadata.matchingFqdn,
 			custom_fqdn: metadata.custom_fqdn
-			
+
 		};
 	}
 
