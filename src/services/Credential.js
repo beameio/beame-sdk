@@ -1003,7 +1003,8 @@ class Credential {
 						    serviceId:     options.serviceId,
 						    matchingFqdn:  options.matchingFqdn,
 						    type:          config.RequestType.RequestWithFqdn,
-						    imageRequired: options.imageRequired
+						    imageRequired: options.imageRequired,
+						    gwFqdn:        options.gwFqdn
 					    },
 					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 
