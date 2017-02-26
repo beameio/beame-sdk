@@ -36,6 +36,8 @@
  *  @property {String|null|undefined} [serviceName]
  *  @property {String|null|undefined} [serviceId]
  *  @property {String|null|undefined} [matchingFqdn]
+ *  @property {String|null|undefined} [gwFqdn]
+ *  @property {Boolean|null|undefined} [imageRequired]
  */
 
 /**
@@ -215,15 +217,25 @@ class Credential {
 				this.fqdn               = certData.commonName;
 				this.beameStoreServices.writeObject(config.CertFileNames.X509, x509);
 			}
+			else {
+				throw Error(err);
+			}
+
 		});
 		pem.getPublicKey(x509, (err, publicKey) => {
-			this.publicKeyStr     = publicKey.publicKey;
-			this.publicKeyNodeRsa = new NodeRsa();
-			try {
-				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
-			} catch (e) {
-				console.log(`Error could not import ${this.publicKeyStr}`);
+			if (!err) {
+				this.publicKeyStr     = publicKey.publicKey;
+				this.publicKeyNodeRsa = new NodeRsa();
+				try {
+					this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
+				} catch (e) {
+					console.log(`Error could not import ${this.publicKeyStr}`);
+				}
 			}
+			else {
+				throw Error(err);
+			}
+
 		});
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
@@ -649,7 +661,7 @@ class Credential {
 		);
 	}
 
-	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn,name, email) {
+	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, name, email) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -671,7 +683,7 @@ class Credential {
 						parent_fqdn,
 						name,
 						email,
-						custom_fqdn : custom_fqdn,
+						custom_fqdn: custom_fqdn,
 						edge_fqdn
 					};
 
@@ -1018,6 +1030,7 @@ class Credential {
 	//endregion
 
 	//region certs
+	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *  @ignore
 	 * @returns {Promise.<String>}
@@ -1614,7 +1627,7 @@ class Credential {
 			service_name:  metadata.serviceName,
 			service_id:    metadata.serviceId,
 			matching_fqdn: metadata.matchingFqdn,
-			custom_fqdn: metadata.custom_fqdn
+			custom_fqdn:   metadata.custom_fqdn
 
 		};
 	}
