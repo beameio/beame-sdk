@@ -38,7 +38,7 @@ const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "n6ge8i9q4b4b5vb6.
 const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
 const beameForceEdgeIP   = process.env.BEAME_FORCE_EDGE_IP || 0;
 
-const defaultValidityPeriod = process.env.BEAME_CERT_VALIDITY_PERIOD || 60 * 60 * 24 * 30 * 2;
+const defaultValidityPeriod = process.env.BEAME_CERT_VALIDITY_PERIOD || 60 * 60 * 24 * 365;
 
 /** @const {String} **/
 const metadataFileName = "metadata.json";
