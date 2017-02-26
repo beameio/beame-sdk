@@ -220,7 +220,11 @@ function renewCert(signerAuthToken,fqdn, callback) {
 
 	let cred = new Credential(new BeameStore());
 
-	CommonUtils.promise2callback(cred.renewCert(authToken,fqdn), callback);
+	function returnOK() {
+		return Promise.resolve({status: 'ok'});
+	}
+
+	CommonUtils.promise2callback(cred.renewCert(authToken,fqdn).then(returnOK), callback);
 }
 renewCert.toText = _lineToText;
 //endregion
