@@ -118,11 +118,11 @@ module.exports = {
 	/**
 	 *
 	 * @param {String|null} [loadBalancerEndpoint]
-	 * @param {Number} retries
-	 * @param {Number} sleep
+	 * @param {Number} [retries]
+	 * @param {Number} [sleep]
 	 * @param {Function} callback
 	 */
-	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback=nop) {
+	selectBestProxy: function (loadBalancerEndpoint, retries, sleep, callback) {
 		if (!loadBalancerEndpoint) {
 			loadBalancerEndpoint = config.loadBalancerURL;
 		}

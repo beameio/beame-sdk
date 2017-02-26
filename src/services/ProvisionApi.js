@@ -351,9 +351,10 @@ class ProvApiService {
 	 * @param {Function} callback
 	 * @param {String|null} [authToken]
 	 * @param {Number|null} [retries]
+	 * @param {Object|null} [inOptions]
 	 */
-	postRequest(url, postData, callback, authToken, retries) {
-		let options     = _.extend(this.options || {}, {"form": postData});
+	postRequest(url, postData, callback, authToken, retries, inOptions) {
+		let options     = _.extend(this.options || inOptions || {}, {"form": postData});
 		options.headers = {'Content-Type': 'application/x-www-form-urlencoded'};
 
 		if (authToken) {

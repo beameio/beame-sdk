@@ -1,0 +1,20 @@
+#!/usr/bin/env ngs
+
+BEAME_BIN = '../../src/cli/beame.js'
+entity_name_pfx = "sdk-test-${time()}-${pid()}"
+
+F create_entity_under_fqdn(fqdn, idx) {
+	entity = ``$BEAME_BIN creds getCreds --name "${entity_name_pfx}-${idx}" --email "${entity_name_pfx}-${idx}@example.com" --fqdn $fqdn --format json``
+	entity.assert_hash_keys(%[parent_fqdn level email name], "Entity hash keys")
+	echo("New entity: $entity")
+	entity.fqdn
+}
+
+F main(start_fqdn:Str, n:Int) {
+	fqdn = start_fqdn
+	for(i;n) {
+		test("Iteration [${i+1}/$n] [fqdn $fqdn]") with {
+			fqdn = create_entity_under_fqdn(fqdn, i)
+		}
+	}
+}

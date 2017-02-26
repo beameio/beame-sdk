@@ -36,6 +36,8 @@
  *  @property {String|null|undefined} [serviceName]
  *  @property {String|null|undefined} [serviceId]
  *  @property {String|null|undefined} [matchingFqdn]
+ *  @property {String|null|undefined} [gwFqdn]
+ *  @property {Boolean|null|undefined} [imageRequired]
  */
 
 /**
@@ -215,15 +217,25 @@ class Credential {
 				this.fqdn               = certData.commonName;
 				this.beameStoreServices.writeObject(config.CertFileNames.X509, x509);
 			}
+			else {
+				throw Error(err);
+			}
+
 		});
 		pem.getPublicKey(x509, (err, publicKey) => {
-			this.publicKeyStr     = publicKey.publicKey;
-			this.publicKeyNodeRsa = new NodeRsa();
-			try {
-				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
-			} catch (e) {
-				console.log(`Error could not import ${this.publicKeyStr}`);
+			if (!err) {
+				this.publicKeyStr     = publicKey.publicKey;
+				this.publicKeyNodeRsa = new NodeRsa();
+				try {
+					this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
+				} catch (e) {
+					console.log(`Error could not import ${this.publicKeyStr}`);
+				}
 			}
+			else {
+				throw Error(err);
+			}
+
 		});
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
@@ -649,6 +661,61 @@ class Credential {
 		);
 	}
 
+	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, name, email) {
+		return new Promise((resolve, reject) => {
+				if (!parent_fqdn) {
+					reject('Parent Fqdn required');
+					return;
+				}
+				//noinspection JSDeprecatedSymbols
+				let parentCred = this.store.getCredential(parent_fqdn);
+
+				if (!parentCred) {
+					reject(`Parent credential ${parent_fqdn} not found`);
+					return;
+				}
+
+				let metadata, edge_fqdn;
+
+				const onEdgeServerSelected = edge => {
+					edge_fqdn = edge.endpoint;
+					metadata  = {
+						parent_fqdn,
+						name,
+						email,
+						custom_fqdn: custom_fqdn,
+						edge_fqdn
+					};
+
+					let postData = Credential.formatRegisterPostData(metadata),
+					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+					    api      = new ProvisionApi();
+
+					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+
+					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+					//noinspection ES6ModulesDependencies,NodeModulesDependencies
+					api.runRestfulAPI(apiData, (error, payload) => {
+						if (error) {
+							reject(error);
+							return;
+						}
+						//set signature to consistent call of new credentials
+						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
+							payload.sign = authToken;
+
+							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+						}).catch(reject);
+
+					});
+				};
+
+				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+			}
+		);
+	}
+
 	/**
 	 * Create entity service with local credentials
 	 * @param {String} parent_fqdn => required
@@ -948,7 +1015,8 @@ class Credential {
 						    serviceId:     options.serviceId,
 						    matchingFqdn:  options.matchingFqdn,
 						    type:          config.RequestType.RequestWithFqdn,
-						    imageRequired: options.imageRequired
+						    imageRequired: options.imageRequired,
+						    gwFqdn:        options.gwFqdn
 					    },
 					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 
@@ -962,6 +1030,7 @@ class Credential {
 	//endregion
 
 	//region certs
+	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *  @ignore
 	 * @returns {Promise.<String>}
@@ -1557,7 +1626,9 @@ class Credential {
 			edge_fqdn:     metadata.edge_fqdn,
 			service_name:  metadata.serviceName,
 			service_id:    metadata.serviceId,
-			matching_fqdn: metadata.matchingFqdn
+			matching_fqdn: metadata.matchingFqdn,
+			custom_fqdn:   metadata.custom_fqdn
+
 		};
 	}
 
