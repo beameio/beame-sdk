@@ -211,7 +211,7 @@ function renewCert(signerAuthToken,fqdn, callback) {
 		let parsed = CommonUtils.parse(signerAuthToken,false);
 
 		if(typeof parsed == "object"){
-			authToken = parse;
+			authToken = parsed;
 		}
 		else{
 			authToken = CommonUtils.parse(parsed,false);
