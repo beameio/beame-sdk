@@ -31,7 +31,8 @@ module.exports = {
 	sign,
 	checkSignature,
 	revokeCert,
-	renewCert
+	renewCert,
+	saveDns
 };
 
 
@@ -263,11 +264,11 @@ function list(regex) {
 
 list.toText = function (creds) {
 	let table = new Table({
-		head:      ['name', 'fqdn', 'parent', 'priv/k'],
-		colWidths: [40, 65, 55, 10]
+		head:      ['name', 'fqdn', 'parent', 'Expires','priv/k'],
+		colWidths: [40, 65, 55,25 ,10]
 	});
 	creds.forEach(item => {
-		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN'), item.getKey('PRIVATE_KEY') ? 'Y' : 'N']);
+		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN'), item.getCertEnd(),item.getKey('PRIVATE_KEY') ? 'Y' : 'N']);
 	});
 	return table;
 };
@@ -288,6 +289,15 @@ function shred(fqdn) {
 	});
 }
 shred.toText = _lineToText;
+
+
+function saveDns(fqdn, value, useBestProxy,callback){
+	let cred = new Credential(new BeameStore());
+
+	CommonUtils.promise2callback(cred.saveDns(fqdn,value,useBestProxy), callback);
+
+}
+saveDns.toText = x=> x;
 //endregion
 
 //region Export/Import

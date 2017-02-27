@@ -67,7 +67,7 @@ const apiEntityActions       = require('../../config/ApiConfig.json').Actions.En
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
-
+const Config = require('../../config/Config');
 const timeFuzz = 5 * 1000; // 5 seconds
 
 class CertificateValidityError extends Error {
@@ -398,6 +398,15 @@ class Credential {
 
 	getPrivateKeyNodeRsa() {
 		return this.privateKeyNodeRsa;
+	}
+
+	getCertEnd() {
+
+		try {
+			return (new Date(this.certData.validity.end)).toLocaleString();
+		} catch (e) {
+			return null;
+		}
 	}
 
 	//endregion
@@ -1184,7 +1193,7 @@ class Credential {
 
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn).then(payload => {
-//noinspection JSDeprecatedSymbols
+					//noinspection JSDeprecatedSymbols
 					let cred = this.store.getCredential(fqdn);
 
 					if (!cred) {
@@ -1311,6 +1320,66 @@ class Credential {
 					});
 				}).catch(reject);
 
+			}
+		);
+	}
+
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @param {String|null|undefined} [value]
+	 * @param {String|null|undefined} [useBestProxy]
+	 */
+	saveDns(fqdn, value, useBestProxy) {
+		return new Promise((resolve, reject) => {
+				if (!value && !useBestProxy) {
+					reject('value required');
+					return;
+				}
+
+				this.store.find(fqdn,false).then(cred=>{
+					let val = null;
+
+					const dnsServices = new (require('./DnsServices'))();
+
+					const _saveDns = () => {
+						return dnsServices.saveDns(fqdn, val);
+					};
+
+					const _updateEntityMeta = () => {
+						const path = require('path');
+
+						let meta = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"),Config.metadataFileName));
+						meta["edge_fqdn"] = val;
+
+						cred.beameStoreServices.writeMetadataSync(meta);
+
+						return Promise.resolve();
+					};
+
+					const _resolve = () => {
+						resolve(val);
+					};
+
+					const _runSequence = () => {
+						_saveDns(val)
+							.then(_updateEntityMeta)
+							.then(_resolve)
+							.catch(reject)
+					};
+
+					if (useBestProxy) {
+						this._selectEdge()
+							.then(edge => {
+								val = edge.endpoint;
+								_runSequence();
+							})
+					}
+					else {
+						val = value;
+						_runSequence();
+					}
+				}).catch(reject);
 
 			}
 		);
