@@ -1,0 +1,10 @@
+#!/usr/bin/env ngs
+
+BEAME_BIN = '../../src/cli/beame.js'
+
+F main(fqdn:Str) {
+	test("Renewing cert for $fqdn") with {
+		s = ``$BEAME_BIN creds renewCert --fqdn $fqdn --format json``
+		assert_hash_keys_values(s, {'status': 'ok'}, "Status OK")
+	}
+}

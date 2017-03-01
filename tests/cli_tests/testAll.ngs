@@ -276,6 +276,10 @@ test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
 	$(./testGetCredsFqdn.ngs ${entities[0].fqdn} 3)
 })
 
+test("Renew", {
+	$(./testRenewCert.ngs ${entities[0].fqdn})
+})
+
 
 echo("All tests done. Exit code: $exit_code")
 { exit_code }
