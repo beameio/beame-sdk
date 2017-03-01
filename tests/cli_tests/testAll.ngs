@@ -272,12 +272,40 @@ if Path(CREDS_FILE) {
 	$(rm $CREDS_FILE)
 }
 
-test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
-	$(./testGetCredsFqdn.ngs ${entities[0].fqdn} 3)
+test("Renew", {
+	s = ``$BEAME_BIN creds renewCert --fqdn ${entities[0].fqdn} --format json``
+	assert_hash_keys_values(s, {'status': 'ok'}, "Status OK")
 })
 
-test("Renew", {
-	$(./testRenewCert.ngs ${entities[0].fqdn})
+test("Revoke", {
+	# TODO: Add status=ok in the program
+	s = ``$BEAME_BIN creds revokeCert --signerFqdn ${entities[1].fqdn} --fqdn ${entities[1].fqdn} --format json``
+	s.assert_hash_keys(%[message])
+	assert('Certificate has been revoked successfully' in s.message)
+})
+
+test("Change DNS to A record") with {
+	ip = '10.' + (rand.partial(256) * 3).map(Str).join(".")
+	$($BEAME_BIN creds setDns --fqdn ${entities[0].fqdn} --value $ip --format json)
+	assert_resolvable(entities[0].fqdn, check={A == [ip]})
+}
+
+test("Change DNS to CNAME record") with {
+	cname = CHARS::ascii_lowercase.rand(16) + '.example.com'
+	$($BEAME_BIN creds setDns --fqdn ${entities[0].fqdn} --value $cname --format json)
+	assert_resolvable(entities[0].fqdn, check={"${cname}." in A})
+}
+
+test("Change DNS to Edge server") with {
+	result = ``$BEAME_BIN creds setDns --fqdn ${entities[0].fqdn} --useBestProxy true --format json``
+	assert_string(result)
+	assert(result ~ /beame/)
+	assert_resolvable(entities[0].fqdn, check=F(answer) answer.any(/beame/) and answer.any(/amazon/))
+}
+
+
+test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
+	$(./testGetCredsFqdn.ngs ${entities[0].fqdn} 3)
 })
 
 
