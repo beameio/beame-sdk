@@ -1330,7 +1330,7 @@ class Credential {
 	 * @param {String|null|undefined} [value]
 	 * @param {String|null|undefined} [useBestProxy]
 	 */
-	saveDns(fqdn, value, useBestProxy) {
+	setDns(fqdn, value, useBestProxy) {
 		return new Promise((resolve, reject) => {
 				if (!value && !useBestProxy) {
 					reject('value required');
@@ -1342,8 +1342,8 @@ class Credential {
 
 					const dnsServices = new (require('./DnsServices'))();
 
-					const _saveDns = () => {
-						return dnsServices.saveDns(fqdn, val);
+					const _setDns = () => {
+						return dnsServices.setDns(fqdn, val);
 					};
 
 					const _updateEntityMeta = () => {
@@ -1362,7 +1362,7 @@ class Credential {
 					};
 
 					const _runSequence = () => {
-						_saveDns(val)
+						_setDns(val)
 							.then(_updateEntityMeta)
 							.then(_resolve)
 							.catch(reject)
@@ -1477,7 +1477,7 @@ class Credential {
 			return this._syncMetadataOnCertReceived(fqdn);
 		};
 
-		return dnsServices.saveDns(fqdn, edge_fqdn)
+		return dnsServices.setDns(fqdn, edge_fqdn)
 			.then(_updateEntityEdge.bind(this))
 			.then(_updateEntityMeta.bind(this));
 	}
