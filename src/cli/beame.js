@@ -58,7 +58,9 @@ const parametersSchema = {
 	'serviceName':        {required: false},
 	'matchingFqdn':       {required: false},
 	'serviceId':          {required: false},
-	'userId':             {required: false}
+	'userId':             {required: false},
+	'value':              {required: false},
+	'useBestProxy':       {required: false}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
@@ -151,10 +153,10 @@ function main() {
 	function commandResultsReady(error, output) {
 
 		if (error) {
-			if(typeof error == 'string') {
+			if (typeof error == 'string') {
 				logger.fatal(error);
 			}
-			if(error instanceof Error) {
+			if (error instanceof Error) {
 				logger.error(error.stack);
 			}
 			logger.fatal(error.message, error.data, error.module);
