@@ -56,7 +56,6 @@ const parametersSchema = {
 	'ttl':                {required: false, default: 300},
 	'src':                {required: false},
 	'serviceName':        {required: false},
-	'matchingFqdn':       {required: false},
 	'serviceId':          {required: false},
 	'userId':             {required: false},
 	'value':              {required: false},
