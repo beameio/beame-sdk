@@ -272,6 +272,18 @@ if Path(CREDS_FILE) {
 	$(rm $CREDS_FILE)
 }
 
+test("Renew", {
+	s = ``$BEAME_BIN creds renewCert --fqdn ${entities[0].fqdn} --format json``
+	assert_hash_keys_values(s, {'status': 'ok'}, "Status OK")
+})
+
+test("Revoke", {
+	# TODO: Add status=ok in the program
+	s = ``$BEAME_BIN creds revokeCert --signerFqdn ${entities[1].fqdn} --fqdn ${entities[1].fqdn} --format json``
+	s.assert_hash_keys(%[message])
+	assert('Certificate has been revoked successfully' in s.message)
+})
+
 test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
 	$(./testGetCredsFqdn.ngs ${entities[0].fqdn} 3)
 })

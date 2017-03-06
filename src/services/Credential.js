@@ -67,8 +67,8 @@ const apiEntityActions       = require('../../config/ApiConfig.json').Actions.En
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
-
-const timeFuzz = 5 * 1000; // 5 seconds
+const Config                 = require('../../config/Config');
+const timeFuzz               = 5 * 1000; // 5 seconds
 
 class CertificateValidityError extends Error {
 }
@@ -398,6 +398,15 @@ class Credential {
 
 	getPrivateKeyNodeRsa() {
 		return this.privateKeyNodeRsa;
+	}
+
+	getCertEnd() {
+
+		try {
+			return (new Date(this.certData.validity.end)).toLocaleString();
+		} catch (e) {
+			return null;
+		}
 	}
 
 	//endregion
@@ -1134,38 +1143,99 @@ class Credential {
 
 					let dirPath = cred.getMetadataKey("path");
 
-					OpenSSlWrapper.getPublicKeySignature(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY).then(signature => {
+					const _renew = () => {
 
-						let pubKeys = {
-							pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
-							pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
-							signature
-						};
+						OpenSSlWrapper.getPublicKeySignature(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY).then(signature => {
 
-						let postData = {
-							    fqdn:     fqdn,
-							    validity: validityPeriod || config.defaultValidityPeriod,
-							    pub:      pubKeys
-						    },
-						    api      = new ProvisionApi(),
-						    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
+							let pubKeys = {
+								pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
+								pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
+								signature
+							};
 
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+							let postData = {
+								    fqdn:     fqdn,
+								    validity: validityPeriod || config.defaultValidityPeriod,
+								    pub:      pubKeys
+							    },
+							    api      = new ProvisionApi(),
+							    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
 
-						let authToken = null;
+							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
-						if (!signerAuthToken) {
-							api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
-						}
-						else {
-							authToken = CommonUtils.stringify(signerAuthToken, false);
-						}
+							let authToken = null;
+
+							if (!signerAuthToken) {
+								api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+							}
+							else {
+								authToken = CommonUtils.stringify(signerAuthToken, false);
+							}
 
 
-						api.runRestfulAPI(apiData, (error, payload) => {
-							cred._saveCerts(error, payload).then(resolve).catch(reject);
-						}, 'POST', authToken);
-					}).catch(reject);
+							api.runRestfulAPI(apiData, (error, payload) => {
+								cred._saveCerts(error, payload).then(resolve).catch(reject);
+							}, 'POST', authToken);
+						}).catch(reject);
+
+					};
+
+					//check if public key exists (old API)
+					const path = require('path');
+
+					let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, config.CertFileNames.PUBLIC_KEY));
+
+					if (publicExists) {
+						_renew();
+					}
+					else {
+
+						async.parallel([
+								cb => {
+									//create public key for existing private
+									let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY),
+									    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY);
+
+									OpenSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+										cb();
+									}).catch(error => {
+										cb(error)
+									});
+								},
+								cb => {
+									//create backup key pair
+									OpenSSlWrapper.createPrivateKey().then(pk =>
+										DirectoryServices.saveFile(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
+											if (!error) {
+												let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY),
+												    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY);
+												OpenSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+													cb(null);
+												}).catch(error => {
+													cb(error)
+												});
+											}
+											else {
+												let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
+												cb(errMsg);
+											}
+										})
+									).catch(error => {
+										cb(error);
+									});
+								}
+							],
+							error => {
+								if (error) {
+									logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
+									reject(error);
+								}
+
+								_renew();
+							});
+
+
+					}
 
 				}).catch(reject);
 			}
@@ -1184,7 +1254,7 @@ class Credential {
 
 		return new Promise((resolve, reject) => {
 				this.getMetadata(fqdn).then(payload => {
-//noinspection JSDeprecatedSymbols
+					//noinspection JSDeprecatedSymbols
 					let cred = this.store.getCredential(fqdn);
 
 					if (!cred) {
@@ -1311,6 +1381,66 @@ class Credential {
 					});
 				}).catch(reject);
 
+			}
+		);
+	}
+
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @param {String|null|undefined} [value]
+	 * @param {String|null|undefined} [useBestProxy]
+	 */
+	setDns(fqdn, value, useBestProxy) {
+		return new Promise((resolve, reject) => {
+				if (!value && !useBestProxy) {
+					reject('value required');
+					return;
+				}
+
+				this.store.find(fqdn, false).then(cred => {
+					let val = null;
+
+					const dnsServices = new (require('./DnsServices'))();
+
+					const _setDns = () => {
+						return dnsServices.setDns(fqdn, val);
+					};
+
+					const _updateEntityMeta = () => {
+						const path = require('path');
+
+						let meta          = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
+						meta["edge_fqdn"] = val;
+
+						cred.beameStoreServices.writeMetadataSync(meta);
+
+						return Promise.resolve();
+					};
+
+					const _resolve = () => {
+						resolve(val);
+					};
+
+					const _runSequence = () => {
+						_setDns(val)
+							.then(_updateEntityMeta)
+							.then(_resolve)
+							.catch(reject)
+					};
+
+					if (useBestProxy) {
+						this._selectEdge()
+							.then(edge => {
+								val = edge.endpoint;
+								_runSequence();
+							})
+					}
+					else {
+						val = value;
+						_runSequence();
+					}
+				}).catch(reject);
 
 			}
 		);
@@ -1408,7 +1538,7 @@ class Credential {
 			return this._syncMetadataOnCertReceived(fqdn);
 		};
 
-		return dnsServices.saveDns(fqdn, edge_fqdn)
+		return dnsServices.setDns(fqdn, edge_fqdn)
 			.then(_updateEntityEdge.bind(this))
 			.then(_updateEntityMeta.bind(this));
 	}

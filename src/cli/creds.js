@@ -211,7 +211,7 @@ function renewCert(signerAuthToken,fqdn, callback) {
 		let parsed = CommonUtils.parse(signerAuthToken,false);
 
 		if(typeof parsed == "object"){
-			authToken = parse;
+			authToken = parsed;
 		}
 		else{
 			authToken = CommonUtils.parse(parsed,false);
@@ -220,7 +220,11 @@ function renewCert(signerAuthToken,fqdn, callback) {
 
 	let cred = new Credential(new BeameStore());
 
-	CommonUtils.promise2callback(cred.renewCert(authToken,fqdn), callback);
+	function returnOK() {
+		return Promise.resolve({status: 'ok'});
+	}
+
+	CommonUtils.promise2callback(cred.renewCert(authToken,fqdn).then(returnOK), callback);
 }
 renewCert.toText = _lineToText;
 //endregion
@@ -259,11 +263,11 @@ function list(regex) {
 
 list.toText = function (creds) {
 	let table = new Table({
-		head:      ['name', 'fqdn', 'parent', 'priv/k'],
-		colWidths: [40, 65, 55, 10]
+		head:      ['name', 'fqdn', 'parent', 'Expires','priv/k'],
+		colWidths: [40, 65, 55,25 ,10]
 	});
 	creds.forEach(item => {
-		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN'), item.getKey('PRIVATE_KEY') ? 'Y' : 'N']);
+		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN'), item.getCertEnd(),item.getKey('PRIVATE_KEY') ? 'Y' : 'N']);
 	});
 	return table;
 };
@@ -284,6 +288,7 @@ function shred(fqdn) {
 	});
 }
 shred.toText = _lineToText;
+
 //endregion
 
 //region Export/Import

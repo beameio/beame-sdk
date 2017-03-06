@@ -207,6 +207,8 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame creds decrypt --data data` - _decrypt session AES key and IV from input json string with specific key-value pairs, with local RSA private key, entity that data was encrypted for, is specified in appropriate field in provided data. The operation will succeed, only if corresponding private key is found in local ~/.beame folder_
 * `beame creds sign --data data --fqdn fqdn [--format {text|json}]` - _sign provided data with private key of specified fqdn, output is json in base64 format_
 * `beame creds checkSignature --data data` - _check signature contained in provided data, with public key of specific fqdn, input data is base64 string, that contains json with specific key-value pairs (exact output of `beame creds sign`)_
+* `beame creds renewCert --fqdn fqdn [--format {text|json}]` - _renew certificate_
+* `beame creds revokeCert --signerFqdn signerFqdn --fqdn fqdn [--format {text|json}]` - _revoke certificate. If revoking your own certificate, for which you have a private key, *signerFqdn* should be same as *fqdn*_
 
 ### Manipulating Tokens
 * `beame token create --fqdn fqdn --data data [--format {text|json}]` - _generate encrypted Beame auth-token with provided data, encrypt with private key of given fqdn_
