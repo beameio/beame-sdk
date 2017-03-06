@@ -284,26 +284,6 @@ test("Revoke", {
 	assert('Certificate has been revoked successfully' in s.message)
 })
 
-test("Change DNS to A record") with {
-	ip = '10.' + (rand.partial(256) * 3).map(Str).join(".")
-	$($BEAME_BIN creds setDns --fqdn ${entities[0].fqdn} --value $ip --format json)
-	assert_resolvable(entities[0].fqdn, check={A == [ip]})
-}
-
-test("Change DNS to CNAME record") with {
-	cname = CHARS::ascii_lowercase.rand(16) + '.example.com'
-	$($BEAME_BIN creds setDns --fqdn ${entities[0].fqdn} --value $cname --format json)
-	assert_resolvable(entities[0].fqdn, check={"${cname}." in A})
-}
-
-test("Change DNS to Edge server") with {
-	result = ``$BEAME_BIN creds setDns --fqdn ${entities[0].fqdn} --useBestProxy true --format json``
-	assert_string(result)
-	assert(result ~ /beame/)
-	assert_resolvable(entities[0].fqdn, check=F(answer) answer.any(/beame/) and answer.any(/amazon/))
-}
-
-
 test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
 	$(./testGetCredsFqdn.ngs ${entities[0].fqdn} 3)
 })

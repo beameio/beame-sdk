@@ -31,8 +31,7 @@ module.exports = {
 	sign,
 	checkSignature,
 	revokeCert,
-	renewCert,
-	setDns
+	renewCert
 };
 
 
@@ -138,9 +137,10 @@ getCreds.toText = _lineToText;
  * @param {String|null|undefined} [src]
  * @param {String|null|undefined} [serviceName]
  * @param {String|null|undefined} [serviceId]
+ * @param {String|null|undefined} [matchingFqdn]
  * @param {Function} callback
  */
-function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId,callback) {
+function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId, matchingFqdn, callback) {
 	if (!fqdn) {
 		logger.fatal(`Fqdn required`);
 		return;
@@ -152,7 +152,7 @@ function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId
 
 				let cred = new Credential(new BeameStore());
 
-				cred.createRegistrationToken({fqdn, name, email, userId, ttl, src, serviceName, serviceId}).then(resolve).catch(reject);
+				cred.createRegistrationToken({fqdn, name, email, userId, ttl, src, serviceName, serviceId, matchingFqdn}).then(resolve).catch(reject);
 			}
 		);
 	}
@@ -289,14 +289,6 @@ function shred(fqdn) {
 }
 shred.toText = _lineToText;
 
-
-function setDns(fqdn, value, useBestProxy,callback){
-	let cred = new Credential(new BeameStore());
-
-	CommonUtils.promise2callback(cred.setDns(fqdn,value,useBestProxy), callback);
-
-}
-setDns.toText = x=> x;
 //endregion
 
 //region Export/Import
