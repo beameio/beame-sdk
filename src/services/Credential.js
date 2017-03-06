@@ -35,6 +35,7 @@
  *  @property {String|null|undefined} [src]
  *  @property {String|null|undefined} [serviceName]
  *  @property {String|null|undefined} [serviceId]
+ *  @property {String|null|undefined} [matchingFqdn]
  *  @property {String|null|undefined} [gwFqdn]
  *  @property {Boolean|null|undefined} [imageRequired]
  */
@@ -732,8 +733,9 @@ class Credential {
 	 * @param {String|null} [src]
 	 * @param {String|null} [serviceName]
 	 * @param {String|null} [serviceId]
+	 * @param {String|null} [matchingFqdn]
 	 */
-	createRegistrationWithLocalCreds(parent_fqdn, name, email, src, serviceName, serviceId) {
+	createRegistrationWithLocalCreds(parent_fqdn, name, email, src, serviceName, serviceId, matchingFqdn) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -754,6 +756,7 @@ class Credential {
 					email,
 					serviceName,
 					serviceId,
+					matchingFqdn,
 					src: src || config.RegistrationSource.Unknown
 				};
 
@@ -969,7 +972,7 @@ class Credential {
 
 				const AuthToken = require('./AuthToken');
 
-				this.createRegistrationWithLocalCreds(options.fqdn, options.name, options.email, options.src, options.serviceName, options.serviceId).then(data => {
+				this.createRegistrationWithLocalCreds(options.fqdn, options.name, options.email, options.src, options.serviceName, options.serviceId, options.matchingFqdn).then(data => {
 
 					let payload     = data.payload,
 					    parent_cred = data.parentCred;
@@ -1003,7 +1006,7 @@ class Credential {
 
 				const AuthToken = require('./AuthToken');
 
-				this.createRegistrationWithLocalCreds(options.fqdn, options.name, options.email, options.src, options.serviceName, options.serviceId).then(data => {
+				this.createRegistrationWithLocalCreds(options.fqdn, options.name, options.email, options.src, options.serviceName, options.serviceId, options.matchingFqdn).then(data => {
 
 					let payload     = data.payload,
 					    parent_cred = data.parentCred;
@@ -1019,6 +1022,7 @@ class Credential {
 						    level:         payload.level,
 						    serviceName:   options.serviceName,
 						    serviceId:     options.serviceId,
+						    matchingFqdn:  options.matchingFqdn,
 						    type:          config.RequestType.RequestWithFqdn,
 						    imageRequired: options.imageRequired,
 						    gwFqdn:        options.gwFqdn
@@ -1691,6 +1695,7 @@ class Credential {
 			edge_fqdn:     metadata.edge_fqdn,
 			service_name:  metadata.serviceName,
 			service_id:    metadata.serviceId,
+			matching_fqdn: metadata.matchingFqdn,
 			custom_fqdn:   metadata.custom_fqdn
 
 		};
