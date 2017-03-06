@@ -31,8 +31,7 @@ module.exports = {
 	sign,
 	checkSignature,
 	revokeCert,
-	renewCert,
-	setDns
+	renewCert
 };
 
 
@@ -290,14 +289,6 @@ function shred(fqdn) {
 }
 shred.toText = _lineToText;
 
-
-function setDns(fqdn, value, useBestProxy,callback){
-	let cred = new Credential(new BeameStore());
-
-	CommonUtils.promise2callback(cred.setDns(fqdn,value,useBestProxy), callback);
-
-}
-setDns.toText = x=> x;
 //endregion
 
 //region Export/Import
