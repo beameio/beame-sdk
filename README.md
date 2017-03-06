@@ -210,10 +210,6 @@ The following commands are used for acquiring and manipulating certificates.
 * `beame creds renewCert --fqdn fqdn [--format {text|json}]` - _renew certificate_
 * `beame creds revokeCert --signerFqdn signerFqdn --fqdn fqdn [--format {text|json}]` - _revoke certificate. If revoking your own certificate, for which you have a private key, *signerFqdn* should be same as *fqdn*_
 
-### Manipulating your DNS entry
-* `beame creds setDns --fqdn fqdn --value IP_OR_CNAME [--format {text|json}]` - _set your DNS entry to custom value, whatever you want. *Note: you will not be able to use Beame.io infrastructure for tunneling*_
-* `beame creds setDns --fqdn fqdn --useBestProxy true  [--format {text|json}]` - _set your DNS entry to Beame.io infrastructure. Do this if you intend to use tunnel for the fqdn._
-
 ### Manipulating Tokens
 * `beame token create --fqdn fqdn --data data [--format {text|json}]` - _generate encrypted Beame auth-token with provided data, encrypt with private key of given fqdn_
 * `beame token validate --authToken authToken [--format {text|json}]` - _verify Beame auth-token, input authToken is the output of `beame token create`_
