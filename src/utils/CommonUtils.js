@@ -142,20 +142,20 @@ class CommonUtils {
 		return statusCode >= 200 && statusCode < 300;
 	}
 
-	static getSequelizeBinaryPath() {
+	static getSequelizeBinaryPath(sequelizeModule) {
 		const path = require('path');
-		return path.join(path.dirname(path.dirname(require.resolve('sequelize'))), '.bin', 'sequelize');
+		return path.join(path.dirname(path.dirname(sequelizeModule)), '.bin', 'sequelize');
 	}
 
 	//noinspection JSUnusedGlobalSymbols
-	static runSequilizeCmd(args) {
+	static runSequilizeCmd(sequelizeModule, args) {
 		const os = require('os');
 		const execFile = require('child_process').execFile;
 
 		return new Promise((resolve, reject) => {
 			if (os.platform() == 'win32') {
 
-				let cmdArgs = ["/c", this.getSequelizeBinaryPath()],
+				let cmdArgs = ["/c", this.getSequelizeBinaryPath(sequelizeModule)],
 					allArgs = cmdArgs.concat(args);
 
 
@@ -169,7 +169,7 @@ class CommonUtils {
 			}
 			else {
 
-				execFile(this.getSequelizeBinaryPath(), args, (error) => {
+				execFile(this.getSequelizeBinaryPath(sequelizeModule), args, (error) => {
 					if (error) {
 						reject(error);
 						return;
