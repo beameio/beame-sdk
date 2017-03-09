@@ -191,11 +191,20 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 	retries--;
 
-	let onApiError = function (error) {
-		logger.warn(`Provision Api GET error on ${url}`, {
+	let onApiError = function (error,response) {
+		logger.warn(`API GET error on ${url}`, {
 			"error": error,
 			"url":   url
 		});
+
+		if(response.status && (response.status == 401 || response.status == 403)){
+			retries = 0;
+			callback && callback(logger.formatErrorMessage("Access Denied", module_name, {
+				url,
+				options
+			}, config.MessageCodes.ApiRestError), null);
+			return;
+		}
 
 		sleep = parseInt(sleep * (Math.random() + 1.5));
 
@@ -206,7 +215,7 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 	try {
 		if (retries == 0) {
-			callback && callback(logger.formatErrorMessage("Get from provision failed", module_name, {
+			callback && callback(logger.formatErrorMessage("Get API failed", module_name, {
 				url,
 				options
 			}, config.MessageCodes.ApiRestError), null);
@@ -217,7 +226,7 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 				options,
 				function (error, response, body) {
 					if (error) {
-						onApiError(error);
+						onApiError(error,response);
 					}
 					else {
 						parseProvisionResponse(error, response, body, type, function (error, payload) {

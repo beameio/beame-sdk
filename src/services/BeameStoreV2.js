@@ -311,36 +311,41 @@ class BeameStoreV2 {
 					metadata: null,
 					x509:     null
 				};
+				let provisionApi = new ProvisionApi();
+
+				const _onMetaReceived = (callback,error, data) => {
+					if (!error) {
+						payload.metadata = typeof(data) == "object" ? data : CommonUtils.parse(data);
+						callback(null, data);
+					}
+					else {
+						callback(error);
+					}
+				};
+
+				const _onX509Received = (callback, error, data) => {
+					if (!error) {
+						payload.x509 = typeof(data) == "object" && data.hasOwnProperty("message") ? data.message : data;
+						callback(null, data);
+					}
+					else {
+						callback(error);
+					}
+				};
 
 				async.parallel(
 					[
-						function (callback) {
+						(callback) => {
 							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
-							ProvisionApi.getRequest(requestPath, function (error, data) {
-								if (!error) {
-									payload.metadata = typeof(data) == "object" ? data : CommonUtils.parse(data);
-									callback(null, data);
-								}
-								else {
-									callback(error);
-								}
-							});
+							provisionApi.makeGetRequest(requestPath, null, _onMetaReceived.bind(this,callback), null, 3 );
 						},
-						function (callback) {
+						(callback) => {
 							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
-							ProvisionApi.getRequest(requestPath, function (error, data) {
-								if (!error) {
-									payload.x509 = typeof(data) == "object" && data.hasOwnProperty("message") ? data.message : data;
-									callback(null, data);
-								}
-								else {
-									callback(error);
-								}
-							});
+							provisionApi.makeGetRequest(requestPath, null, _onX509Received.bind(this,callback), null, 3 );
 						}
 
 					],
-					function (error) {
+					(error)  => {
 						if (error) {
 							logger.error(`Get remote creds error ${BeameLogger.formatError(error)}`);
 							reject(error, null);
