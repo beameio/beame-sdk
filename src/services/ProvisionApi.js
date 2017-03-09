@@ -120,11 +120,20 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 	retries--;
 
-	let onApiError = function (error) {
+	let onApiError = function (error,response) {
 		logger.warn("Provision Api post error", {
 			"error": error,
 			"url":   url
 		});
+
+		if(response.statusCode && (response.statusCode == 401 || response.statusCode == 403)){
+			retries = 0;
+			logger.error(`API POST on ${url}:: Access Denied`);
+			callback && callback(logger.formatErrorMessage('Access Denied', module_name, {
+				url
+			}, config.MessageCodes.ApiRestError,response.statusCode), null);
+			return;
+		}
 
 		sleep = parseInt(sleep * (Math.random() + 1.5));
 
@@ -148,8 +157,8 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 				url,
 				options,
 				function (error, response, body) {
-					if (error) {
-						onApiError(error);
+					if (error || (response.statusCode == 401 || response.statusCode == 403)) {
+						onApiError(error,response);
 					}
 					else {
 						parseProvisionResponse(error, response, body, type, function (error, payload) {
@@ -188,14 +197,22 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
  */
 const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 
-
 	retries--;
 
-	let onApiError = function (error) {
-		logger.warn(`Provision Api GET error on ${url}`, {
+	let onApiError = function (error,response) {
+		logger.warn(`API GET error on ${url}`, {
 			"error": error,
 			"url":   url
 		});
+
+		if(response.statusCode && (response.statusCode == 401 || response.statusCode == 403)){
+			retries = 0;
+			logger.error(`API Get on ${url}:: Access Denied`);
+			callback && callback(logger.formatErrorMessage('Access Denied', module_name, {
+				url
+			}, config.MessageCodes.ApiRestError,response.statusCode), null);
+			return;
+		}
 
 		sleep = parseInt(sleep * (Math.random() + 1.5));
 
@@ -206,7 +223,7 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 	try {
 		if (retries == 0) {
-			callback && callback(logger.formatErrorMessage("Get from provision failed", module_name, {
+			callback && callback(logger.formatErrorMessage("Get API failed", module_name, {
 				url,
 				options
 			}, config.MessageCodes.ApiRestError), null);
@@ -216,8 +233,8 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 				url,
 				options,
 				function (error, response, body) {
-					if (error) {
-						onApiError(error);
+					if (error || (response.statusCode == 401 || response.statusCode == 403)) {
+						onApiError(error,response);
 					}
 					else {
 						parseProvisionResponse(error, response, body, type, function (error, payload) {

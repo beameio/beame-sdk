@@ -113,14 +113,16 @@ class BeameLogger {
 	 * @param {String|null} [module]
 	 * @param {Object|null|undefined} [data]
 	 * @param {String|null|undefined} [error_code]
+	 * @param {Number|null|undefined} [status]
 	 * @returns {typeof LoggerMessage}
 	 */
-	formatErrorMessage(message, module, data, error_code) {
+	formatErrorMessage(message, module, data, error_code,status) {
 		return {
 			message,
 			module: module || this.module,
 			data,
-			code:   error_code
+			code:   error_code,
+			status
 		}
 	}
 

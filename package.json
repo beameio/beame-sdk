@@ -52,8 +52,8 @@
     "request": "^2.72.0",
     "rimraf": "^2.5.3",
     "serve-index": "^1.8.0",
-    "socket.io": "1.5.1",
-    "socket.io-client": "1.5.1",
+    "socket.io": "1.7.3",
+    "socket.io-client": "1.7.3",
     "sprintf": "^0.1.5",
     "sync-request": "^3.0.1",
     "underscore": "^1.8.3"
