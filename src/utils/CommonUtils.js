@@ -148,11 +148,24 @@ class CommonUtils {
 	}
 
 	//noinspection JSUnusedGlobalSymbols
-	static runSequilizeCmd(sequelizeModule, args) {
+	static runSequilizeCmd(sequelizeModule, args, dirname) {
 		const os = require('os');
 		const execFile = require('child_process').execFile;
+		const path = require('path');
+
+		const _commonSequelizeArgs = ()=> {
+			let result = [];
+			['migrations', 'seeders', 'models'].forEach(what => {
+				result.push(`--${what}-path`);
+				result.push(path.join(dirname, what));
+			});
+			return result;
+		};
+
+		args.splice.apply(args, [1, 0].concat(_commonSequelizeArgs()));
 
 		return new Promise((resolve, reject) => {
+
 			if (os.platform() == 'win32') {
 
 				let cmdArgs = ["/c", this.getSequelizeBinaryPath(sequelizeModule)],
