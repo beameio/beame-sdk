@@ -169,7 +169,7 @@ class CommonUtils {
 			if (os.platform() == 'win32') {
 
 				let cmdArgs = ["/c", this.getSequelizeBinaryPath(sequelizeModule)],
-					allArgs = cmdArgs.concat(args);
+				    allArgs = cmdArgs.concat(args);
 
 
 				execFile('cmd', allArgs, (error) => {
