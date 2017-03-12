@@ -126,7 +126,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 			"url":   url
 		});
 
-		if(response.statusCode && (response.statusCode == 401 || response.statusCode == 403)){
+		if(response && response.statusCode && (response.statusCode == 401 || response.statusCode == 403)){
 			retries = 0;
 			logger.error(`API POST on ${url}:: Access Denied`);
 			callback && callback(logger.formatErrorMessage('Access Denied', module_name, {
@@ -205,7 +205,7 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 			"url":   url
 		});
 
-		if(response.statusCode && (response.statusCode == 401 || response.statusCode == 403)){
+		if(response && response.statusCode && (response.statusCode == 401 || response.statusCode == 403)){
 			retries = 0;
 			logger.error(`API Get on ${url}:: Access Denied`);
 			callback && callback(logger.formatErrorMessage('Access Denied', module_name, {
