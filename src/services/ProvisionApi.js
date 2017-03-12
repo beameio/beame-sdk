@@ -32,6 +32,9 @@ const _       = require('underscore');
 const request = require('request');
 const fs      = require('fs');
 
+function _isUnauthorizedRequest(response){
+	return response && response.statusCode && (response.statusCode == 401 || response.statusCode == 403);
+}
 
 function clearJSON(json) {
 
@@ -126,7 +129,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 			"url":   url
 		});
 
-		if(response.statusCode && (response.statusCode == 401 || response.statusCode == 403)){
+		if(_isUnauthorizedRequest(response)){
 			retries = 0;
 			logger.error(`API POST on ${url}:: Access Denied`);
 			callback && callback(logger.formatErrorMessage('Access Denied', module_name, {
@@ -157,7 +160,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 				url,
 				options,
 				function (error, response, body) {
-					if (error || (response.statusCode == 401 || response.statusCode == 403)) {
+					if (error || _isUnauthorizedRequest(response)) {
 						onApiError(error,response);
 					}
 					else {
@@ -205,7 +208,7 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 			"url":   url
 		});
 
-		if(response.statusCode && (response.statusCode == 401 || response.statusCode == 403)){
+		if(_isUnauthorizedRequest(response)){
 			retries = 0;
 			logger.error(`API Get on ${url}:: Access Denied`);
 			callback && callback(logger.formatErrorMessage('Access Denied', module_name, {
@@ -233,7 +236,7 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 				url,
 				options,
 				function (error, response, body) {
-					if (error || (response.statusCode == 401 || response.statusCode == 403)) {
+					if (error || _isUnauthorizedRequest(response)) {
 						onApiError(error,response);
 					}
 					else {
