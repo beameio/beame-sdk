@@ -12,6 +12,45 @@ const timeFuzz = 5;
 
 class AuthToken {
 
+	//noinspection JSUnusedGlobalSymbols
+	static getRequestAuthToken(req) {
+		return new Promise((resolve, reject) => {
+				let authHead  = req.get('X-BeameAuthToken'),
+				    /** @type {SignatureToken|null} */
+				    authToken = null;
+
+				logger.debug(`auth head received ${authHead}`);
+
+				if (authHead) {
+					try {
+						authToken = CommonUtils.parse(authHead);
+
+						if (!CommonUtils.isObject(authToken)) {
+							logger.error(`invalid auth ${authToken} token format`);
+							reject({message: 'Auth token invalid json format'});
+							return;
+						}
+					}
+					catch (error) {
+						logger.error(`Parse auth header error ${BeameLogger.formatError(error)}`);
+						reject({message: 'Auth token invalid json format'});
+						return;
+					}
+				}
+
+				if (!authToken) {
+					reject({message: 'Auth token required'});
+					return;
+				}
+
+				AuthToken.validate(authToken)
+					.then(resolve)
+					.catch(reject);
+			}
+		);
+	}
+
+
 	/**
 	 * @param {Object|String} data
 	 * @param {Credential}signingCreds

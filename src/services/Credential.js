@@ -670,6 +670,7 @@ class Credential {
 		);
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, name, email) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
@@ -1385,6 +1386,7 @@ class Credential {
 		);
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {String} fqdn
@@ -1767,7 +1769,7 @@ class Credential {
 	checkValidity() {
 		return new Promise((resolve, reject) => {
 			const validity = this.certData.validity;
-			logger.debug('checkValidity: fqdn, start, end', this.fqdn, validity.start, validity.end);
+			logger.debug(`checkValidity: fqdn, start, end', ${this.fqdn}, ${validity.start}, ${validity.end}`);
 			// validity.end = 0;
 			const now = Date.now();
 			if (validity.start > now + timeFuzz) {
