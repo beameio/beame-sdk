@@ -10,7 +10,6 @@
  * @typedef {Object} RemoteCreds
  * @property {Object} metadata
  * @property {String} x509
- * @property {String} pub_key
  */
 
 /**
@@ -310,8 +309,7 @@ class BeameStoreV2 {
 				/** @type {RemoteCreds} */
 				let payload = {
 					metadata: null,
-					x509:     null,
-					pub_key:null
+					x509:     null
 				};
 				let provisionApi = new ProvisionApi();
 
@@ -328,13 +326,6 @@ class BeameStoreV2 {
 				const _onX509Received = (callback, error, data) => {
 					if (!error) {
 						payload.x509 = typeof(data) == "object" && data.hasOwnProperty("message") ? data.message : data;
-						const pem                    = require('pem');
-						pem.getPublicKey(payload.x509, (err, publicKey) => {
-							let publicKeyStr     = publicKey.publicKey;
-							console.log(publicKeyStr);
-							payload.pub_key = publicKeyStr;
-						});
-
 						callback(null, data);
 					}
 					else {
