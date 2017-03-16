@@ -89,7 +89,7 @@ class DataServices {
 
 	static writeMetadataSync(dir, fqdn, metadata) {
 		let dirPath = BeameUtils.makePath(dir, fqdn);
-		DataServices.saveFile(dirPath, config.metadataFileName, CommonUtils.stringify(metadata, false));
+		DataServices.saveFile(dirPath, config.metadataFileName, CommonUtils.stringify(metadata, true));
 	}
 
 	/**
@@ -154,7 +154,7 @@ class DataServices {
 							saveCert(config.CertResponseFields.x509, config.CertFileNames.X509, callback);
 						},
 						function (callback) {
-							
+
 							if (!payload.hasOwnProperty(config.CertResponseFields.p7b) || !payload[config.CertResponseFields.p7b].length) {
 								callback(null);
 							}
