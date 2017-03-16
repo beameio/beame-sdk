@@ -12,7 +12,7 @@ const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
 
 
-const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
+const CertEndpoint = "https://beameio-net-certs-dev.s3.amazonaws.com";
 
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
