@@ -1,7 +1,7 @@
 {
     "Endpoints": {
-        "BaseUrl": "https://prov-staging.beameio.net",
-        "BaseDNSUrl":"https://t24w58ow5jkkmkhu.mpk3nobb568nycf5.v1.d.beameio.net"
+        "BaseUrl": "https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net",
+        "BaseDNSUrl":"https://lcram0sj9ox726l1.tl5h1ipgobrdqsj6.v1.p.beameio.net"
     },
     "RetryAttempts": 10,
     "Actions": {
