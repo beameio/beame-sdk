@@ -12,7 +12,7 @@ const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
 
 
-const CertEndpoint = "https://beameio-net-certs-dev.s3.amazonaws.com";
+const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
@@ -28,7 +28,7 @@ const localCertsDirV2 = path.join(rootDir, 'v2');
 
 
 /** @const {String} **/
-const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://yd959gzioglrn39f.mtrc55l896fup0fp.v1.s.beameio.net ";
+const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://yd959gzioglrn39f.mtrc55l896fup0fp.v1.s.beameio.net";
 
 /** @const {String} **/
 const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || "https://yxyrz54y6uchvvbc.z0w0zv388qz2cijm.v1.s.beameio.net";
