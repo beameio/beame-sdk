@@ -20,18 +20,20 @@
  * @property {String|null} parent_fqdn
  */
 
-const path              = require('path');
-const util              = require('util');
-const config            = require('../../config/Config');
-const module_name       = config.AppModules.BeameStore;
-const BeameLogger       = require('../utils/Logger');
-const logger            = new BeameLogger(module_name);
-const ProvisionApi      = require('./ProvisionApi');
-const Credential        = require('./Credential');
-const async             = require('async');
-const BeameUtils        = require('../utils/BeameUtils');
-const CommonUtils       = require('../utils/CommonUtils');
-const DirectoryServices = require('./DirectoryServices');
+const path                = require('path');
+const util                = require('util');
+const config              = require('../../config/Config');
+const module_name         = config.AppModules.BeameStore;
+const BeameLogger         = require('../utils/Logger');
+const logger              = new BeameLogger(module_name);
+const ProvisionApi        = require('./ProvisionApi');
+const Credential          = require('./Credential');
+const async               = require('async');
+const BeameUtils          = require('../utils/BeameUtils');
+const CommonUtils         = require('../utils/CommonUtils');
+const DirectoryServices   = require('./DirectoryServices');
+const Config              = require('../../config/Config');
+const CertValidationError = Config.CertValidationError;
 
 let _store = null;
 
@@ -103,26 +105,59 @@ class BeameStoreV2 {
 	 * @param {Boolean} [allowRemote]
 	 * @returns {Promise.<Credential>}
 	 */
-	find(fqdn, allowRemote=true) {
+	find(fqdn, allowRemote = true) {
 
-		let ret;
+		return new Promise((resolve, reject) => {
+				if (!fqdn) {
+					reject('Credential#find: fqdn is a required argument');
+					return;
+				}
 
-		if (!fqdn) {
-			return Promise.reject('Credential#find: fqdn is a required argument');
-		}
+				const _validateNewCred  = newCred =>{
+					newCred.checkValidity()
+							.then(resolve)
+							.catch(reject);
+				};
 
-		let cred = this._getCredential(fqdn);
+				const _renewCred = () => {
+					this.fetch(fqdn)
+						.then(_validateNewCred)
+						.catch(reject);
+				};
 
-		if (cred) {
-			ret = Promise.resolve(cred);
-		} else {
-			if(!allowRemote) {
-				return Promise.reject(`Credential ${fqdn} was not found locally and allowRemote is false`);
+				const _onValidationError = (credential, certError) => {
+					if (certError.errorCode === CertValidationError.Expired && !credential.hasKey("PRIVATE_KEY")) {
+						_renewCred();
+					}
+					else {
+						reject(certError);
+					}
+				};
+
+				const _onCredFound = credential => {
+					credential.checkValidity()
+						.then(resolve)
+						.catch(_onValidationError.bind(null, credential));
+				};
+
+				let cred = this._getCredential(fqdn);
+
+				if (cred) {
+					_onCredFound(cred);
+				} else {
+					if (!allowRemote) {
+						reject(`Credential ${fqdn} was not found locally and allowRemote is false`);
+						return;
+					}
+					this.fetch(fqdn)
+						.then(_onCredFound)
+						.catch(reject);
+				}
+
 			}
-			ret = this.fetch(fqdn);
-		}
+		);
 
-		return ret.then(Credential.checkValidityPromiseHelper);
+
 	}
 
 	addCredential(credential) {
@@ -224,6 +259,15 @@ class BeameStoreV2 {
 				else if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
+
+				if(options.expiration || options.expiration === 0 ){
+					let expired = new Date(cred.getCertEnd());
+
+					if(CommonUtils.addDays(null,options.expiration) < expired){
+						return false;
+					}
+				}
+
 				return true;
 			}
 		);
@@ -305,13 +349,13 @@ class BeameStoreV2 {
 		return new Promise((resolve, reject) => {
 
 				/** @type {RemoteCreds} */
-				let payload = {
+				let payload      = {
 					metadata: null,
 					x509:     null
 				};
 				let provisionApi = new ProvisionApi();
 
-				const _onMetaReceived = (callback,error, data) => {
+				const _onMetaReceived = (callback, error, data) => {
 					if (!error) {
 						payload.metadata = typeof(data) == "object" ? data : CommonUtils.parse(data);
 						callback(null, data);
@@ -335,15 +379,15 @@ class BeameStoreV2 {
 					[
 						(callback) => {
 							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
-							provisionApi.makeGetRequest(requestPath, null, _onMetaReceived.bind(this,callback), null, 3 );
+							provisionApi.makeGetRequest(requestPath, null, _onMetaReceived.bind(this, callback), null, 3);
 						},
 						(callback) => {
 							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
-							provisionApi.makeGetRequest(requestPath, null, _onX509Received.bind(this,callback), null, 3 );
+							provisionApi.makeGetRequest(requestPath, null, _onX509Received.bind(this, callback), null, 3);
 						}
 
 					],
-					(error)  => {
+					(error) => {
 						if (error) {
 							logger.error(`Get remote creds error ${BeameLogger.formatError(error)}`);
 							reject(error, null);

@@ -176,6 +176,10 @@ const TimeUnits = {
 	"Day":    "d"
 };
 
+const CertValidationError = {
+	"InFuture": "InFuture",
+	"Expired":  "Expired"
+};
 
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
@@ -205,5 +209,6 @@ module.exports = {
 	RegistrationSource,
 	RequestType,
 	ApprovedZones,
-	defaultValidityPeriod
+	defaultValidityPeriod,
+	CertValidationError
 };
