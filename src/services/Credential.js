@@ -70,7 +70,18 @@ const CryptoServices         = require('../services/Crypto');
 const Config                 = require('../../config/Config');
 const timeFuzz               = 5 * 1000; // 5 seconds
 
+const CertValidationError = Config.CertValidationError;
+
+
 class CertificateValidityError extends Error {
+	get errorCode() {
+		return this._errorCode;
+	}
+
+	constructor(message, code) {
+		super(message);
+		this._errorCode = code;
+	}
 }
 
 /**
@@ -101,6 +112,7 @@ class Credential {
 		/** @member {Array.<Credential>} */
 		this.children = [];
 
+		this.expired = false;
 
 		// cert files
 		/** @member {Buffer}*/
@@ -154,6 +166,7 @@ class Credential {
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store, this.parseMetadata(metadata));
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
+		this.setExpirationStatus();
 	}
 
 	/**
@@ -166,6 +179,7 @@ class Credential {
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
 		this.loadCredentialsObject();
 		this.initCryptoKeys();
+		this.setExpirationStatus();
 	}
 
 	/**
@@ -179,6 +193,7 @@ class Credential {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
 				this.certData           = err ? null : certData;
+				this.setExpirationStatus();
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = this.extractCommonName();
 				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
@@ -211,6 +226,7 @@ class Credential {
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
 				this.certData           = certData;
+				this.setExpirationStatus();
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this.store);
 				this.metadata.fqdn      = certData.commonName;
 				//noinspection JSUnresolvedVariable
@@ -384,7 +400,15 @@ class Credential {
 
 	//noinspection JSUnusedGlobalSymbols
 	extractCommonName() {
-		return this.certData ? this.certData.commonName : null;
+		return CommonUtils.isObjectEmpty(this.certData) ?  null :  this.certData.commonName;
+	}
+
+	setExpirationStatus() {
+		try {
+			this.expired = CommonUtils.isObjectEmpty(this.certData) ?  true : new Date(this.certData.validity.end) < new Date();
+		} catch (e) {
+			logger.error(`set expiration status error ${e}`,this.certData)
+		}
 	}
 
 	getPublicKeyNodeRsa() {
@@ -1773,19 +1797,15 @@ class Credential {
 			// validity.end = 0;
 			const now = Date.now();
 			if (validity.start > now + timeFuzz) {
-				reject(new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`));
+				reject(new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`, CertValidationError.InFuture));
 				return;
 			}
 			if (validity.end < now - timeFuzz) {
-				reject(new CertificateValidityError(`Certificate ${this.fqdn} has expired`));
+				reject(new CertificateValidityError(`Certificate ${this.fqdn} has expired`, CertValidationError.Expired));
 				return;
 			}
 			resolve(this);
 		});
-	}
-
-	static checkValidityPromiseHelper(cred) {
-		return cred.checkValidity();
 	}
 
 	//region live credential

@@ -60,6 +60,8 @@ const parametersSchema = {
 	'serviceId':          {required: false},
 	'userId':             {required: false},
 	'value':              {required: false},
+	'hasPrivateKey':      {required: false},
+	'expiration':         {required: false},
 	'useBestProxy':       {required: false}
 };
 

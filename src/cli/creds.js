@@ -15,8 +15,9 @@ const Credential  = require('../services/Credential');
 const AuthToken   = require('../services/AuthToken');
 const path        = require('path');
 const fs          = require('fs');
+const colors      = require('colors');
 
-module.exports = {
+module.exports    = {
 	show,
 	list,
 	getCreds,
@@ -44,8 +45,8 @@ module.exports = {
 function _lineToText(line) {
 	let table = new Table();
 	for (let k in line) {
-			//noinspection JSUnfilteredForInLoop
-			table.push({[k]: line[k] ? line[k].toString() : null});
+		//noinspection JSUnfilteredForInLoop
+		table.push({[k]: line[k] ? line[k].toString() : null});
 
 	}
 
@@ -66,11 +67,12 @@ function _obj2base64(o) {
  * Return list of credentials
  * @private
  * @param {String|null} [regex] entity regex
+ * @param {Object} options
  * @returns {Array<Credential>}
  */
-function _listCreds(regex) {
+function _listCreds(regex, options) {
 	const store = new BeameStore();
-	return store.list(regex, {});
+	return store.list(regex, options);
 }
 //endregion
 
@@ -152,7 +154,17 @@ function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId
 
 				let cred = new Credential(new BeameStore());
 
-				cred.createRegistrationToken({fqdn, name, email, userId, ttl, src, serviceName, serviceId, matchingFqdn}).then(resolve).catch(reject);
+				cred.createRegistrationToken({
+					fqdn,
+					name,
+					email,
+					userId,
+					ttl,
+					src,
+					serviceName,
+					serviceId,
+					matchingFqdn
+				}).then(resolve).catch(reject);
 			}
 		);
 	}
@@ -185,10 +197,10 @@ updateMetadata.toText = _lineToText;
  * @param {String} fqdn
  * @param {Function} callback
  */
-function revokeCert(signerFqdn,fqdn, callback) {
+function revokeCert(signerFqdn, fqdn, callback) {
 	let cred = new Credential(new BeameStore());
 
-	CommonUtils.promise2callback(cred.revokeCert(signerFqdn,fqdn), callback);
+	CommonUtils.promise2callback(cred.revokeCert(signerFqdn, fqdn), callback);
 }
 revokeCert.toText = _lineToText;
 
@@ -199,22 +211,22 @@ revokeCert.toText = _lineToText;
  * @param {String} fqdn
  * @param {Function} callback
  */
-function renewCert(signerAuthToken,fqdn, callback) {
+function renewCert(signerAuthToken, fqdn, callback) {
 
-	if(!signerAuthToken && !fqdn){
+	if (!signerAuthToken && !fqdn) {
 		throw new Error(`signerAuthToken or fqdn required`);
 	}
 
 	let authToken;
 
-	if(signerAuthToken){
-		let parsed = CommonUtils.parse(signerAuthToken,false);
+	if (signerAuthToken) {
+		let parsed = CommonUtils.parse(signerAuthToken, false);
 
-		if(typeof parsed == "object"){
+		if (typeof parsed == "object") {
 			authToken = parsed;
 		}
-		else{
-			authToken = CommonUtils.parse(parsed,false);
+		else {
+			authToken = CommonUtils.parse(parsed, false);
 		}
 	}
 
@@ -224,7 +236,7 @@ function renewCert(signerAuthToken,fqdn, callback) {
 		return Promise.resolve({status: 'ok'});
 	}
 
-	CommonUtils.promise2callback(cred.renewCert(authToken,fqdn).then(returnOK), callback);
+	CommonUtils.promise2callback(cred.renewCert(authToken, fqdn).then(returnOK), callback);
 }
 renewCert.toText = _lineToText;
 //endregion
@@ -254,20 +266,33 @@ show.toText = _lineToText;
  * @public
  * @method Creds.list
  * @param {String|null} [regex] entity fqdn
+ * @param {Boolean|null} hasPrivateKey
+ * @param {Number|null} expiration in days
  * @returns {Array.<Credential>}
  */
-function list(regex) {
+function list(regex, hasPrivateKey, expiration) {
 	logger.debug(`list  ${regex}`);
-	return _listCreds(regex || '.');
+	let options = {
+		hasPrivateKey: hasPrivateKey ? hasPrivateKey == 'true' : null,
+		expiration:    expiration ? Number(expiration) : (expiration === 0 ? 0 : null)
+	};
+	return _listCreds(regex || '.', options);
 }
 
 list.toText = function (creds) {
 	let table = new Table({
-		head:      ['name', 'fqdn', 'parent', 'Expires','priv/k'],
-		colWidths: [40, 65, 55,25 ,10]
+		head:      ['name', 'fqdn', 'parent', 'Expires', 'priv/k'],
+		colWidths: [40, 65, 55, 25, 10]
 	});
+
+	const _setStyle = (value,cred) => {
+		let val = value || '';
+		return cred.expired === true ? colors.red(val) : val;
+	};
+
 	creds.forEach(item => {
-		table.push([item.getMetadataKey("Name"), item.fqdn, item.getMetadataKey('PARENT_FQDN'), item.getCertEnd(),item.getKey('PRIVATE_KEY') ? 'Y' : 'N']);
+
+		table.push([_setStyle(item.getMetadataKey("Name"),item), _setStyle(item.fqdn,item), _setStyle(item.getMetadataKey('PARENT_FQDN'),item), _setStyle(item.getCertEnd(),item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N',item)]);
 	});
 	return table;
 };

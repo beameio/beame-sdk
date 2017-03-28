@@ -10,9 +10,9 @@ class CommonUtils {
 			return n < 10 ? "0" + n : n;
 		}
 
-		let d = new Date(),
-			dash = "-",
-			colon = ":";
+		let d     = new Date(),
+		    dash  = "-",
+		    colon = ":";
 
 		return d.getFullYear() + dash +
 			pad(d.getMonth() + 1) + dash +
@@ -32,8 +32,8 @@ class CommonUtils {
 		let d = new Date();
 
 		return d.getFullYear() +
-			pad(d.getMonth() + 1)  +
-			pad(d.getDate())  +
+			pad(d.getMonth() + 1) +
+			pad(d.getDate()) +
 			pad(d.getHours()) +
 			pad(d.getMinutes()) +
 			pad(d.getSeconds());
@@ -57,9 +57,9 @@ class CommonUtils {
 	}
 
 	static randomPassword(length) {
-		let len = length || 16;
+		let len     = length || 16;
 		const chars = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+<>ABCDEFGHIJKLMNOP1234567890";
-		let pass = "";
+		let pass    = "";
 		for (let x = 0; x < len; x++) {
 			let i = Math.floor(Math.random() * chars.length);
 			pass += chars.charAt(i);
@@ -89,6 +89,12 @@ class CommonUtils {
 	 */
 	static randomTimeout(upper) {
 		return Math.floor((Math.random() * (upper || 10)) + 1) * 1000 * Math.random()
+	}
+
+	static addDays(date, days) {
+		let result = new Date(date || new Date());
+		result.setDate(result.getDate() + days);
+		return result;
 	}
 
 	/**
@@ -149,11 +155,11 @@ class CommonUtils {
 
 	//noinspection JSUnusedGlobalSymbols
 	static runSequilizeCmd(sequelizeModule, args, dirname) {
-		const os = require('os');
+		const os       = require('os');
 		const execFile = require('child_process').execFile;
-		const path = require('path');
+		const path     = require('path');
 
-		const _commonSequelizeArgs = ()=> {
+		const _commonSequelizeArgs = () => {
 			let result = [];
 			['migrations', 'seeders', 'models'].forEach(what => {
 				result.push(`--${what}-path`);

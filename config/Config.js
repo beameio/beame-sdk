@@ -12,7 +12,7 @@ const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
 
 
-const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
+const CertEndpoint = "https://beameio-net-certs-dev.s3.amazonaws.com";
 
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
@@ -176,6 +176,10 @@ const TimeUnits = {
 	"Day":    "d"
 };
 
+const CertValidationError = {
+	"InFuture": "InFuture",
+	"Expired":  "Expired"
+};
 
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
@@ -205,5 +209,6 @@ module.exports = {
 	RegistrationSource,
 	RequestType,
 	ApprovedZones,
-	defaultValidityPeriod
+	defaultValidityPeriod,
+	CertValidationError
 };
