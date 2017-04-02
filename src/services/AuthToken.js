@@ -60,6 +60,12 @@ class AuthToken {
 	static create(data, signingCreds, ttl) {
 
 		try {
+
+			if(!CommonUtils.isTimeValid()){
+				logger.error(`Your local machine clock is incorrect`);
+				return null;
+			}
+
 			if (!(signingCreds instanceof Credential)) {
 				logger.warn('signingCreds must be present and must be instance of Credential');
 				return null;

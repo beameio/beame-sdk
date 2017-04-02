@@ -40,6 +40,8 @@ const beameForceEdgeIP   = process.env.BEAME_FORCE_EDGE_IP || 0;
 
 const defaultValidityPeriod = process.env.BEAME_CERT_VALIDITY_PERIOD || 60 * 60 * 24 * 365;
 
+const defaultAllowedClockFuzz = 100; //in seconds
+
 /** @const {String} **/
 const metadataFileName = "metadata.json";
 
@@ -210,5 +212,6 @@ module.exports = {
 	RequestType,
 	ApprovedZones,
 	defaultValidityPeriod,
-	CertValidationError
+	CertValidationError,
+	defaultAllowedClockFuzz
 };
