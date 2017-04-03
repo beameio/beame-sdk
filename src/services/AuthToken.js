@@ -60,12 +60,6 @@ class AuthToken {
 	static create(data, signingCreds, ttl) {
 
 		try {
-
-			if(!CommonUtils.isTimeValid()){
-				logger.error(`Your local machine clock is incorrect`);
-				return null;
-			}
-
 			if (!(signingCreds instanceof Credential)) {
 				logger.warn('signingCreds must be present and must be instance of Credential');
 				return null;
@@ -92,6 +86,15 @@ class AuthToken {
 
 	}
 
+	static createAsync(data, signingCreds, ttl){
+		return new Promise((resolve, reject) => {
+
+				CommonUtils.validateMachineClock().then(()=>{
+					resolve(AuthToken.create(data,signingCreds,ttl))
+				}).catch(reject);
+			}
+		);
+	}
 
 	/**
 	 *

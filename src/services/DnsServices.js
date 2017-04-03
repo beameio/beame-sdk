@@ -31,8 +31,10 @@ class DnsServices {
 					const AuthToken = require('./AuthToken'),
 					      data      = {fqdn, value: edge_fqdn};
 
-					let authToken = AuthToken.create(data, cred);
-					resolve(authToken);
+					AuthToken.createAsync(data, cred)
+							.then(resolve)
+							.catch(reject);
+
 				}).catch(reject);
 			}
 		);

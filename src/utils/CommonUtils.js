@@ -202,27 +202,36 @@ class CommonUtils {
 	/**
 	 * @param {Number|null|undefined} [fuzz] in seconds
 	 */
-	static isTimeValid(fuzz) {
+	static validateMachineClock(fuzz) {
 		const ntpClient        = require('ntp-client'),
 		      defaultClockFuzz = require('../../config/Config').defaultAllowedClockFuzz;
 
-		ntpClient.getNetworkTime("pool.ntp.org", 123, function (err, date) {
-			if (err) {
-				console.error(err);
-				return;
+
+		return new Promise((resolve, reject) => {
+				ntpClient.getNetworkTime("pool.ntp.org", 123, function (err, date) {
+					if (err) {
+						console.error(err);
+						reject(err);
+						return;
+					}
+
+					let local = new Date(),
+					    diff  = Math.abs((date.getTime() - local.getTime()) / 1000);
+
+					let isTimeValid = diff <= (fuzz || defaultClockFuzz);
+
+					isTimeValid ? resolve()  : reject(`Machine clock incorrect, diff vs ntp is ${diff}`)
+
+					// console.log("Current ntp time : ",date);
+					//
+					// console.log("Current machine time : ",local);
+					//
+					// console.log("diff is : ",(date.getTime() - local.getTime())/1000);
+				});
 			}
+		);
 
-			let local = new Date(),
-			    diff  = (date.getTime() - local.getTime()) / 1000;
 
-			return Math.abs(diff) <= fuzz || defaultClockFuzz;
-
-			// console.log("Current ntp time : ",date);
-			//
-			// console.log("Current machine time : ",local);
-			//
-			// console.log("diff is : ",(date.getTime() - local.getTime())/1000);
-		});
 	}
 }
 

@@ -192,7 +192,7 @@ class Credential {
 				if (this.fqdn && this.fqdn !== certData.commonName) {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
-				this.certData           = err ? null : certData;
+				this.certData = err ? null : certData;
 				this.setExpirationStatus();
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = this.extractCommonName();
@@ -225,7 +225,7 @@ class Credential {
 		pem.config({sync: true});
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
-				this.certData           = certData;
+				this.certData = certData;
 				this.setExpirationStatus();
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this.store);
 				this.metadata.fqdn      = certData.commonName;
@@ -400,15 +400,15 @@ class Credential {
 
 	//noinspection JSUnusedGlobalSymbols
 	extractCommonName() {
-		return CommonUtils.isObjectEmpty(this.certData) ?  null :  this.certData.commonName;
+		return CommonUtils.isObjectEmpty(this.certData) ? null : this.certData.commonName;
 	}
 
 	setExpirationStatus() {
 		try {
 			//noinspection JSUnresolvedVariable
-			this.expired = CommonUtils.isObjectEmpty(this.certData) ?  true : new Date(this.certData.validity.end) < new Date();
+			this.expired = CommonUtils.isObjectEmpty(this.certData) ? true : new Date(this.certData.validity.end) < new Date();
 		} catch (e) {
-			logger.error(`set expiration status error ${e}`,this.certData)
+			logger.error(`set expiration status error ${e}`, this.certData)
 		}
 	}
 
@@ -513,14 +513,10 @@ class Credential {
 				}
 				const AuthToken = require('./AuthToken');
 
-				let authToken = AuthToken.create(dataToSign || Date.now(), signCred, ttl || 60 * 5);
-
-				if (!authToken) {
+				AuthToken.createAsync(dataToSign || Date.now(), signCred, ttl || 60 * 5).then(resolve).catch(error => {
+					logger.error(error);
 					reject(`Sign data failure, please see logs`);
-					return;
-				}
-
-				resolve(authToken);
+				});
 			}
 		);
 
@@ -1010,16 +1006,18 @@ class Credential {
 					    parent_cred = data.parentCred;
 
 
-					let authToken = AuthToken.create({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2),
-					    token     = {
-						    authToken: authToken,
-						    name:      options.name,
-						    email:     options.email,
-						    type:      config.RequestType.RequestWithFqdn
-					    },
-					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+					AuthToken.createAsync({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2).then(authToken => {
+						let token = {
+							    authToken: authToken,
+							    name:      options.name,
+							    email:     options.email,
+							    type:      config.RequestType.RequestWithFqdn
+						    },
+						    str   = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 
-					resolve(str);
+						resolve(str);
+					}).catch(reject);
+
 				}).catch(reject);
 			}
 		);
@@ -1043,25 +1041,27 @@ class Credential {
 					let payload     = data.payload,
 					    parent_cred = data.parentCred;
 
+					AuthToken.create({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2).then(authToken => {
+						let token = {
+							    authToken:     authToken,
+							    name:          options.name,
+							    email:         options.email,
+							    usrId:         options.userId,
+							    src:           options.src,
+							    level:         payload.level,
+							    serviceName:   options.serviceName,
+							    serviceId:     options.serviceId,
+							    matchingFqdn:  options.matchingFqdn,
+							    type:          config.RequestType.RequestWithFqdn,
+							    imageRequired: options.imageRequired,
+							    gwFqdn:        options.gwFqdn
+						    },
+						    str   = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 
-					let authToken = AuthToken.create({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2),
-					    token     = {
-						    authToken:     authToken,
-						    name:          options.name,
-						    email:         options.email,
-						    usrId:         options.userId,
-						    src:           options.src,
-						    level:         payload.level,
-						    serviceName:   options.serviceName,
-						    serviceId:     options.serviceId,
-						    matchingFqdn:  options.matchingFqdn,
-						    type:          config.RequestType.RequestWithFqdn,
-						    imageRequired: options.imageRequired,
-						    gwFqdn:        options.gwFqdn
-					    },
-					    str       = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+						resolve(str);
 
-					resolve(str);
+					}).catch(reject);
+
 				}).catch(reject);
 			}
 		);
