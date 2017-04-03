@@ -615,7 +615,7 @@ class Credential {
 
 		let decryptedMessage = this.decryptWithRSA(encryptedMessage.rsaCipheredKeys);
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		let payload          = CommonUtils.parse(decryptedMessage);
+		let payload          = JSON.parse(decryptedMessage);
 
 		let decipheredPayload = CryptoServices.aesDecrypt([
 			encryptedMessage.data,
