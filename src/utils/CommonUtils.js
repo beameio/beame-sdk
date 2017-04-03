@@ -204,7 +204,7 @@ class CommonUtils {
 	 */
 	static validateMachineClock(fuzz) {
 		const ntpClient        = require('ntp-client'),
-		      defaultClockFuzz = require('../../config/Config').defaultAllowedClockFuzz;
+		      defaultClockFuzz = require('../../config/Config').defaultAllowedClockDiff;
 
 
 		return new Promise((resolve, reject) => {

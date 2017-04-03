@@ -8,7 +8,7 @@ const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require('./BeameStoreV2');
 const Credential  = require('./Credential');
 
-const timeFuzz = 5;
+const timeFuzz = config.defaultTimeFuzz;
 
 class AuthToken {
 
@@ -72,7 +72,7 @@ class AuthToken {
 			/** @type {SignedData} */
 			const token = {
 				created_at: Math.round(now / 1000),
-				valid_till: Math.round(now / 1000) + (ttl || 10),
+				valid_till: Math.round(now / 1000) + (ttl || config.defaultAuthTokenTtl),
 				data:       data2sign
 			};
 
