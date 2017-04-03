@@ -226,7 +226,7 @@ class CommonUtils {
 					//
 					// console.log("diff is : ",(date.getTime() - local)/1000);
 
-					isTimeValid ? resolve()  : reject(`Machine clock incorrect, diff vs ntp is ${diff}`)
+					isTimeValid ? resolve()  : reject(`Machine clock incorrect, diff vs ntp is ${diff} seconds`)
 
 
 				});
