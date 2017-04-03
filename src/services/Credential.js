@@ -68,7 +68,7 @@ const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.Au
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
 const Config                 = require('../../config/Config');
-const timeFuzz               = 5 * 1000; // 5 seconds
+const timeFuzz               = Config.defaultTimeFuzz * 1000;
 
 const CertValidationError = Config.CertValidationError;
 
@@ -1805,11 +1805,11 @@ class Credential {
 			logger.debug(`checkValidity: fqdn, start, end', ${this.fqdn}, ${validity.start}, ${validity.end}`);
 			// validity.end = 0;
 			const now = Date.now();
-			if (validity.start > now + timeFuzz) {
+			if (validity.start - Config.defaultAllowedClockDiff > now + timeFuzz) {
 				reject(new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`, CertValidationError.InFuture));
 				return;
 			}
-			if (validity.end < now - timeFuzz) {
+			if (validity.end +  Config.defaultAllowedClockDiff < now - timeFuzz) {
 				reject(new CertificateValidityError(`Certificate ${this.fqdn} has expired`, CertValidationError.Expired));
 				return;
 			}
