@@ -215,18 +215,20 @@ class CommonUtils {
 						return;
 					}
 
-					let local = new Date(),
-					    diff  = Math.abs((date.getTime() - local.getTime()) / 1000);
+					let local = Date.now(),
+					    diff  = Math.abs((date.getTime() - local) / 1000);
 
 					let isTimeValid = diff <= (fuzz || defaultClockFuzz);
 
+					console.log("Current ntp time : ",date);
+
+					console.log("Current machine time : ",local);
+
+					console.log("diff is : ",(date.getTime() - local)/1000);
+
 					isTimeValid ? resolve()  : reject(`Machine clock incorrect, diff vs ntp is ${diff}`)
 
-					// console.log("Current ntp time : ",date);
-					//
-					// console.log("Current machine time : ",local);
-					//
-					// console.log("diff is : ",(date.getTime() - local.getTime())/1000);
+
 				});
 			}
 		);
