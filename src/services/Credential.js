@@ -405,6 +405,7 @@ class Credential {
 
 	setExpirationStatus() {
 		try {
+			//noinspection JSUnresolvedVariable
 			this.expired = CommonUtils.isObjectEmpty(this.certData) ?  true : new Date(this.certData.validity.end) < new Date();
 		} catch (e) {
 			logger.error(`set expiration status error ${e}`,this.certData)
@@ -427,6 +428,7 @@ class Credential {
 	getCertEnd() {
 
 		try {
+			//noinspection JSUnresolvedVariable
 			return (new Date(this.certData.validity.end)).toLocaleString();
 		} catch (e) {
 			return null;
@@ -617,7 +619,7 @@ class Credential {
 
 		let decryptedMessage = this.decryptWithRSA(encryptedMessage.rsaCipheredKeys);
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		let payload          = JSON.parse(decryptedMessage);
+		let payload          = CommonUtils.parse(decryptedMessage);
 
 		let decipheredPayload = CryptoServices.aesDecrypt([
 			encryptedMessage.data,
@@ -639,8 +641,9 @@ class Credential {
 	 * @param {String} parent_fqdn => required
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
+	 * @param {Number|null} [validityPeriod]
 	 */
-	createEntityWithLocalCreds(parent_fqdn, name, email) {
+	createEntityWithLocalCreds(parent_fqdn, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -683,7 +686,7 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+							this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 						}).catch(reject);
 
 					});
@@ -695,7 +698,7 @@ class Credential {
 	}
 
 	//noinspection JSUnusedGlobalSymbols
-	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, name, email) {
+	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -739,7 +742,7 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+							this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 						}).catch(reject);
 
 					});
@@ -821,8 +824,9 @@ class Credential {
 	 * @param {String|null} [authSrvFqdn]
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
+	 * @param {Number|null} [validityPeriod]
 	 */
-	createEntityWithAuthServer(authToken, authSrvFqdn, name, email) {
+	createEntityWithAuthServer(authToken, authSrvFqdn, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
 				let metadata, edge_fqdn;
 
@@ -872,7 +876,7 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
@@ -886,9 +890,10 @@ class Credential {
 	 * @param {String} authToken
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
+	 * @param {Number|null} [validityPeriod]
 	 * @returns {Promise}
 	 */
-	createEntityWithAuthToken(authToken, name, email) {
+	createEntityWithAuthToken(authToken, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
 				let metadata, edge_fqdn;
 
@@ -947,7 +952,7 @@ class Credential {
 
 					payload.sign = authToken;
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 
 				};
 
@@ -958,16 +963,18 @@ class Credential {
 
 	}
 
-	createEntityWithRegistrationToken(token) {
+	createEntityWithRegistrationToken(token, validityPeriod) {
 		let type = token.type || config.RequestType.RequestWithAuthServer;
 
 		switch (type) {
 			case config.RequestType.RequestWithAuthServer:
-				return this.createEntityWithAuthServer(token.authToken, token.authSrvFqdn, token.name, token.email);
+				//noinspection JSCheckFunctionSignatures
+				return this.createEntityWithAuthServer(token.authToken, token.authSrvFqdn, token.name, token.email, validityPeriod);
 			case config.RequestType.RequestWithParentFqdn:
-				return this.createEntityWithAuthToken(token.authToken, token.name, token.email);
+				return this.createEntityWithAuthToken(token.authToken, token.name, token.email, validityPeriod);
 			case config.RequestType.RequestWithFqdn:
 
+				//noinspection JSUnresolvedVariable
 				let aut        = CommonUtils.parse(token.authToken),
 				    signedData = CommonUtils.parse(aut.signedData.data),
 				    payload    = {
@@ -980,7 +987,7 @@ class Credential {
 					    email: token.email
 				    };
 
-				return this.requestCerts(payload, metadata);
+				return this.requestCerts(payload, metadata, validityPeriod);
 			default:
 				return Promise.reject(`Unknown request type`);
 		}
@@ -1088,15 +1095,16 @@ class Credential {
 	 * @ignore
 	 * @param {SignatureToken} authToken
 	 * @param {Object} pubKeys
+	 * @param {Number|null|undefined} [validityPeriod] in seconds
 	 */
-	getCert(authToken, pubKeys) {
+	getCert(authToken, pubKeys, validityPeriod) {
 		let fqdn = this.fqdn;
 
 
 		return new Promise((resolve, reject) => {
 				let postData = {
 					    fqdn:     fqdn,
-					    validity: config.defaultValidityPeriod,
+					    validity: validityPeriod || config.defaultValidityPeriod,
 					    pub:      pubKeys
 				    },
 				    api      = new ProvisionApi(),
@@ -1112,13 +1120,13 @@ class Credential {
 		);
 	}
 
-	requestCerts(payload, metadata) {
+	requestCerts(payload, metadata, validityPeriod) {
 		return new Promise((resolve, reject) => {
 
 				const onEdgeServerSelected = edge => {
 					metadata.edge_fqdn = edge.endpoint;
 
-					this._requestCerts(payload, metadata).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(resolve).catch(reject);
+					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(resolve).catch(reject);
 				};
 
 				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
@@ -1154,7 +1162,7 @@ class Credential {
 	/**
 	 * @param {String|null|undefined} [signerAuthToken]
 	 * @param {String} fqdn
-	 * @param {Number|null|Undefined} [validityPeriod]
+	 * @param {Number|null|undefined} [validityPeriod]
 	 * @returns {Promise}
 	 */
 	renewCert(signerAuthToken, fqdn, validityPeriod) {
@@ -1657,9 +1665,10 @@ class Credential {
 	/**
 	 * @param payload
 	 * @param metadata
+	 * @param [validityPeriod]
 	 * @returns {Promise}
 	 */
-	_requestCerts(payload, metadata) {
+	_requestCerts(payload, metadata, validityPeriod) {
 		return new Promise((resolve, reject) => {
 
 
@@ -1693,7 +1702,7 @@ class Credential {
 									signature
 								};
 
-								cred.getCert(sign, pubKeys).then(() => {
+								cred.getCert(sign, pubKeys, validityPeriod).then(() => {
 									//TODO wait for tests
 									// metadata.fqdn        = payload.fqdn;
 									// metadata.parent_fqdn = payload.parent_fqdn;
