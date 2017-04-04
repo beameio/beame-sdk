@@ -80,14 +80,15 @@ function _listCreds(regex, options) {
 /**
  *
  * @param {Object}token
+ * @param [validityPeriod]
  * @returns {*}
  * @private
  */
-const _getCreds = (token) => {
+const _getCreds = (token, validityPeriod) => {
 
 	let cred = new Credential(new BeameStore());
 
-	return cred.createEntityWithRegistrationToken(token);
+	return cred.createEntityWithRegistrationToken(token, validityPeriod);
 
 };
 /**
@@ -101,10 +102,11 @@ const _getCreds = (token) => {
  * @param {String|null} [authSrvFqdn]
  * @param {String|null} [name]
  * @param {String|null} [email]
+ * @param {Number|null} [validityPeriod] cert validity period in seconds
  * @param {Function} callback
  */
 
-function getCreds(regToken, token, authSrvFqdn, fqdn, name, email, callback) {
+function getCreds(regToken, token, authSrvFqdn, fqdn, name, email, validityPeriod, callback) {
 
 	if (!token && !fqdn && !regToken) {
 		logger.fatal(`Auth Token or Fqdn required`);
@@ -117,13 +119,13 @@ function getCreds(regToken, token, authSrvFqdn, fqdn, name, email, callback) {
 	    parsedAuthToken = regToken ? CommonUtils.parse(regToken) : null;
 
 	if (parsedAuthToken) {
-		promise = _getCreds(parsedAuthToken);
+		promise = _getCreds(parsedAuthToken, validityPeriod);
 	}
 	else if (parsedToken) {
-		promise = cred.createEntityWithAuthServer(parsedToken, authSrvFqdn, name, email);
+		promise = cred.createEntityWithAuthServer(parsedToken, authSrvFqdn, name, email, validityPeriod);
 	}
 	else if (fqdn) {
-		promise = cred.createEntityWithLocalCreds(fqdn, name, email);
+		promise = cred.createEntityWithLocalCreds(fqdn, name, email, validityPeriod);
 	}
 
 	CommonUtils.promise2callback(promise, callback);
@@ -209,9 +211,10 @@ revokeCert.toText = _lineToText;
  * @method Creds.revokeCert
  * @param {String} signerAuthToken
  * @param {String} fqdn
+ * @param {Number|null} [validityPeriod] cert validity period in seconds
  * @param {Function} callback
  */
-function renewCert(signerAuthToken, fqdn, callback) {
+function renewCert(signerAuthToken, fqdn, validityPeriod, callback) {
 
 	if (!signerAuthToken && !fqdn) {
 		throw new Error(`signerAuthToken or fqdn required`);
@@ -236,7 +239,7 @@ function renewCert(signerAuthToken, fqdn, callback) {
 		return Promise.resolve({status: 'ok'});
 	}
 
-	CommonUtils.promise2callback(cred.renewCert(authToken, fqdn).then(returnOK), callback);
+	CommonUtils.promise2callback(cred.renewCert(authToken, fqdn, validityPeriod).then(returnOK), callback);
 }
 renewCert.toText = _lineToText;
 //endregion
