@@ -62,6 +62,7 @@ const parametersSchema = {
 	'value':              {required: false},
 	'hasPrivateKey':      {required: false},
 	'expiration':         {required: false},
+	'validityPeriod':     {required: false},
 	'useBestProxy':       {required: false}
 };
 

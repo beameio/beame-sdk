@@ -198,6 +198,43 @@ class CommonUtils {
 			}
 		});
 	}
+
+	/**
+	 * @param {Number|null|undefined} [fuzz] in seconds
+	 */
+	static validateMachineClock(fuzz) {
+		const ntpClient        = require('ntp-client'),
+		      defaultClockFuzz = require('../../config/Config').defaultAllowedClockDiff;
+
+
+		return new Promise((resolve, reject) => {
+				ntpClient.getNetworkTime("pool.ntp.org", 123, function (err, date) {
+					if (err) {
+						console.error(err);
+						reject(err);
+						return;
+					}
+
+					let local = Date.now(),
+					    diff  = Math.abs((date.getTime() - local) / 1000);
+
+					let isTimeValid = diff <= (fuzz || defaultClockFuzz);
+
+					// console.log("Current ntp time : ",date);
+					//
+					// console.log("Current machine time : ",local);
+					//
+					// console.log("diff is : ",(date.getTime() - local)/1000);
+
+					isTimeValid ? resolve()  : reject(`Machine clock incorrect, diff vs ntp is ${diff} seconds`)
+
+
+				});
+			}
+		);
+
+
+	}
 }
 
 module.exports = CommonUtils;
