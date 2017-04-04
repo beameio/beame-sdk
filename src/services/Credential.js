@@ -1041,7 +1041,7 @@ class Credential {
 					let payload     = data.payload,
 					    parent_cred = data.parentCred;
 
-					AuthToken.create({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2).then(authToken => {
+					AuthToken.createAsync({fqdn: payload.fqdn}, parent_cred, options.ttl || 60 * 60 * 24 * 2).then(authToken => {
 						let token = {
 							    authToken:     authToken,
 							    name:          options.name,
