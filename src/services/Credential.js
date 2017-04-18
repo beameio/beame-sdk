@@ -70,6 +70,9 @@ const CryptoServices         = require('../services/Crypto');
 const Config                 = require('../../config/Config');
 const timeFuzz               = Config.defaultTimeFuzz * 1000;
 
+const nop = function () {
+};
+
 const CertValidationError = Config.CertValidationError;
 
 
@@ -693,6 +696,59 @@ class Credential {
 		);
 	}
 
+	createVirtualEntity(parent_fqdn, name, email, password, validityPeriod) {
+		return new Promise((resolve, reject) => {
+				if (!parent_fqdn) {
+					reject('Parent Fqdn required');
+					return;
+				}
+				//noinspection JSDeprecatedSymbols
+				let parentCred = this.store.getCredential(parent_fqdn);
+
+				if (!parentCred) {
+					reject(`Parent credential ${parent_fqdn} not found`);
+					return;
+				}
+
+				let metadata;
+
+				metadata = {
+					parent_fqdn,
+					name,
+					email
+				};
+
+				let postData = Credential.formatRegisterPostData(metadata),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+				    api      = new ProvisionApi();
+
+				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				api.runRestfulAPI(apiData, (error, payload) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+					//set signature to consistent call of new credentials
+					this.signWithFqdn(parent_fqdn, payload).then(authToken => {
+						payload.sign = authToken;
+
+						this._requestVirtualCerts(payload, password, validityPeriod).then(payload => {
+							resolve(payload);
+						}).catch(reject);
+
+
+					}).catch(reject);
+
+				});
+
+			}
+		);
+	}
+
 	//noinspection JSUnusedGlobalSymbols
 	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
@@ -1096,8 +1152,9 @@ class Credential {
 	 * @param {SignatureToken} authToken
 	 * @param {Object} pubKeys
 	 * @param {Number|null|undefined} [validityPeriod] in seconds
+	 * @param {Boolean} [saveCerts]
 	 */
-	getCert(authToken, pubKeys, validityPeriod) {
+	getCert(authToken, pubKeys, validityPeriod, saveCerts = true) {
 		let fqdn = this.fqdn;
 
 
@@ -1114,7 +1171,18 @@ class Credential {
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error, payload) => {
-					this._saveCerts(error, payload).then(resolve).catch(reject);
+
+					if(error){
+						reject(error);
+						return;
+					}
+
+					if (saveCerts) {
+						this._saveCerts(error, payload).then(resolve).catch(reject);
+					}
+					else {
+						resolve(payload);
+					}
 				}, 'POST', JSON.stringify(authToken));
 			}
 		);
@@ -1662,6 +1730,34 @@ class Credential {
 		);
 	}
 
+
+	_createTempKeys() {
+
+		return new Promise((resolve, reject) => {
+
+				OpenSSlWrapper.createPrivateKey().then(pk => {
+						const NodeRSA   = require('node-rsa');
+						let key         = new NodeRSA(pk),
+						      publicDer = key.exportKey('pkcs8-public-der'),
+						      publicPem = key.exportKey('pkcs8-public-pem'),
+						      signature = key.sign(publicDer, 'base64', '');
+
+						resolve({
+							pubKeys: {
+								pub: publicPem,
+								signature,
+							},
+							pk
+						});
+					}
+				).catch(error => {
+					reject(error);
+				})
+
+			}
+		);
+	}
+
 	/**
 	 * @param payload
 	 * @param metadata
@@ -1719,6 +1815,83 @@ class Credential {
 					logger.error(BeameLogger.formatError(e), e);
 					reject(e);
 				}
+			}
+		);
+	}
+
+	/**
+	 * @param payload
+	 * @param [validityPeriod]
+	 * @param {String} password
+	 * @returns {Promise}
+	 */
+	_requestVirtualCerts(payload, password, validityPeriod) {
+		return new Promise((resolve, reject) => {
+
+				let path                = null;
+
+				function deleteCredFolder(){
+					const DirectoryServices = require('./DirectoryServices');
+					if (path) {
+						DirectoryServices.deleteFolder(path, nop);
+					}
+				}
+
+				function onError(e) {
+					logger.error(BeameLogger.formatError(e), e);
+					deleteCredFolder();
+					reject(e);
+				}
+
+				let sign = CommonUtils.parse(payload.sign),
+				    fqdn = payload.fqdn;
+
+				logger.debug("orderCerts()", payload);
+
+				if (!sign) {
+					reject('Invalid authorization token');
+					return;
+				}
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.parent_fqdn);
+
+				this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
+					cred => {
+
+						path = cred.getMetadataKey("path");
+						deleteCredFolder();
+
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
+
+						cred._createTempKeys().then(keys => {
+
+							let private_key = keys.pk;
+
+							cred.getCert(sign, keys.pubKeys, validityPeriod, false).then(payload => {
+
+								if(!payload){
+									reject(`inavlid cert request payload`);
+									return;
+								}
+
+								const pem = require('pem');
+
+								pem.createPkcs12(private_key, payload.p7b, password, [], (err, pfx) => {
+
+									if (err) {
+										reject(err);
+										return;
+									}
+
+									resolve({
+										fqdn,
+										pfx:pfx.pkcs12
+									});
+								});
+
+							}).catch(onError);
+						}).catch(onError);
+					}).catch(onError);
 			}
 		);
 	}
@@ -1809,7 +1982,7 @@ class Credential {
 				reject(new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`, CertValidationError.InFuture));
 				return;
 			}
-			if (validity.end +  Config.defaultAllowedClockDiff < now - timeFuzz) {
+			if (validity.end + Config.defaultAllowedClockDiff < now - timeFuzz) {
 				reject(new CertificateValidityError(`Certificate ${this.fqdn} has expired`, CertValidationError.Expired));
 				return;
 			}
