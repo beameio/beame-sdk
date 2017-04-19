@@ -5,98 +5,32 @@
 const path     = require('path');
 const exec     = require('child_process').exec;
 const execFile = require('child_process').execFile;
-const fs          = require('fs');
+const fs       = require('fs');
 
 const CommonUtils = require('./CommonUtils');
 const config      = require('../../config/Config');
 const module_name = config.AppModules.OpenSSL;
 const logger      = new (require('../utils/Logger'))(module_name);
-const beameUtils  = require('../utils/BeameUtils');
 const csrSubj     = "C=US/ST=Florida/L=Gainesville/O=LFE.COM, Inc/OU=Development/CN=";
 
 
 class OpenSSLWrapper {
 
-	getPublicKeySignature(dirPath, private_key_filename, public_key_filename) {
+	static getPublicKeySignature(pk) {
 
-		const public_der_filename = 'public_key.der';
+		try {
+			const NodeRSA   = require('node-rsa');
+			let key         = new NodeRSA(pk),
+			      publicDer = key.exportKey('pkcs8-public-der'),
+			      signature = key.sign(publicDer, 'base64', '');
 
-		const savePublicKeyDer = () => {
-			return new Promise((resolve, reject) => {
-					let pkFile = beameUtils.makePath(dirPath, public_key_filename);
-
-					let action = "openssl",
-					    args   = ['rsa', '-pubin', '-in', pkFile, '-outform', 'DER', '-out', path.join(dirPath, public_der_filename)];
-
-					try {
-						execFile(action, args, function (error) {
-							if (error) {
-								reject(error);
-								return;
-							}
-
-							resolve();
-
-						});
-					}
-					catch (e) {
-						reject(e);
-					}
-				}
-			);
-		};
-
-		const savePublicKeySignature = () => {
-			return new Promise((resolve, reject) => {
-					let private_key    = path.join(dirPath, private_key_filename),
-					    public_key_der = path.join(dirPath, public_der_filename),
-					    temp_signature = path.join(dirPath, 'sign.sha256'),
-					    signature      = path.join(dirPath, 'sign.txt');
-
-
-					let action = "openssl",
-					    args   = ['dgst', '-sha256', '-sign', private_key, '-out', temp_signature, public_key_der];
-
-					try {
-						execFile(action, args, function (error) {
-							if (error) {
-								reject(error);
-								return;
-							}
-
-							//console.log('***************************public key signature sha256 saved***********************************');
-
-							args = ['base64', '-in', temp_signature, '-out', signature];
-
-							execFile(action, args, function (error) {
-								if (error) {
-									reject(error);
-									return;
-								}
-
-								let sign = fs.readFileSync(signature, 'utf8');
-
-								fs.unlink(public_key_der);
-								fs.unlink(temp_signature);
-								fs.unlink(signature);
-
-								resolve(sign);
-							});
-
-						});
-					}
-					catch (e) {
-						reject(e);
-					}
-				}
-			);
-		};
-
-		return savePublicKeyDer().then(savePublicKeySignature);
-
+			return Promise.resolve(signature);
+		} catch (e) {
+			return Promise.reject(e);
+		}
 	}
 
-	savePublicKey (pkFile, pubFile) {
+	savePublicKey(pkFile, pubFile) {
 		return new Promise((resolve, reject) => {
 
 				let action = "openssl",
@@ -205,7 +139,7 @@ class OpenSSLWrapper {
 
 	createPKCS7Cert(dirPath) {
 		let action = "openssl",
-		    args   = ["crl2pkcs7", "-inform" , "PEM" , "-certfile", path.join(dirPath, config.CertFileNames.X509), "-certfile", path.join(dirPath, config.CertFileNames.BEAME_CA), "-certfile", path.join(dirPath, config.CertFileNames.CA_G2),"-certfile", path.join(dirPath, config.CertFileNames.CA), "-outform","PEM","-out",path.join(dirPath, config.CertFileNames.PKCS7),"-nocrl"];
+		    args   = ["crl2pkcs7", "-inform", "PEM", "-certfile", path.join(dirPath, config.CertFileNames.X509), "-certfile", path.join(dirPath, config.CertFileNames.BEAME_CA), "-certfile", path.join(dirPath, config.CertFileNames.CA_G2), "-certfile", path.join(dirPath, config.CertFileNames.CA), "-outform", "PEM", "-out", path.join(dirPath, config.CertFileNames.PKCS7), "-nocrl"];
 
 		return new Promise((resolve, reject) => {
 				try {
@@ -228,8 +162,8 @@ class OpenSSLWrapper {
 	createPfxCert(dirPath) {
 		let pwd    = CommonUtils.randomPassword(),
 		    action = "openssl",
-		    args   = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.P7B),  "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath, config.CertFileNames.PKCS12)];
-			//"-certfile", path.join(dirPath, config.CertFileNames.CA),
+		    args   = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.P7B), "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath, config.CertFileNames.PKCS12)];
+		//"-certfile", path.join(dirPath, config.CertFileNames.CA),
 
 		return new Promise((resolve, reject) => {
 				try {
