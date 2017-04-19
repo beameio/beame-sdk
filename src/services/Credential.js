@@ -59,7 +59,8 @@ const logger_level           = "Credential";
 const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger(module_name);
 const BeameStoreDataServices = require('../services/BeameStoreDataServices');
-const OpenSSlWrapper         = new (require('../utils/OpenSSLWrapper'))();
+const OpenSSLWrapper         = require('../utils/OpenSSLWrapper');
+const openSSlWrapper         = new OpenSSLWrapper();
 const beameUtils             = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
 const ProvisionApi           = require('../services/ProvisionApi');
@@ -1141,7 +1142,7 @@ class Credential {
 
 			cred._createInitialKeyPairs(dirPath).then(() => {
 				let pkFile = beameUtils.makePath(dirPath, pkFileName);
-				OpenSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+				openSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
 			}).catch(reject);
 
 		});
@@ -1246,7 +1247,7 @@ class Credential {
 
 					const _renew = () => {
 
-						OpenSSlWrapper.getPublicKeySignature(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY).then(signature => {
+						OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
 							let pubKeys = {
 								pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
@@ -1297,7 +1298,7 @@ class Credential {
 									let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY),
 									    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY);
 
-									OpenSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+									openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
 										cb();
 									}).catch(error => {
 										cb(error)
@@ -1305,12 +1306,12 @@ class Credential {
 								},
 								cb => {
 									//create backup key pair
-									OpenSSlWrapper.createPrivateKey().then(pk =>
+									openSSlWrapper.createPrivateKey().then(pk =>
 										DirectoryServices.saveFile(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
 											if (!error) {
 												let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY),
 												    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY);
-												OpenSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+												openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
 													cb(null);
 												}).catch(error => {
 													cb(error)
@@ -1688,12 +1689,12 @@ class Credential {
 		return new Promise((resolve, reject) => {
 
 				const _saveKeyPair = (private_key_name, public_key_name, cb) => {
-					OpenSSlWrapper.createPrivateKey().then(pk =>
+					openSSlWrapper.createPrivateKey().then(pk =>
 						DirectoryServices.saveFile(dirPath, private_key_name, pk, error => {
 							if (!error) {
 								let pkFile  = beameUtils.makePath(dirPath, private_key_name),
 								    pubFile = beameUtils.makePath(dirPath, public_key_name);
-								OpenSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+								openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
 									cb(null);
 								}).catch(error => {
 									cb(error)
@@ -1735,7 +1736,7 @@ class Credential {
 
 		return new Promise((resolve, reject) => {
 
-				OpenSSlWrapper.createPrivateKey().then(pk => {
+				openSSlWrapper.createPrivateKey().then(pk => {
 						const NodeRSA   = require('node-rsa');
 						let key         = new NodeRSA(pk),
 						      publicDer = key.exportKey('pkcs8-public-der'),
@@ -1790,7 +1791,7 @@ class Credential {
 						cred._createInitialKeyPairs(dirPath).then(() => {
 							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
 
-							OpenSSlWrapper.getPublicKeySignature(dirPath, config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY).then(signature => {
+							OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
 								let pubKeys = {
 									pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
@@ -1799,9 +1800,6 @@ class Credential {
 								};
 
 								cred.getCert(sign, pubKeys, validityPeriod).then(() => {
-									//TODO wait for tests
-									// metadata.fqdn        = payload.fqdn;
-									// metadata.parent_fqdn = payload.parent_fqdn;
 									resolve(metadata);
 								}).catch(onError);
 
@@ -1919,7 +1917,7 @@ class Credential {
 							[
 								function (callback) {
 
-									OpenSSlWrapper.createPfxCert(dirPath).then(pwd => {
+									openSSlWrapper.createPfxCert(dirPath).then(pwd => {
 										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
 											if (!error) {
 												callback(null, data)
