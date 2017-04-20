@@ -159,8 +159,8 @@ class OpenSSLWrapper {
 		);
 	}
 
-	createPfxCert(dirPath) {
-		let pwd    = CommonUtils.randomPassword(),
+	createPfxCert(dirPath,password) {
+		let pwd    = password || CommonUtils.randomPassword(),
 		    action = "openssl",
 		    args   = ["pkcs12", "-export", "-in", path.join(dirPath, config.CertFileNames.P7B), "-inkey", path.join(dirPath, config.CertFileNames.PRIVATE_KEY), "-password", "pass:" + pwd, "-out", path.join(dirPath, config.CertFileNames.PKCS12)];
 		//"-certfile", path.join(dirPath, config.CertFileNames.CA),
