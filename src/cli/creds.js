@@ -273,11 +273,12 @@ show.toText = _lineToText;
  * @param {Number|null} expiration in days
  * @returns {Array.<Credential>}
  */
-function list(regex, hasPrivateKey, expiration) {
+function list(regex, hasPrivateKey, expiration, anyParent) {
 	logger.debug(`list  ${regex}`);
 	let options = {
 		hasPrivateKey: hasPrivateKey ? hasPrivateKey == 'true' : null,
-		expiration:    expiration ? Number(expiration) : (expiration === 0 ? 0 : null)
+		expiration:    expiration ? Number(expiration) : (expiration === 0 ? 0 : null),
+		anyParent:     anyParent || null
 	};
 	return _listCreds(regex || '.', options);
 }

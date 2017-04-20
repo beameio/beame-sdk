@@ -278,6 +278,10 @@ class BeameStoreV2 {
 					}
 				}
 
+				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
+					return false;
+				}
+
 				return true;
 			}
 		);

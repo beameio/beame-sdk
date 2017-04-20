@@ -63,7 +63,8 @@ const parametersSchema = {
 	'hasPrivateKey':      {required: false},
 	'expiration':         {required: false},
 	'validityPeriod':     {required: false},
-	'useBestProxy':       {required: false}
+	'useBestProxy':       {required: false},
+	'anyParent':          {required: false}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

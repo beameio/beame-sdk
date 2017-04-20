@@ -1988,6 +1988,27 @@ class Credential {
 		});
 	}
 
+	hasLocalParentAtAnyLevel(fqdn) {
+
+		if(this.fqdn == fqdn) {
+			return true;
+		}
+
+		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN)
+
+		if(!parent_fqdn) {
+			return false;
+		}
+
+		let parentCred = this.store.getCredential(parent_fqdn);
+
+		if(!parentCred) {
+			return false;
+		}
+
+		return parentCred.hasLocalParentAtAnyLevel(fqdn);
+	}
+
 	//region live credential
 	/**
 	 * Import remote(non-Beame) credentials and save it to store(x509 + metadata)
