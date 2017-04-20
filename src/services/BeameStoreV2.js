@@ -248,6 +248,14 @@ class BeameStoreV2 {
 		return BeameUtils.findInTree(
 			{children: this.credentials},
 			cred => {
+
+				let allEnvs = !!options.allEnvs,
+					envPattern = config.EnvProfile.FqdnPattern;
+
+				if(!allEnvs && (!cred.fqdn || !(cred.fqdn.indexOf(envPattern)>0))){
+					return false;
+				}
+
 				//noinspection JSCheckFunctionSignatures
 				if (!(cred.fqdn && cred.fqdn.match(regex))) {
 					return false;
