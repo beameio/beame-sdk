@@ -2006,7 +2006,7 @@ class Credential {
 			return true;
 		}
 
-		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN)
+		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
 
 		if(!parent_fqdn) {
 			return false;
@@ -2019,6 +2019,18 @@ class Credential {
 		}
 
 		return parentCred.hasLocalParentAtAnyLevel(fqdn);
+	}
+
+	hasParent(parentFqdn) {
+
+
+		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+
+		if(!parent_fqdn) {
+			return false;
+		}
+
+		return parent_fqdn === parentFqdn;
 	}
 
 	//region live credential

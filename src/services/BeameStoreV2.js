@@ -143,6 +143,8 @@ class BeameStoreV2 {
 				let cred = this._getCredential(fqdn);
 
 				if (cred) {
+					//refresh metadata info
+					cred.metadata = cred.beameStoreServices.readMetadataSync(cred.metadata.path);
 					_onCredFound(cred);
 				} else {
 					if (!allowRemote) {
@@ -279,6 +281,10 @@ class BeameStoreV2 {
 				}
 
 				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
+					return false;
+				}
+
+				if(options.hasParent && !cred.hasParent(options.hasParent)) {
 					return false;
 				}
 
