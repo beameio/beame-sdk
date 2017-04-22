@@ -280,7 +280,7 @@ class BeameStoreV2 {
 					}
 				}
 
-				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
+				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent, options.anyParentIncludeTop)) {
 					return false;
 				}
 

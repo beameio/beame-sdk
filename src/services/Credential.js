@@ -2000,9 +2000,9 @@ class Credential {
 		});
 	}
 
-	hasLocalParentAtAnyLevel(fqdn) {
+	hasLocalParentAtAnyLevel(fqdn, includeTop = true) {
 
-		if(this.fqdn == fqdn) {
+		if(includeTop && this.fqdn == fqdn) {
 			return true;
 		}
 
