@@ -2018,7 +2018,7 @@ class Credential {
 			return false;
 		}
 
-		return parentCred.hasLocalParentAtAnyLevel(fqdn);
+		return parentCred.hasLocalParentAtAnyLevel(fqdn, includeTop);
 	}
 
 	hasParent(parentFqdn) {
