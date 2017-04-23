@@ -293,6 +293,13 @@ class BeameStoreV2 {
 	}
 
 	//noinspection JSUnusedGlobalSymbols
+	hasLocalChildren(fqdn){
+	   return  !!this.list(null, {
+			hasParent: fqdn
+		}).length;
+	}
+
+	//noinspection JSUnusedGlobalSymbols
 	addToStore(x509) {
 		let credential = new Credential(this);
 		credential.initFromX509(x509);
