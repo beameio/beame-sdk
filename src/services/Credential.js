@@ -2000,7 +2000,7 @@ class Credential {
 		});
 	}
 
-	hasLocalParentAtAnyLevel(fqdn, includeTop = true) {
+	hasLocalParentAtAnyLevel(fqdn) {
 
 		if(includeTop && this.fqdn == fqdn) {
 			return true;
@@ -2018,7 +2018,7 @@ class Credential {
 			return false;
 		}
 
-		return parentCred.hasLocalParentAtAnyLevel(fqdn, includeTop);
+		return parentCred.hasLocalParentAtAnyLevel(fqdn);
 	}
 
 	hasParent(parentFqdn) {
