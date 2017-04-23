@@ -195,7 +195,6 @@ class BeameStoreV2 {
 
 	/**
 	 * Return credential from local Beame store
-	 * @deprecated
 	 * @public
 	 * @method BeameStoreV2.getCredential
 	 * @param {String} fqdn
