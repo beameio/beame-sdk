@@ -2002,7 +2002,7 @@ class Credential {
 
 	hasLocalParentAtAnyLevel(fqdn) {
 
-		if(includeTop && this.fqdn == fqdn) {
+		if(this.fqdn == fqdn) {
 			return true;
 		}
 
