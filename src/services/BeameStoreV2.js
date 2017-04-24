@@ -143,6 +143,8 @@ class BeameStoreV2 {
 				let cred = this._getCredential(fqdn);
 
 				if (cred) {
+					//refresh metadata info
+					cred.metadata = cred.beameStoreServices.readMetadataSync(cred.metadata.path);
 					_onCredFound(cred);
 				} else {
 					if (!allowRemote) {
@@ -193,7 +195,6 @@ class BeameStoreV2 {
 
 	/**
 	 * Return credential from local Beame store
-	 * @deprecated
 	 * @public
 	 * @method BeameStoreV2.getCredential
 	 * @param {String} fqdn
@@ -248,6 +249,14 @@ class BeameStoreV2 {
 		return BeameUtils.findInTree(
 			{children: this.credentials},
 			cred => {
+
+				let allEnvs = !!options.allEnvs,
+					envPattern = config.EnvProfile.FqdnPattern;
+
+				if(!allEnvs && (!cred.fqdn || !(cred.fqdn.indexOf(envPattern)>0))){
+					return false;
+				}
+
 				//noinspection JSCheckFunctionSignatures
 				if (!(cred.fqdn && cred.fqdn.match(regex))) {
 					return false;
@@ -270,9 +279,24 @@ class BeameStoreV2 {
 					}
 				}
 
+				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
+					return false;
+				}
+
+				if(options.hasParent && !cred.hasParent(options.hasParent)) {
+					return false;
+				}
+
 				return true;
 			}
 		);
+	}
+
+	//noinspection JSUnusedGlobalSymbols
+	hasLocalChildren(fqdn){
+	   return  !!this.list(null, {
+			hasParent: fqdn
+		}).length;
 	}
 
 	//noinspection JSUnusedGlobalSymbols

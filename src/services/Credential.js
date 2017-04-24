@@ -7,6 +7,7 @@
 
 /** @namespace Credential **/
 
+
 /**
  * @typedef {Object} MetadataObject
  * @property {String} fqdn
@@ -14,7 +15,6 @@
  * @property {String|null} [name]
  * @property {String|null} [email]
  * @property {Number} level
- * @property {String|null} [local_ip] => local IP address(for future use)
  * @property {String|null} [edge_fqdn] => edge server FQDN
  * @property {String} path => path to local creds folder
  */
@@ -38,6 +38,13 @@
  *  @property {String|null|undefined} [matchingFqdn]
  *  @property {String|null|undefined} [gwFqdn]
  *  @property {Boolean|null|undefined} [imageRequired]
+ */
+
+/**
+ * @typedef {Object} RequestCertOptions
+ * @property {Number|null} [validityPeriod]
+ * @property {String|null} [password]
+ * @property {Boolean|true} [saveCerts]
  */
 
 /**
@@ -642,8 +649,9 @@ class Credential {
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
 	 * @param {Number|null} [validityPeriod]
+	 * @param {String|null} [password]
 	 */
-	createEntityWithLocalCreds(parent_fqdn, name, email, validityPeriod) {
+	createEntityWithLocalCreds(parent_fqdn, name, email, validityPeriod, password) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -686,7 +694,7 @@ class Credential {
 						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
 							payload.sign = authToken;
 
-							this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+							this._requestCerts(payload, metadata, validityPeriod, password).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
 						}).catch(reject);
 
 					});
@@ -1148,23 +1156,25 @@ class Credential {
 		});
 	}
 
+
+
 	/**
 	 * @ignore
 	 * @param {SignatureToken} authToken
 	 * @param {Object} pubKeys
-	 * @param {Number|null|undefined} [validityPeriod] in seconds
-	 * @param {Boolean} [saveCerts]
+	 * @param {RequestCertOptions} options
 	 */
-	getCert(authToken, pubKeys, validityPeriod, saveCerts = true) {
+	getCert(authToken, pubKeys, options) {
 		let fqdn = this.fqdn;
 
 
 		return new Promise((resolve, reject) => {
 				let postData = {
 					    fqdn:     fqdn,
-					    validity: validityPeriod || config.defaultValidityPeriod,
+					    validity: options.validityPeriod || config.defaultValidityPeriod,
 					    pub:      pubKeys
 				    },
+				    saveCerts = options.saveCerts || true,
 				    api      = new ProvisionApi(),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
 
@@ -1179,7 +1189,7 @@ class Credential {
 					}
 
 					if (saveCerts) {
-						this._saveCerts(error, payload).then(resolve).catch(reject);
+						this._saveCerts(error, payload, options.password).then(resolve).catch(reject);
 					}
 					else {
 						resolve(payload);
@@ -1763,9 +1773,10 @@ class Credential {
 	 * @param payload
 	 * @param metadata
 	 * @param [validityPeriod]
+	 * @param [password]
 	 * @returns {Promise}
 	 */
-	_requestCerts(payload, metadata, validityPeriod) {
+	_requestCerts(payload, metadata, validityPeriod, password) {
 		return new Promise((resolve, reject) => {
 
 
@@ -1799,7 +1810,7 @@ class Credential {
 									signature
 								};
 
-								cred.getCert(sign, pubKeys, validityPeriod).then(() => {
+								cred.getCert(sign, pubKeys, {validityPeriod, saveCerts: true ,password}).then(() => {
 									resolve(metadata);
 								}).catch(onError);
 
@@ -1865,10 +1876,10 @@ class Credential {
 
 							let private_key = keys.pk;
 
-							cred.getCert(sign, keys.pubKeys, validityPeriod, false).then(payload => {
+							cred.getCert(sign, keys.pubKeys, {validityPeriod, saveCerts:false}).then(payload => {
 
 								if(!payload){
-									reject(`inavlid cert request payload`);
+									reject(`invalid cert request payload`);
 									return;
 								}
 
@@ -1898,10 +1909,11 @@ class Credential {
 	 *
 	 * @param error
 	 * @param payload
+	 * @param {String|null} [password]
 	 * @returns {Promise}
 	 * @private
 	 */
-	_saveCerts(error, payload) {
+	_saveCerts(error, payload, password) {
 		let fqdn = this.fqdn;
 
 		return new Promise((resolve, reject) => {
@@ -1917,7 +1929,7 @@ class Credential {
 							[
 								function (callback) {
 
-									openSSlWrapper.createPfxCert(dirPath).then(pwd => {
+									openSSlWrapper.createPfxCert(dirPath,password).then(pwd => {
 										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
 											if (!error) {
 												callback(null, data)
@@ -1986,6 +1998,39 @@ class Credential {
 			}
 			resolve(this);
 		});
+	}
+
+	hasLocalParentAtAnyLevel(fqdn) {
+
+		if(this.fqdn == fqdn) {
+			return true;
+		}
+
+		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+
+		if(!parent_fqdn) {
+			return false;
+		}
+
+		let parentCred = this.store.getCredential(parent_fqdn);
+
+		if(!parentCred) {
+			return false;
+		}
+
+		return parentCred.hasLocalParentAtAnyLevel(fqdn);
+	}
+
+	hasParent(parentFqdn) {
+
+
+		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+
+		if(!parent_fqdn) {
+			return false;
+		}
+
+		return parent_fqdn === parentFqdn;
 	}
 
 	//region live credential

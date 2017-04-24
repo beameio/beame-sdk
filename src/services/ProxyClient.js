@@ -6,7 +6,9 @@
 const _   = require('underscore');
 const net = require('net');
 const io  = require('socket.io-client');
-
+const authToken = require('./AuthToken');
+const BeameStore = require('./BeameStoreV2');
+const store = new BeameStore();
 const socketUtils = require('../utils/SocketUtils');
 const config      = require('../../config/Config');
 const module_name = config.AppModules.ProxyClient;
@@ -90,9 +92,14 @@ class ProxyClient {
 			}
 			//logger.debug(`ProxyClient connected => {hostname:${this.hostname}, endpoint:${this.edgeServerHostname}, targetHost:${this.targetHost}, targetPort: ${this.targetPort}}`);
 			this._connected = true;
+			let cred     = store.getCredential(this._hostname),
+				token    = authToken.create(this._hostname, cred, 60);
+
 			socketUtils.emitMessage(this._socketio, 'register_server', socketUtils.formatMessage(null, {
 				hostname: this._hostname,
-				type:     this._type
+				type:     this._type,
+				isSigned: true,
+				signature: token
 			}));
 
 			this._options && this._options.onConnect && this._options.onConnect();

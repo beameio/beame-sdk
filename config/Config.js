@@ -16,6 +16,12 @@ const CertEndpoint = "https://beameio-net-certs-staging.s3.amazonaws.com";
 
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
+
+const EnvProfile = {
+	Name : 'Dev',
+	FqdnPattern: '.d.'
+};
+
 /** @const {String} **/
 const rootDir                   = process.env.BEAME_DIR || path.join(home, '.beame');
 
@@ -193,6 +199,7 @@ const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER
 module.exports = {
 	rootDir,
 	npmRootDir,
+	EnvProfile,
 	localCertsDirV2,
 	remotePKsDirV1,
 	loadBalancerURL,
