@@ -28,7 +28,7 @@ class ProxyClient {
 
 	/**
 	 * @param {String} serverType
-	 * @param {String} edgeClientHostname - server endpoint url
+	 * @param {String} serverFqdn - server endpoint url
 	 * @param {String} edgeServerHostname - SSL Proxy Server endpoint url
 	 * @param {String} targetHost
 	 * @param {Number} targetPort
@@ -38,7 +38,7 @@ class ProxyClient {
 	 * @constructor
 	 * @class
 	 */
-	constructor(serverType, edgeClientHostname, edgeServerHostname, targetHost, targetPort, options, agent, edgeClientCerts) {
+	constructor(serverType, serverFqdn, targetHost, targetPort, options, agent, edgeClientCerts) {
 
 		/** @member {Boolean} */
 		this._connected = false;
@@ -51,12 +51,12 @@ class ProxyClient {
 		/**
 		 * SSL Proxy Server endpoint url
 		 * @member {String} */
-		this._edgeServerHostname = edgeServerHostname;
+		this._edgeServerHostname = null;
 
 		/**
 		 * server endpoint url
 		 * @member {String} */
-		this._hostname = edgeClientHostname;
+		this._srvFqdn = serverFqdn;
 
 		/** @member {String} */
 		this._targetHost = targetHost;
@@ -66,10 +66,12 @@ class ProxyClient {
 
 		//logger.debug(`ProxyClient connecting to ${this.edgeServerHostname}`);
 
+		this._options = options;
+
 		/**
 		 * Connect to ProxyServer
 		 */
-		const io_options = {multiplex: false, agent: agent};
+		let io_options = {multiplex: false, agent: agent};
 
 		if (edgeClientCerts) {
 			io_options.cert = edgeClientCerts.cert;
@@ -78,10 +80,37 @@ class ProxyClient {
 
 		}
 
-		//noinspection JSUnresolvedVariable
-		this._options = options;
+		this._ioOptions = io_options;
 
-		this._socketio = io.connect(this._edgeServerHostname + '/control', io_options);
+	}
+
+	start() {
+		const store = new (require("./BeameStoreV2"))();
+
+		let cred = store.getCredential(this._srvFqdn);
+
+		if (!cred) {
+			logger.error(`Credentials not found for ${this._srvFqdn}. SERVER NOT STARTED`);
+			return;
+		}
+
+		this._cred = cred;
+
+		cred.getDnsValue().then(edge_fqdn => {
+			this._edgeServerHostname = edge_fqdn;
+
+			this._initSocket();
+
+		}).catch(e => {
+			logger.error(`DNS Value not found for ${this._srvFqdn}. SERVER NOT STARTED`);
+
+		})
+	}
+
+	_initSocket() {
+		//noinspection JSUnresolvedVariable
+
+		this._socketio = io.connect(this._edgeServerHostname + '/control', this._ioOptions);
 
 		this._socketio.on('connect', () => {
 
@@ -91,7 +120,7 @@ class ProxyClient {
 			//logger.debug(`ProxyClient connected => {hostname:${this.hostname}, endpoint:${this.edgeServerHostname}, targetHost:${this.targetHost}, targetPort: ${this.targetPort}}`);
 			this._connected = true;
 			socketUtils.emitMessage(this._socketio, 'register_server', socketUtils.formatMessage(null, {
-				hostname: this._hostname,
+				hostname: this._srvFqdn,
 				type:     this._type
 			}));
 
@@ -132,7 +161,7 @@ class ProxyClient {
 			this.deleteSocket(data.socketId);
 		});
 
-		this._socketio.on('_end',(data) => {
+		this._socketio.on('_end', (data) => {
 			//logger.debug("***************Killing the socket ");
 			if (!data || !data.socketId) {
 				return;
@@ -153,10 +182,6 @@ class ProxyClient {
 				}, 10000);
 			}, this);
 		});
-	}
-
-	start(){
-
 	}
 
 	createLocalServerConnection(data, callback = nop) {

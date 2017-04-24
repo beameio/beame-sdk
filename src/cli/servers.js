@@ -47,12 +47,12 @@ function runChatServer(fqdn) {
 
 		//noinspection JSUnusedLocalSymbols
 		app.on("request", function (req, resp) {
-			logger.debug("On Request", {_hostname: fqdn, method: req.method, url: req.url, headers: req.headers});
+			logger.debug("On Request", {_srvFqdn: fqdn, method: req.method, url: req.url, headers: req.headers});
 		});
 
 		//noinspection JSUnusedLocalSymbols
 		app.on("upgrade", function (req, resp) {
-			logger.debug("On upgrade", {_hostname: fqdn, method: req.method, url: req.url, headers: req.headers});
+			logger.debug("On upgrade", {_srvFqdn: fqdn, method: req.method, url: req.url, headers: req.headers});
 		});
 
 		const socketio = require('socket.io')(app);

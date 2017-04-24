@@ -69,28 +69,18 @@ function BeameServer(instanceFqdn, requestListener, hostOnlineCallback, errorCal
 			}
 		}
 
-		let fqdn      = cred.getKey('FQDN'),
-		    local_ip  = cred.getMetadataKey('LOCAL_IP'),
-		    edge_fqdn = cred.getMetadataKey('EDGE_FQDN');
-
-		if (!edge_fqdn) {
-			return __onError('Edge server hostname required');
-		}
+		let fqdn      = cred.getKey('FQDN');
 
 		if (!fqdn) {
 			return __onError('Server hostname required');
 		}
 
-		if (!local_ip) {
-			new ProxyClient("HTTPS", fqdn,
-				edge_fqdn, 'localhost',
+
+		let proxyClient =new ProxyClient("HTTPS", fqdn, 'localhost',
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
 				null, certs);
-		}
-		else {
-			onLocalServerCreated(null);
-		}
 
+		proxyClient.start();
 	});
 }
 

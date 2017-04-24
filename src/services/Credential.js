@@ -16,6 +16,8 @@
  * @property {String|null} [email]
  * @property {Number} level
  * @property {String|null} [edge_fqdn] => edge server FQDN
+ * @property {Array|null} [actions]
+ * @property {Array|null} [dnsRecords]
  * @property {String} path => path to local creds folder
  */
 
@@ -1123,7 +1125,6 @@ class Credential {
 		});
 	}
 
-
 	/**
 	 * @ignore
 	 * @param {SignatureToken} authToken
@@ -1421,13 +1422,15 @@ class Credential {
 			}
 		);
 	}
+	//endregion
 
+	//region dns service
 	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {String} fqdn
 	 * @param {String|null|undefined} [value]
-	 * @param {String|null|undefined} [useBestProxy]
+	 * @param {Boolean|null|undefined} [useBestProxy]
 	 */
 	setDns(fqdn, value, useBestProxy) {
 		return new Promise((resolve, reject) => {
@@ -1449,11 +1452,18 @@ class Credential {
 						const path = require('path');
 
 						let meta          = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
-						meta["edge_fqdn"] = val;
+
+						if(!meta.dnsRecords){
+							meta.dnsRecords = [];
+						}
+
+						meta.dnsRecords.push({
+							"edge_fqdn" : val
+						});
 
 						cred.beameStoreServices.writeMetadataSync(meta);
 
-						return Promise.resolve();
+						return Promise.resolve(val);
 					};
 
 					const _resolve = () => {
@@ -1484,6 +1494,22 @@ class Credential {
 		);
 	}
 
+	getDnsValue(){
+		return new Promise((resolve, reject) => {
+				if(this.metadata.dnsRecords && this.metadata.dnsRecords.length){
+					resolve(this.metadata.dnsRecords[0].edge_fqdn);
+					return;
+				}
+
+				this.setDns(this.fqdn,null,true).then(edge_fqdn=>{
+					resolve(edge_fqdn);
+				}).catch(e=>{
+					logger.error(e);
+					reject();
+				})
+			}
+		);
+	}
 	//endregion
 
 	//region common helpers
@@ -1884,6 +1910,7 @@ class Credential {
 
 	//endregion
 
+	//region helpers
 	checkValidity() {
 		return new Promise((resolve, reject) => {
 			const validity = this.certData.validity;
@@ -1934,6 +1961,7 @@ class Credential {
 
 		return parent_fqdn === parentFqdn;
 	}
+	//endregion
 
 	//region live credential
 	/**
