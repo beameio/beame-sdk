@@ -76,7 +76,7 @@ function BeameServer(instanceFqdn, requestListener, hostOnlineCallback, errorCal
 		}
 
 
-		let proxyClient =new ProxyClient("HTTPS", fqdn, 'localhost',
+		let proxyClient =new ProxyClient("HTTPS", cred, 'localhost',
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
 				null, certs);
 

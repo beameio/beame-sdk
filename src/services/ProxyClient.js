@@ -10,7 +10,8 @@ const io  = require('socket.io-client');
 const socketUtils = require('../utils/SocketUtils');
 const config      = require('../../config/Config');
 const module_name = config.AppModules.ProxyClient;
-const logger      = new (require('../utils/Logger'))(module_name);
+const BeameLogger = require('../utils/Logger');
+const logger      = new BeameLogger(module_name);
 /**
  * @typedef {Object} HttpsProxyAgent
  */
@@ -28,8 +29,7 @@ class ProxyClient {
 
 	/**
 	 * @param {String} serverType
-	 * @param {String} serverFqdn - server endpoint url
-	 * @param {String} edgeServerHostname - SSL Proxy Server endpoint url
+	 * @param {Credential} serverCred - server credential
 	 * @param {String} targetHost
 	 * @param {Number} targetPort
 	 * @param {ProxyClientOptions} options
@@ -38,7 +38,7 @@ class ProxyClient {
 	 * @constructor
 	 * @class
 	 */
-	constructor(serverType, serverFqdn, targetHost, targetPort, options, agent, edgeClientCerts) {
+	constructor(serverType, serverCred, targetHost, targetPort, options, agent, edgeClientCerts) {
 
 		/** @member {Boolean} */
 		this._connected = false;
@@ -53,10 +53,12 @@ class ProxyClient {
 		 * @member {String} */
 		this._edgeServerHostname = null;
 
+		this._cred = serverCred;
+
 		/**
 		 * server endpoint url
 		 * @member {String} */
-		this._srvFqdn = serverFqdn;
+		this._srvFqdn = serverCred.fqdn;
 
 		/** @member {String} */
 		this._targetHost = targetHost;
@@ -76,8 +78,6 @@ class ProxyClient {
 		if (edgeClientCerts) {
 			io_options.cert = edgeClientCerts.cert;
 			io_options.key  = edgeClientCerts.key;
-			io_options.ca   = edgeClientCerts.ca;
-
 		}
 
 		this._ioOptions = io_options;
@@ -85,24 +85,14 @@ class ProxyClient {
 	}
 
 	start() {
-		const store = new (require("./BeameStoreV2"))();
 
-		let cred = store.getCredential(this._srvFqdn);
-
-		if (!cred) {
-			logger.error(`Credentials not found for ${this._srvFqdn}. SERVER NOT STARTED`);
-			return;
-		}
-
-		this._cred = cred;
-
-		cred.getDnsValue().then(edge_fqdn => {
+		this._cred.getDnsValue().then(edge_fqdn => {
 			this._edgeServerHostname = edge_fqdn;
 
 			this._initSocket();
 
 		}).catch(e => {
-			logger.error(`DNS Value not found for ${this._srvFqdn}. SERVER NOT STARTED`);
+			logger.error(`Get dns error for ${this._srvFqdn} ${BeameLogger.formatError(e)}. SERVER NOT STARTED`);
 
 		})
 	}

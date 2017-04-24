@@ -1562,7 +1562,6 @@ class Credential {
 		return {
 			key:  pk,
 			cert: p7b
-			//ca:   ca
 		};
 	}
 

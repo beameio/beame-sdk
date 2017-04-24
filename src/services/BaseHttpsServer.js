@@ -66,7 +66,7 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 		}
 
 		//noinspection JSUnresolvedVariable
-		let proxyClient = new ProxyClient("HTTPS", fqdn,'localhost',
+		let proxyClient = new ProxyClient("HTTPS", cred,'localhost',
 			server.address().port, {onLocalServerCreated: onLocalServerCreated},
 			null, serverOptions);
 
