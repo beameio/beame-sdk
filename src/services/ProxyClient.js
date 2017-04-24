@@ -83,7 +83,7 @@ class ProxyClient {
 
 		this._socketio = io.connect(this._edgeServerHostname + '/control', io_options);
 
-		this._socketio.on('connect', _.bind(function () {
+		this._socketio.on('connect', () => {
 
 			if (this._connected) {
 				return;
@@ -97,11 +97,11 @@ class ProxyClient {
 
 			this._options && this._options.onConnect && this._options.onConnect();
 
-		}, this));
+		});
 
-		this._socketio.on('error', _.bind(function (err) {
+		this._socketio.on('error', (err) => {
 			//logger.debug("Could not connect to proxy server", err);
-		}, this));
+		});
 
 		this._socketio.on('create_connection', data => {
 
@@ -109,13 +109,13 @@ class ProxyClient {
 			this.createLocalServerConnection(data, this._options && this._options.onConnection);
 		});
 
-		this._socketio.once('hostRegistered', _.bind(function (data) {
+		this._socketio.once('hostRegistered', (data) => {
 			this._options && this._options.onLocalServerCreated && this._options.onLocalServerCreated.call(null, data);
 			//  this.createLocalServerConnection.call(this, data, this._options && this._options.onLocalServerCreated);
 			//logger.debug('hostRegistered', data);
-		}, this));
+		});
 
-		this._socketio.on('data', _.bind(function (data) {
+		this._socketio.on('data', (data) => {
 			const socketId = data.socketId;
 			const socket   = this._clientSockets[socketId];
 			if (socket) {
@@ -126,13 +126,13 @@ class ProxyClient {
 				});
 
 			}
-		}, this));
+		});
 
-		this._socketio.on('socket_error', _.bind(function (data) {
+		this._socketio.on('socket_error', (data) => {
 			this.deleteSocket(data.socketId);
-		}, this));
+		});
 
-		this._socketio.on('_end', _.bind(function (data) {
+		this._socketio.on('_end',(data) => {
 			//logger.debug("***************Killing the socket ");
 			if (!data || !data.socketId) {
 				return;
@@ -141,9 +141,9 @@ class ProxyClient {
 				this.deleteSocket(data.socketId);
 			}, 1000);
 
-		}, this));
+		});
 
-		this._socketio.on('disconnect', _.bind(function () {
+		this._socketio.on('disconnect', () => {
 
 			this._connected = false;
 			_.each(this._clientSockets, function (socket) {
@@ -152,7 +152,11 @@ class ProxyClient {
 					this.deleteSocket(socket.id);
 				}, 10000);
 			}, this);
-		}, this));
+		});
+	}
+
+	start(){
+
 	}
 
 	createLocalServerConnection(data, callback = nop) {
