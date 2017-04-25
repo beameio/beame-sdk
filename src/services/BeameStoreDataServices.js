@@ -5,8 +5,6 @@
  * @typedef {Object} FqdnMetadata
  * @property {String|null} [name]
  * @property {String|null} [email]
- * @property {String|null} [local_ip]
- * @property {String|null} [edge_fqdn]
  * @property {String|null} [parent_fqdn]
  */
 

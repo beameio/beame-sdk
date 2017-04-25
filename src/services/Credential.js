@@ -15,7 +15,6 @@
  * @property {String|null} [name]
  * @property {String|null} [email]
  * @property {Number} level
- * @property {String|null} [edge_fqdn] => edge server FQDN
  * @property {Array|null} [actions]
  * @property {Array|null} [dnsRecords]
  * @property {String} path => path to local creds folder
@@ -1458,7 +1457,8 @@ class Credential {
 						}
 
 						meta.dnsRecords.push({
-							"edge_fqdn" : val
+							value : val,
+							date:Date.now()
 						});
 
 						cred.beameStoreServices.writeMetadataSync(meta);
@@ -1497,12 +1497,12 @@ class Credential {
 	getDnsValue(){
 		return new Promise((resolve, reject) => {
 				if(this.metadata.dnsRecords && this.metadata.dnsRecords.length){
-					resolve(this.metadata.dnsRecords[0].edge_fqdn);
+					resolve(this.metadata.dnsRecords[0].value);
 					return;
 				}
 
-				this.setDns(this.fqdn,null,true).then(edge_fqdn=>{
-					resolve(edge_fqdn);
+				this.setDns(this.fqdn,null,true).then(value=>{
+					resolve(value);
 				}).catch(e=>{
 					logger.error(e);
 					reject();
@@ -1898,12 +1898,10 @@ class Credential {
 			name:          metadata.name,
 			email:         metadata.email,
 			parent_fqdn:   metadata.parent_fqdn,
-			edge_fqdn:     metadata.edge_fqdn,
 			service_name:  metadata.serviceName,
 			service_id:    metadata.serviceId,
 			matching_fqdn: metadata.matchingFqdn,
 			custom_fqdn:   metadata.custom_fqdn
-
 		};
 	}
 

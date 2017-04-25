@@ -86,8 +86,8 @@ class ProxyClient {
 
 	start() {
 
-		this._cred.getDnsValue().then(edge_fqdn => {
-			this._edgeServerHostname = edge_fqdn;
+		this._cred.getDnsValue().then(value => {
+			this._edgeServerHostname = value;
 
 			this._initSocket();
 
@@ -222,6 +222,7 @@ class ProxyClient {
 		callback(data);
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	destroy() {
 		if (this._socketio) {
 			this._socketio = null;
