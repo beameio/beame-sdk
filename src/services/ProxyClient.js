@@ -3,10 +3,10 @@
  */
 "use strict";
 
-const _   = require('underscore');
-const net = require('net');
-const io  = require('socket.io-client');
-const authToken = require('./AuthToken');
+const _           = require('underscore');
+const net         = require('net');
+const io          = require('socket.io-client');
+const authToken   = require('./AuthToken');
 const CommonUtils = require('../utils/CommonUtils');
 const socketUtils = require('../utils/SocketUtils');
 const config      = require('../../config/Config');
@@ -87,15 +87,20 @@ class ProxyClient {
 
 	start() {
 
-		this._cred.getDnsValue().then(value => {
-			this._edgeServerHostname = value;
+		return new Promise((resolve, reject) => {
+				this._cred.getDnsValue().then(value => {
+					this._edgeServerHostname = value;
 
-			this._initSocket();
+					this._initSocket();
 
-		}).catch(e => {
-			logger.error(`Get dns error for ${this._srvFqdn} ${BeameLogger.formatError(e)}. SERVER NOT STARTED`);
+					resolve()
 
-		})
+				}).catch(e => {
+					logger.error(`Get dns error for ${this._srvFqdn} ${BeameLogger.formatError(e)}. SERVER NOT STARTED`);
+					reject(e);
+				})
+			}
+		);
 	}
 
 	_initSocket() {
@@ -111,12 +116,12 @@ class ProxyClient {
 
 			this._connected = true;
 
-			let token    = authToken.create(this._srvFqdn, this._cred, 60);
+			let token = authToken.create(this._srvFqdn, this._cred, 60);
 
 			socketUtils.emitMessage(this._socketio, 'register_server', socketUtils.formatMessage(null, {
-				hostname: this._srvFqdn,
-				type:     this._type,
-				isSigned: true,
+				hostname:  this._srvFqdn,
+				type:      this._type,
+				isSigned:  true,
 				signature: token
 			}));
 
@@ -130,11 +135,11 @@ class ProxyClient {
 
 		this._socketio.on('hostRegisterFailed', (error) => {
 
-			try{
+			try {
 				let parsed = CommonUtils.parse(error);
 
-				if(parsed.code){
-					switch (parsed.code){
+				if (parsed.code) {
+					switch (parsed.code) {
 						case 'signature':
 							logger.error(`Host registration error ${parsed.message}`);
 							break;
@@ -151,7 +156,7 @@ class ProxyClient {
 					}
 				}
 			}
-			catch(e){
+			catch (e) {
 
 			}
 		});
