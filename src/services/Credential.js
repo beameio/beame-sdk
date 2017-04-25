@@ -15,7 +15,8 @@
  * @property {String|null} [name]
  * @property {String|null} [email]
  * @property {Number} level
- * @property {String|null} [edge_fqdn] => edge server FQDN
+ * @property {Array|null} [actions]
+ * @property {Array|null} [dnsRecords]
  * @property {String} path => path to local creds folder
  */
 
@@ -665,42 +666,34 @@ class Credential {
 					return;
 				}
 
-				let metadata, edge_fqdn;
-
-				const onEdgeServerSelected = edge => {
-					edge_fqdn = edge.endpoint;
-					metadata  = {
-						parent_fqdn,
-						name,
-						email,
-						edge_fqdn
-					};
-
-					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
-					    api      = new ProvisionApi();
-
-					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
-
-					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					api.runRestfulAPI(apiData, (error, payload) => {
-						if (error) {
-							reject(error);
-							return;
-						}
-						//set signature to consistent call of new credentials
-						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
-							payload.sign = authToken;
-
-							this._requestCerts(payload, metadata, validityPeriod, password).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
-						}).catch(reject);
-
-					});
+				let metadata = {
+					parent_fqdn,
+					name,
+					email
 				};
 
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				let postData = Credential.formatRegisterPostData(metadata),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+				    api      = new ProvisionApi();
+
+				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				api.runRestfulAPI(apiData, (error, payload) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+					//set signature to consistent call of new credentials
+					this.signWithFqdn(parent_fqdn, payload).then(authToken => {
+						payload.sign = authToken;
+
+						this._requestCerts(payload, metadata, validityPeriod, password).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
+					}).catch(reject);
+
+				});
 			}
 		);
 	}
@@ -773,43 +766,35 @@ class Credential {
 					return;
 				}
 
-				let metadata, edge_fqdn;
-
-				const onEdgeServerSelected = edge => {
-					edge_fqdn = edge.endpoint;
-					metadata  = {
-						parent_fqdn,
-						name,
-						email,
-						custom_fqdn: custom_fqdn,
-						edge_fqdn
-					};
-
-					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
-					    api      = new ProvisionApi();
-
-					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
-
-					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					api.runRestfulAPI(apiData, (error, payload) => {
-						if (error) {
-							reject(error);
-							return;
-						}
-						//set signature to consistent call of new credentials
-						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
-							payload.sign = authToken;
-
-							this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
-						}).catch(reject);
-
-					});
+				let metadata = {
+					parent_fqdn,
+					name,
+					email,
+					custom_fqdn: custom_fqdn
 				};
 
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				let postData = Credential.formatRegisterPostData(metadata),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+				    api      = new ProvisionApi();
+
+				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				api.runRestfulAPI(apiData, (error, payload) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+					//set signature to consistent call of new credentials
+					this.signWithFqdn(parent_fqdn, payload).then(authToken => {
+						payload.sign = authToken;
+
+						this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
+					}).catch(reject);
+
+				});
 			}
 		);
 	}
@@ -889,7 +874,6 @@ class Credential {
 	 */
 	createEntityWithAuthServer(authToken, authSrvFqdn, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
-				let metadata, edge_fqdn;
 
 				if (!authToken) {
 					reject('Auth token required');
@@ -897,31 +881,6 @@ class Credential {
 				}
 
 				logger.debug("createEntityWithAuthServer(): Selecting proxy");
-
-				const onEdgeServerSelected = edge => {
-
-					logger.debug("createEntityWithAuthServer(): onEdgeServerSelected");
-					let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || config.authServerURL;
-
-					edge_fqdn = edge.endpoint;
-
-					metadata = {
-						name,
-						email,
-						edge_fqdn
-					};
-					let api  = new ProvisionApi();
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, authServerFqdn);
-
-					api.postRequest(
-						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
-						Credential.formatRegisterPostData(metadata),
-						fqdnResponseReady.bind(this),
-						authToken,
-						5
-					);
-				};
 
 				/**
 				 * @param error
@@ -937,10 +896,29 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+					this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 				};
 
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				logger.debug("createEntityWithAuthServer(): onEdgeServerSelected");
+
+				let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || config.authServerURL;
+
+				let metadata = {
+					name,
+					email
+				};
+				let api      = new ProvisionApi();
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, authServerFqdn);
+
+				api.postRequest(
+					authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
+					Credential.formatRegisterPostData(metadata),
+					fqdnResponseReady.bind(this),
+					authToken,
+					5
+				);
+
 			}
 		);
 
@@ -956,7 +934,6 @@ class Credential {
 	 */
 	createEntityWithAuthToken(authToken, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
-				let metadata, edge_fqdn;
 
 				if (!authToken) {
 					reject('Auth token required');
@@ -971,31 +948,6 @@ class Credential {
 				}
 
 				logger.debug("createEntityWithAuthToken(): Selecting proxy");
-
-				const onEdgeServerSelected = edge => {
-
-					edge_fqdn = edge.endpoint;
-
-					metadata = {
-						name,
-						email,
-						parent_fqdn: tokenObj.signedBy,
-						edge_fqdn,
-					};
-
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, metadata.parent_fqdn);
-
-					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
-					    api      = new ProvisionApi();
-
-					api.runRestfulAPI(apiData,
-						fqdnResponseReady.bind(this),
-						'POST',
-						authToken
-					);
-				};
 
 				/**
 				 * @param error
@@ -1013,12 +965,28 @@ class Credential {
 
 					payload.sign = authToken;
 
-					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+					this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 
 				};
 
+				let metadata = {
+					name,
+					email,
+					parent_fqdn: tokenObj.signedBy
+				};
 
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, metadata.parent_fqdn);
+
+				let postData = Credential.formatRegisterPostData(metadata),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+				    api      = new ProvisionApi();
+
+				api.runRestfulAPI(apiData,
+					fqdnResponseReady.bind(this),
+					'POST',
+					authToken
+				);
+
 			}
 		);
 
@@ -1156,8 +1124,6 @@ class Credential {
 		});
 	}
 
-
-
 	/**
 	 * @ignore
 	 * @param {SignatureToken} authToken
@@ -1169,21 +1135,21 @@ class Credential {
 
 
 		return new Promise((resolve, reject) => {
-				let postData = {
+				let postData  = {
 					    fqdn:     fqdn,
 					    validity: options.validityPeriod || config.defaultValidityPeriod,
 					    pub:      pubKeys
 				    },
 				    saveCerts = options.saveCerts || true,
-				    api      = new ProvisionApi(),
-				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
+				    api       = new ProvisionApi(),
+				    apiData   = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error, payload) => {
 
-					if(error){
+					if (error) {
 						reject(error);
 						return;
 					}
@@ -1202,13 +1168,7 @@ class Credential {
 	requestCerts(payload, metadata, validityPeriod) {
 		return new Promise((resolve, reject) => {
 
-				const onEdgeServerSelected = edge => {
-					metadata.edge_fqdn = edge.endpoint;
-
-					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(resolve).catch(reject);
-				};
-
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 			}
 		);
 	}
@@ -1461,48 +1421,15 @@ class Credential {
 			}
 		);
 	}
+	//endregion
 
-	/**
-	 * @ignore
-	 * @param fqdn
-	 * @param edge_fqdn
-	 * @returns {Promise}
-	 */
-	updateEntityEdge(fqdn, edge_fqdn) {
-		return new Promise((resolve, reject) => {
-
-				this.store.find(fqdn).then(cred => {
-
-					const api = new ProvisionApi();
-
-					let postData = {
-						    edge_fqdn
-					    },
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntityEdge.endpoint, postData);
-
-					api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
-
-					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					api.runRestfulAPI(apiData, (error) => {
-						if (error) {
-							reject(error);
-							return;
-						}
-						resolve();
-
-					});
-				}).catch(reject);
-
-			}
-		);
-	}
-
+	//region dns service
 	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {String} fqdn
 	 * @param {String|null|undefined} [value]
-	 * @param {String|null|undefined} [useBestProxy]
+	 * @param {Boolean|null|undefined} [useBestProxy]
 	 */
 	setDns(fqdn, value, useBestProxy) {
 		return new Promise((resolve, reject) => {
@@ -1524,11 +1451,19 @@ class Credential {
 						const path = require('path');
 
 						let meta          = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
-						meta["edge_fqdn"] = val;
+
+						if(!meta.dnsRecords){
+							meta.dnsRecords = [];
+						}
+
+						meta.dnsRecords.push({
+							value : val,
+							date:Date.now()
+						});
 
 						cred.beameStoreServices.writeMetadataSync(meta);
 
-						return Promise.resolve();
+						return Promise.resolve(val);
 					};
 
 					const _resolve = () => {
@@ -1559,6 +1494,22 @@ class Credential {
 		);
 	}
 
+	getDnsValue(){
+		return new Promise((resolve, reject) => {
+				if(this.metadata.dnsRecords && this.metadata.dnsRecords.length){
+					resolve(this.metadata.dnsRecords[0].value);
+					return;
+				}
+
+				this.setDns(this.fqdn,null,true).then(value=>{
+					resolve(value);
+				}).catch(e=>{
+					logger.error(e);
+					reject();
+				})
+			}
+		);
+	}
 	//endregion
 
 	//region common helpers
@@ -1611,7 +1562,6 @@ class Credential {
 		return {
 			key:  pk,
 			cert: p7b
-			//ca:   ca
 		};
 	}
 
@@ -1631,29 +1581,6 @@ class Credential {
 				});
 			}
 		);
-	}
-
-	/**
-	 *
-	 * @param {String} fqdn
-	 * @param {String} edge_fqdn
-	 * @returns {Promise}
-	 * @private
-	 */
-	_onCertsReceived(fqdn, edge_fqdn) {
-		const dnsServices = new (require('./DnsServices'))();
-
-		const _updateEntityEdge = () => {
-			return this.updateEntityEdge(fqdn, edge_fqdn);
-		};
-
-		const _updateEntityMeta = () => {
-			return this._syncMetadataOnCertReceived(fqdn);
-		};
-
-		return dnsServices.setDns(fqdn, edge_fqdn)
-			.then(_updateEntityEdge.bind(this))
-			.then(_updateEntityMeta.bind(this));
 	}
 
 	_syncMetadataOnCertReceived(fqdn) {
@@ -1810,7 +1737,7 @@ class Credential {
 									signature
 								};
 
-								cred.getCert(sign, pubKeys, {validityPeriod, saveCerts: true ,password}).then(() => {
+								cred.getCert(sign, pubKeys, {validityPeriod, saveCerts: true, password}).then(() => {
 									resolve(metadata);
 								}).catch(onError);
 
@@ -1837,9 +1764,9 @@ class Credential {
 	_requestVirtualCerts(payload, password, validityPeriod) {
 		return new Promise((resolve, reject) => {
 
-				let path                = null;
+				let path = null;
 
-				function deleteCredFolder(){
+				function deleteCredFolder() {
 					const DirectoryServices = require('./DirectoryServices');
 					if (path) {
 						DirectoryServices.deleteFolder(path, nop);
@@ -1876,9 +1803,9 @@ class Credential {
 
 							let private_key = keys.pk;
 
-							cred.getCert(sign, keys.pubKeys, {validityPeriod, saveCerts:false}).then(payload => {
+							cred.getCert(sign, keys.pubKeys, {validityPeriod, saveCerts: false}).then(payload => {
 
-								if(!payload){
+								if (!payload) {
 									reject(`invalid cert request payload`);
 									return;
 								}
@@ -1894,7 +1821,7 @@ class Credential {
 
 									resolve({
 										fqdn,
-										pfx:pfx.pkcs12
+										pfx: pfx.pkcs12
 									});
 								});
 
@@ -1929,7 +1856,7 @@ class Credential {
 							[
 								function (callback) {
 
-									openSSlWrapper.createPfxCert(dirPath,password).then(pwd => {
+									openSSlWrapper.createPfxCert(dirPath, password).then(pwd => {
 										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
 											if (!error) {
 												callback(null, data)
@@ -1971,17 +1898,16 @@ class Credential {
 			name:          metadata.name,
 			email:         metadata.email,
 			parent_fqdn:   metadata.parent_fqdn,
-			edge_fqdn:     metadata.edge_fqdn,
 			service_name:  metadata.serviceName,
 			service_id:    metadata.serviceId,
 			matching_fqdn: metadata.matchingFqdn,
 			custom_fqdn:   metadata.custom_fqdn
-
 		};
 	}
 
 	//endregion
 
+	//region helpers
 	checkValidity() {
 		return new Promise((resolve, reject) => {
 			const validity = this.certData.validity;
@@ -2002,19 +1928,19 @@ class Credential {
 
 	hasLocalParentAtAnyLevel(fqdn) {
 
-		if(this.fqdn == fqdn) {
+		if (this.fqdn == fqdn) {
 			return true;
 		}
 
 		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
 
-		if(!parent_fqdn) {
+		if (!parent_fqdn) {
 			return false;
 		}
 
 		let parentCred = this.store.getCredential(parent_fqdn);
 
-		if(!parentCred) {
+		if (!parentCred) {
 			return false;
 		}
 
@@ -2026,12 +1952,13 @@ class Credential {
 
 		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
 
-		if(!parent_fqdn) {
+		if (!parent_fqdn) {
 			return false;
 		}
 
 		return parent_fqdn === parentFqdn;
 	}
+	//endregion
 
 	//region live credential
 	/**

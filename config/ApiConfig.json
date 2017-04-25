@@ -15,9 +15,6 @@
             "UpdateEntity": {
                 "endpoint": "/api/v1/node/update"
             },
-            "UpdateEntityEdge": {
-                "endpoint": "/api/v1/node/update/edge"
-            },
             "GetMetadata": {
                 "endpoint": "/api/v1/node/get/meta"
             },

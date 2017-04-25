@@ -12,7 +12,8 @@ const store = new BeameStore();
 const socketUtils = require('../utils/SocketUtils');
 const config      = require('../../config/Config');
 const module_name = config.AppModules.ProxyClient;
-const logger      = new (require('../utils/Logger'))(module_name);
+const BeameLogger = require('../utils/Logger');
+const logger      = new BeameLogger(module_name);
 /**
  * @typedef {Object} HttpsProxyAgent
  */
@@ -30,8 +31,7 @@ class ProxyClient {
 
 	/**
 	 * @param {String} serverType
-	 * @param {String} edgeClientHostname - server endpoint url
-	 * @param {String} edgeServerHostname - SSL Proxy Server endpoint url
+	 * @param {Credential} serverCred - server credential
 	 * @param {String} targetHost
 	 * @param {Number} targetPort
 	 * @param {ProxyClientOptions} options
@@ -40,7 +40,7 @@ class ProxyClient {
 	 * @constructor
 	 * @class
 	 */
-	constructor(serverType, edgeClientHostname, edgeServerHostname, targetHost, targetPort, options, agent, edgeClientCerts) {
+	constructor(serverType, serverCred, targetHost, targetPort, options, agent, edgeClientCerts) {
 
 		/** @member {Boolean} */
 		this._connected = false;
@@ -53,12 +53,14 @@ class ProxyClient {
 		/**
 		 * SSL Proxy Server endpoint url
 		 * @member {String} */
-		this._edgeServerHostname = edgeServerHostname;
+		this._edgeServerHostname = null;
+
+		this._cred = serverCred;
 
 		/**
 		 * server endpoint url
 		 * @member {String} */
-		this._hostname = edgeClientHostname;
+		this._srvFqdn = serverCred.fqdn;
 
 		/** @member {String} */
 		this._targetHost = targetHost;
@@ -68,47 +70,59 @@ class ProxyClient {
 
 		//logger.debug(`ProxyClient connecting to ${this.edgeServerHostname}`);
 
+		this._options = options;
+
 		/**
 		 * Connect to ProxyServer
 		 */
-		const io_options = {multiplex: false, agent: agent};
+		let io_options = {multiplex: false, agent: agent};
 
 		if (edgeClientCerts) {
 			io_options.cert = edgeClientCerts.cert;
 			io_options.key  = edgeClientCerts.key;
-			io_options.ca   = edgeClientCerts.ca;
-
 		}
 
+		this._ioOptions = io_options;
+
+	}
+
+	start() {
+
+		this._cred.getDnsValue().then(value => {
+			this._edgeServerHostname = value;
+
+			this._initSocket();
+
+		}).catch(e => {
+			logger.error(`Get dns error for ${this._srvFqdn} ${BeameLogger.formatError(e)}. SERVER NOT STARTED`);
+
+		})
+	}
+
+	_initSocket() {
 		//noinspection JSUnresolvedVariable
-		this._options = options;
 
-		this._socketio = io.connect(this._edgeServerHostname + '/control', io_options);
+		this._socketio = io.connect(this._edgeServerHostname + '/control', this._ioOptions);
 
-		this._socketio.on('connect', _.bind(function () {
+		this._socketio.on('connect', () => {
 
 			if (this._connected) {
 				return;
 			}
 			//logger.debug(`ProxyClient connected => {hostname:${this.hostname}, endpoint:${this.edgeServerHostname}, targetHost:${this.targetHost}, targetPort: ${this.targetPort}}`);
 			this._connected = true;
-			let cred     = store.getCredential(this._hostname),
-				token    = authToken.create(this._hostname, cred, 60);
-
 			socketUtils.emitMessage(this._socketio, 'register_server', socketUtils.formatMessage(null, {
-				hostname: this._hostname,
-				type:     this._type,
-				isSigned: true,
-				signature: token
+				hostname: this._srvFqdn,
+				type:     this._type
 			}));
 
 			this._options && this._options.onConnect && this._options.onConnect();
 
-		}, this));
+		});
 
-		this._socketio.on('error', _.bind(function (err) {
+		this._socketio.on('error', (err) => {
 			//logger.debug("Could not connect to proxy server", err);
-		}, this));
+		});
 
 		this._socketio.on('create_connection', data => {
 
@@ -116,13 +130,13 @@ class ProxyClient {
 			this.createLocalServerConnection(data, this._options && this._options.onConnection);
 		});
 
-		this._socketio.once('hostRegistered', _.bind(function (data) {
+		this._socketio.once('hostRegistered', (data) => {
 			this._options && this._options.onLocalServerCreated && this._options.onLocalServerCreated.call(null, data);
 			//  this.createLocalServerConnection.call(this, data, this._options && this._options.onLocalServerCreated);
 			//logger.debug('hostRegistered', data);
-		}, this));
+		});
 
-		this._socketio.on('data', _.bind(function (data) {
+		this._socketio.on('data', (data) => {
 			const socketId = data.socketId;
 			const socket   = this._clientSockets[socketId];
 			if (socket) {
@@ -133,13 +147,13 @@ class ProxyClient {
 				});
 
 			}
-		}, this));
+		});
 
-		this._socketio.on('socket_error', _.bind(function (data) {
+		this._socketio.on('socket_error', (data) => {
 			this.deleteSocket(data.socketId);
-		}, this));
+		});
 
-		this._socketio.on('_end', _.bind(function (data) {
+		this._socketio.on('_end', (data) => {
 			//logger.debug("***************Killing the socket ");
 			if (!data || !data.socketId) {
 				return;
@@ -148,9 +162,9 @@ class ProxyClient {
 				this.deleteSocket(data.socketId);
 			}, 1000);
 
-		}, this));
+		});
 
-		this._socketio.on('disconnect', _.bind(function () {
+		this._socketio.on('disconnect', () => {
 
 			this._connected = false;
 			_.each(this._clientSockets, function (socket) {
@@ -159,7 +173,7 @@ class ProxyClient {
 					this.deleteSocket(socket.id);
 				}, 10000);
 			}, this);
-		}, this));
+		});
 	}
 
 	createLocalServerConnection(data, callback = nop) {
@@ -210,6 +224,7 @@ class ProxyClient {
 		callback(data);
 	}
 
+	//noinspection JSUnusedGlobalSymbols
 	destroy() {
 		if (this._socketio) {
 			this._socketio = null;

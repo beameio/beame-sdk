@@ -11,10 +11,10 @@ const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger("DnsServices");
 class DnsServices {
 
-	setDns(fqdn, edge_fqdn) {
+	setDns(fqdn, value) {
 
 		return new Promise((resolve, reject) => {
-				this._setDns(fqdn, edge_fqdn).then(()=>{
+				this._setDns(fqdn, value).then(()=>{
 					logger.info(`DNS update record for ${fqdn} requested`);
 					resolve();
 				}).catch(reject);
@@ -23,13 +23,13 @@ class DnsServices {
 
 	}
 
-	_getToken(fqdn, edge_fqdn) {
+	_getToken(fqdn, value) {
 		return new Promise((resolve, reject) => {
 				const store = new (require('./BeameStoreV2'))();
 
 				store.find(fqdn, false).then(cred => {
 					const AuthToken = require('./AuthToken'),
-					      data      = {fqdn, value: edge_fqdn};
+					      data      = {fqdn, value: value};
 
 					AuthToken.createAsync(data, cred)
 							.then(resolve)
@@ -40,10 +40,10 @@ class DnsServices {
 		);
 	}
 
-	_setDns(fqdn, edge_fqdn) {
+	_setDns(fqdn, value) {
 
 		return new Promise((resolve, reject) => {
-				this._getToken(fqdn, edge_fqdn).then(authToken => {
+				this._getToken(fqdn, value).then(authToken => {
 					let provisionApi = new ProvisionApi();
 					provisionApi.postRequest(`${apiConfig.Endpoints.BaseDNSUrl}${apiDnsActions.Get.endpoint}${fqdn}`, {authToken},resolve);
 				}).catch(reject);
