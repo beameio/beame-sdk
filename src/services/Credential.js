@@ -1141,7 +1141,7 @@ class Credential {
 					}
 
 					let approverFqdn = validParents[0].fqdn,
-						approverCred = this.store.getCredential(approverFqdn);
+					    approverCred = this.store.getCredential(approverFqdn);
 
 					AuthToken.createAsync(data2Sign || {fqdn}, approverCred, ttl).then(resolve).catch(reject);
 
@@ -1255,110 +1255,110 @@ class Credential {
 	 */
 	renewCert(signerAuthToken, fqdn, validityPeriod) {
 		return new Promise((resolve, reject) => {
-				this.store.find(fqdn, false).then(cred => {
 
-					if (!cred.hasKey("PRIVATE_KEY")) {
-						reject(`Private key not found for ${fqdn}`);
-						return;
-					}
+				let cred = this.store.getCredential(fqdn);
 
-					let dirPath = cred.getMetadataKey("path");
+				if (!cred.hasKey("PRIVATE_KEY")) {
+					reject(`Private key not found for ${fqdn}`);
+					return;
+				}
 
-					const _renew = () => {
+				let dirPath = cred.getMetadataKey("path");
 
-						OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
+				const _renew = () => {
 
-							let pubKeys = {
-								pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
-								pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
-								signature
-							};
+					OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
-							let postData = {
-								    fqdn:     fqdn,
-								    validity: validityPeriod || config.defaultValidityPeriod,
-								    pub:      pubKeys
-							    },
-							    api      = new ProvisionApi(),
-							    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
+						let pubKeys = {
+							pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
+							pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
+							signature
+						};
 
-							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+						let postData = {
+							    fqdn:     fqdn,
+							    validity: validityPeriod || config.defaultValidityPeriod,
+							    pub:      pubKeys
+						    },
+						    api      = new ProvisionApi(),
+						    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
 
-							let authToken = null;
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
-							if (!signerAuthToken) {
-								api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+						let authToken = null;
+
+						if (!signerAuthToken) {
+							api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+						}
+						else {
+							authToken = CommonUtils.stringify(signerAuthToken, false);
+						}
+
+
+						api.runRestfulAPI(apiData, (error, payload) => {
+							cred._saveCerts(error, payload).then(resolve).catch(reject);
+						}, 'POST', authToken);
+					}).catch(reject);
+
+				};
+
+				//check if public key exists (old API)
+				const path = require('path');
+
+				let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, config.CertFileNames.PUBLIC_KEY));
+
+				if (publicExists) {
+					_renew();
+				}
+				else {
+
+					async.parallel([
+							cb => {
+								//create public key for existing private
+								let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY),
+								    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY);
+
+								openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+									cb();
+								}).catch(error => {
+									cb(error)
+								});
+							},
+							cb => {
+								//create backup key pair
+								openSSlWrapper.createPrivateKey().then(pk =>
+									DirectoryServices.saveFile(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
+										if (!error) {
+											let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY),
+											    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY);
+											openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+												cb(null);
+											}).catch(error => {
+												cb(error)
+											});
+										}
+										else {
+											let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
+											cb(errMsg);
+										}
+									})
+								).catch(error => {
+									cb(error);
+								});
 							}
-							else {
-								authToken = CommonUtils.stringify(signerAuthToken, false);
+						],
+						error => {
+							if (error) {
+								logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
+								reject(error);
 							}
 
-
-							api.runRestfulAPI(apiData, (error, payload) => {
-								cred._saveCerts(error, payload).then(resolve).catch(reject);
-							}, 'POST', authToken);
-						}).catch(reject);
-
-					};
-
-					//check if public key exists (old API)
-					const path = require('path');
-
-					let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, config.CertFileNames.PUBLIC_KEY));
-
-					if (publicExists) {
-						_renew();
-					}
-					else {
-
-						async.parallel([
-								cb => {
-									//create public key for existing private
-									let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY),
-									    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY);
-
-									openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
-										cb();
-									}).catch(error => {
-										cb(error)
-									});
-								},
-								cb => {
-									//create backup key pair
-									openSSlWrapper.createPrivateKey().then(pk =>
-										DirectoryServices.saveFile(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
-											if (!error) {
-												let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY),
-												    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY);
-												openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
-													cb(null);
-												}).catch(error => {
-													cb(error)
-												});
-											}
-											else {
-												let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
-												cb(errMsg);
-											}
-										})
-									).catch(error => {
-										cb(error);
-									});
-								}
-							],
-							error => {
-								if (error) {
-									logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
-									reject(error);
-								}
-
-								_renew();
-							});
+							_renew();
+						});
 
 
-					}
+				}
 
-				}).catch(reject);
 			}
 		);
 	}
