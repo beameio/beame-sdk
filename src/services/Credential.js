@@ -1980,7 +1980,8 @@ class Credential {
 			fqdn:          parent_fqdn,
 			name:          cred.getMetadataKey(config.MetadataProperties.NAME),
 			hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
-			level:         lvl ? parseInt(lvl) : null
+			level:         lvl ? parseInt(lvl) : null,
+			expired:       cred.expired
 		});
 
 		return this.getParentsChain(parent_fqdn, parents);
