@@ -1421,6 +1421,7 @@ class Credential {
 			}
 		);
 	}
+
 	//endregion
 
 	//region dns service
@@ -1450,15 +1451,15 @@ class Credential {
 					const _updateEntityMeta = () => {
 						const path = require('path');
 
-						let meta          = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
+						let meta = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
 
-						if(!meta.dnsRecords){
+						if (!meta.dnsRecords) {
 							meta.dnsRecords = [];
 						}
 
 						meta.dnsRecords.push({
-							value : val,
-							date:Date.now()
+							value: val,
+							date:  Date.now()
 						});
 
 						cred.beameStoreServices.writeMetadataSync(meta);
@@ -1494,22 +1495,23 @@ class Credential {
 		);
 	}
 
-	getDnsValue(){
+	getDnsValue() {
 		return new Promise((resolve, reject) => {
-				if(this.metadata.dnsRecords && this.metadata.dnsRecords.length){
+				if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
 					resolve(this.metadata.dnsRecords[0].value);
 					return;
 				}
 
-				this.setDns(this.fqdn,null,true).then(value=>{
+				this.setDns(this.fqdn, null, true).then(value => {
 					resolve(value);
-				}).catch(e=>{
+				}).catch(e => {
 					logger.error(e);
 					reject();
 				})
 			}
 		);
 	}
+
 	//endregion
 
 	//region common helpers
@@ -1667,7 +1669,6 @@ class Credential {
 			}
 		);
 	}
-
 
 	_createTempKeys() {
 
@@ -1958,6 +1959,31 @@ class Credential {
 
 		return parent_fqdn === parentFqdn;
 	}
+
+	getParentsChain(fqdn, parents = []) {
+
+		let cred = this.store.getCredential(fqdn);
+
+		if (!cred) {
+			return parents;
+		}
+
+		let parent_fqdn = cred.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+
+		if (!parent_fqdn) {
+			return parents;
+		}
+
+		parents.push({
+			fqdn:          parent_fqdn,
+			name:          cred.getMetadataKey(config.MetadataProperties.NAME),
+			hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
+			level:         cred.getMetadataKey(config.MetadataProperties.LEVEL)
+		});
+
+		return this.getParentsChain(parent_fqdn, parents);
+	}
+
 	//endregion
 
 	//region live credential
