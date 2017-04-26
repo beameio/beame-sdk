@@ -400,6 +400,12 @@ class Credential {
 		return this.metadata.hasOwnProperty(field.toLowerCase()) || this.metadata.hasOwnProperty(field) ? (this.metadata[field.toLowerCase()] || this.metadata[field]) : null;
 	}
 
+	hasMetadataKey(field) {
+		let value = this.metadata.hasOwnProperty(field.toLowerCase()) || this.metadata.hasOwnProperty(field) ? (this.metadata[field.toLowerCase()] || this.metadata[field]) : null;
+
+		return value != null && value != undefined;
+	}
+
 	hasKey(key) {
 		//key = key.toLowerCase();
 		return (this.hasOwnProperty(key) && !_.isEmpty(this[key])) || (this.hasOwnProperty(key.toLowerCase()) && !_.isEmpty(this[key.toLowerCase()]))
@@ -1099,6 +1105,49 @@ class Credential {
 			}
 		);
 
+	}
+
+
+	createAuthTokenForCred(fqdn, data2Sign = null, ttl = null) {
+
+		const AuthToken = require('./AuthToken');
+
+		return new Promise((resolve, reject) => {
+				let cred = this.store.getCredential(fqdn);
+
+				if (!cred) {
+					reject(`Cred not found for ${fqdn}`);
+					return;
+				}
+
+				if (!cred.expired) {
+					AuthToken.createAsync(data2Sign || {fqdn}, cred, ttl).then(resolve).catch(reject);
+				}
+				else {
+					let parents = this.getParentsChain(fqdn);
+
+					if (!parents.length) {
+						reject(`Cred ${fqdn} expired. Parent credential not found`);
+						return;
+					}
+
+					let validParents = parents.filter(x => x.hasPrivateKey === true && !x.expired).sort((a, b) => {
+						return b.level - a.level;
+					});
+
+					if (!validParents.length) {
+						reject(`Cred ${fqdn} expired.Valid parent credential not found`);
+						return;
+					}
+
+					let approverFqdn = validParents[0].fqdn,
+						approverCred = this.store.getCredential(approverFqdn);
+
+					AuthToken.createAsync(data2Sign || {fqdn}, approverCred, ttl).then(resolve).catch(reject);
+
+				}
+			}
+		);
 	}
 
 	//endregion
@@ -1974,14 +2023,17 @@ class Credential {
 			return parents;
 		}
 
-		let lvl = cred.getMetadataKey(config.MetadataProperties.LEVEL);
+		let parent = this.store.getCredential(parent_fqdn);
+
+		let hasLevel = parent.hasMetadataKey(config.MetadataProperties.LEVEL),
+		    lvl      = hasLevel ? parent.getMetadataKey(config.MetadataProperties.LEVEL) : null;
 
 		parents.push({
 			fqdn:          parent_fqdn,
-			name:          cred.getMetadataKey(config.MetadataProperties.NAME),
-			hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
-			level:         lvl ? parseInt(lvl) : null,
-			expired:       cred.expired
+			name:          parent.getMetadataKey(config.MetadataProperties.NAME),
+			hasPrivateKey: parent.hasKey("PRIVATE_KEY"),
+			level:         hasLevel ? parseInt(lvl) : null,
+			expired:       parent.expired
 		});
 
 		return this.getParentsChain(parent_fqdn, parents);
