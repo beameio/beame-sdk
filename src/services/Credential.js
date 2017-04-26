@@ -1974,11 +1974,13 @@ class Credential {
 			return parents;
 		}
 
+		let lvl = cred.getMetadataKey(config.MetadataProperties.LEVEL);
+
 		parents.push({
 			fqdn:          parent_fqdn,
 			name:          cred.getMetadataKey(config.MetadataProperties.NAME),
 			hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
-			level:         cred.getMetadataKey(config.MetadataProperties.LEVEL)
+			level:         lvl ? parseInt(lvl) : null
 		});
 
 		return this.getParentsChain(parent_fqdn, parents);
