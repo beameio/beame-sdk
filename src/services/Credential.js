@@ -1372,17 +1372,17 @@ class Credential {
 
 		return new Promise((resolve) => {
 				if (this.hasMetadataKey("revoked")) {
-					resolve();
+					resolve(this);
 					return;
 				}
 
 				this.checkOcspStatus(this.getKey("X509")).then(() => {
 					_saveOcspStatus(false);
-					resolve();
+					resolve(this);
 
 				}).catch(() => {
 					_saveOcspStatus(true);
-					resolve();
+					resolve(this);
 				})
 			}
 		);
