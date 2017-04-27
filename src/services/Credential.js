@@ -1153,25 +1153,25 @@ class Credential {
 	//endregion
 
 	//region certs
-	//noinspection JSUnusedGlobalSymbols
+
 	/**
 	 *  @ignore
 	 * @returns {Promise.<String>}
 	 */
-	createCSR(cred, dirPath) {
-
-		const fqdn       = this.fqdn,
-		      pkFileName = config.CertFileNames.PRIVATE_KEY;
-
-		return new Promise(function (resolve, reject) {
-
-			cred._createInitialKeyPairs(dirPath).then(() => {
-				let pkFile = beameUtils.makePath(dirPath, pkFileName);
-				openSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
-			}).catch(reject);
-
-		});
-	}
+	// createCSR(cred, dirPath) {
+	//
+	// 	const fqdn       = this.fqdn,
+	// 	      pkFileName = config.CertFileNames.PRIVATE_KEY;
+	//
+	// 	return new Promise(function (resolve, reject) {
+	//
+	// 		cred._createInitialKeyPairs(dirPath).then(() => {
+	// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
+	// 			openSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+	// 		}).catch(reject);
+	//
+	// 	});
+	// }
 
 	/**
 	 * @ignore
@@ -1361,6 +1361,31 @@ class Credential {
 
 			}
 		);
+	}
+
+	checkOcspStatus(cert) {
+		return new Promise((resolve, reject) => {
+				const ocsp = require('ocsp');
+
+				try {
+					ocsp.check({
+						cert:   cert,
+						issuer: DirectoryServices.readFile(config.issuerCaCertPath)
+					}, function (err, res) {
+						if (err) {
+							reject(err);
+						}
+						else {
+							res && res.type && res.type == 'good' ? resolve() : reject(res);
+						}
+
+					});
+				} catch (e) {
+					reject(e);
+				}
+			}
+		);
+
 	}
 
 	//endregion

@@ -50,6 +50,7 @@
     "node-uuid": "^1.4.7",
     "npm-prefix": "^1.2.0",
     "ntp-client": "^0.5.3",
+    "ocsp": "^1.2.0",
     "pem": "https://github.com/beameio/pem",
     "request": "^2.72.0",
     "rimraf": "^2.5.3",
