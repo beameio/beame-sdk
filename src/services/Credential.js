@@ -1107,7 +1107,7 @@ class Credential {
 
 	}
 
-
+	//noinspection JSUnusedGlobalSymbols
 	createAuthTokenForCred(fqdn, data2Sign = null, ttl = null) {
 
 		const AuthToken = require('./AuthToken');
@@ -1222,27 +1222,48 @@ class Credential {
 		);
 	}
 
-	revokeCert(signerFqdn, revokeFqdn) {
+	revokeCert(signerAuthToken, signerFqdn, revokeFqdn) {
 		return new Promise((resolve, reject) => {
-				this.store.find(signerFqdn, false).then(cred => {
+				const api = new ProvisionApi();
 
-					const api = new ProvisionApi();
+				let postData = {
+					    fqdn: revokeFqdn
+				    },
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRevoke.endpoint, postData);
 
-					let postData = {
-						    fqdn: revokeFqdn
-					    },
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRevoke.endpoint, postData);
+				let authToken = null;
 
+				if (!signerAuthToken) {
+					let cred = this.store.getCredential(signerFqdn);
+					if (!cred) {
+						reject(`Signer cred for ${signerFqdn} not found`);
+						return;
+					}
 					api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+				}
+				else {
+					authToken = CommonUtils.stringify(signerAuthToken, false);
+				}
 
-					api.runRestfulAPI(apiData, (error) => {
-						if (error) {
-							reject(error);
-						}
-						resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
-					});
+				const _onApiResponse = (error) => {
+					if (error) {
+						reject(error);
+						return;
+					}
 
-				}).catch(reject);
+					let revokedCred = this.store.getCredential(revokeFqdn);
+
+
+					if (revokedCred && revokedCred.hasKey("X509")) {
+						revokedCred.metadata.revoked = true;
+						revokedCred.beameStoreServices.writeMetadataSync(revokedCred.metadata);
+					}
+
+					resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
+
+				};
+
+				api.runRestfulAPI(apiData, _onApiResponse, 'POST', authToken);
 			}
 		);
 	}
