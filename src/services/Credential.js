@@ -1363,6 +1363,31 @@ class Credential {
 		);
 	}
 
+	updateOcspStatus() {
+
+		const _saveOcspStatus = (isRevoked) => {
+			this.metadata.revoked = isRevoked;
+			this.beameStoreServices.writeMetadataSync(this.metadata);
+		};
+
+		return new Promise((resolve) => {
+				if (this.hasMetadataKey("revoked")) {
+					resolve();
+					return;
+				}
+
+				this.checkOcspStatus(this.getKey("X509")).then(() => {
+					_saveOcspStatus(false);
+					resolve();
+
+				}).catch(() => {
+					_saveOcspStatus(true);
+					resolve();
+				})
+			}
+		);
+	}
+
 	checkOcspStatus(cert) {
 		return new Promise((resolve, reject) => {
 				const ocsp = require('ocsp');
@@ -1385,7 +1410,6 @@ class Credential {
 				}
 			}
 		);
-
 	}
 
 	//endregion

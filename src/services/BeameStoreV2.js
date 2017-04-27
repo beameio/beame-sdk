@@ -136,6 +136,7 @@ class BeameStoreV2 {
 
 				const _onCredFound = credential => {
 					credential.checkValidity()
+						.then(credential.updateOcspStatus.bind(credential))
 						.then(resolve)
 						.catch(_onValidationError.bind(null, credential));
 				};
