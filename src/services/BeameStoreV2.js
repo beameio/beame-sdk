@@ -259,10 +259,23 @@ class BeameStoreV2 {
 					return false;
 				}
 
+				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
+					return false;
+				}
+
+				if(options.hasParent && !cred.hasParent(options.hasParent)) {
+					return false;
+				}
+
+				if(options.excludeRevoked && cred.metadata.revoked) {
+					return false;
+				}
+
 				//noinspection JSCheckFunctionSignatures
 				if (!(cred.fqdn && cred.fqdn.match(regex))) {
 					return false;
 				}
+
 				//noinspection RedundantIfStatementJS,JSUnresolvedVariable
 				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
@@ -281,13 +294,7 @@ class BeameStoreV2 {
 					}
 				}
 
-				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
-					return false;
-				}
 
-				if(options.hasParent && !cred.hasParent(options.hasParent)) {
-					return false;
-				}
 
 				return true;
 			}
