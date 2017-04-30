@@ -2079,9 +2079,11 @@ class Credential {
 		return parent_fqdn === parentFqdn;
 	}
 
-	getParentsChain(fqdn, parents = []) {
+	getParentsChain(credential ,fqdn, parents = []) {
 
-		let cred = this.store.getCredential(fqdn);
+		if(!fqdn && !credential) return parents;
+
+		let cred = credential || this.store.getCredential(fqdn);
 
 		if (!cred) {
 			return parents;
@@ -2106,7 +2108,7 @@ class Credential {
 			expired:       parent.expired
 		});
 
-		return this.getParentsChain(parent_fqdn, parents);
+		return this.getParentsChain(parent, parent_fqdn, parents);
 	}
 
 	//endregion
