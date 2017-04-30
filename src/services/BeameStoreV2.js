@@ -81,6 +81,7 @@ class BeameStoreV2 {
 			return new Promise(resolve => {
 					let remoteCred = new Credential(this);
 					remoteCred.initFromX509(data.x509, data.metadata);
+					remoteCred.initFromData(fqdn);
 					this.addCredential(remoteCred);
 					remoteCred.saveCredentialsObject();
 					resolve(remoteCred);
