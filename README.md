@@ -376,4 +376,4 @@ testCheckSignature({ signedData: 'beameio',
 );
 ```
 
-## Beame Environment variables
+## Environment variables
