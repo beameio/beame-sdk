@@ -377,3 +377,5 @@ testCheckSignature({ signedData: 'beameio',
 ```
 
 ## Environment variables
+
+* `BEAME_OCSP_RESOLVE_ARBITRATION` - Resolve OCSP check if unavailable or in any other arbitration situation 

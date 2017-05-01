@@ -59,7 +59,8 @@
     "socket.io-client": "1.7.3",
     "sprintf": "^0.1.5",
     "sync-request": "^3.0.1",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "x509": "^0.3.2"
   },
   "directories": {
     "test": "tests"

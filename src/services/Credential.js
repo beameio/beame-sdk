@@ -1397,7 +1397,7 @@ class Credential {
 					return;
 				}
 
-				this.checkOcspStatus(this.getKey("X509")).then(() => {
+				this.checkOcspStatus(this).then(() => {
 					_saveOcspStatus(false);
 					resolve(this);
 
@@ -1409,25 +1409,76 @@ class Credential {
 		);
 	}
 
-	checkOcspStatus(cert) {
+	checkOcspStatus(cred) {
 		return new Promise((resolve, reject) => {
-				const ocsp = require('ocsp');
+				const ocsp                 = require('ocsp');
+				const path                 = require('path');
+				const request              = require('request');
+				const fs                   = require('fs');
+				const resolveOnArbitration = process.env.BEAME_OCSP_RESOLVE_ARBITRATION;
 
 				try {
-					ocsp.check({
-						cert:   cert,
-						issuer: DirectoryServices.readFile(config.issuerCaCertPath)
-					}, function (err, res) {
-						if (err) {
-							reject(err);
-						}
-						else {
-							res && res.type && res.type == 'good' ? resolve() : reject(res);
+					let x509          = require('x509'),
+					    parsedCert    = x509.parseCert(path.join(cred.metadata.path, Config.CertFileNames.X509)),
+					    issuer        = parsedCert.extensions.authorityInformationAccess,
+					    re            = /^CA Issuers.*URI:(.+)/m,
+					    m             = issuer.match(re),
+					    issuerCertUrl = m && m.length ? m[1] : null;
+
+					if (!issuerCertUrl) {
+						resolveOnArbitration ? resolve() : reject(new Error(`No Issuer CA Cert url found`));
+						return;
+					}
+
+					let certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1),
+					    certPath = path.join(Config.issuerCertsPath, certName),
+					    pemPath  = path.join(Config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
+
+					const _doOcspRequest = () => {
+						ocsp.check({
+							cert:   cred.getKey("X509"),
+							issuer: DirectoryServices.readFile(pemPath)
+						}, function (err, res) {
+							if (err) {
+								reject(err);
+							}
+							else {
+								res && res.type && res.type == 'good' ? resolve() : (resolveOnArbitration ? resolve() : reject(res));
+							}
+
+						});
+					};
+
+					if (DirectoryServices.doesPathExists(pemPath)) {
+						_doOcspRequest();
+					}
+					else {
+
+						if (!DirectoryServices.doesPathExists(config.issuerCertsPath)) {
+							DirectoryServices.createDir(config.issuerCertsPath);
 						}
 
-					});
+						request.get(
+							issuerCertUrl,
+							{encoding: null},
+							function (error, response, body) {
+								if (!error && response.statusCode === 200) {
+
+									fs.writeFileSync(certPath, body);
+
+									OpenSSLWrapper.convertCertToPem(certPath, pemPath).then(() => {
+										fs.unlink(certPath);
+										_doOcspRequest();
+									}).catch(e => {
+										resolveOnArbitration ? resolve() : reject(e);
+									})
+								}
+							}
+						);
+					}
+
 				} catch (e) {
-					reject(e);
+					resolveOnArbitration ? resolve() : reject(e);
 				}
 			}
 		);
@@ -2079,9 +2130,9 @@ class Credential {
 		return parent_fqdn === parentFqdn;
 	}
 
-	getParentsChain(credential ,fqdn, parents = []) {
+	getParentsChain(credential, fqdn, parents = []) {
 
-		if(!fqdn && !credential) return parents;
+		if (!fqdn && !credential) return parents;
 
 		let cred = credential || this.store.getCredential(fqdn);
 

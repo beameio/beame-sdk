@@ -105,6 +105,23 @@ class OpenSSLWrapper {
 		);
 	}
 
+	static convertCertToPem(derPath,pemPath){
+			let action = "openssl",
+			    args   = ["x509", "-inform", "der", "-in", derPath, "-out" , pemPath];
+
+			return new Promise((resolve, reject) => {
+					try {
+						execFile(action, args, function (error) {
+							error ? reject(error) : resolve();
+						});
+					}
+					catch (e) {
+						reject(e);
+					}
+				}
+			);
+	}
+
 	// createCSR(fqdn, pkFile) {
 	// 	return new Promise((resolve, reject) => {
 	// 		let errMsg,

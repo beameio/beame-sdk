@@ -90,7 +90,7 @@ class AuthToken {
 		return new Promise((resolve, reject) => {
 
 				CommonUtils.validateMachineClock()
-					.then(signingCreds.checkOcspStatus.bind(signingCreds, signingCreds.getKey("X509")))
+					.then(signingCreds.checkOcspStatus.bind(signingCreds, signingCreds))
 					.then(() => {
 						resolve(AuthToken.create(data, signingCreds, ttl))
 					}).catch(reject);
@@ -135,7 +135,7 @@ class AuthToken {
 			const store = new BeameStore();
 
 			store.find(authToken.signedBy).then(signerCreds => {
-				signerCreds.checkOcspStatus(signerCreds.getKey("X509"))
+				signerCreds.checkOcspStatus(signerCreds)
 					.then(() => {
 						const signatureStatus = signerCreds.checkSignature(authToken);
 						if (!signatureStatus) {

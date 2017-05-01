@@ -32,7 +32,7 @@ const remotePKsDirV1 = path.join(rootDir, 'pki');
 
 const localCertsDirV2 = path.join(rootDir, 'v2');
 
-const issuerCaCertPath = path.join(__dirname,'..','certs','beame_ca.pem');
+const issuerCertsPath = path.join(__dirname,'..','certs');
 
 /** @const {String} **/
 const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
@@ -203,7 +203,7 @@ module.exports = {
 	EnvProfile,
 	localCertsDirV2,
 	remotePKsDirV1,
-	issuerCaCertPath,
+	issuerCertsPath,
 	loadBalancerURL,
 	beameDevCredsFqdn,
 	metadataFileName,
