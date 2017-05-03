@@ -11,11 +11,23 @@ const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger("DnsServices");
 class DnsServices {
 
-	setDns(fqdn, value) {
+	setDns(fqdn, value, dnsFqdn) {
 
 		return new Promise((resolve, reject) => {
-				this._setDns(fqdn, value).then(()=>{
+				this._setDns(fqdn, value, dnsFqdn).then(()=>{
 					logger.info(`DNS update record for ${fqdn} requested`);
+					resolve();
+				}).catch(reject);
+			}
+		);
+
+	}
+
+	deleteDns(fqdn, dnsFqdn) {
+
+		return new Promise((resolve, reject) => {
+				this._deleteDns(fqdn,  dnsFqdn).then(()=>{
+					logger.info(`DNS deleted record for ${fqdn} requested`);
 					resolve();
 				}).catch(reject);
 			}
@@ -40,12 +52,24 @@ class DnsServices {
 		);
 	}
 
-	_setDns(fqdn, value) {
+	_setDns(fqdn, value, dnsFqdn) {
 
 		return new Promise((resolve, reject) => {
 				this._getToken(fqdn, value).then(authToken => {
 					let provisionApi = new ProvisionApi();
-					provisionApi.postRequest(`${apiConfig.Endpoints.BaseDNSUrl}${apiDnsActions.Get.endpoint}${fqdn}`, {authToken},resolve);
+					provisionApi.postRequest(`${apiConfig.Endpoints.BaseDNSUrl}${apiDnsActions.Set.endpoint}${dnsFqdn || fqdn}`, {authToken},resolve);
+				}).catch(reject);
+			}
+		);
+
+	}
+
+	_deleteDns(fqdn, dnsFqdn) {
+
+		return new Promise((resolve, reject) => {
+				this._getToken(fqdn, fqdn).then(authToken => {
+					let provisionApi = new ProvisionApi();
+					provisionApi.postRequest(`${apiConfig.Endpoints.BaseDNSUrl}${apiDnsActions.Delete.endpoint}${dnsFqdn || fqdn}`, {authToken},resolve);
 				}).catch(reject);
 			}
 		);

@@ -30,15 +30,18 @@
         },
         "AuthServerApi": {
             "RegisterEntity": {
-                    "endpoint": "/node/auth/register"
+                "endpoint": "/node/auth/register"
             }
         },
         "DnsApi": {
-            "Set":{
-                "endpoint":"/v1/dns/host/"
+            "Set": {
+                "endpoint": "/v1/dns/set/"
             },
-            "Get":{
-                "endpoint":"/v1/dns/host/"
+            "Get": {
+                "endpoint": "/v1/dns/list/"
+            },
+            "Delete": {
+                "endpoint": "/v1/dns/delete/"
             }
         }
     }

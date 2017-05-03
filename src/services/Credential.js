@@ -206,6 +206,9 @@ class Credential {
 			      cert     = x509.parseCert(x509Path);
 
 			this.certData.extensions         = cert.extensions;
+			this.certData.subject            = cert.subject;
+			this.certData.altNames           = cert.altNames;
+			this.certData.publicKey          = cert.publicKey;
 			this.certData.signatureAlgorithm = cert.signatureAlgorithm;
 			this.certData.fingerPrint        = cert.fingerPrint;
 		}
@@ -654,7 +657,7 @@ class Credential {
 
 		let decryptedMessage = this.decryptWithRSA(encryptedMessage.rsaCipheredKeys);
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		let payload          = JSON.parse(decryptedMessage);
+		let payload          = CommonUtils.parse(decryptedMessage);
 
 		let decipheredPayload = CryptoServices.aesDecrypt([
 			encryptedMessage.data,
@@ -1439,6 +1442,7 @@ class Credential {
 				const resolveOnArbitration = process.env.BEAME_OCSP_RESOLVE_ARBITRATION;
 
 				try {
+					//noinspection JSUnresolvedVariable
 					let x509          = require('x509'),
 					    parsedCert    = x509.parseCert(path.join(cred.metadata.path, Config.CertFileNames.X509)),
 					    issuer        = parsedCert.extensions.authorityInformationAccess,
@@ -1622,8 +1626,9 @@ class Credential {
 	 * @param {String} fqdn
 	 * @param {String|null|undefined} [value]
 	 * @param {Boolean|null|undefined} [useBestProxy]
+	 * @param {String|null|undefined} [dnsFqdn] => could be different from fqdn in case of local ip
 	 */
-	setDns(fqdn, value, useBestProxy) {
+	setDns(fqdn, value, useBestProxy, dnsFqdn) {
 		return new Promise((resolve, reject) => {
 				if (!value && !useBestProxy) {
 					reject('value required');
@@ -1636,24 +1641,16 @@ class Credential {
 					const dnsServices = new (require('./DnsServices'))();
 
 					const _setDns = () => {
-						return dnsServices.setDns(fqdn, val);
+						return dnsServices.setDns(fqdn, val, dnsFqdn);
 					};
 
 					const _updateEntityMeta = () => {
-						const path = require('path');
 
-						let meta = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
-
-						if (!meta.dnsRecords) {
-							meta.dnsRecords = [];
-						}
-
-						meta.dnsRecords.push({
+						Credential._updateDnsRecords(cred, dnsFqdn || fqdn, {
+							fqdn:  dnsFqdn || fqdn,
 							value: val,
 							date:  Date.now()
 						});
-
-						cred.beameStoreServices.writeMetadataSync(meta);
 
 						return Promise.resolve(val);
 					};
@@ -1686,6 +1683,40 @@ class Credential {
 		);
 	}
 
+	/**
+	 * Delete Dns record
+	 * @param {String} fqdn
+	 * @param {String|null|undefined} [dnsFqdn] => could be different from fqdn in case of local ip
+	 * @returns {Promise}
+	 */
+	deleteDns(fqdn, dnsFqdn) {
+		return new Promise((resolve, reject) => {
+
+				this.store.find(fqdn, false).then(cred => {
+
+					const _deleteDns = () => {
+						const dnsServices = new (require('./DnsServices'))();
+						return dnsServices.deleteDns(fqdn, dnsFqdn);
+					};
+
+					const _updateEntityMeta = () => {
+
+						Credential._updateDnsRecords(cred, dnsFqdn || fqdn);
+
+						return Promise.resolve();
+					};
+
+					_deleteDns()
+						.then(_updateEntityMeta)
+						.then(resolve)
+						.catch(reject)
+
+				}).catch(reject);
+
+			}
+		);
+	}
+
 	getDnsValue() {
 		return new Promise((resolve, reject) => {
 				if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
@@ -1701,6 +1732,49 @@ class Credential {
 				})
 			}
 		);
+	}
+
+	static _updateDnsRecords(cred, dnsFqdn, dnsRecord) {
+
+		const path = require('path');
+
+		let meta = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
+
+		if (!meta.dnsRecords) {
+			meta.dnsRecords = [];
+		}
+		else {
+			//delete old
+			meta.dnsRecords.forEach(function (element, index) {
+				if (element.fqdn == dnsFqdn) {
+					meta.dnsRecords.splice(index, 1);
+				}
+			});
+		}
+
+		if (dnsRecord) {
+			meta.dnsRecords.push(dnsRecord);
+		}
+
+		meta.dnsRecords.sort((a, b) => {
+			try {
+				let nameA = a.fqdn.toUpperCase(); // ignore upper and lowercase
+				let nameB = b.fqdn.toUpperCase(); // ignore upper and lowercase
+				if (nameA < nameB) {
+					return -1;
+				}
+				if (nameA > nameB) {
+					return 1;
+				}
+
+				// names must be equal
+				return 0;
+			} catch (e) {
+				return 0;
+			}
+		});
+
+		cred.beameStoreServices.writeMetadataSync(meta);
 	}
 
 //endregion
