@@ -162,6 +162,9 @@ class Credential {
 		 * @member {Object}
 		 */
 		this.certData = {};
+
+		// Object represents x509 parse result as certificate info
+		this.certX509Data = {};
 	}
 
 	//region Init functions
@@ -178,7 +181,8 @@ class Credential {
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store, this.parseMetadata(metadata));
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
-		this.setExpirationStatus();
+		this.initCryptoKeys();
+
 	}
 
 	/**
@@ -191,7 +195,22 @@ class Credential {
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
 		this.loadCredentialsObject();
 		this.initCryptoKeys();
-		this.setExpirationStatus();
+
+	}
+
+	_updateCertData() {
+		//get x509 cert data
+		try {
+			const x509     = require('x509'),
+			      x509Path = beameUtils.makePath(this.getMetadataKey("path"), Config.CertFileNames.X509),
+			      cert     = x509.parseCert(x509Path);
+
+			this.certData.extensions         = cert.extensions;
+			this.certData.signatureAlgorithm = cert.signatureAlgorithm;
+			this.certData.fingerPrint        = cert.fingerPrint;
+		}
+		catch (e) {
+		}
 	}
 
 	/**
@@ -209,6 +228,7 @@ class Credential {
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = this.extractCommonName();
 				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
+				this._updateCertData();
 			});
 
 			pem.getPublicKey(this.getKey("X509") + "", (err, publicKey) => {
@@ -244,6 +264,7 @@ class Credential {
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = certData.commonName;
 				this.beameStoreServices.writeObject(config.CertFileNames.X509, x509);
+				this._updateCertData();
 			}
 			else {
 				throw Error(err);
@@ -307,9 +328,9 @@ class Credential {
 		this.beameStoreServices.setFolder(this);
 	}
 
-	//endregion
+//endregion
 
-	//region Save/load services
+//region Save/load services
 	/**
 	 * Delete Credential folder from Beame Store
 	 * @public
@@ -363,9 +384,9 @@ class Credential {
 		}
 	}
 
-	//endregion
+//endregion
 
-	//region GET and common helpers
+//region GET and common helpers
 	parseMetadata(metadata) {
 		if (!_.isEmpty(metadata)) {
 			_.map(metadata, (value, key) => {
@@ -374,7 +395,7 @@ class Credential {
 		}
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	toJSON() {
 		let ret = {
 			metadata: {}
@@ -416,7 +437,7 @@ class Credential {
 		return this.hasKey(key) ? (this[key] || this[key.toLowerCase()]) : null;
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	extractCommonName() {
 		return CommonUtils.isObjectEmpty(this.certData) ? null : this.certData.commonName;
 	}
@@ -453,9 +474,9 @@ class Credential {
 		}
 	}
 
-	//endregion
+//endregion
 
-	//region Crypto functions
+//region Crypto functions
 	/**
 	 * Sign given data with local Beame store Credential
 	 * @public
@@ -646,10 +667,10 @@ class Credential {
 		return decipheredPayload;
 	}
 
-	//endregion
+//endregion
 
-	//region Entity manage
-	//region create entity
+//region Entity manage
+//region create entity
 	/**
 	 * Create entity service with local credentials
 	 * @param {String} parent_fqdn => required
@@ -757,7 +778,7 @@ class Credential {
 		);
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
@@ -1063,7 +1084,7 @@ class Credential {
 
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	/**
 	 * Create registration token for child of given fqdn
 	 * @param {RegistrationTokenOptionsToken} options
@@ -1107,7 +1128,7 @@ class Credential {
 
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	createAuthTokenForCred(fqdn, data2Sign = null, ttl = null) {
 
 		const AuthToken = require('./AuthToken');
@@ -1150,28 +1171,28 @@ class Credential {
 		);
 	}
 
-	//endregion
+//endregion
 
-	//region certs
+//region certs
 
 	/**
 	 *  @ignore
 	 * @returns {Promise.<String>}
 	 */
-	// createCSR(cred, dirPath) {
-	//
-	// 	const fqdn       = this.fqdn,
-	// 	      pkFileName = config.CertFileNames.PRIVATE_KEY;
-	//
-	// 	return new Promise(function (resolve, reject) {
-	//
-	// 		cred._createInitialKeyPairs(dirPath).then(() => {
-	// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
-	// 			openSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
-	// 		}).catch(reject);
-	//
-	// 	});
-	// }
+// createCSR(cred, dirPath) {
+//
+// 	const fqdn       = this.fqdn,
+// 	      pkFileName = config.CertFileNames.PRIVATE_KEY;
+//
+// 	return new Promise(function (resolve, reject) {
+//
+// 		cred._createInitialKeyPairs(dirPath).then(() => {
+// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
+// 			openSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+// 		}).catch(reject);
+//
+// 	});
+// }
 
 	/**
 	 * @ignore
@@ -1484,9 +1505,9 @@ class Credential {
 		);
 	}
 
-	//endregion
+//endregion
 
-	//region metadata
+//region metadata
 	/**
 	 *
 	 * @param fqdn
@@ -1592,10 +1613,10 @@ class Credential {
 		);
 	}
 
-	//endregion
+//endregion
 
-	//region dns service
-	//noinspection JSUnusedGlobalSymbols
+//region dns service
+//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {String} fqdn
@@ -1682,10 +1703,10 @@ class Credential {
 		);
 	}
 
-	//endregion
+//endregion
 
-	//region common helpers
-	//noinspection JSUnusedGlobalSymbols
+//region common helpers
+//noinspection JSUnusedGlobalSymbols
 	/**
 	 * @ignore
 	 * @param {String} fqdn
@@ -1718,7 +1739,7 @@ class Credential {
 		);
 	}
 
-	// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
+// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
 	/**
 	 * @ignore
 	 * @returns {{key: *, cert: *, ca: *}}
@@ -1737,9 +1758,9 @@ class Credential {
 		};
 	}
 
-	//endregion
+//endregion
 
-	//region private helpers
+//region private helpers
 	_selectEdge() {
 
 		return new Promise((resolve, reject) => {
@@ -2062,9 +2083,10 @@ class Credential {
 		);
 	}
 
-	//endregion
+//endregion
 
-	static formatRegisterPostData(metadata) {
+	static
+	formatRegisterPostData(metadata) {
 		return {
 			name:          metadata.name,
 			email:         metadata.email,
@@ -2076,9 +2098,9 @@ class Credential {
 		};
 	}
 
-	//endregion
+//endregion
 
-	//region helpers
+//region helpers
 	checkValidity() {
 		return new Promise((resolve, reject) => {
 			const validity = this.certData.validity;
@@ -2162,16 +2184,17 @@ class Credential {
 		return this.getParentsChain(parent, parent_fqdn, parents);
 	}
 
-	//endregion
+//endregion
 
-	//region live credential
+//region live credential
 	/**
 	 * Import remote(non-Beame) credentials and save it to store(x509 + metadata)
 	 * @public
 	 * @method  Credential.importLiveCredentials
 	 * @param {String} fqdn
 	 */
-	static importLiveCredentials(fqdn) {
+	static
+	importLiveCredentials(fqdn) {
 		if (!fqdn) {
 			throw new Error('importLiveCredentials: fqdn is a required argument');
 		}
@@ -2210,7 +2233,7 @@ class Credential {
 
 	}
 
-	//endregion
+//endregion
 }
 
 Credential.CertificateValidityError = CertificateValidityError;
