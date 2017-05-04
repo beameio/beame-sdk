@@ -2255,6 +2255,10 @@ class Credential {
 
 		let parent = this.store.getCredential(parent_fqdn);
 
+		if(!parent){
+			return parents;
+		}
+
 		let hasLevel = parent.hasMetadataKey(config.MetadataProperties.LEVEL),
 		    lvl      = hasLevel ? parent.getMetadataKey(config.MetadataProperties.LEVEL) : null;
 
