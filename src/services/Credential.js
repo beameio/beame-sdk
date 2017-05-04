@@ -347,7 +347,7 @@ class Credential {
 
 //endregion
 
-//region Save/load services
+	//region Save/load services
 	/**
 	 * Delete Credential folder from Beame Store
 	 * @public
@@ -401,9 +401,9 @@ class Credential {
 		}
 	}
 
-//endregion
+	//endregion
 
-//region GET and common helpers
+	//region GET and common helpers
 	parseMetadata(metadata) {
 		if (!_.isEmpty(metadata)) {
 			_.map(metadata, (value, key) => {
@@ -493,7 +493,7 @@ class Credential {
 
 //endregion
 
-//region Crypto functions
+	//region Crypto functions
 	/**
 	 * Sign given data with local Beame store Credential
 	 * @public
@@ -686,8 +686,8 @@ class Credential {
 
 //endregion
 
-//region Entity manage
-//region create entity
+	//region Entity manage
+	//region create entity
 	/**
 	 * Create entity service with local credentials
 	 * @param {String} parent_fqdn => required
@@ -1190,7 +1190,7 @@ class Credential {
 
 //endregion
 
-//region certs
+	//region certs
 
 	// /**
 	//  *  @ignore
@@ -1522,7 +1522,7 @@ class Credential {
 
 //endregion
 
-//region metadata
+	//region metadata
 	/**
 	 *
 	 * @param fqdn
@@ -1630,7 +1630,7 @@ class Credential {
 
 //endregion
 
-//region dns service
+	//region dns service
 //noinspection JSUnusedGlobalSymbols
 	/**
 	 *
@@ -1790,7 +1790,7 @@ class Credential {
 
 //endregion
 
-//region common helpers
+	//region common helpers
 //noinspection JSUnusedGlobalSymbols
 	/**
 	 * @ignore
@@ -1845,7 +1845,7 @@ class Credential {
 
 //endregion
 
-//region private helpers
+	//region private helpers
 	_selectEdge() {
 
 		return new Promise((resolve, reject) => {
@@ -2185,7 +2185,7 @@ class Credential {
 
 //endregion
 
-//region helpers
+	//region helpers
 	checkValidity() {
 		return new Promise((resolve, reject) => {
 			const validity = this.certData.validity;
@@ -2271,7 +2271,7 @@ class Credential {
 
 //endregion
 
-//region live credential
+	//region live credential
 	/**
 	 * Import remote(non-Beame) credentials and save it to store(x509 + metadata)
 	 * @public
