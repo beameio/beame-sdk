@@ -1291,10 +1291,8 @@ class Credential {
 
 					let revokedCred = this.store.getCredential(revokeFqdn);
 
-
 					if (revokedCred && revokedCred.hasKey("X509")) {
-						revokedCred.metadata.revoked = true;
-						revokedCred.beameStoreServices.writeMetadataSync(revokedCred.metadata);
+						revokedCred.saveOcspStatus(true);
 					}
 
 					resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
@@ -1422,12 +1420,12 @@ class Credential {
 		);
 	}
 
-	updateOcspStatus() {
+	saveOcspStatus(isRevoked)  {
+		this.metadata.revoked = isRevoked;
+		this.beameStoreServices.writeMetadataSync(this.metadata);
+	};
 
-		const _saveOcspStatus = (isRevoked) => {
-			this.metadata.revoked = isRevoked;
-			this.beameStoreServices.writeMetadataSync(this.metadata);
-		};
+	updateOcspStatus() {
 
 		return new Promise((resolve) => {
 				if (this.hasMetadataKey("revoked")) {
@@ -1436,11 +1434,11 @@ class Credential {
 				}
 
 				this.checkOcspStatus(this).then(() => {
-					_saveOcspStatus(false);
+					this.saveOcspStatus(false);
 					resolve(this);
 
 				}).catch(() => {
-					_saveOcspStatus(true);
+					this.saveOcspStatus(true);
 					resolve(this);
 				})
 			}
