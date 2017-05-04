@@ -217,13 +217,14 @@ class Credential {
 			this.certData.subject                         = cert.subject;
 			this.certData.altNames                        = cert.altNames;
 			this.certData.publicKey                       = cert.publicKey;
-			this.certData.signatureAlgorithm              = cert.signatureAlgorithm;
+			this.certData.publicKey                       = this.certData.publicKey === "rsaEncryption" ? 'RSA Encryption ( 1.2.840.113549.1.1.1 )' : this.certData.publicKey;
+			this.certData.signatureAlgorithm              = cert.signatureAlgorithm === "sha256WithRSAEncryption" ? 'SHA-256 with RSA Encryption ( 1.2.840.113549.1.1.11 )' : cert.signatureAlgorithm;
 			this.certData.fingerPrint                     = cert.fingerPrint;
 			this.certData.issuer.issuerCertUrl            = Credential._parseX509IssuerExtensions(cert, /^CA Issuers.*URI:(.+)/m, 'authorityInformationAccess');
-			this.certData.issuer.issuerOcspUrl            = Credential._parseX509IssuerExtensions(cert, /^OSCP.*URI:(.+)/m, 'authorityInformationAccess');
-			this.certData.issuer.issuerCertPoliciesRepUrl = Credential._parseX509IssuerExtensions(cert, /^CPS:(.+)/m, 'certificatePolicies');
-			this.certData.notAfter                        = new Date(cert.notAfter);
-			this.certData.notBefore                       = new Date(cert.notBefore);
+			this.certData.issuer.issuerOcspUrl            = Credential._parseX509IssuerExtensions(cert, /^OCSP.*URI:(.+)/m, 'authorityInformationAccess');
+			this.certData.issuer.issuerCertPoliciesRepUrl = Credential._parseX509IssuerExtensions(cert, /CPS: (.+)/m, 'certificatePolicies');
+			this.certData.notAfter                        = (new Date(cert.notAfter)).toString();
+			this.certData.notBefore                       = (new Date(cert.notBefore)).toString();
 		}
 		catch (e) {
 		}
