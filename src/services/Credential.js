@@ -198,6 +198,14 @@ class Credential {
 
 	}
 
+	static _parseX509IssuerExtensions(parsedCert, re, ext) {
+		let issuer        = parsedCert.extensions[ext],
+		    m             = issuer.match(re),
+		    issuerCertUrl = m && m.length ? m[1] : null;
+
+		return issuerCertUrl;
+	}
+
 	_updateCertData() {
 		//get x509 cert data
 		try {
@@ -205,12 +213,17 @@ class Credential {
 			      x509Path = beameUtils.makePath(this.getMetadataKey("path"), Config.CertFileNames.X509),
 			      cert     = x509.parseCert(x509Path);
 
-			this.certData.extensions         = cert.extensions;
-			this.certData.subject            = cert.subject;
-			this.certData.altNames           = cert.altNames;
-			this.certData.publicKey          = cert.publicKey;
-			this.certData.signatureAlgorithm = cert.signatureAlgorithm;
-			this.certData.fingerPrint        = cert.fingerPrint;
+			this.certData.extensions                      = cert.extensions;
+			this.certData.subject                         = cert.subject;
+			this.certData.altNames                        = cert.altNames;
+			this.certData.publicKey                       = cert.publicKey;
+			this.certData.signatureAlgorithm              = cert.signatureAlgorithm;
+			this.certData.fingerPrint                     = cert.fingerPrint;
+			this.certData.issuer.issuerCertUrl            = Credential._parseX509IssuerExtensions(cert, /^CA Issuers.*URI:(.+)/m, 'authorityInformationAccess');
+			this.certData.issuer.issuerOcspUrl            = Credential._parseX509IssuerExtensions(cert, /^OSCP.*URI:(.+)/m, 'authorityInformationAccess');
+			this.certData.issuer.issuerCertPoliciesRepUrl = Credential._parseX509IssuerExtensions(cert, /^CPS:(.+)/m, 'certificatePolicies');
+			this.certData.notAfter                        = new Date(cert.notAfter);
+			this.certData.notBefore                       = new Date(cert.notBefore);
 		}
 		catch (e) {
 		}
@@ -1178,10 +1191,10 @@ class Credential {
 
 //region certs
 
-	/**
-	 *  @ignore
-	 * @returns {Promise.<String>}
-	 */
+	// /**
+	//  *  @ignore
+	//  * @returns {Promise.<String>}
+	//  */
 // createCSR(cred, dirPath) {
 //
 // 	const fqdn       = this.fqdn,
@@ -1445,10 +1458,7 @@ class Credential {
 					//noinspection JSUnresolvedVariable
 					let x509          = require('x509'),
 					    parsedCert    = x509.parseCert(path.join(cred.metadata.path, Config.CertFileNames.X509)),
-					    issuer        = parsedCert.extensions.authorityInformationAccess,
-					    re            = /^CA Issuers.*URI:(.+)/m,
-					    m             = issuer.match(re),
-					    issuerCertUrl = m && m.length ? m[1] : null;
+					    issuerCertUrl = Credential._parseX509IssuerExtensions(parsedCert, /^CA Issuers.*URI:(.+)/m, 'authorityInformationAccess');
 
 					if (!issuerCertUrl) {
 						resolveOnArbitration ? resolve() : reject(new Error(`No Issuer CA Cert url found`));
