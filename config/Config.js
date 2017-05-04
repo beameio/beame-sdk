@@ -29,10 +29,9 @@ const rootDir                   = process.env.BEAME_DIR || path.join(home, '.bea
 /** @const {String} **/
 const remotePKsDirV1 = path.join(rootDir, 'pki');
 
-
 const localCertsDirV2 = path.join(rootDir, 'v2');
 
-const issuerCertsPath = path.join(localCertsDirV2,'ocsp-cache');
+const issuerCertsPath = path.join(rootDir,'ocsp-cache');
 
 /** @const {String} **/
 const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
