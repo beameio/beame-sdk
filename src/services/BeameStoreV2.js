@@ -81,6 +81,7 @@ class BeameStoreV2 {
 			return new Promise(resolve => {
 					let remoteCred = new Credential(this);
 					remoteCred.initFromX509(data.x509, data.metadata);
+					remoteCred.initFromData(fqdn);
 					this.addCredential(remoteCred);
 					remoteCred.saveCredentialsObject();
 					resolve(remoteCred);
@@ -136,6 +137,7 @@ class BeameStoreV2 {
 
 				const _onCredFound = credential => {
 					credential.checkValidity()
+						.then(credential.updateOcspStatus.bind(credential))
 						.then(resolve)
 						.catch(_onValidationError.bind(null, credential));
 				};
@@ -143,6 +145,8 @@ class BeameStoreV2 {
 				let cred = this._getCredential(fqdn);
 
 				if (cred) {
+					//refresh metadata info
+					cred.metadata = cred.beameStoreServices.readMetadataSync(cred.metadata.path);
 					_onCredFound(cred);
 				} else {
 					if (!allowRemote) {
@@ -165,7 +169,8 @@ class BeameStoreV2 {
 		    fqdn        = credential.fqdn;
 
 		if (this.credentials[fqdn]) {
-			logger.fatal(`Credentials for fqdn ${fqdn} are already present`);
+			logger.error(`Credentials for fqdn ${fqdn} are already present`);
+			return;
 		}
 
 		let parentNode = parent_fqdn && this._getCredential(parent_fqdn);
@@ -193,7 +198,6 @@ class BeameStoreV2 {
 
 	/**
 	 * Return credential from local Beame store
-	 * @deprecated
 	 * @public
 	 * @method BeameStoreV2.getCredential
 	 * @param {String} fqdn
@@ -248,10 +252,33 @@ class BeameStoreV2 {
 		return BeameUtils.findInTree(
 			{children: this.credentials},
 			cred => {
+
+				let allEnvs = !!options.allEnvs,
+					envPattern = config.EnvProfile.FqdnPattern,
+					approvedZones = config.ApprovedZones,
+					zone = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null;
+
+				if(!allEnvs && (!cred.fqdn || (approvedZones.includes(zone) && !(cred.fqdn.indexOf(envPattern)>0)))){
+					return false;
+				}
+
+				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
+					return false;
+				}
+
+				if(options.hasParent && !cred.hasParent(options.hasParent)) {
+					return false;
+				}
+
+				if(options.excludeRevoked && cred.metadata.revoked) {
+					return false;
+				}
+
 				//noinspection JSCheckFunctionSignatures
 				if (!(cred.fqdn && cred.fqdn.match(regex))) {
 					return false;
 				}
+
 				//noinspection RedundantIfStatementJS,JSUnresolvedVariable
 				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
@@ -270,9 +297,18 @@ class BeameStoreV2 {
 					}
 				}
 
+
+
 				return true;
 			}
 		);
+	}
+
+	//noinspection JSUnusedGlobalSymbols
+	hasLocalChildren(fqdn){
+	   return  !!this.list(null, {
+			hasParent: fqdn
+		}).length;
 	}
 
 	//noinspection JSUnusedGlobalSymbols
@@ -327,6 +363,7 @@ class BeameStoreV2 {
 						data => {
 							let remoteCred = new Credential(this);
 							remoteCred.initFromX509(data.x509, data.metadata);
+							remoteCred.initFromData(fqdn);
 							this.addCredential(remoteCred);
 
 							if (remoteCred.checkSignature(token)) {

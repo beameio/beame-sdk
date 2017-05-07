@@ -16,6 +16,7 @@ _The Beame SDK allows you to establish a HTTPS session between machines without 
  - [Custom Client Provisioning Flow Chart](#custom-client-provisioning-flow-chart)
  - [Beame CLI (credentials, running test server, encryption)](#beame-cli)
  - [Beame NodeJS API](#beame-nodejs-api)
+ - [Environment Variables](#environment-variables)
 
 ## Beame SDK Networking basics
 _Beame-SDK, by design, provides full set of tools to implement fully functional, secure private network. Beame-SDK employs hierarchical network structure. The most top level is the Layer-0 (L0) - the network root. L1 is created underneath L0 and considered "child" of L0. L0 may have any number of "children" (L1's), each of those, in turn, can have its own "children" L2's and so on. Any lower level "child" can be tracked, by cryptography, up to its L0 "parent". This is the base for building a private network with proprietary chain of trust._  
@@ -375,4 +376,6 @@ testCheckSignature({ signedData: 'beameio',
 );
 ```
 
+## Environment variables
 
+* `BEAME_OCSP_RESOLVE_ARBITRATION` - Resolve OCSP check if unavailable or in any other arbitration situation 

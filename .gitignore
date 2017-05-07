@@ -19,3 +19,4 @@ tests/unit-tests/cli/
 example/node_modules
 out/
 docs/
+certs/

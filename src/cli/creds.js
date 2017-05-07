@@ -195,14 +195,37 @@ updateMetadata.toText = _lineToText;
 /**
  * @public
  * @method Creds.revokeCert
- * @param {String} signerFqdn
+ * @param {String|null} [signerAuthToken]
+ * @param {String|null} [signerFqdn]
  * @param {String} fqdn
  * @param {Function} callback
  */
-function revokeCert(signerFqdn, fqdn, callback) {
+function revokeCert(signerAuthToken, signerFqdn, fqdn, callback) {
+
+	if (!signerAuthToken && !signerFqdn) {
+		throw new Error(`signerAuthToken or signerFqdn required`);
+	}
+
+	if (!fqdn) {
+		throw new Error(`Fqdn required`);
+	}
+
+	let authToken;
+
+	if (signerAuthToken) {
+		let parsed = CommonUtils.parse(signerAuthToken, false);
+
+		if (typeof parsed == "object") {
+			authToken = parsed;
+		}
+		else {
+			authToken = CommonUtils.parse(parsed, false);
+		}
+	}
+
 	let cred = new Credential(new BeameStore());
 
-	CommonUtils.promise2callback(cred.revokeCert(signerFqdn, fqdn), callback);
+	CommonUtils.promise2callback(cred.revokeCert(authToken, signerFqdn, fqdn), callback);
 }
 revokeCert.toText = _lineToText;
 
@@ -273,11 +296,12 @@ show.toText = _lineToText;
  * @param {Number|null} expiration in days
  * @returns {Array.<Credential>}
  */
-function list(regex, hasPrivateKey, expiration) {
+function list(regex, hasPrivateKey, expiration, anyParent) {
 	logger.debug(`list  ${regex}`);
 	let options = {
 		hasPrivateKey: hasPrivateKey ? hasPrivateKey == 'true' : null,
-		expiration:    expiration ? Number(expiration) : (expiration === 0 ? 0 : null)
+		expiration:    expiration ? Number(expiration) : (expiration === 0 ? 0 : null),
+		anyParent:     anyParent || null
 	};
 	return _listCreds(regex || '.', options);
 }

@@ -262,11 +262,6 @@ test("File server", {
 	"File server is OK"
 })
 
-test("importLiveCredentials", {
-	$($BEAME_BIN creds importLiveCredentials --fqdn google.com)
-	``$BEAME_BIN creds list --format json``.none({A.metadata.fqdn == "*.google.com"}) throws TestFail("importLiveCredentials failed")
-})
-
 if Path(CREDS_FILE) {
 	echo("+ Removing temporary credentials file $CREDS_FILE")
 	$(rm $CREDS_FILE)
@@ -288,6 +283,10 @@ test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
 	$(./testGetCredsFqdn.ngs ${entities[0].fqdn} 3)
 })
 
+test("importLiveCredentials", {
+	$($BEAME_BIN creds importLiveCredentials --fqdn google.com)
+	``$BEAME_BIN creds list --format json``.none({A.metadata.fqdn == "*.google.com"}) throws TestFail("importLiveCredentials failed")
+})
 
 echo("All tests done. Exit code: $exit_code")
 { exit_code }

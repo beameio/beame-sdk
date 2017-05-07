@@ -46,12 +46,6 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 		return _onError(`Could not find certificate for ${fqdn}`);
 	}
 
-	let edge_fqdn = cred.getMetadataKey('EDGE_FQDN');
-
-	if (!edge_fqdn) {
-		return _onError('Edge server hostname required');
-	}
-
 	let certs = null;
 
 	try {
@@ -72,10 +66,11 @@ function BaseBeameHttpsServer(fqdn, options, requestListener, hostOnlineCallback
 		}
 
 		//noinspection JSUnresolvedVariable
-		new ProxyClient("HTTPS", fqdn,
-			edge_fqdn, 'localhost',
+		let proxyClient = new ProxyClient("HTTPS", cred,'localhost',
 			server.address().port, {onLocalServerCreated: onLocalServerCreated},
 			null, serverOptions);
+
+		proxyClient.start();
 	});
 }
 
