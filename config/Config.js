@@ -19,7 +19,7 @@ const PinAtomPKbyDefault        = false;
 
 const EnvProfile = {
 	Name : 'Dev',
-	FqdnPattern: '.p.'
+	FqdnPattern: '.d.'
 };
 
 /** @const {String} **/
