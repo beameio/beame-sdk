@@ -222,7 +222,7 @@ class Credential {
 			let hex = X509.pemToHex(pemStr);
 			let ai = X509.getExtAIAInfo(hex),
 			    alt = X509.getExtSubjectAltName(hex),
-				keyUsageStr = rs.X509.getExtKeyUsageString(hex),
+				keyUsageStr = X509.getExtKeyUsageString(hex),
 				alg = x.getSignatureAlgorithmField(),
 				subjectStr = x.getSubjectString();
 
@@ -263,8 +263,8 @@ class Credential {
 
 			this.certData.extensions                      = {
 				keyUsage:keyUsageStr,
-				authorityKeyIdentifier:rs.X509.getExtAuthorityKeyIdentifier(hex).kid.match(/(..)/g).join(':').toUpperCase(),
-				subjectKeyIdentifier:rs.X509.getExtSubjectKeyIdentifier(hex).match(/(..)/g).join(':').toUpperCase()
+				authorityKeyIdentifier:X509.getExtAuthorityKeyIdentifier(hex).kid.match(/(..)/g).join(':').toUpperCase(),
+				subjectKeyIdentifier:X509.getExtSubjectKeyIdentifier(hex).match(/(..)/g).join(':').toUpperCase()
 			};
 			this.certData.subject                         = subject;
 			this.certData.altNames                        = alt;
@@ -1509,6 +1509,11 @@ class Credential {
 					let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
 
 					if (!issuerCertUrl) {
+
+						this._updateCertData();
+
+						issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+
 						resolveOnArbitration ? resolve() : reject(new Error(`No Issuer CA Cert url found`));
 						return;
 					}
