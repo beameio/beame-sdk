@@ -2322,8 +2322,7 @@ class Credential {
 	 * @method  Credential.importLiveCredentials
 	 * @param {String} fqdn
 	 */
-	static
-	importLiveCredentials(fqdn) {
+	static importLiveCredentials(fqdn) {
 		if (!fqdn) {
 			throw new Error('importLiveCredentials: fqdn is a required argument');
 		}
