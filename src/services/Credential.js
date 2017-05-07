@@ -163,8 +163,6 @@ class Credential {
 		 */
 		this.certData = {};
 
-		// Object represents x509 parse result as certificate info
-		this.certX509Data = {};
 	}
 
 	//region Init functions
@@ -196,14 +194,6 @@ class Credential {
 		this.loadCredentialsObject();
 		this.initCryptoKeys();
 
-	}
-
-	static _parseX509IssuerExtensions(parsedCert, re, ext) {
-		let issuer        = parsedCert.extensions[ext],
-		    m             = issuer.match(re),
-		    issuerCertUrl = m && m.length ? m[1] : null;
-
-		return issuerCertUrl;
 	}
 
 	_updateCertData() {
@@ -270,10 +260,8 @@ class Credential {
 			this.certData.altNames                        = alt;
 			this.certData.publicKey                       = 'RSA Encryption ( 1.2.840.113549.1.1.1 )';
 			this.certData.signatureAlgorithm              = alg === "SHA256withRSA" ? 'SHA-256 with RSA Encryption ( 1.2.840.113549.1.1.11 )' : alg;
-			//this.certData.fingerPrint                     = cert.fingerPrint;
 			this.certData.issuer.issuerCertUrl            = ai.caissuer[0];
 			this.certData.issuer.issuerOcspUrl            = ai.ocsp[0];
-			//this.certData.issuer.issuerCertPoliciesRepUrl = Credential._parseX509IssuerExtensions(cert, /CPS: (.+)/m, 'certificatePolicies');
 			this.certData.notAfter                        = (new Date(this.certData.validity.end)).toString();
 			this.certData.notBefore                       = (new Date(this.certData.validity.start)).toString();
 		}
@@ -722,7 +710,7 @@ class Credential {
 
 		let decryptedMessage = this.decryptWithRSA(encryptedMessage.rsaCipheredKeys);
 		//noinspection ES6ModulesDependencies,NodeModulesDependencies
-		let payload          = CommonUtils.parse(decryptedMessage);
+		let payload          = JSON.parse(decryptedMessage);
 
 		let decipheredPayload = CryptoServices.aesDecrypt([
 			encryptedMessage.data,
