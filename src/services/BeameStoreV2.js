@@ -255,10 +255,10 @@ class BeameStoreV2 {
 
 				let allEnvs = !!options.allEnvs,
 					envPattern = config.EnvProfile.FqdnPattern,
-					approvedZones = config.ApprovedZones;
+					approvedZones = config.ApprovedZones,
+					zone = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null;
 
-				if(!allEnvs && (!cred.fqdn || !(cred.fqdn.indexOf(envPattern)>0))){
-					if(cred.metadata && ! cred.metadata.live)
+				if(!allEnvs && (!cred.fqdn || (approvedZones.includes(zone) && !(cred.fqdn.indexOf(envPattern)>0)))){
 					return false;
 				}
 
