@@ -209,22 +209,73 @@ class Credential {
 	_updateCertData() {
 		//get x509 cert data
 		try {
-			const x509     = require('x509'),
-			      x509Path = beameUtils.makePath(this.getMetadataKey("path"), Config.CertFileNames.X509),
-			      cert     = x509.parseCert(x509Path);
+			const x509Path = beameUtils.makePath(this.getMetadataKey("path"), Config.CertFileNames.X509);
 
-			this.certData.extensions                      = cert.extensions;
-			this.certData.subject                         = cert.subject;
-			this.certData.altNames                        = cert.altNames;
-			this.certData.publicKey                       = cert.publicKey;
-			this.certData.publicKey                       = this.certData.publicKey === "rsaEncryption" ? 'RSA Encryption ( 1.2.840.113549.1.1.1 )' : this.certData.publicKey;
-			this.certData.signatureAlgorithm              = cert.signatureAlgorithm === "sha256WithRSAEncryption" ? 'SHA-256 with RSA Encryption ( 1.2.840.113549.1.1.11 )' : cert.signatureAlgorithm;
-			this.certData.fingerPrint                     = cert.fingerPrint;
-			this.certData.issuer.issuerCertUrl            = Credential._parseX509IssuerExtensions(cert, /^CA Issuers.*URI:(.+)/m, 'authorityInformationAccess');
-			this.certData.issuer.issuerOcspUrl            = Credential._parseX509IssuerExtensions(cert, /^OCSP.*URI:(.+)/m, 'authorityInformationAccess');
-			this.certData.issuer.issuerCertPoliciesRepUrl = Credential._parseX509IssuerExtensions(cert, /CPS: (.+)/m, 'certificatePolicies');
-			this.certData.notAfter                        = (new Date(cert.notAfter)).toString();
-			this.certData.notBefore                       = (new Date(cert.notBefore)).toString();
+			const rs = require('jsrsasign');
+			const X509 = rs.X509;
+			const fs = require('fs');
+			let pemStr = (fs.readFileSync(x509Path)).toString();
+			let x = new rs.X509();
+			x.readCertPEM(pemStr);
+
+
+			let hex = X509.pemToHex(pemStr);
+			let ai = X509.getExtAIAInfo(hex),
+			    alt = X509.getExtSubjectAltName(hex),
+				keyUsageStr = rs.X509.getExtKeyUsageString(hex),
+				alg = x.getSignatureAlgorithmField(),
+				subjectStr = x.getSubjectString();
+
+				let subject = {
+					"commonName":   "",
+					"country":      "",
+					"locality":     "",
+					"state":        "",
+					"organization": ""
+				};
+
+				let sp = subjectStr.split('/');
+				for(let i = 0;i < sp.length; i++){
+					let pair = sp[i].split('=');
+					if(pair.length != 2) continue;
+
+					let prefix = pair[0];
+
+					switch (prefix){
+						case 'CN':
+							subject.commonName = pair[1];
+							break;
+						case 'C':
+							subject.country = pair[1];
+							break;
+						case 'L':
+							subject.locality = pair[1];
+							break;
+						case 'ST':
+							subject.state = pair[1];
+							break;
+						case 'O':
+							subject.organization = pair[1];
+							break;
+					}
+				}
+
+
+			this.certData.extensions                      = {
+				keyUsage:keyUsageStr,
+				authorityKeyIdentifier:rs.X509.getExtAuthorityKeyIdentifier(hex).kid.match(/(..)/g).join(':').toUpperCase(),
+				subjectKeyIdentifier:rs.X509.getExtSubjectKeyIdentifier(hex).match(/(..)/g).join(':').toUpperCase()
+			};
+			this.certData.subject                         = subject;
+			this.certData.altNames                        = alt;
+			this.certData.publicKey                       = 'RSA Encryption ( 1.2.840.113549.1.1.1 )';
+			this.certData.signatureAlgorithm              = alg === "SHA256withRSA" ? 'SHA-256 with RSA Encryption ( 1.2.840.113549.1.1.11 )' : alg;
+			//this.certData.fingerPrint                     = cert.fingerPrint;
+			this.certData.issuer.issuerCertUrl            = ai.caissuer[0];
+			this.certData.issuer.issuerOcspUrl            = ai.ocsp[0];
+			//this.certData.issuer.issuerCertPoliciesRepUrl = Credential._parseX509IssuerExtensions(cert, /CPS: (.+)/m, 'certificatePolicies');
+			this.certData.notAfter                        = (new Date(this.certData.validity.end)).toString();
+			this.certData.notBefore                       = (new Date(this.certData.validity.start)).toString();
 		}
 		catch (e) {
 		}
@@ -1455,9 +1506,7 @@ class Credential {
 
 				try {
 					//noinspection JSUnresolvedVariable
-					let x509          = require('x509'),
-					    parsedCert    = x509.parseCert(path.join(cred.metadata.path, Config.CertFileNames.X509)),
-					    issuerCertUrl = Credential._parseX509IssuerExtensions(parsedCert, /^CA Issuers.*URI:(.+)/m, 'authorityInformationAccess');
+					let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
 
 					if (!issuerCertUrl) {
 						resolveOnArbitration ? resolve() : reject(new Error(`No Issuer CA Cert url found`));
