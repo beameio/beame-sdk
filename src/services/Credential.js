@@ -1681,6 +1681,12 @@ class Credential {
 	 */
 	setDns(fqdn, value, useBestProxy, dnsFqdn) {
 		return new Promise((resolve, reject) => {
+
+				if(!fqdn){
+					reject('FQDN required');
+					return;
+				}
+
 				if (!value && !useBestProxy) {
 					reject('value required');
 					return;
@@ -2210,8 +2216,7 @@ class Credential {
 
 //endregion
 
-	static
-	formatRegisterPostData(metadata) {
+	static formatRegisterPostData(metadata) {
 		return {
 			name:          metadata.name,
 			email:         metadata.email,

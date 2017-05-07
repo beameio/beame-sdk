@@ -17,7 +17,7 @@ const path        = require('path');
 const fs          = require('fs');
 const colors      = require('colors');
 
-module.exports    = {
+module.exports = {
 	show,
 	list,
 	getCreds,
@@ -32,7 +32,8 @@ module.exports    = {
 	sign,
 	checkSignature,
 	revokeCert,
-	renewCert
+	renewCert,
+	setDns
 };
 
 
@@ -265,6 +266,23 @@ function renewCert(signerAuthToken, fqdn, validityPeriod, callback) {
 	CommonUtils.promise2callback(cred.renewCert(authToken, fqdn, validityPeriod).then(returnOK), callback);
 }
 renewCert.toText = _lineToText;
+
+/**
+ * @public
+ * @method Creds.setDns
+ * @param {String} fqdn
+ * @param {String|null|undefined} [value] => dns record value
+ * @param {Boolean|null} [useBestProxy]
+ * @param {String|null|undefined} [dnsFqdn] => using for any alt-names which is not CN
+ * @param callback
+ */
+function setDns(fqdn, value, useBestProxy, dnsFqdn, callback) {
+	let cred = new Credential(new BeameStore());
+
+	CommonUtils.promise2callback(cred.setDns(fqdn, value, useBestProxy || !value, dnsFqdn), callback);
+
+}
+setDns.toText = x => `DNS set to ${x}`;
 //endregion
 
 //region list/show/shred functions
@@ -312,14 +330,14 @@ list.toText = function (creds) {
 		colWidths: [40, 65, 55, 25, 10]
 	});
 
-	const _setStyle = (value,cred) => {
+	const _setStyle = (value, cred) => {
 		let val = value || '';
 		return cred.expired === true ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
 
-		table.push([_setStyle(item.getMetadataKey("Name"),item), _setStyle(item.fqdn,item), _setStyle(item.getMetadataKey('PARENT_FQDN'),item), _setStyle(item.getCertEnd(),item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N',item)]);
+		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item)]);
 	});
 	return table;
 };
