@@ -251,7 +251,7 @@ class Credential {
 				}
 
 
-			this.certData.extensions                      = {
+			this.certData.extensions                      =  {
 				keyUsage:keyUsageStr,
 				authorityKeyIdentifier:X509.getExtAuthorityKeyIdentifier(hex).kid.match(/(..)/g).join(':').toUpperCase(),
 				subjectKeyIdentifier:X509.getExtSubjectKeyIdentifier(hex).match(/(..)/g).join(':').toUpperCase()
@@ -2344,6 +2344,7 @@ class Credential {
 				certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
 				certBody += "-----END CERTIFICATE-----";
 				let credentials = store.addToStore(certBody);
+				credentials.metadata.live = true;
 				credentials.saveCredentialsObject();
 			};
 

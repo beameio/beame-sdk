@@ -254,9 +254,11 @@ class BeameStoreV2 {
 			cred => {
 
 				let allEnvs = !!options.allEnvs,
-					envPattern = config.EnvProfile.FqdnPattern;
+					envPattern = config.EnvProfile.FqdnPattern,
+					approvedZones = config.ApprovedZones;
 
 				if(!allEnvs && (!cred.fqdn || !(cred.fqdn.indexOf(envPattern)>0))){
+					if(cred.metadata && ! cred.metadata.live)
 					return false;
 				}
 
