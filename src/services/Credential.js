@@ -7,6 +7,7 @@
 
 /** @namespace Credential **/
 
+
 /**
  * @typedef {Object} MetadataObject
  * @property {String} fqdn
@@ -14,8 +15,8 @@
  * @property {String|null} [name]
  * @property {String|null} [email]
  * @property {Number} level
- * @property {String|null} [local_ip] => local IP address(for future use)
- * @property {String|null} [edge_fqdn] => edge server FQDN
+ * @property {Array|null} [actions]
+ * @property {Array|null} [dnsRecords]
  * @property {String} path => path to local creds folder
  */
 
@@ -38,6 +39,13 @@
  *  @property {String|null|undefined} [matchingFqdn]
  *  @property {String|null|undefined} [gwFqdn]
  *  @property {Boolean|null|undefined} [imageRequired]
+ */
+
+/**
+ * @typedef {Object} RequestCertOptions
+ * @property {Number|null} [validityPeriod]
+ * @property {String|null} [password]
+ * @property {Boolean|true} [saveCerts]
  */
 
 /**
@@ -154,6 +162,7 @@ class Credential {
 		 * @member {Object}
 		 */
 		this.certData = {};
+
 	}
 
 	//region Init functions
@@ -170,7 +179,8 @@ class Credential {
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store, this.parseMetadata(metadata));
 		this.parseMetadata(metadata);
 		this.beameStoreServices.setFolder(this);
-		this.setExpirationStatus();
+		this.initCryptoKeys();
+
 	}
 
 	/**
@@ -183,7 +193,80 @@ class Credential {
 		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
 		this.loadCredentialsObject();
 		this.initCryptoKeys();
-		this.setExpirationStatus();
+
+	}
+
+	_updateCertData() {
+		//get x509 cert data
+		try {
+			const x509Path = beameUtils.makePath(this.getMetadataKey("path"), Config.CertFileNames.X509);
+
+			const rs = require('jsrsasign');
+			const X509 = rs.X509;
+			const fs = require('fs');
+			let pemStr = (fs.readFileSync(x509Path)).toString();
+			let x = new rs.X509();
+			x.readCertPEM(pemStr);
+
+
+			let hex = X509.pemToHex(pemStr);
+			let ai = X509.getExtAIAInfo(hex),
+			    alt = X509.getExtSubjectAltName(hex),
+				keyUsageStr = X509.getExtKeyUsageString(hex),
+				alg = x.getSignatureAlgorithmField(),
+				subjectStr = x.getSubjectString();
+
+				let subject = {
+					"commonName":   "",
+					"country":      "",
+					"locality":     "",
+					"state":        "",
+					"organization": ""
+				};
+
+				let sp = subjectStr.split('/');
+				for(let i = 0;i < sp.length; i++){
+					let pair = sp[i].split('=');
+					if(pair.length != 2) continue;
+
+					let prefix = pair[0];
+
+					switch (prefix){
+						case 'CN':
+							subject.commonName = pair[1];
+							break;
+						case 'C':
+							subject.country = pair[1];
+							break;
+						case 'L':
+							subject.locality = pair[1];
+							break;
+						case 'ST':
+							subject.state = pair[1];
+							break;
+						case 'O':
+							subject.organization = pair[1];
+							break;
+					}
+				}
+
+
+			this.certData.extensions                      =  {
+				keyUsage:keyUsageStr,
+				authorityKeyIdentifier:X509.getExtAuthorityKeyIdentifier(hex).kid.match(/(..)/g).join(':').toUpperCase(),
+				subjectKeyIdentifier:X509.getExtSubjectKeyIdentifier(hex).match(/(..)/g).join(':').toUpperCase()
+			};
+			this.certData.subject                         = subject;
+			this.certData.altNames                        = alt;
+			this.certData.publicKey                       = 'RSA Encryption ( 1.2.840.113549.1.1.1 )';
+			this.certData.signatureAlgorithm              = alg === "SHA256withRSA" ? 'SHA-256 with RSA Encryption ( 1.2.840.113549.1.1.11 )' : alg;
+			this.certData.issuer.issuerCertUrl            = ai.caissuer[0];
+			this.certData.issuer.issuerOcspUrl            = ai.ocsp[0];
+			this.certData.notAfter                        = (new Date(this.certData.validity.end)).toString();
+			this.certData.notBefore                       = (new Date(this.certData.validity.start)).toString();
+		}
+		catch (e) {
+		}
 	}
 
 	/**
@@ -201,6 +284,7 @@ class Credential {
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = this.extractCommonName();
 				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
+				this._updateCertData();
 			});
 
 			pem.getPublicKey(this.getKey("X509") + "", (err, publicKey) => {
@@ -236,6 +320,7 @@ class Credential {
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = certData.commonName;
 				this.beameStoreServices.writeObject(config.CertFileNames.X509, x509);
+				this._updateCertData();
 			}
 			else {
 				throw Error(err);
@@ -299,7 +384,7 @@ class Credential {
 		this.beameStoreServices.setFolder(this);
 	}
 
-	//endregion
+//endregion
 
 	//region Save/load services
 	/**
@@ -366,7 +451,7 @@ class Credential {
 		}
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	toJSON() {
 		let ret = {
 			metadata: {}
@@ -392,6 +477,12 @@ class Credential {
 		return this.metadata.hasOwnProperty(field.toLowerCase()) || this.metadata.hasOwnProperty(field) ? (this.metadata[field.toLowerCase()] || this.metadata[field]) : null;
 	}
 
+	hasMetadataKey(field) {
+		let value = this.metadata.hasOwnProperty(field.toLowerCase()) || this.metadata.hasOwnProperty(field) ? (this.metadata[field.toLowerCase()] || this.metadata[field]) : null;
+
+		return value != null && value != undefined;
+	}
+
 	hasKey(key) {
 		//key = key.toLowerCase();
 		return (this.hasOwnProperty(key) && !_.isEmpty(this[key])) || (this.hasOwnProperty(key.toLowerCase()) && !_.isEmpty(this[key.toLowerCase()]))
@@ -402,7 +493,7 @@ class Credential {
 		return this.hasKey(key) ? (this[key] || this[key.toLowerCase()]) : null;
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	extractCommonName() {
 		return CommonUtils.isObjectEmpty(this.certData) ? null : this.certData.commonName;
 	}
@@ -439,7 +530,7 @@ class Credential {
 		}
 	}
 
-	//endregion
+//endregion
 
 	//region Crypto functions
 	/**
@@ -632,7 +723,7 @@ class Credential {
 		return decipheredPayload;
 	}
 
-	//endregion
+//endregion
 
 	//region Entity manage
 	//region create entity
@@ -642,8 +733,9 @@ class Credential {
 	 * @param {String|null} [name]
 	 * @param {String|null} [email]
 	 * @param {Number|null} [validityPeriod]
+	 * @param {String|null} [password]
 	 */
-	createEntityWithLocalCreds(parent_fqdn, name, email, validityPeriod) {
+	createEntityWithLocalCreds(parent_fqdn, name, email, validityPeriod, password) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
 					reject('Parent Fqdn required');
@@ -657,42 +749,34 @@ class Credential {
 					return;
 				}
 
-				let metadata, edge_fqdn;
-
-				const onEdgeServerSelected = edge => {
-					edge_fqdn = edge.endpoint;
-					metadata  = {
-						parent_fqdn,
-						name,
-						email,
-						edge_fqdn
-					};
-
-					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
-					    api      = new ProvisionApi();
-
-					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
-
-					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					api.runRestfulAPI(apiData, (error, payload) => {
-						if (error) {
-							reject(error);
-							return;
-						}
-						//set signature to consistent call of new credentials
-						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
-							payload.sign = authToken;
-
-							this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
-						}).catch(reject);
-
-					});
+				let metadata = {
+					parent_fqdn,
+					name,
+					email
 				};
 
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				let postData = Credential.formatRegisterPostData(metadata),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+				    api      = new ProvisionApi();
+
+				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				api.runRestfulAPI(apiData, (error, payload) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+					//set signature to consistent call of new credentials
+					this.signWithFqdn(parent_fqdn, payload).then(authToken => {
+						payload.sign = authToken;
+
+						this._requestCerts(payload, metadata, validityPeriod, password).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
+					}).catch(reject);
+
+				});
 			}
 		);
 	}
@@ -750,7 +834,7 @@ class Credential {
 		);
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
 				if (!parent_fqdn) {
@@ -765,43 +849,35 @@ class Credential {
 					return;
 				}
 
-				let metadata, edge_fqdn;
-
-				const onEdgeServerSelected = edge => {
-					edge_fqdn = edge.endpoint;
-					metadata  = {
-						parent_fqdn,
-						name,
-						email,
-						custom_fqdn: custom_fqdn,
-						edge_fqdn
-					};
-
-					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
-					    api      = new ProvisionApi();
-
-					api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
-
-					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					api.runRestfulAPI(apiData, (error, payload) => {
-						if (error) {
-							reject(error);
-							return;
-						}
-						//set signature to consistent call of new credentials
-						this.signWithFqdn(parent_fqdn, payload).then(authToken => {
-							payload.sign = authToken;
-
-							this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
-						}).catch(reject);
-
-					});
+				let metadata = {
+					parent_fqdn,
+					name,
+					email,
+					custom_fqdn: custom_fqdn
 				};
 
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				let postData = Credential.formatRegisterPostData(metadata),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+				    api      = new ProvisionApi();
+
+				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+
+				//noinspection ES6ModulesDependencies,NodeModulesDependencies
+				api.runRestfulAPI(apiData, (error, payload) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+					//set signature to consistent call of new credentials
+					this.signWithFqdn(parent_fqdn, payload).then(authToken => {
+						payload.sign = authToken;
+
+						this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
+					}).catch(reject);
+
+				});
 			}
 		);
 	}
@@ -881,7 +957,6 @@ class Credential {
 	 */
 	createEntityWithAuthServer(authToken, authSrvFqdn, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
-				let metadata, edge_fqdn;
 
 				if (!authToken) {
 					reject('Auth token required');
@@ -889,31 +964,6 @@ class Credential {
 				}
 
 				logger.debug("createEntityWithAuthServer(): Selecting proxy");
-
-				const onEdgeServerSelected = edge => {
-
-					logger.debug("createEntityWithAuthServer(): onEdgeServerSelected");
-					let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || config.authServerURL;
-
-					edge_fqdn = edge.endpoint;
-
-					metadata = {
-						name,
-						email,
-						edge_fqdn
-					};
-					let api  = new ProvisionApi();
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, authServerFqdn);
-
-					api.postRequest(
-						authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
-						Credential.formatRegisterPostData(metadata),
-						fqdnResponseReady.bind(this),
-						authToken,
-						5
-					);
-				};
 
 				/**
 				 * @param error
@@ -929,10 +979,29 @@ class Credential {
 
 					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
-					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+					this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 				};
 
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				logger.debug("createEntityWithAuthServer(): onEdgeServerSelected");
+
+				let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || config.authServerURL;
+
+				let metadata = {
+					name,
+					email
+				};
+				let api      = new ProvisionApi();
+
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, authServerFqdn);
+
+				api.postRequest(
+					authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
+					Credential.formatRegisterPostData(metadata),
+					fqdnResponseReady.bind(this),
+					authToken,
+					5
+				);
+
 			}
 		);
 
@@ -948,7 +1017,6 @@ class Credential {
 	 */
 	createEntityWithAuthToken(authToken, name, email, validityPeriod) {
 		return new Promise((resolve, reject) => {
-				let metadata, edge_fqdn;
 
 				if (!authToken) {
 					reject('Auth token required');
@@ -963,31 +1031,6 @@ class Credential {
 				}
 
 				logger.debug("createEntityWithAuthToken(): Selecting proxy");
-
-				const onEdgeServerSelected = edge => {
-
-					edge_fqdn = edge.endpoint;
-
-					metadata = {
-						name,
-						email,
-						parent_fqdn: tokenObj.signedBy,
-						edge_fqdn,
-					};
-
-
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, metadata.parent_fqdn);
-
-					let postData = Credential.formatRegisterPostData(metadata),
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
-					    api      = new ProvisionApi();
-
-					api.runRestfulAPI(apiData,
-						fqdnResponseReady.bind(this),
-						'POST',
-						authToken
-					);
-				};
 
 				/**
 				 * @param error
@@ -1005,12 +1048,28 @@ class Credential {
 
 					payload.sign = authToken;
 
-					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge_fqdn)).then(resolve).catch(reject);
+					this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 
 				};
 
+				let metadata = {
+					name,
+					email,
+					parent_fqdn: tokenObj.signedBy
+				};
 
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, metadata.parent_fqdn);
+
+				let postData = Credential.formatRegisterPostData(metadata),
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
+				    api      = new ProvisionApi();
+
+				api.runRestfulAPI(apiData,
+					fqdnResponseReady.bind(this),
+					'POST',
+					authToken
+				);
+
 			}
 		);
 
@@ -1081,7 +1140,7 @@ class Credential {
 
 	}
 
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	/**
 	 * Create registration token for child of given fqdn
 	 * @param {RegistrationTokenOptionsToken} options
@@ -1125,61 +1184,104 @@ class Credential {
 
 	}
 
-	//endregion
+//noinspection JSUnusedGlobalSymbols
+	createAuthTokenForCred(fqdn, data2Sign = null, ttl = null) {
+
+		const AuthToken = require('./AuthToken');
+
+		return new Promise((resolve, reject) => {
+				let cred = this.store.getCredential(fqdn);
+
+				if (!cred) {
+					reject(`Cred not found for ${fqdn}`);
+					return;
+				}
+
+				if (!cred.expired) {
+					AuthToken.createAsync(data2Sign || {fqdn}, cred, ttl).then(resolve).catch(reject);
+				}
+				else {
+					let parents = this.getParentsChain(fqdn);
+
+					if (!parents.length) {
+						reject(`Cred ${fqdn} expired. Parent credential not found`);
+						return;
+					}
+
+					let validParents = parents.filter(x => x.hasPrivateKey === true && !x.expired).sort((a, b) => {
+						return b.level - a.level;
+					});
+
+					if (!validParents.length) {
+						reject(`Cred ${fqdn} expired.Valid parent credential not found`);
+						return;
+					}
+
+					let approverFqdn = validParents[0].fqdn,
+					    approverCred = this.store.getCredential(approverFqdn);
+
+					AuthToken.createAsync(data2Sign || {fqdn}, approverCred, ttl).then(resolve).catch(reject);
+
+				}
+			}
+		);
+	}
+
+//endregion
 
 	//region certs
-	//noinspection JSUnusedGlobalSymbols
-	/**
-	 *  @ignore
-	 * @returns {Promise.<String>}
-	 */
-	createCSR(cred, dirPath) {
 
-		const fqdn       = this.fqdn,
-		      pkFileName = config.CertFileNames.PRIVATE_KEY;
-
-		return new Promise(function (resolve, reject) {
-
-			cred._createInitialKeyPairs(dirPath).then(() => {
-				let pkFile = beameUtils.makePath(dirPath, pkFileName);
-				openSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
-			}).catch(reject);
-
-		});
-	}
+	// /**
+	//  *  @ignore
+	//  * @returns {Promise.<String>}
+	//  */
+// createCSR(cred, dirPath) {
+//
+// 	const fqdn       = this.fqdn,
+// 	      pkFileName = config.CertFileNames.PRIVATE_KEY;
+//
+// 	return new Promise(function (resolve, reject) {
+//
+// 		cred._createInitialKeyPairs(dirPath).then(() => {
+// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
+// 			openSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
+// 		}).catch(reject);
+//
+// 	});
+// }
 
 	/**
 	 * @ignore
 	 * @param {SignatureToken} authToken
 	 * @param {Object} pubKeys
-	 * @param {Number|null|undefined} [validityPeriod] in seconds
-	 * @param {Boolean} [saveCerts]
+	 * @param {RequestCertOptions} options
 	 */
-	getCert(authToken, pubKeys, validityPeriod, saveCerts = true) {
+	getCert(authToken, pubKeys, options) {
 		let fqdn = this.fqdn;
 
 
 		return new Promise((resolve, reject) => {
-				let postData = {
+				let postData  = {
 					    fqdn:     fqdn,
-					    validity: validityPeriod || config.defaultValidityPeriod,
+					    validity: options.validityPeriod || config.defaultValidityPeriod,
 					    pub:      pubKeys
 				    },
-				    api      = new ProvisionApi(),
-				    apiData  = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
+				    saveCerts = options.saveCerts || true,
+				    api       = new ProvisionApi(),
+				    apiData   = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
 
 				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error, payload) => {
 
-					if(error){
+					if (error) {
 						reject(error);
 						return;
 					}
 
 					if (saveCerts) {
-						this._saveCerts(error, payload).then(resolve).catch(reject);
+						this._saveCerts(error, payload, options.password).then(resolve).catch(reject);
 					}
 					else {
 						resolve(payload);
@@ -1192,38 +1294,51 @@ class Credential {
 	requestCerts(payload, metadata, validityPeriod) {
 		return new Promise((resolve, reject) => {
 
-				const onEdgeServerSelected = edge => {
-					metadata.edge_fqdn = edge.endpoint;
-
-					this._requestCerts(payload, metadata, validityPeriod).then(this._onCertsReceived.bind(this, payload.fqdn, edge.endpoint)).then(resolve).catch(reject);
-				};
-
-				this._selectEdge().then(onEdgeServerSelected.bind(this)).catch(reject);
+				this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 			}
 		);
 	}
 
-	revokeCert(signerFqdn, revokeFqdn) {
+	revokeCert(signerAuthToken, signerFqdn, revokeFqdn) {
 		return new Promise((resolve, reject) => {
-				this.store.find(signerFqdn, false).then(cred => {
+				const api = new ProvisionApi();
 
-					const api = new ProvisionApi();
+				let postData = {
+					    fqdn: revokeFqdn
+				    },
+				    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRevoke.endpoint, postData);
 
-					let postData = {
-						    fqdn: revokeFqdn
-					    },
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRevoke.endpoint, postData);
+				let authToken = null;
 
+				if (!signerAuthToken) {
+					let cred = this.store.getCredential(signerFqdn);
+					if (!cred) {
+						reject(`Signer cred for ${signerFqdn} not found`);
+						return;
+					}
 					api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+				}
+				else {
+					authToken = CommonUtils.stringify(signerAuthToken, false);
+				}
 
-					api.runRestfulAPI(apiData, (error) => {
-						if (error) {
-							reject(error);
-						}
-						resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
-					});
+				const _onApiResponse = (error) => {
+					if (error) {
+						reject(error);
+						return;
+					}
 
-				}).catch(reject);
+					let revokedCred = this.store.getCredential(revokeFqdn);
+
+					if (revokedCred && revokedCred.hasKey("X509")) {
+						revokedCred.saveOcspStatus(true);
+					}
+
+					resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
+
+				};
+
+				api.runRestfulAPI(apiData, _onApiResponse, 'POST', authToken);
 			}
 		);
 	}
@@ -1236,115 +1351,216 @@ class Credential {
 	 */
 	renewCert(signerAuthToken, fqdn, validityPeriod) {
 		return new Promise((resolve, reject) => {
-				this.store.find(fqdn, false).then(cred => {
 
-					if (!cred.hasKey("PRIVATE_KEY")) {
-						reject(`Private key not found for ${fqdn}`);
-						return;
-					}
+				let cred = this.store.getCredential(fqdn);
 
-					let dirPath = cred.getMetadataKey("path");
+				if (!cred.hasKey("PRIVATE_KEY")) {
+					reject(`Private key not found for ${fqdn}`);
+					return;
+				}
 
-					const _renew = () => {
+				let dirPath = cred.getMetadataKey("path");
 
-						OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
+				const _renew = () => {
 
-							let pubKeys = {
-								pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
-								pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
-								signature
-							};
+					OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
-							let postData = {
-								    fqdn:     fqdn,
-								    validity: validityPeriod || config.defaultValidityPeriod,
-								    pub:      pubKeys
-							    },
-							    api      = new ProvisionApi(),
-							    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
+						let pubKeys = {
+							pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
+							pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
+							signature
+						};
 
-							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+						let postData = {
+							    fqdn:     fqdn,
+							    validity: validityPeriod || config.defaultValidityPeriod,
+							    pub:      pubKeys
+						    },
+						    api      = new ProvisionApi(),
+						    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
 
-							let authToken = null;
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
-							if (!signerAuthToken) {
-								api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+						let authToken = null;
+
+						if (!signerAuthToken) {
+							api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+						}
+						else {
+							authToken = CommonUtils.stringify(signerAuthToken, false);
+						}
+
+
+						api.runRestfulAPI(apiData, (error, payload) => {
+							cred._saveCerts(error, payload).then(resolve).catch(reject);
+						}, 'POST', authToken);
+					}).catch(reject);
+
+				};
+
+				//check if public key exists (old API)
+				const path = require('path');
+
+				let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, config.CertFileNames.PUBLIC_KEY));
+
+				if (publicExists) {
+					_renew();
+				}
+				else {
+
+					async.parallel([
+							cb => {
+								//create public key for existing private
+								let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY),
+								    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY);
+
+								openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+									cb();
+								}).catch(error => {
+									cb(error)
+								});
+							},
+							cb => {
+								//create backup key pair
+								openSSlWrapper.createPrivateKey().then(pk =>
+									DirectoryServices.saveFile(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
+										if (!error) {
+											let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY),
+											    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY);
+											openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+												cb(null);
+											}).catch(error => {
+												cb(error)
+											});
+										}
+										else {
+											let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
+											cb(errMsg);
+										}
+									})
+								).catch(error => {
+									cb(error);
+								});
 							}
-							else {
-								authToken = CommonUtils.stringify(signerAuthToken, false);
+						],
+						error => {
+							if (error) {
+								logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
+								reject(error);
 							}
 
-
-							api.runRestfulAPI(apiData, (error, payload) => {
-								cred._saveCerts(error, payload).then(resolve).catch(reject);
-							}, 'POST', authToken);
-						}).catch(reject);
-
-					};
-
-					//check if public key exists (old API)
-					const path = require('path');
-
-					let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, config.CertFileNames.PUBLIC_KEY));
-
-					if (publicExists) {
-						_renew();
-					}
-					else {
-
-						async.parallel([
-								cb => {
-									//create public key for existing private
-									let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY),
-									    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY);
-
-									openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
-										cb();
-									}).catch(error => {
-										cb(error)
-									});
-								},
-								cb => {
-									//create backup key pair
-									openSSlWrapper.createPrivateKey().then(pk =>
-										DirectoryServices.saveFile(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
-											if (!error) {
-												let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY),
-												    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY);
-												openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
-													cb(null);
-												}).catch(error => {
-													cb(error)
-												});
-											}
-											else {
-												let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
-												cb(errMsg);
-											}
-										})
-									).catch(error => {
-										cb(error);
-									});
-								}
-							],
-							error => {
-								if (error) {
-									logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
-									reject(error);
-								}
-
-								_renew();
-							});
+							_renew();
+						});
 
 
-					}
+				}
 
-				}).catch(reject);
 			}
 		);
 	}
 
-	//endregion
+	saveOcspStatus(isRevoked)  {
+		this.metadata.revoked = isRevoked;
+		this.beameStoreServices.writeMetadataSync(this.metadata);
+	};
+
+	updateOcspStatus() {
+
+		return new Promise((resolve) => {
+				if (this.hasMetadataKey("revoked")) {
+					resolve(this);
+					return;
+				}
+
+				this.checkOcspStatus(this).then(() => {
+					this.saveOcspStatus(false);
+					resolve(this);
+
+				}).catch(() => {
+					this.saveOcspStatus(true);
+					resolve(this);
+				})
+			}
+		);
+	}
+
+	checkOcspStatus(cred) {
+		return new Promise((resolve, reject) => {
+				const ocsp                 = require('ocsp');
+				const path                 = require('path');
+				const request              = require('request');
+				const fs                   = require('fs');
+				const resolveOnArbitration = process.env.BEAME_OCSP_RESOLVE_ARBITRATION;
+
+				try {
+					//noinspection JSUnresolvedVariable
+					let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+
+					if (!issuerCertUrl) {
+
+						this._updateCertData();
+
+						issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+
+						resolveOnArbitration ? resolve() : reject(new Error(`No Issuer CA Cert url found`));
+						return;
+					}
+
+					let certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1),
+					    certPath = path.join(Config.issuerCertsPath, certName),
+					    pemPath  = path.join(Config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
+
+					const _doOcspRequest = () => {
+						ocsp.check({
+							cert:   cred.getKey("X509"),
+							issuer: DirectoryServices.readFile(pemPath)
+						}, function (err, res) {
+							if (err) {
+								reject(err);
+							}
+							else {
+								res && res.type && res.type == 'good' ? resolve() : (resolveOnArbitration ? resolve() : reject(res));
+							}
+
+						});
+					};
+
+					if (DirectoryServices.doesPathExists(pemPath)) {
+						_doOcspRequest();
+					}
+					else {
+
+						if (!DirectoryServices.doesPathExists(config.issuerCertsPath)) {
+							DirectoryServices.createDir(config.issuerCertsPath);
+						}
+
+						request.get(
+							issuerCertUrl,
+							{encoding: null},
+							function (error, response, body) {
+								if (!error && response.statusCode === 200) {
+
+									fs.writeFileSync(certPath, body);
+
+									OpenSSLWrapper.convertCertToPem(certPath, pemPath).then(() => {
+										fs.unlink(certPath);
+										_doOcspRequest();
+									}).catch(e => {
+										resolveOnArbitration ? resolve() : reject(e);
+									})
+								}
+							}
+						);
+					}
+
+				} catch (e) {
+					resolveOnArbitration ? resolve() : reject(e);
+				}
+			}
+		);
+	}
+
+//endregion
 
 	//region metadata
 	/**
@@ -1452,49 +1668,18 @@ class Credential {
 		);
 	}
 
-	/**
-	 * @ignore
-	 * @param fqdn
-	 * @param edge_fqdn
-	 * @returns {Promise}
-	 */
-	updateEntityEdge(fqdn, edge_fqdn) {
-		return new Promise((resolve, reject) => {
+//endregion
 
-				this.store.find(fqdn).then(cred => {
-
-					const api = new ProvisionApi();
-
-					let postData = {
-						    edge_fqdn
-					    },
-					    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntityEdge.endpoint, postData);
-
-					api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
-
-					//noinspection ES6ModulesDependencies,NodeModulesDependencies
-					api.runRestfulAPI(apiData, (error) => {
-						if (error) {
-							reject(error);
-							return;
-						}
-						resolve();
-
-					});
-				}).catch(reject);
-
-			}
-		);
-	}
-
-	//noinspection JSUnusedGlobalSymbols
+	//region dns service
+//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
 	 * @param {String} fqdn
 	 * @param {String|null|undefined} [value]
-	 * @param {String|null|undefined} [useBestProxy]
+	 * @param {Boolean|null|undefined} [useBestProxy]
+	 * @param {String|null|undefined} [dnsFqdn] => could be different from fqdn in case of local ip
 	 */
-	setDns(fqdn, value, useBestProxy) {
+	setDns(fqdn, value, useBestProxy, dnsFqdn) {
 		return new Promise((resolve, reject) => {
 				if (!value && !useBestProxy) {
 					reject('value required');
@@ -1507,18 +1692,18 @@ class Credential {
 					const dnsServices = new (require('./DnsServices'))();
 
 					const _setDns = () => {
-						return dnsServices.setDns(fqdn, val);
+						return dnsServices.setDns(fqdn, val, dnsFqdn);
 					};
 
 					const _updateEntityMeta = () => {
-						const path = require('path');
 
-						let meta          = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
-						meta["edge_fqdn"] = val;
+						Credential._updateDnsRecords(cred, dnsFqdn || fqdn, {
+							fqdn:  dnsFqdn || fqdn,
+							value: val,
+							date:  Date.now()
+						});
 
-						cred.beameStoreServices.writeMetadataSync(meta);
-
-						return Promise.resolve();
+						return Promise.resolve(val);
 					};
 
 					const _resolve = () => {
@@ -1549,10 +1734,104 @@ class Credential {
 		);
 	}
 
-	//endregion
+	/**
+	 * Delete Dns record
+	 * @param {String} fqdn
+	 * @param {String|null|undefined} [dnsFqdn] => could be different from fqdn in case of local ip
+	 * @returns {Promise}
+	 */
+	deleteDns(fqdn, dnsFqdn) {
+		return new Promise((resolve, reject) => {
+
+				this.store.find(fqdn, false).then(cred => {
+
+					const _deleteDns = () => {
+						const dnsServices = new (require('./DnsServices'))();
+						return dnsServices.deleteDns(fqdn, dnsFqdn);
+					};
+
+					const _updateEntityMeta = () => {
+
+						Credential._updateDnsRecords(cred, dnsFqdn || fqdn);
+
+						return Promise.resolve();
+					};
+
+					_deleteDns()
+						.then(_updateEntityMeta)
+						.then(resolve)
+						.catch(reject)
+
+				}).catch(reject);
+
+			}
+		);
+	}
+
+	getDnsValue() {
+		return new Promise((resolve, reject) => {
+				if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
+					resolve(this.metadata.dnsRecords[0].value);
+					return;
+				}
+
+				this.setDns(this.fqdn, null, true).then(value => {
+					resolve(value);
+				}).catch(e => {
+					logger.error(e);
+					reject();
+				})
+			}
+		);
+	}
+
+	static _updateDnsRecords(cred, dnsFqdn, dnsRecord) {
+
+		const path = require('path');
+
+		let meta = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
+
+		if (!meta.dnsRecords) {
+			meta.dnsRecords = [];
+		}
+		else {
+			//delete old
+			meta.dnsRecords.forEach(function (element, index) {
+				if (element.fqdn == dnsFqdn) {
+					meta.dnsRecords.splice(index, 1);
+				}
+			});
+		}
+
+		if (dnsRecord) {
+			meta.dnsRecords.push(dnsRecord);
+		}
+
+		meta.dnsRecords.sort((a, b) => {
+			try {
+				let nameA = a.fqdn.toUpperCase(); // ignore upper and lowercase
+				let nameB = b.fqdn.toUpperCase(); // ignore upper and lowercase
+				if (nameA < nameB) {
+					return -1;
+				}
+				if (nameA > nameB) {
+					return 1;
+				}
+
+				// names must be equal
+				return 0;
+			} catch (e) {
+				return 0;
+			}
+		});
+
+		cred.beameStoreServices.writeMetadataSync(meta);
+	}
+
+//endregion
 
 	//region common helpers
-	//noinspection JSUnusedGlobalSymbols
+//noinspection JSUnusedGlobalSymbols
 	/**
 	 * @ignore
 	 * @param {String} fqdn
@@ -1585,7 +1864,7 @@ class Credential {
 		);
 	}
 
-	// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
+// Also used for SNIServer#addFqdn(fqdn, HERE, ...)
 	/**
 	 * @ignore
 	 * @returns {{key: *, cert: *, ca: *}}
@@ -1601,11 +1880,10 @@ class Credential {
 		return {
 			key:  pk,
 			cert: p7b
-			//ca:   ca
 		};
 	}
 
-	//endregion
+//endregion
 
 	//region private helpers
 	_selectEdge() {
@@ -1621,29 +1899,6 @@ class Credential {
 				});
 			}
 		);
-	}
-
-	/**
-	 *
-	 * @param {String} fqdn
-	 * @param {String} edge_fqdn
-	 * @returns {Promise}
-	 * @private
-	 */
-	_onCertsReceived(fqdn, edge_fqdn) {
-		const dnsServices = new (require('./DnsServices'))();
-
-		const _updateEntityEdge = () => {
-			return this.updateEntityEdge(fqdn, edge_fqdn);
-		};
-
-		const _updateEntityMeta = () => {
-			return this._syncMetadataOnCertReceived(fqdn);
-		};
-
-		return dnsServices.setDns(fqdn, edge_fqdn)
-			.then(_updateEntityEdge.bind(this))
-			.then(_updateEntityMeta.bind(this));
 	}
 
 	_syncMetadataOnCertReceived(fqdn) {
@@ -1731,7 +1986,6 @@ class Credential {
 		);
 	}
 
-
 	_createTempKeys() {
 
 		return new Promise((resolve, reject) => {
@@ -1763,9 +2017,10 @@ class Credential {
 	 * @param payload
 	 * @param metadata
 	 * @param [validityPeriod]
+	 * @param [password]
 	 * @returns {Promise}
 	 */
-	_requestCerts(payload, metadata, validityPeriod) {
+	_requestCerts(payload, metadata, validityPeriod, password) {
 		return new Promise((resolve, reject) => {
 
 
@@ -1799,7 +2054,7 @@ class Credential {
 									signature
 								};
 
-								cred.getCert(sign, pubKeys, validityPeriod).then(() => {
+								cred.getCert(sign, pubKeys, {validityPeriod, saveCerts: true, password}).then(() => {
 									resolve(metadata);
 								}).catch(onError);
 
@@ -1826,9 +2081,9 @@ class Credential {
 	_requestVirtualCerts(payload, password, validityPeriod) {
 		return new Promise((resolve, reject) => {
 
-				let path                = null;
+				let path = null;
 
-				function deleteCredFolder(){
+				function deleteCredFolder() {
 					const DirectoryServices = require('./DirectoryServices');
 					if (path) {
 						DirectoryServices.deleteFolder(path, nop);
@@ -1865,10 +2120,10 @@ class Credential {
 
 							let private_key = keys.pk;
 
-							cred.getCert(sign, keys.pubKeys, validityPeriod, false).then(payload => {
+							cred.getCert(sign, keys.pubKeys, {validityPeriod, saveCerts: false}).then(payload => {
 
-								if(!payload){
-									reject(`inavlid cert request payload`);
+								if (!payload) {
+									reject(`invalid cert request payload`);
 									return;
 								}
 
@@ -1883,7 +2138,7 @@ class Credential {
 
 									resolve({
 										fqdn,
-										pfx:pfx.pkcs12
+										pfx: pfx.pkcs12
 									});
 								});
 
@@ -1898,10 +2153,11 @@ class Credential {
 	 *
 	 * @param error
 	 * @param payload
+	 * @param {String|null} [password]
 	 * @returns {Promise}
 	 * @private
 	 */
-	_saveCerts(error, payload) {
+	_saveCerts(error, payload, password) {
 		let fqdn = this.fqdn;
 
 		return new Promise((resolve, reject) => {
@@ -1917,7 +2173,7 @@ class Credential {
 							[
 								function (callback) {
 
-									openSSlWrapper.createPfxCert(dirPath).then(pwd => {
+									openSSlWrapper.createPfxCert(dirPath, password).then(pwd => {
 										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
 											if (!error) {
 												callback(null, data)
@@ -1952,24 +2208,24 @@ class Credential {
 		);
 	}
 
-	//endregion
+//endregion
 
-	static formatRegisterPostData(metadata) {
+	static
+	formatRegisterPostData(metadata) {
 		return {
 			name:          metadata.name,
 			email:         metadata.email,
 			parent_fqdn:   metadata.parent_fqdn,
-			edge_fqdn:     metadata.edge_fqdn,
 			service_name:  metadata.serviceName,
 			service_id:    metadata.serviceId,
 			matching_fqdn: metadata.matchingFqdn,
 			custom_fqdn:   metadata.custom_fqdn
-
 		};
 	}
 
-	//endregion
+//endregion
 
+	//region helpers
 	checkValidity() {
 		return new Promise((resolve, reject) => {
 			const validity = this.certData.validity;
@@ -1987,6 +2243,77 @@ class Credential {
 			resolve(this);
 		});
 	}
+
+	hasLocalParentAtAnyLevel(fqdn) {
+
+		if (this.fqdn == fqdn) {
+			return true;
+		}
+
+		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+
+		if (!parent_fqdn) {
+			return false;
+		}
+
+		let parentCred = this.store.getCredential(parent_fqdn);
+
+		if (!parentCred) {
+			return false;
+		}
+
+		return parentCred.hasLocalParentAtAnyLevel(fqdn);
+	}
+
+	hasParent(parentFqdn) {
+
+
+		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+
+		if (!parent_fqdn) {
+			return false;
+		}
+
+		return parent_fqdn === parentFqdn;
+	}
+
+	getParentsChain(credential, fqdn, parents = []) {
+
+		if (!fqdn && !credential) return parents;
+
+		let cred = credential || this.store.getCredential(fqdn);
+
+		if (!cred) {
+			return parents;
+		}
+
+		let parent_fqdn = cred.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+
+		if (!parent_fqdn) {
+			return parents;
+		}
+
+		let parent = this.store.getCredential(parent_fqdn);
+
+		if(!parent){
+			return parents;
+		}
+
+		let hasLevel = parent.hasMetadataKey(config.MetadataProperties.LEVEL),
+		    lvl      = hasLevel ? parent.getMetadataKey(config.MetadataProperties.LEVEL) : null;
+
+		parents.push({
+			fqdn:          parent_fqdn,
+			name:          parent.getMetadataKey(config.MetadataProperties.NAME),
+			hasPrivateKey: parent.hasKey("PRIVATE_KEY"),
+			level:         hasLevel ? parseInt(lvl) : null,
+			expired:       parent.expired
+		});
+
+		return this.getParentsChain(parent, parent_fqdn, parents);
+	}
+
+//endregion
 
 	//region live credential
 	/**
@@ -2017,6 +2344,7 @@ class Credential {
 				certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
 				certBody += "-----END CERTIFICATE-----";
 				let credentials = store.addToStore(certBody);
+				credentials.metadata.live = true;
 				credentials.saveCredentialsObject();
 			};
 
@@ -2034,7 +2362,7 @@ class Credential {
 
 	}
 
-	//endregion
+//endregion
 }
 
 Credential.CertificateValidityError = CertificateValidityError;

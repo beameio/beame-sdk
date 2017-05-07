@@ -14,6 +14,7 @@ module.exports = {
 	ProvApi:           require('./src/services/ProvisionApi'),
 	ProxyClient:       require('./src/services/ProxyClient'),
 	OpenSSlWrapper:    require('./src/utils/OpenSSLWrapper'),
-	DnsServices:       require('./src/services/DnsServices')
+	DnsServices:       require('./src/services/DnsServices'),
+	Config:            require('./config/Config')
 };
 

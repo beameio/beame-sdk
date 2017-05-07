@@ -1,6 +1,6 @@
 {
   "name": "beame-sdk",
-  "version": "2.0.36",
+  "version": "2.0.40",
   "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "index.js",
   "engine": "node >= 4.4.0",
@@ -43,6 +43,7 @@
     "debug": "^2.2.0",
     "express": "^4.14.0",
     "http-proxy": "^1.14.0",
+    "jsrsasign": "7.1.3",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "network": "^0.2.1",
@@ -50,6 +51,7 @@
     "node-uuid": "^1.4.7",
     "npm-prefix": "^1.2.0",
     "ntp-client": "^0.5.3",
+    "ocsp": "^1.2.0",
     "pem": "https://github.com/beameio/pem",
     "request": "^2.72.0",
     "rimraf": "^2.5.3",

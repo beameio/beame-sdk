@@ -16,6 +16,12 @@ const CertEndpoint = "https://beameio-net-certs.s3.amazonaws.com";
 
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
+
+const EnvProfile = {
+	Name : 'Dev',
+	FqdnPattern: '.s.'
+};
+
 /** @const {String} **/
 const rootDir                   = process.env.BEAME_DIR || path.join(home, '.beame');
 
@@ -23,9 +29,9 @@ const rootDir                   = process.env.BEAME_DIR || path.join(home, '.bea
 /** @const {String} **/
 const remotePKsDirV1 = path.join(rootDir, 'pki');
 
-
 const localCertsDirV2 = path.join(rootDir, 'v2');
 
+const issuerCertsPath = path.join(rootDir,'ocsp-cache');
 
 /** @const {String} **/
 const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net";
@@ -193,8 +199,10 @@ const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER
 module.exports = {
 	rootDir,
 	npmRootDir,
+	EnvProfile,
 	localCertsDirV2,
 	remotePKsDirV1,
+	issuerCertsPath,
 	loadBalancerURL,
 	beameDevCredsFqdn,
 	metadataFileName,

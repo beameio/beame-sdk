@@ -56,18 +56,18 @@ if(developers.length == 0){
 
 if(edgeclients.length> 0){
 	console.log("You have edgeclient ready to go starting ....");
-	runTestBeameServer(edgeclients[0]._hostname);
+	runTestBeameServer(edgeclients[0]._srvFqdn);
 	return;
 }
 
 if(atoms.length == 0 && edgeclients.length ==  0 && developers.length > 0){
 	console.log("You have developer credentials; now we will set up an Atom SSL cert, and actual edgeClient cert ");
 	console.log("It will take about 30 seconds please wait patiently, yes we understand..., it will be much faster soon");
-	var devHostname = developers[0]._hostname;
+	var devHostname = developers[0]._srvFqdn;
 	beameSDK.creds.createAtom(devHostname ,"BeameNode2", 1, function(data){
-		console.log('Just created atom with host:'+data._hostname);
-		beameSDK.creds.createEdgeClient(data._hostname, 1, function(edgeData){
-			var edgeHostname = edgeData._hostname;
+		console.log('Just created atom with host:'+data._srvFqdn);
+		beameSDK.creds.createEdgeClient(data._srvFqdn, 1, function(edgeData){
+			var edgeHostname = edgeData._srvFqdn;
 			console.log('Congrats! My new hostname is: https://'+ edgeHostname);
 			setTimeout(runTestBeameServer(edgeHostname), 2000);//JIC - wait dns to update
 			edgeClientCreated = true;
@@ -77,11 +77,11 @@ if(atoms.length == 0 && edgeclients.length ==  0 && developers.length > 0){
 }
 
 if(atoms.length > 0 && edgeclients.length ===  0){
-	console.log("You already have atom credentials your atom hostname is %j", atoms[0]._hostname);
+	console.log("You already have atom credentials your atom hostname is %j", atoms[0]._srvFqdn);
 	console.log("All we need to do is to create the webserver aka edgeCert for the demo, about 30 seconds, yes its slow, but not for long");
 
-	beameSDK.creds.createEdgeClient(atoms[0]._hostname, 1, function(edgeData){
-		var edgeHostname = edgeData._hostname;
+	beameSDK.creds.createEdgeClient(atoms[0]._srvFqdn, 1, function(edgeData){
+		var edgeHostname = edgeData._srvFqdn;
 		console.log('Congrats! My new hostname is: https://'+ edgeHostname);
 		setTimeout(runTestBeameServer(edgeHostname), 2000);//JIC - wait dns to update
 		edgeClientCreated = true;
