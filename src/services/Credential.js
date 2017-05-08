@@ -1472,8 +1472,8 @@ class Credential {
 					return;
 				}
 
-				this.checkOcspStatus(this).then(() => {
-					this.saveOcspStatus(false);
+				this.checkOcspStatus(this).then(resp => {
+					this.saveOcspStatus(!resp.status);
 					resolve(this);
 
 				}).catch(() => {
@@ -1502,7 +1502,7 @@ class Credential {
 
 						issuerCertUrl = cred.certData.issuer.issuerCertUrl;
 
-						resolveOnArbitration ? resolve() : reject(new Error(`No Issuer CA Cert url found`));
+						resolveOnArbitration ? resolve({status:true}) : reject(new Error(`No Issuer CA Cert url found`));
 						return;
 					}
 
@@ -1514,12 +1514,12 @@ class Credential {
 						ocsp.check({
 							cert:   cred.getKey("X509"),
 							issuer: DirectoryServices.readFile(pemPath)
-						}, function (err, res) {
+						},  (err, res) => {
 							if (err) {
-								reject(err);
+								resolve({status:false,message:BeameLogger.formatError(err)});
 							}
 							else {
-								res && res.type && res.type == 'good' ? resolve() : (resolveOnArbitration ? resolve() : reject(res));
+								res && res.type && res.type == 'good' ? resolve({status:true}) : (resolveOnArbitration ? resolve({status:true}) : resolve({status:false, message:CommonUtils.stringify(res)}));
 							}
 
 						});
@@ -1546,7 +1546,7 @@ class Credential {
 										fs.unlink(certPath);
 										_doOcspRequest();
 									}).catch(e => {
-										resolveOnArbitration ? resolve() : reject(e);
+										resolveOnArbitration ? resolve({status:true}) : reject({status:false,message:BeameLogger.formatError(e)});
 									})
 								}
 							}
@@ -1554,7 +1554,7 @@ class Credential {
 					}
 
 				} catch (e) {
-					resolveOnArbitration ? resolve() : reject(e);
+					resolveOnArbitration ? resolve({status:true}) : reject({status:false,message:BeameLogger.formatError(e)});
 				}
 			}
 		);

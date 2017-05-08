@@ -33,6 +33,7 @@ module.exports = {
 	checkSignature,
 	revokeCert,
 	renewCert,
+	checkOcsp,
 	setDns,
 	deleteDns
 };
@@ -152,7 +153,6 @@ function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId
 		return;
 	}
 
-
 	function _get() {
 		return new Promise((resolve, reject) => {
 
@@ -194,42 +194,6 @@ function updateMetadata(fqdn, name, email, callback) {
 }
 updateMetadata.toText = _lineToText;
 
-/**
- * @public
- * @method Creds.revokeCert
- * @param {String|null} [signerAuthToken]
- * @param {String|null} [signerFqdn]
- * @param {String} fqdn
- * @param {Function} callback
- */
-function revokeCert(signerAuthToken, signerFqdn, fqdn, callback) {
-
-	if (!signerAuthToken && !signerFqdn) {
-		throw new Error(`signerAuthToken or signerFqdn required`);
-	}
-
-	if (!fqdn) {
-		throw new Error(`Fqdn required`);
-	}
-
-	let authToken;
-
-	if (signerAuthToken) {
-		let parsed = CommonUtils.parse(signerAuthToken, false);
-
-		if (typeof parsed == "object") {
-			authToken = parsed;
-		}
-		else {
-			authToken = CommonUtils.parse(parsed, false);
-		}
-	}
-
-	let cred = new Credential(new BeameStore());
-
-	CommonUtils.promise2callback(cred.revokeCert(authToken, signerFqdn, fqdn), callback);
-}
-revokeCert.toText = _lineToText;
 
 /**
  * @public
@@ -268,6 +232,65 @@ function renewCert(signerAuthToken, fqdn, validityPeriod, callback) {
 }
 renewCert.toText = _lineToText;
 
+
+/**
+ * @public
+ * @method Creds.revokeCert
+ * @param {String|null} [signerAuthToken]
+ * @param {String|null} [signerFqdn]
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
+function revokeCert(signerAuthToken, signerFqdn, fqdn, callback) {
+
+	if (!signerAuthToken && !signerFqdn) {
+		throw new Error(`signerAuthToken or signerFqdn required`);
+	}
+
+	if (!fqdn) {
+		throw new Error(`Fqdn required`);
+	}
+
+	let authToken;
+
+	if (signerAuthToken) {
+		let parsed = CommonUtils.parse(signerAuthToken, false);
+
+		if (typeof parsed == "object") {
+			authToken = parsed;
+		}
+		else {
+			authToken = CommonUtils.parse(parsed, false);
+		}
+	}
+
+	let cred = new Credential(new BeameStore());
+
+	CommonUtils.promise2callback(cred.revokeCert(authToken, signerFqdn, fqdn), callback);
+}
+revokeCert.toText = _lineToText;
+
+function checkOcsp(fqdn,callback){
+	if (!fqdn) {
+		throw new Error(`Fqdn required`);
+	}
+
+	function returnOK() {
+		return Promise.resolve({status: 'ok'});
+	}
+
+	let cred = (new BeameStore()).getCredential(fqdn);
+
+	if(!cred){
+		throw new Error(`Credential fr ${fqdn} not found`);
+	}
+
+
+	CommonUtils.promise2callback(cred.checkOcspStatus(cred), callback);
+}
+checkOcsp.toText = x => {
+	return x.status === true ? `Certificate is valid` : x.message;
+};
 /**
  * @public
  * @method Creds.setDns
