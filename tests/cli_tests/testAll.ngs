@@ -272,12 +272,24 @@ test("Renew", {
 	assert_hash_keys_values(s, {'status': 'ok'}, "Status OK")
 })
 
+test("OCSP test") with {
+	s = ``$BEAME_BIN creds checkOcsp --fqdn $fqdn --format json``
+
+	assert_hash_keys_values(s, {'status': true}, "Ocsp status $fqdn is OK")
+}
+
 test("Revoke", {
 	# TODO: Add status=ok in the program
 	s = ``$BEAME_BIN creds revokeCert --signerFqdn ${entities[1].fqdn} --fqdn ${entities[1].fqdn} --format json``
 	s.assert_hash_keys(%[message])
 	assert('Certificate has been revoked successfully' in s.message)
 })
+
+test("OCSP test after revocation") with {
+	s = retry(body={``$BEAME_BIN creds checkOcsp --fqdn $fqdn --format json``},success_predicate={A.status==false},fail_cb={throw TestFail("Check OCSP for $fqdn failed")})
+	s.assert_hash_keys(%[status])
+    assert_hash_keys_values(s, {'status': false}, "Ocsp status $fqdn revoked")
+}
 
 test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
 	$(./testGetCredsFqdn.ngs ${entities[0].fqdn} 3)
