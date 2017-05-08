@@ -33,7 +33,8 @@ module.exports = {
 	checkSignature,
 	revokeCert,
 	renewCert,
-	setDns
+	setDns,
+	deleteDns
 };
 
 
@@ -283,6 +284,21 @@ function setDns(fqdn, value, useBestProxy, dnsFqdn, callback) {
 
 }
 setDns.toText = x => `DNS set to ${x}`;
+
+/**
+ * @public
+ * @method Creds.deleteDns
+ * @param {String} fqdn
+ * @param {String|null|undefined} [dnsFqdn] => using for any alt-names which is not CN
+ * @param callback
+ */
+function deleteDns(fqdn, dnsFqdn, callback) {
+	let cred = new Credential(new BeameStore());
+
+	CommonUtils.promise2callback(cred.deleteDns(fqdn, dnsFqdn), callback);
+
+}
+deleteDns.toText = x => `DNS record for ${x} has been deleted`;
 //endregion
 
 //region list/show/shred functions

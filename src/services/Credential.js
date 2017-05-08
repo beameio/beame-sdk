@@ -1760,7 +1760,7 @@ class Credential {
 
 						Credential._updateDnsRecords(cred, dnsFqdn || fqdn);
 
-						return Promise.resolve();
+						return Promise.resolve( dnsFqdn || fqdn);
 					};
 
 					_deleteDns()
