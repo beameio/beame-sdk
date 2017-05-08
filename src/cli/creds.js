@@ -270,6 +270,12 @@ function revokeCert(signerAuthToken, signerFqdn, fqdn, callback) {
 }
 revokeCert.toText = _lineToText;
 
+/**
+ * @public
+ * @method Creds.checkOcsp
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
 function checkOcsp(fqdn,callback){
 	if (!fqdn) {
 		throw new Error(`Fqdn required`);
