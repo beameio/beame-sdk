@@ -284,7 +284,7 @@ function checkOcsp(fqdn,callback){
 	let cred = (new BeameStore()).getCredential(fqdn);
 
 	if(!cred){
-		throw new Error(`Credential fr ${fqdn} not found`);
+		throw new Error(`Credential for ${fqdn} not found`);
 	}
 
 
