@@ -275,10 +275,6 @@ function checkOcsp(fqdn,callback){
 		throw new Error(`Fqdn required`);
 	}
 
-	function returnOK() {
-		return Promise.resolve({status: 'ok'});
-	}
-
 	let cred = (new BeameStore()).getCredential(fqdn);
 
 	if(!cred){
@@ -289,7 +285,7 @@ function checkOcsp(fqdn,callback){
 	CommonUtils.promise2callback(cred.checkOcspStatus(cred), callback);
 }
 checkOcsp.toText = x => {
-	return x.status === true ? `Certificate is valid` : x.message;
+	return x.status === true ? `Certificate ${x.fqdn} is valid` : x.message;
 };
 /**
  * @public
