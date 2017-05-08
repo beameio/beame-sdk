@@ -103,7 +103,7 @@ class BeameLogger {
 			case 'array':
 				return error[0].toString();
 			default:
-				return error.toString();
+				return error ? error.toString() : 'Unexpected error';
 		}
 	}
 
