@@ -287,7 +287,6 @@ test("Revoke", {
 
 test("OCSP test after revocation") with {
 	s = retry(body={``$BEAME_BIN creds checkOcsp --fqdn $fqdn --format json``},success_predicate={A.status==false},fail_cb={throw TestFail("Check OCSP for $fqdn failed")})
-	s.assert_hash_keys(%[status])
     assert_hash_keys_values(s, {'status': false}, "Ocsp status $fqdn revoked")
 }
 
