@@ -1500,7 +1500,7 @@ class Credential {
 
 				const _resolve = (status, error) => {
 					returnedMessage.status  = status;
-					returnedMessage.message = (status ? '' : (returnedMessage.fqdn + " ")) + BeameLogger.formatError(error);
+					returnedMessage.message = (status ? '' : (returnedMessage.fqdn + " ")) + (error ? BeameLogger.formatError(error) : null);
 					resolve(returnedMessage);
 				};
 
