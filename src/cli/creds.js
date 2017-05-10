@@ -594,11 +594,11 @@ function decrypt(encryptedData) {
 
 	try {
 		logger.debug('message token parsed', encryptedData);
-		if (!encryptedData.encryptedFor) {
+		if (!encryptedData.encryptedFor && (!encryptedData.signedData || !encryptedData.signedData.encryptedFor)) {
 			logger.fatal("Decrypting a wrongly formatted message", encryptedData);
 		}
 
-		let targetFqdn = encryptedData.encryptedFor;
+		let targetFqdn = encryptedData.encryptedFor || encryptedData.signedData.encryptedFor;
 		console.error(`targetFqdn ${targetFqdn}`);
 		//noinspection JSDeprecatedSymbols
 		let credential = store.getCredential(targetFqdn);

@@ -2058,12 +2058,12 @@ class Credential {
 					cred => {
 
 						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingCSR, payload.fqdn);
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingKeys, payload.fqdn);
 
 						let dirPath = cred.getMetadataKey("path");
 
 						cred._createInitialKeyPairs(dirPath).then(() => {
-							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
+							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.KeysCreated, payload.fqdn);
 
 							OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
