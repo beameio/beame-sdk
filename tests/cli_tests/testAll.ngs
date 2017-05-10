@@ -113,13 +113,22 @@ F test_dns(fqdn:Str) {
 
 }
 
-doc Test decrypt
-F test_decrypt(encrypted_data:Str){
+doc Test decrypt json
+F test_decrypt_json(encrypted_data:Str){
 test("Decrypt data / json", {
 	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
 	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
 	"Decryped data was same as the original data"
 })
+}
+
+doc Test decrypt text
+F test_decrypt_text(encrypted_data:Str){
+    test("Decrypt data / text", {
+    	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
+    	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
+    	"Decryped data was same as the original data"
+    })
 }
 
 # ---------- Tests ----------
@@ -157,7 +166,7 @@ test("Encrypt data / json", {
 	enc
 })
 
-test_decrypt(encrypted_data)
+test_decrypt_json(encrypted_data)
 
 test("Encrypt and sign data / json", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --signingFqdn ${entities[0].fqdn} --format json`
@@ -167,7 +176,7 @@ test("Encrypt and sign data / json", {
 	enc
 })
 
-test_decrypt(encrypted_data)
+test_decrypt_json(encrypted_data)
 
 
 encrypted_data = null
@@ -177,12 +186,14 @@ test("Encrypt data / text", {
 	encrypted_data
 })
 
+test_decrypt_text(encrypted_data)
 
-test("Decrypt data / text", {
-	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
-	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
-	"Decryped data was same as the original data"
+test("Encrypt and sign data / text", {
+	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --signingFqdn ${entities[0].fqdn}`
+	encrypted_data
 })
+
+test_decrypt_text(encrypted_data)
 
 data_with_signature = null
 bad_data_with_signature = null
