@@ -91,8 +91,8 @@ class AuthToken {
 
 				CommonUtils.validateMachineClock()
 					.then(signingCreds.checkOcspStatus.bind(signingCreds, signingCreds))
-					.then(() => {
-						resolve(AuthToken.create(data, signingCreds, ttl))
+					.then(resp => {
+					   resp.status ? resolve(AuthToken.create(data, signingCreds, ttl)) : reject(resp.message)
 					}).catch(reject);
 			}
 		);
@@ -136,7 +136,13 @@ class AuthToken {
 
 			store.find(authToken.signedBy).then(signerCreds => {
 				signerCreds.checkOcspStatus(signerCreds)
-					.then(() => {
+					.then( resp => {
+
+						if(!resp.status){
+							reject(resp.message || ``);
+							return;
+						}
+
 						const signatureStatus = signerCreds.checkSignature(authToken);
 						if (!signatureStatus) {
 							logger.error(`Bad signature`);

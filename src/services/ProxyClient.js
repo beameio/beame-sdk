@@ -143,11 +143,11 @@ class ProxyClient {
 						case 'signature':
 							logger.error(`Host registration error ${parsed.message}`);
 							break;
-
+						case 'payload':
+							break;
 						case 'hostname':
 						case 'subdomain':
 						case 'panic':
-						case 'payload':
 							logger.error(`Host registration ${parsed.code} error ${parsed.message || ''}`);
 							break;
 						default:

@@ -37,8 +37,8 @@ const StandardFlowEvent = {
 	"ReceivedCerts":     "ReceivedCerts",
 	"GettingAuthCreds":  "GettingAuthCreds",
 	"AuthCredsReceived": "AuthCredsReceived",
-	"GeneratingCSR":     "GeneratingCSR",
-	"CSRCreated":        "CSRCreated",
+	"GeneratingKeys":    "GeneratingKeys",
+	"KeysCreated":       "KeysCreated",
 	"UpdatingMetadata":  "UpdatingMetadata",
 	"MetadataUpdated":   "MetadataUpdated"
 };
@@ -103,7 +103,7 @@ class BeameLogger {
 			case 'array':
 				return error[0].toString();
 			default:
-				return error.toString();
+				return error ? error.toString() : 'Unexpected error';
 		}
 	}
 
@@ -198,11 +198,11 @@ class BeameLogger {
 			case StandardFlowEvent.AuthCredsReceived:
 				message = `${entity} auth server creds received for ${fqdn} ...`;
 				break;
-			case StandardFlowEvent.GeneratingCSR:
-				message = `${entity} generating CSR on ${fqdn}...`;
+			case StandardFlowEvent.GeneratingKeys:
+				message = `${entity} generating Key Pair on ${fqdn}...`;
 				break;
-			case StandardFlowEvent.CSRCreated:
-				message = `${entity} CSR for  ${fqdn} created successfully...`;
+			case StandardFlowEvent.KeysCreated:
+				message = `${entity} Key Pair for ${fqdn} created successfully...`;
 				break;
 			case StandardFlowEvent.UpdatingMetadata:
 				message = `${entity} updating metadata ${fqdn}...`;
