@@ -91,6 +91,27 @@ F test_server(fqdn:Str, cmd:Command, url:Str) {
 	ret
 }
 
+doc Waits till hostname becomes resolvable (has DNS record)
+F test_dns(fqdn:Str) {
+
+    test("Change DNS to A record") with {
+    	ip = '10.' + (rand.partial(256) * 3).map(Str).join(".")
+    	$($BEAME_BIN creds setDns --fqdn $fqdn --value $ip --format json)
+    	assert_resolvable(fqdn, check={A == [ip]})
+    }
+
+    test("Change DNS to CNAME record") with {
+    	cname = CHARS::ascii_lowercase.rand(16) + '.example.com'
+    	$($BEAME_BIN creds setDns --fqdn $fqdn --value $cname --format json)
+    	assert_resolvable(fqdn, check={"${cname}." in A})
+    }
+
+    test("Delete DNS record") with {
+    	deleted_fqdn = ``$BEAME_BIN creds deleteDns --fqdn $fqdn --format json``
+    	assert_eq(deleted_fqdn,fqdn,"Deleted fqdn matched to requested")
+    }
+
+}
 
 # ---------- Tests ----------
 
@@ -276,6 +297,8 @@ test("OCSP test") with {
 	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``
 	assert_hash_keys_values(s, {'status': true}, "Ocsp status ${entities[1].fqdn} is OK")
 }
+
+test_dns(entities[1].fqdn)
 
 test("Revoke", {
 	# TODO: Add status=ok in the program
