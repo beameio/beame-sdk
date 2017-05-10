@@ -201,69 +201,69 @@ class Credential {
 		try {
 			const x509Path = beameUtils.makePath(this.getMetadataKey("path"), Config.CertFileNames.X509);
 
-			const rs = require('jsrsasign');
+			const rs   = require('jsrsasign');
 			const X509 = rs.X509;
-			const fs = require('fs');
+			const fs   = require('fs');
 			let pemStr = (fs.readFileSync(x509Path)).toString();
-			let x = new rs.X509();
+			let x      = new rs.X509();
 			x.readCertPEM(pemStr);
 
 
-			let hex = X509.pemToHex(pemStr);
-			let ai = X509.getExtAIAInfo(hex),
-			    alt = X509.getExtSubjectAltName(hex),
-				keyUsageStr = X509.getExtKeyUsageString(hex),
-				alg = x.getSignatureAlgorithmField(),
-				subjectStr = x.getSubjectString();
+			let hex         = X509.pemToHex(pemStr);
+			let ai          = X509.getExtAIAInfo(hex),
+			    alt         = X509.getExtSubjectAltName(hex),
+			    keyUsageStr = X509.getExtKeyUsageString(hex),
+			    alg         = x.getSignatureAlgorithmField(),
+			    subjectStr  = x.getSubjectString();
 
-				let subject = {
-					"commonName":   "",
-					"country":      "",
-					"locality":     "",
-					"state":        "",
-					"organization": ""
-				};
-
-				let sp = subjectStr.split('/');
-				for(let i = 0;i < sp.length; i++){
-					let pair = sp[i].split('=');
-					if(pair.length != 2) continue;
-
-					let prefix = pair[0];
-
-					switch (prefix){
-						case 'CN':
-							subject.commonName = pair[1];
-							break;
-						case 'C':
-							subject.country = pair[1];
-							break;
-						case 'L':
-							subject.locality = pair[1];
-							break;
-						case 'ST':
-							subject.state = pair[1];
-							break;
-						case 'O':
-							subject.organization = pair[1];
-							break;
-					}
-				}
-
-
-			this.certData.extensions                      =  {
-				keyUsage:keyUsageStr,
-				authorityKeyIdentifier:X509.getExtAuthorityKeyIdentifier(hex).kid.match(/(..)/g).join(':').toUpperCase(),
-				subjectKeyIdentifier:X509.getExtSubjectKeyIdentifier(hex).match(/(..)/g).join(':').toUpperCase()
+			let subject = {
+				"commonName":   "",
+				"country":      "",
+				"locality":     "",
+				"state":        "",
+				"organization": ""
 			};
-			this.certData.subject                         = subject;
-			this.certData.altNames                        = alt;
-			this.certData.publicKey                       = 'RSA Encryption ( 1.2.840.113549.1.1.1 )';
-			this.certData.signatureAlgorithm              = alg === "SHA256withRSA" ? 'SHA-256 with RSA Encryption ( 1.2.840.113549.1.1.11 )' : alg;
-			this.certData.issuer.issuerCertUrl            = ai.caissuer[0];
-			this.certData.issuer.issuerOcspUrl            = ai.ocsp[0];
-			this.certData.notAfter                        = (new Date(this.certData.validity.end)).toString();
-			this.certData.notBefore                       = (new Date(this.certData.validity.start)).toString();
+
+			let sp = subjectStr.split('/');
+			for (let i = 0; i < sp.length; i++) {
+				let pair = sp[i].split('=');
+				if (pair.length != 2) continue;
+
+				let prefix = pair[0];
+
+				switch (prefix) {
+					case 'CN':
+						subject.commonName = pair[1];
+						break;
+					case 'C':
+						subject.country = pair[1];
+						break;
+					case 'L':
+						subject.locality = pair[1];
+						break;
+					case 'ST':
+						subject.state = pair[1];
+						break;
+					case 'O':
+						subject.organization = pair[1];
+						break;
+				}
+			}
+
+
+			this.certData.extensions           = {
+				keyUsage:               keyUsageStr,
+				authorityKeyIdentifier: X509.getExtAuthorityKeyIdentifier(hex).kid.match(/(..)/g).join(':').toUpperCase(),
+				subjectKeyIdentifier:   X509.getExtSubjectKeyIdentifier(hex).match(/(..)/g).join(':').toUpperCase()
+			};
+			this.certData.subject              = subject;
+			this.certData.altNames             = alt;
+			this.certData.publicKey            = 'RSA Encryption ( 1.2.840.113549.1.1.1 )';
+			this.certData.signatureAlgorithm   = alg === "SHA256withRSA" ? 'SHA-256 with RSA Encryption ( 1.2.840.113549.1.1.11 )' : alg;
+			this.certData.issuer.issuerCertUrl = ai.caissuer[0];
+			this.certData.issuer.issuerOcspUrl = ai.ocsp[0];
+			this.certData.notAfter             = (new Date(this.certData.validity.end)).toString();
+			this.certData.notBefore            = (new Date(this.certData.validity.start)).toString();
 		}
 		catch (e) {
 		}
@@ -1459,7 +1459,7 @@ class Credential {
 		);
 	}
 
-	saveOcspStatus(isRevoked)  {
+	saveOcspStatus(isRevoked) {
 		this.metadata.revoked = isRevoked;
 		this.beameStoreServices.writeMetadataSync(this.metadata);
 	};
@@ -1472,8 +1472,8 @@ class Credential {
 					return;
 				}
 
-				this.checkOcspStatus(this).then(() => {
-					this.saveOcspStatus(false);
+				this.checkOcspStatus(this).then(resp => {
+					this.saveOcspStatus(!resp.status);
 					resolve(this);
 
 				}).catch(() => {
@@ -1492,7 +1492,20 @@ class Credential {
 				const fs                   = require('fs');
 				const resolveOnArbitration = process.env.BEAME_OCSP_RESOLVE_ARBITRATION;
 
+				let returnedMessage = {
+					status:  false,
+					fqdn:    cred.fqdn,
+					message: null
+				};
+
+				const _resolve = (status, error) => {
+					returnedMessage.status  = status;
+					returnedMessage.message = (status ? '' : (returnedMessage.fqdn + " ")) + (error ? BeameLogger.formatError(error) : null);
+					resolve(returnedMessage);
+				};
+
 				try {
+
 					//noinspection JSUnresolvedVariable
 					let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
 
@@ -1502,7 +1515,7 @@ class Credential {
 
 						issuerCertUrl = cred.certData.issuer.issuerCertUrl;
 
-						resolveOnArbitration ? resolve() : reject(new Error(`No Issuer CA Cert url found`));
+						resolveOnArbitration ? _resolve(true, 'Issuer cert url not found') : reject(new Error(`No Issuer CA Cert url found`));
 						return;
 					}
 
@@ -1514,12 +1527,12 @@ class Credential {
 						ocsp.check({
 							cert:   cred.getKey("X509"),
 							issuer: DirectoryServices.readFile(pemPath)
-						}, function (err, res) {
+						}, (err, res) => {
 							if (err) {
-								reject(err);
+								_resolve(false, err);
 							}
 							else {
-								res && res.type && res.type == 'good' ? resolve() : (resolveOnArbitration ? resolve() : reject(res));
+								res && res.type && res.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, res);
 							}
 
 						});
@@ -1546,7 +1559,7 @@ class Credential {
 										fs.unlink(certPath);
 										_doOcspRequest();
 									}).catch(e => {
-										resolveOnArbitration ? resolve() : reject(e);
+										_resolve(resolveOnArbitration, e);
 									})
 								}
 							}
@@ -1554,7 +1567,7 @@ class Credential {
 					}
 
 				} catch (e) {
-					resolveOnArbitration ? resolve() : reject(e);
+					_resolve(resolveOnArbitration, e);
 				}
 			}
 		);
@@ -1681,6 +1694,12 @@ class Credential {
 	 */
 	setDns(fqdn, value, useBestProxy, dnsFqdn) {
 		return new Promise((resolve, reject) => {
+
+				if (!fqdn) {
+					reject('FQDN required');
+					return;
+				}
+
 				if (!value && !useBestProxy) {
 					reject('value required');
 					return;
@@ -1754,7 +1773,7 @@ class Credential {
 
 						Credential._updateDnsRecords(cred, dnsFqdn || fqdn);
 
-						return Promise.resolve();
+						return Promise.resolve(dnsFqdn || fqdn);
 					};
 
 					_deleteDns()
@@ -2039,12 +2058,12 @@ class Credential {
 					cred => {
 
 						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingCSR, payload.fqdn);
+						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingKeys, payload.fqdn);
 
 						let dirPath = cred.getMetadataKey("path");
 
 						cred._createInitialKeyPairs(dirPath).then(() => {
-							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.CSRCreated, payload.fqdn);
+							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.KeysCreated, payload.fqdn);
 
 							OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
@@ -2210,8 +2229,7 @@ class Credential {
 
 //endregion
 
-	static
-	formatRegisterPostData(metadata) {
+	static formatRegisterPostData(metadata) {
 		return {
 			name:          metadata.name,
 			email:         metadata.email,
@@ -2295,7 +2313,7 @@ class Credential {
 
 		let parent = this.store.getCredential(parent_fqdn);
 
-		if(!parent){
+		if (!parent) {
 			return parents;
 		}
 
@@ -2339,11 +2357,11 @@ class Credential {
 				//noinspection JSUnresolvedFunction
 				let cert = conn.getPeerCertificate(true);
 				conn.end();
-				let bas64Str    = new Buffer(cert.raw, "hex").toString("base64");
-				let certBody    = "-----BEGIN CERTIFICATE-----\r\n";
+				let bas64Str              = new Buffer(cert.raw, "hex").toString("base64");
+				let certBody              = "-----BEGIN CERTIFICATE-----\r\n";
 				certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
 				certBody += "-----END CERTIFICATE-----";
-				let credentials = store.addToStore(certBody);
+				let credentials           = store.addToStore(certBody);
 				credentials.metadata.live = true;
 				credentials.saveCredentialsObject();
 			};

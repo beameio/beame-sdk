@@ -91,6 +91,45 @@ F test_server(fqdn:Str, cmd:Command, url:Str) {
 	ret
 }
 
+doc Waits till hostname becomes resolvable (has DNS record)
+F test_dns(fqdn:Str) {
+
+    test("Change DNS to A record") with {
+    	ip = '10.' + (rand.partial(256) * 3).map(Str).join(".")
+    	$($BEAME_BIN creds setDns --fqdn $fqdn --value $ip --format json)
+    	assert_resolvable(fqdn, check={A == [ip]})
+    }
+
+    test("Change DNS to CNAME record") with {
+    	cname = CHARS::ascii_lowercase.rand(16) + '.example.com'
+    	$($BEAME_BIN creds setDns --fqdn $fqdn --value $cname --format json)
+    	assert_resolvable(fqdn, check={"${cname}." in A})
+    }
+
+    test("Delete DNS record") with {
+    	deleted_fqdn = ``$BEAME_BIN creds deleteDns --fqdn $fqdn --format json``
+    	assert_eq(deleted_fqdn,fqdn,"Deleted fqdn matched to requested")
+    }
+
+}
+
+doc Test decrypt json
+F test_decrypt_json(encrypted_data:Str){
+test("Decrypt data / json", {
+	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
+	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
+	"Decryped data was same as the original data"
+})
+}
+
+doc Test decrypt text
+F test_decrypt_text(encrypted_data:Str){
+    test("Decrypt data / text", {
+    	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
+    	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
+    	"Decryped data was same as the original data"
+    })
+}
 
 # ---------- Tests ----------
 
@@ -127,12 +166,18 @@ test("Encrypt data / json", {
 	enc
 })
 
+test_decrypt_json(encrypted_data)
 
-test("Decrypt data / json", {
-	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
-	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
-	"Decryped data was same as the original data"
+test("Encrypt and sign data / json", {
+	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --signingFqdn ${entities[0].fqdn} --format json`
+	enc = encrypted_data.parse()
+	enc.assert_hash_keys(%[signedData signedBy signature], "Encrypted data hash keys")
+	enc.signedData.encryptedFor != entities[0].fqdn throws TestFail("encryptedFor mismatch")
+	enc
 })
+
+test_decrypt_json(encrypted_data)
+
 
 encrypted_data = null
 
@@ -141,12 +186,14 @@ test("Encrypt data / text", {
 	encrypted_data
 })
 
+test_decrypt_text(encrypted_data)
 
-test("Decrypt data / text", {
-	dec = ``$BEAME_BIN creds decrypt --encryptedData $encrypted_data``
-	dec != TEST_DATA throws TestFail("Decrypted data is not the same as the original data")
-	"Decryped data was same as the original data"
+test("Encrypt and sign data / text", {
+	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --signingFqdn ${entities[0].fqdn}`
+	encrypted_data
 })
+
+test_decrypt_text(encrypted_data)
 
 data_with_signature = null
 bad_data_with_signature = null
@@ -272,12 +319,24 @@ test("Renew", {
 	assert_hash_keys_values(s, {'status': 'ok'}, "Status OK")
 })
 
+test("OCSP test") with {
+	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``
+	assert_hash_keys_values(s, {'status': true}, "Ocsp status ${entities[1].fqdn} is OK")
+}
+
+test_dns(entities[1].fqdn)
+
 test("Revoke", {
 	# TODO: Add status=ok in the program
 	s = ``$BEAME_BIN creds revokeCert --signerFqdn ${entities[1].fqdn} --fqdn ${entities[1].fqdn} --format json``
 	s.assert_hash_keys(%[message])
 	assert('Certificate has been revoked successfully' in s.message)
 })
+
+test("OCSP test after revocation") with {
+	s = retry(body={``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``},success_predicate={A.status==false},fail_cb={throw TestFail("Check OCSP for ${entities[1].fqdn} failed")})
+    assert_hash_keys_values(s, {'status': false}, "Ocsp status ${entities[1].fqdn} revoked")
+}
 
 test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
 	$(./testGetCredsFqdn.ngs ${entities[0].fqdn} 3)

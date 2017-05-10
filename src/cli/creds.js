@@ -17,7 +17,7 @@ const path        = require('path');
 const fs          = require('fs');
 const colors      = require('colors');
 
-module.exports    = {
+module.exports = {
 	show,
 	list,
 	getCreds,
@@ -32,7 +32,10 @@ module.exports    = {
 	sign,
 	checkSignature,
 	revokeCert,
-	renewCert
+	renewCert,
+	checkOcsp,
+	setDns,
+	deleteDns
 };
 
 
@@ -150,7 +153,6 @@ function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId
 		return;
 	}
 
-
 	function _get() {
 		return new Promise((resolve, reject) => {
 
@@ -192,6 +194,45 @@ function updateMetadata(fqdn, name, email, callback) {
 }
 updateMetadata.toText = _lineToText;
 
+
+/**
+ * @public
+ * @method Creds.revokeCert
+ * @param {String} signerAuthToken
+ * @param {String} fqdn
+ * @param {Number|null} [validityPeriod] cert validity period in seconds
+ * @param {Function} callback
+ */
+function renewCert(signerAuthToken, fqdn, validityPeriod, callback) {
+
+	if (!signerAuthToken && !fqdn) {
+		throw new Error(`signerAuthToken or fqdn required`);
+	}
+
+	let authToken;
+
+	if (signerAuthToken) {
+		let parsed = CommonUtils.parse(signerAuthToken, false);
+
+		if (typeof parsed == "object") {
+			authToken = parsed;
+		}
+		else {
+			authToken = CommonUtils.parse(parsed, false);
+		}
+	}
+
+	let cred = new Credential(new BeameStore());
+
+	function returnOK() {
+		return Promise.resolve({status: 'ok'});
+	}
+
+	CommonUtils.promise2callback(cred.renewCert(authToken, fqdn, validityPeriod).then(returnOK), callback);
+}
+renewCert.toText = _lineToText;
+
+
 /**
  * @public
  * @method Creds.revokeCert
@@ -231,40 +272,58 @@ revokeCert.toText = _lineToText;
 
 /**
  * @public
- * @method Creds.revokeCert
- * @param {String} signerAuthToken
+ * @method Creds.checkOcsp
  * @param {String} fqdn
- * @param {Number|null} [validityPeriod] cert validity period in seconds
  * @param {Function} callback
  */
-function renewCert(signerAuthToken, fqdn, validityPeriod, callback) {
-
-	if (!signerAuthToken && !fqdn) {
-		throw new Error(`signerAuthToken or fqdn required`);
+function checkOcsp(fqdn,callback){
+	if (!fqdn) {
+		throw new Error(`Fqdn required`);
 	}
 
-	let authToken;
+	let cred = (new BeameStore()).getCredential(fqdn);
 
-	if (signerAuthToken) {
-		let parsed = CommonUtils.parse(signerAuthToken, false);
-
-		if (typeof parsed == "object") {
-			authToken = parsed;
-		}
-		else {
-			authToken = CommonUtils.parse(parsed, false);
-		}
+	if(!cred){
+		throw new Error(`Credential for ${fqdn} not found`);
 	}
 
+
+	CommonUtils.promise2callback(cred.checkOcspStatus(cred), callback);
+}
+checkOcsp.toText = x => {
+	return x.status === true ? `Certificate ${x.fqdn} is valid` : x.message;
+};
+/**
+ * @public
+ * @method Creds.setDns
+ * @param {String} fqdn
+ * @param {String|null|undefined} [value] => dns record value
+ * @param {Boolean|null} [useBestProxy]
+ * @param {String|null|undefined} [dnsFqdn] => using for any alt-names which is not CN
+ * @param callback
+ */
+function setDns(fqdn, value, useBestProxy, dnsFqdn, callback) {
 	let cred = new Credential(new BeameStore());
 
-	function returnOK() {
-		return Promise.resolve({status: 'ok'});
-	}
+	CommonUtils.promise2callback(cred.setDns(fqdn, value, useBestProxy || !value, dnsFqdn), callback);
 
-	CommonUtils.promise2callback(cred.renewCert(authToken, fqdn, validityPeriod).then(returnOK), callback);
 }
-renewCert.toText = _lineToText;
+setDns.toText = x => `DNS set to ${x}`;
+
+/**
+ * @public
+ * @method Creds.deleteDns
+ * @param {String} fqdn
+ * @param {String|null|undefined} [dnsFqdn] => using for any alt-names which is not CN
+ * @param callback
+ */
+function deleteDns(fqdn, dnsFqdn, callback) {
+	let cred = new Credential(new BeameStore());
+
+	CommonUtils.promise2callback(cred.deleteDns(fqdn, dnsFqdn), callback);
+
+}
+deleteDns.toText = x => `DNS record for ${x} has been deleted`;
 //endregion
 
 //region list/show/shred functions
@@ -312,14 +371,14 @@ list.toText = function (creds) {
 		colWidths: [40, 65, 55, 25, 10]
 	});
 
-	const _setStyle = (value,cred) => {
+	const _setStyle = (value, cred) => {
 		let val = value || '';
 		return cred.expired === true ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
 
-		table.push([_setStyle(item.getMetadataKey("Name"),item), _setStyle(item.fqdn,item), _setStyle(item.getMetadataKey('PARENT_FQDN'),item), _setStyle(item.getCertEnd(),item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N',item)]);
+		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item)]);
 	});
 	return table;
 };
@@ -535,11 +594,11 @@ function decrypt(encryptedData) {
 
 	try {
 		logger.debug('message token parsed', encryptedData);
-		if (!encryptedData.encryptedFor) {
+		if (!encryptedData.encryptedFor && (!encryptedData.signedData || !encryptedData.signedData.encryptedFor)) {
 			logger.fatal("Decrypting a wrongly formatted message", encryptedData);
 		}
 
-		let targetFqdn = encryptedData.encryptedFor;
+		let targetFqdn = encryptedData.encryptedFor || encryptedData.signedData.encryptedFor;
 		console.error(`targetFqdn ${targetFqdn}`);
 		//noinspection JSDeprecatedSymbols
 		let credential = store.getCredential(targetFqdn);
