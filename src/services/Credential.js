@@ -1527,6 +1527,8 @@ class Credential {
 
 						cred.metadata.revoked = !status;
 
+						cred.beameStoreServices.writeMetadataSync(cred.metadata);
+
 						Credential.saveCredAction(cred, {
 							action: Config.CredAction.OcspUpdate,
 							date:   Date.now()
