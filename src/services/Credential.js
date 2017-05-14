@@ -1831,7 +1831,7 @@ class Credential {
 
 						Credential.saveCredAction(cred, {
 							action: Config.CredAction.DnsDeleted,
-							fqdn:   data.fqdn || data.dnsFqdn,
+							fqdn:   fqdn || dnsFqdn,
 							date:   Date.now()
 						});
 
