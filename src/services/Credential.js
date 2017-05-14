@@ -17,6 +17,7 @@
  * @property {Number} level
  * @property {Array|null} [actions]
  * @property {Array|null} [dnsRecords]
+ * @property {Object|null} [ocspStatus]
  * @property {String} path => path to local creds folder
  */
 
@@ -262,7 +263,9 @@ class Credential {
 			this.certData.signatureAlgorithm   = alg === "SHA256withRSA" ? 'SHA-256 with RSA Encryption ( 1.2.840.113549.1.1.11 )' : alg;
 			this.certData.issuer.issuerCertUrl = ai.caissuer[0];
 			this.certData.issuer.issuerOcspUrl = ai.ocsp[0];
+			//noinspection JSUnresolvedVariable
 			this.certData.notAfter             = (new Date(this.certData.validity.end)).toString();
+			//noinspection JSUnresolvedVariable
 			this.certData.notBefore            = (new Date(this.certData.validity.start)).toString();
 		}
 		catch (e) {
@@ -709,7 +712,7 @@ class Credential {
 		}
 
 		let decryptedMessage = this.decryptWithRSA(encryptedMessage.rsaCipheredKeys);
-		//noinspection ES6ModulesDependencies,NodeModulesDependencies
+		//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
 		let payload          = JSON.parse(decryptedMessage);
 
 		let decipheredPayload = CryptoServices.aesDecrypt([
@@ -1334,6 +1337,11 @@ class Credential {
 						revokedCred.saveOcspStatus(true);
 					}
 
+					Credential.saveCredAction(revokedCred, {
+						action: Config.CredAction.Revoke,
+						date:   Date.now()
+					});
+
 					resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
 
 				};
@@ -1392,7 +1400,13 @@ class Credential {
 
 
 						api.runRestfulAPI(apiData, (error, payload) => {
-							cred._saveCerts(error, payload).then(resolve).catch(reject);
+							cred._saveCerts(error, payload).then(certs => {
+								Credential.saveCredAction(cred, {
+									action: Config.CredAction.Renew,
+									date:   Date.now()
+								});
+								resolve(certs);
+							}).catch(reject);
 						}, 'POST', authToken);
 					}).catch(reject);
 
@@ -1408,6 +1422,7 @@ class Credential {
 				}
 				else {
 
+					//noinspection JSUnresolvedFunction
 					async.parallel([
 							cb => {
 								//create public key for existing private
@@ -1484,13 +1499,15 @@ class Credential {
 		);
 	}
 
-	checkOcspStatus(cred) {
+	checkOcspStatus(cred, forceCheck = false) {
 		return new Promise((resolve, reject) => {
 				const ocsp                 = require('ocsp');
 				const path                 = require('path');
 				const request              = require('request');
 				const fs                   = require('fs');
 				const resolveOnArbitration = process.env.BEAME_OCSP_RESOLVE_ARBITRATION;
+				const cachePeriod          = process.env.BEAME_OCSP_CACHE_PERIOD || Config.ocspCachePeriod;
+				let lastOcsp               = cred.metadata.ocspStatus;
 
 				let returnedMessage = {
 					status:  false,
@@ -1498,13 +1515,35 @@ class Credential {
 					message: null
 				};
 
-				const _resolve = (status, error) => {
+				const _resolve = (status, error, updateMetadata = true) => {
 					returnedMessage.status  = status;
 					returnedMessage.message = (status ? '' : (returnedMessage.fqdn + " ")) + (error ? BeameLogger.formatError(error) : null);
+
+					if (updateMetadata) {
+						cred.metadata.ocspStatus = {
+							status: status,
+							date:   Date.now()
+						};
+
+						cred.metadata.revoked = !status;
+
+						Credential.saveCredAction(cred, {
+							action: Config.CredAction.OcspUpdate,
+							date:   Date.now()
+						});
+					}
+
 					resolve(returnedMessage);
 				};
 
 				try {
+
+					if (lastOcsp && !forceCheck) {
+						if (Date.now() - lastOcsp.date < cachePeriod) {
+							_resolve(lastOcsp.status, null, false);
+							return;
+						}
+					}
 
 					//noinspection JSUnresolvedVariable
 					let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
@@ -1726,6 +1765,14 @@ class Credential {
 					};
 
 					const _resolve = () => {
+
+						Credential.saveCredAction(cred, {
+							action: Config.CredAction.DnsSaved,
+							fqdn:   dnsFqdn || fqdn,
+							value:  value,
+							date:   Date.now()
+						});
+
 						resolve(val);
 					};
 
@@ -1737,11 +1784,18 @@ class Credential {
 					};
 
 					if (useBestProxy) {
-						this._selectEdge()
-							.then(edge => {
-								val = edge.endpoint;
-								_runSequence();
-							})
+
+						if (process.env.BEAME_FORCE_EDGE_FQDN) {
+							val = process.env.BEAME_FORCE_EDGE_FQDN;
+							_runSequence();
+						}
+						else {
+							this._selectEdge()
+								.then(edge => {
+									val = edge.endpoint;
+									_runSequence();
+								})
+						}
 					}
 					else {
 						val = value;
@@ -1772,6 +1826,12 @@ class Credential {
 					const _updateEntityMeta = () => {
 
 						Credential._updateDnsRecords(cred, dnsFqdn || fqdn);
+
+						Credential.saveCredAction(cred, {
+							action: Config.CredAction.DnsDeleted,
+							fqdn:   data.fqdn || data.dnsFqdn,
+							date:   Date.now()
+						});
 
 						return Promise.resolve(dnsFqdn || fqdn);
 					};
@@ -1984,6 +2044,7 @@ class Credential {
 					})
 				};
 
+				//noinspection JSUnresolvedFunction
 				async.parallel([
 						cb => {
 							_saveKeyPair(config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY, cb);
@@ -2188,6 +2249,7 @@ class Credential {
 
 					directoryServices.saveCerts(dirPath, payload).then(() => {
 
+						//noinspection JSUnresolvedFunction
 						async.parallel(
 							[
 								function (callback) {
@@ -2225,6 +2287,16 @@ class Credential {
 				}
 			}
 		);
+	}
+
+	static saveCredAction(cred, token) {
+		if (!cred.metadata.actions) {
+			cred.metadata.actions = [];
+		}
+
+		cred.metadata.actions.push(token);
+
+		cred.beameStoreServices.writeMetadataSync(cred.metadata);
 	}
 
 //endregion
