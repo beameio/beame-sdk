@@ -1570,6 +1570,8 @@ class Credential {
 							issuer: DirectoryServices.readFile(pemPath)
 						}, (err, res) => {
 							if (err) {
+								logger.error(`check ocsp for ${cred.fqdn} error`);
+								logger.error(err);
 								_resolve(false, err);
 							}
 							else {
