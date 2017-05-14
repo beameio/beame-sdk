@@ -2290,6 +2290,8 @@ class Credential {
 	}
 
 	static saveCredAction(cred, token) {
+		cred.metadata = cred.beameStoreServices.readMetadataSync();
+
 		if (!cred.metadata.actions) {
 			cred.metadata.actions = [];
 		}
