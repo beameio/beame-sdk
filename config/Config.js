@@ -23,7 +23,7 @@ const EnvProfile = {
 };
 
 /** @const {String} **/
-const rootDir                   = process.env.BEAME_DIR || path.join(home, '.beame');
+const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
 
 /** @const {String} **/
@@ -31,7 +31,7 @@ const remotePKsDirV1 = path.join(rootDir, 'pki');
 
 const localCertsDirV2 = path.join(rootDir, 'v2');
 
-const issuerCertsPath = path.join(rootDir,'ocsp-cache');
+const issuerCertsPath = path.join(rootDir, 'ocsp-cache');
 
 /** @const {String} **/
 const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net";
@@ -43,7 +43,7 @@ const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "am53rz8o6cjsm0xm.
 
 const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
 
-const beameForceEdgeIP   = process.env.BEAME_FORCE_EDGE_IP || 0;
+const beameForceEdgeIP = process.env.BEAME_FORCE_EDGE_IP || 0;
 
 const defaultValidityPeriod = process.env.BEAME_CERT_VALIDITY_PERIOD || 60 * 60 * 24 * 365;
 
@@ -53,13 +53,15 @@ const defaultAuthTokenTtl = defaultAllowedClockDiff;
 
 const defaultTimeFuzz = 10;
 
+const ocspCachePeriod = 1000 * 60 * 60 * 24 * 30;
+
 /** @const {String} **/
 const metadataFileName = "metadata.json";
 
 /** @const {String} **/
 const s3MetadataFileName = "metadata.json";
 
-const ApprovedZones = ['beameio.net','beame.io'];
+const ApprovedZones = ['beameio.net', 'beame.io'];
 
 /**
  * Registration sources
@@ -76,9 +78,23 @@ const RegistrationSource = {
 };
 
 const RequestType = {
-	"RequestWithFqdn" : "RequestWithFqdn",
-	"RequestWithParentFqdn" : "RequestWithParentFqdn",
-	"RequestWithAuthServer" : "RequestWithAuthServer",
+	"RequestWithFqdn":       "RequestWithFqdn",
+	"RequestWithParentFqdn": "RequestWithParentFqdn",
+	"RequestWithAuthServer": "RequestWithAuthServer",
+};
+
+const CredAction = {
+	"Revoke":          "Revoke",
+	"Renew":           "Renew",
+	"SendByEmail":     "Send by email",
+	"Download":        "Download",
+	"VpnRootCreated":  "Set as VPN Root",
+	"VpnRootDeleted":  "VPN Root Deleted",
+	"ChildCreated":    "Child cred created",
+	"RegTokenCreated": "Reg token created",
+	"DnsSaved":        "Dns Saved",
+	"DnsDeleted":      "Dns deleted",
+	"OcspUpdate":      "OCSP status updated"
 };
 
 /**
@@ -94,11 +110,6 @@ const CertFileNames = {
 	"P7B":                "p7b.cer",
 	"PKCS12":             "cert.pfx",
 	"PWD":                "pwd.txt"
-	// "BEAME_CA":           "beame_ca.pem",
-	// "CA":                 "ca.pem",
-	// "CA_G2":              "ca_g2.pem",
-	//"PKCS7":              "pkcs7.pem",
-
 };
 
 
@@ -108,8 +119,11 @@ const MetadataProperties = {
 	UID:         "uid",
 	NAME:        "name",
 	PARENT_FQDN: "parent_fqdn",
-	EDGE_FQDN:   "edge_fqdn",
-	PATH:        "path"
+	PATH:        "path",
+	DNS:         "dnsRecords",
+	REVOKED:     "revoked",
+	ACTIONS:     "actions",
+	OCSP_STATUS: "ocspStatus"
 };
 
 /**
@@ -117,9 +131,9 @@ const MetadataProperties = {
  *  @enum {string}
  */
 const CertResponseFields = {
-	"x509":  "x509",
-	"p7b": "p7b",
-	"ca":    "ca"
+	"x509": "x509",
+	"p7b":  "p7b",
+	"ca":   "ca"
 	//"pkcs7": "pkcs7",
 	// ,"beame_ca": "beame_ca"
 	// ,"ca_g2": "ca_g2"
@@ -172,7 +186,7 @@ const MessageCodes = {
 
 const ResponseKeys = {
 	"NodeFiles":                 [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
-	"EntityMetadataKeys":        ["fqdn", "parent_fqdn", "name", "email", "level", "local_ip", "edge_fqdn"],
+	"EntityMetadataKeys":        ["fqdn", "parent_fqdn", "name", "email", "level"],
 	"EntityCreateResponseKeys":  ["fqdn"],
 	"CertificateResponseKeys":   ["x509", "pkcs7", "ca"],
 	"RevokeDevCertResponseKeys": ["recovery_code"]
@@ -218,6 +232,7 @@ module.exports = {
 	InitFirstRemoteEdgeClient,
 	PinAtomPKbyDefault,
 	MetadataProperties,
+	CredAction,
 	authServerURL,
 	beameForceEdgeFqdn,
 	beameForceEdgeIP,
@@ -225,6 +240,7 @@ module.exports = {
 	RequestType,
 	ApprovedZones,
 	defaultValidityPeriod,
+	ocspCachePeriod,
 	CertValidationError,
 	defaultAllowedClockDiff,
 	defaultAuthTokenTtl,
