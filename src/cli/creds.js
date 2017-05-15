@@ -288,8 +288,9 @@ function checkOcsp(fqdn, forceCheck, callback){
 		throw new Error(`Credential for ${fqdn} not found`);
 	}
 
+	let check = !!(forceCheck && forceCheck === "true");
 
-	CommonUtils.promise2callback(cred.checkOcspStatus(cred,forceCheck), callback);
+	CommonUtils.promise2callback(cred.checkOcspStatus(cred,check), callback);
 }
 checkOcsp.toText = x => {
 	return x.status === true ? `Certificate ${x.fqdn} is valid` : x.message;
