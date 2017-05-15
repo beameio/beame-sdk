@@ -103,7 +103,7 @@ F test_dns(fqdn:Str) {
     test("Change DNS to CNAME record") with {
     	cname = CHARS::ascii_lowercase.rand(16) + '.example.com'
     	$($BEAME_BIN creds setDns --fqdn $fqdn --value $cname --format json)
-    	assert_resolvable(fqdn, check={"${cname}." in A})
+    	assert_resolvable(fqdn,sleep=5, check={"${cname}." in A})
     }
 
     test("Delete DNS record") with {
@@ -334,7 +334,7 @@ test("Revoke", {
 })
 
 test("OCSP test after revocation") with {
-	s = retry(body={``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``},success_predicate={A.status==false},fail_cb={throw TestFail("Check OCSP for ${entities[1].fqdn} failed")})
+	s = retry(body={``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --forceCheck true --format json``},success_predicate={A.status==false},fail_cb={throw TestFail("Check OCSP for ${entities[1].fqdn} failed")})
     assert_hash_keys_values(s, {'status': false}, "Ocsp status ${entities[1].fqdn} revoked")
 }
 
