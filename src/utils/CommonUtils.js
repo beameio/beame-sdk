@@ -201,18 +201,26 @@ class CommonUtils {
 
 	/**
 	 * @param {Number|null|undefined} [fuzz] in seconds
+	 * @param retries
 	 */
-	static validateMachineClock(fuzz) {
+	static validateMachineClock(fuzz,retries = 3) {
 		const ntpClient        = require('ntp-client'),
 		      defaultClockFuzz = require('../../config/Config').defaultAllowedClockDiff;
 
 
 		return new Promise((resolve, reject) => {
-				ntpClient.getNetworkTime("pool.ntp.org", 123, function (err, date) {
+				ntpClient.getNetworkTime("pool.ntp.org", 123, (err, date) => {
 					if (err) {
-						console.error(err);
-						reject(err);
-						return;
+
+						if(retries == 0){
+							console.error(err);
+							reject(err);
+							return;
+						}
+
+						retries--;
+
+						return CommonUtils.validateMachineClock(fuzz,retries);
 					}
 
 					let local = Date.now(),
