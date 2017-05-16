@@ -114,10 +114,10 @@ class BeameStoreV2 {
 					return;
 				}
 
-				const _validateNewCred  = newCred =>{
+				const _validateNewCred = newCred => {
 					newCred.checkValidity()
-							.then(resolve)
-							.catch(reject);
+						.then(resolve)
+						.catch(reject);
 				};
 
 				const _renewCred = () => {
@@ -253,24 +253,24 @@ class BeameStoreV2 {
 			{children: this.credentials},
 			cred => {
 
-				let allEnvs = !!options.allEnvs,
-					envPattern = config.EnvProfile.FqdnPattern,
-					approvedZones = config.ApprovedZones,
-					zone = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null;
+				let allEnvs       = !!options.allEnvs,
+				    envPattern    = config.EnvProfile.FqdnPattern,
+				    approvedZones = config.ApprovedZones,
+				    zone          = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null;
 
-				if(!allEnvs && (!cred.fqdn || (approvedZones.includes(zone) && !(cred.fqdn.indexOf(envPattern)>0)))){
+				if (!allEnvs && (!cred.fqdn || (approvedZones.includes(zone) && cred.fqdn.indexOf('.v1.') > 0 && !(cred.fqdn.indexOf(envPattern) > 0)))) {
 					return false;
 				}
 
-				if(options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
+				if (options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
 					return false;
 				}
 
-				if(options.hasParent && !cred.hasParent(options.hasParent)) {
+				if (options.hasParent && !cred.hasParent(options.hasParent)) {
 					return false;
 				}
 
-				if(options.excludeRevoked && cred.metadata.revoked) {
+				if (options.excludeRevoked && cred.metadata.revoked) {
 					return false;
 				}
 
@@ -289,14 +289,13 @@ class BeameStoreV2 {
 					}
 				}
 
-				if(options.expiration || options.expiration === 0 ){
+				if (options.expiration || options.expiration === 0) {
 					let expired = new Date(cred.getCertEnd());
 
-					if(CommonUtils.addDays(null,options.expiration) < expired){
+					if (CommonUtils.addDays(null, options.expiration) < expired) {
 						return false;
 					}
 				}
-
 
 
 				return true;
@@ -305,8 +304,8 @@ class BeameStoreV2 {
 	}
 
 	//noinspection JSUnusedGlobalSymbols
-	hasLocalChildren(fqdn){
-	   return  !!this.list(null, {
+	hasLocalChildren(fqdn) {
+		return !!this.list(null, {
 			hasParent: fqdn
 		}).length;
 	}
