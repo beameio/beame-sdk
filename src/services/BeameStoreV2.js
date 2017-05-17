@@ -258,6 +258,8 @@ class BeameStoreV2 {
 				    approvedZones = config.ApprovedZones,
 				    zone          = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null;
 
+
+				//TODO fix .v1. hack
 				if (!allEnvs && (!cred.fqdn || (approvedZones.includes(zone) && cred.fqdn.indexOf('.v1.') > 0 && !(cred.fqdn.indexOf(envPattern) > 0)))) {
 					return false;
 				}
