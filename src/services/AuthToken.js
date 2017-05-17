@@ -65,6 +65,21 @@ class AuthToken {
 				return null;
 			}
 
+			if(signingCreds.expired){
+				logger.warn(`signingCreds ${signingCreds.fqdn} expired`);
+				return null;
+			}
+
+			if(signingCreds.metadata.revoked){
+				logger.warn(`signingCreds ${signingCreds.fqdn} revoked`);
+				return null;
+			}
+
+			if(!signingCreds.hasKey("PRIVATE_KEY")){
+				logger.warn(`signingCreds ${signingCreds.fqdn} must has private key`);
+				return null;
+			}
+
 			const now = Date.now();
 
 			let data2sign = data ? (typeof data == "object" ? CommonUtils.stringify(data, false) : data) : null;

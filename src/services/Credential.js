@@ -1200,11 +1200,11 @@ class Credential {
 					return;
 				}
 
-				if (!cred.expired) {
+				if (!cred.expired  && cred.hasKey("PRIVATE_KEY")) {
 					AuthToken.createAsync(data2Sign || {fqdn}, cred, ttl).then(resolve).catch(reject);
 				}
 				else {
-					let parents = this.getParentsChain(fqdn);
+					let parents = this.getParentsChain(null,fqdn);
 
 					if (!parents.length) {
 						reject(`Cred ${fqdn} expired. Parent credential not found`);
