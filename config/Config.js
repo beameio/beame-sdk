@@ -18,7 +18,7 @@ const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 
 const EnvProfile = {
-	Name : 'Dev',
+	Name : 'Prod',
 	FqdnPattern: '.p.'
 };
 
