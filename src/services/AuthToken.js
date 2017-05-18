@@ -61,22 +61,22 @@ class AuthToken {
 
 		try {
 			if (!(signingCreds instanceof Credential)) {
-				logger.warn('signingCreds must be present and must be instance of Credential');
+				logger.error('signingCreds must be present and must be instance of Credential');
 				return null;
 			}
 
 			if(signingCreds.expired){
-				logger.warn(`signingCreds ${signingCreds.fqdn} expired`);
+				logger.error(`signingCreds ${signingCreds.fqdn} expired`);
 				return null;
 			}
 
 			if(signingCreds.metadata.revoked){
-				logger.warn(`signingCreds ${signingCreds.fqdn} revoked`);
+				logger.error(`signingCreds ${signingCreds.fqdn} revoked`);
 				return null;
 			}
 
 			if(!signingCreds.hasKey("PRIVATE_KEY")){
-				logger.warn(`signingCreds ${signingCreds.fqdn} must has private key`);
+				logger.error(`signingCreds ${signingCreds.fqdn} must has private key`);
 				return null;
 			}
 
