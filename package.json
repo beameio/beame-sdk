@@ -52,7 +52,7 @@
     "npm-prefix": "^1.2.0",
     "ntp-client": "^0.5.3",
     "ocsp": "^1.2.0",
-    "pem": "https://github.com/beameio/pem",
+    "pem": "https://github.com/beameio/pem/archive/v1.8.3-beame1.tar.gz",
     "request": "^2.72.0",
     "rimraf": "^2.5.3",
     "serve-index": "^1.8.0",
