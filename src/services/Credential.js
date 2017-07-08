@@ -1525,7 +1525,7 @@ class Credential {
 							date:   Date.now()
 						};
 
-						cred.metadata.revoked = !status;
+						cred.metadata.revoked =     !status;
 
 						cred.beameStoreServices.writeMetadataSync(cred.metadata);
 

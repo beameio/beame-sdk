@@ -123,7 +123,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 	retries--;
 
-	let onApiError = function (error,response) {
+	let onApiError =  (error,response) => {
 		logger.warn("Provision Api post error", {
 			"error": error,
 			"url":   url
@@ -159,7 +159,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 			request.post(
 				url,
 				options,
-				function (error, response, body) {
+				 (error, response, body) => {
 					if (error || _isUnauthorizedRequest(response)) {
 						onApiError(error,response);
 					}
@@ -235,12 +235,12 @@ const getFromProvisionApi = (url, options, type, retries, sleep, callback) => {
 			request.get(
 				url,
 				options,
-				function (error, response, body) {
+				 (error, response, body) => {
 					if (error || _isUnauthorizedRequest(response)) {
 						onApiError(error,response);
 					}
 					else {
-						parseProvisionResponse(error, response, body, type, function (error, payload) {
+						parseProvisionResponse(error, response, body, type,  (error, payload) => {
 							if (payload) {
 								callback(null, payload);
 							}
