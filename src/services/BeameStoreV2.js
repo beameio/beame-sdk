@@ -253,10 +253,11 @@ class BeameStoreV2 {
 			{children: this.credentials},
 			cred => {
 
-				let allEnvs       = !!options.allEnvs,
-				    envPattern    = config.EnvProfile.FqdnPattern,
-				    approvedZones = config.ApprovedZones,
-				    zone          = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null;
+				let allEnvs        = !!options.allEnvs,
+				    envPattern     = config.EnvProfile.FqdnPattern,
+				    approvedZones  = config.ApprovedZones,
+				    zone           = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null,
+					today = new Date();
 
 
 				//TODO fix .v1. hack
@@ -272,7 +273,13 @@ class BeameStoreV2 {
 					return false;
 				}
 
+				let expirationDate = new Date(cred.getCertEnd());
+
 				if (options.excludeRevoked && cred.metadata.revoked) {
+					return false;
+				}
+
+				if (options.excludeExpired && expirationDate < today) {
 					return false;
 				}
 
@@ -292,15 +299,31 @@ class BeameStoreV2 {
 				}
 
 				if (options.expiration || options.expiration === 0) {
-					let expired = new Date(cred.getCertEnd());
 
-					if (CommonUtils.addDays(null, options.expiration) < expired) {
+					if (CommonUtils.addDays(null, options.expiration) < expirationDate) {
 						return false;
 					}
 				}
 
 
 				return true;
+			}
+		);
+	}
+
+	getActiveLocalCreds() {
+		return new Promise((resolve) => {
+
+				let list = this.list(null, {
+					hasPrivateKey:  true,
+					excludeRevoked: true,
+					excludeExpired:true
+				});
+
+
+				resolve(list.map(item => {
+					return {fqdn: item.fqdn, name: item.metadata.name ? `${item.metadata.name} (${item.fqdn})` : item.fqdn}
+				}));
 			}
 		);
 	}
