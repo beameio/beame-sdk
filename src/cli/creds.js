@@ -37,7 +37,8 @@ module.exports = {
 	checkOcsp,
 	setDns,
 	deleteDns,
-	listCredChain
+	listCredChain,
+	verifyAncestry
 };
 
 
@@ -487,6 +488,27 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 	}
 }
 
+/**
+ * Check if two creds have common relative up to highestFqdn
+ * @public
+ * @method Creds.verifyAncestry
+ * @param {String} fqdn - lowest fqdn to start from
+ * @param {String} targetFqdn
+ * @param {int} highestFqdn
+ */
+function verifyAncestry(fqdn, targetFqdn, highestFqdn) {
+	const store = new BeameStore();
+	store.verifyAncestry(fqdn, targetFqdn, highestFqdn || null, (error, related) => {
+		if(!error){
+			console.log(fqdn,' & ',targetFqdn,' related => ', related?'YES':'NO');
+			return true;
+		}
+		else{
+			console.error(error);
+			return false;
+		}
+	});
+}
 
 /**
  * Fetch creds up to L0
@@ -497,7 +519,7 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
  */
 function listCredChain(fqdn, callback) {
 	const store = new BeameStore();
-	store.fetchCredChain(fqdn, (error, list) => {
+	store.fetchCredChain(fqdn, null,(error, list) => {
 		if(!error){
 			callback(null, list);
 		}

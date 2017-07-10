@@ -99,13 +99,14 @@ class BeameStoreV2 {
 	}
 
 	/**
-	 * Fetch cred tree up to L0
+	 * Fetch cred tree up to L0 or highestFqdn
 	 * @public
 	 * @method BeameStoreV2.fetchCredChain
 	 * @param {String} fqdn
+	 * @param {String} highestFqdn
 	 * @param {function} callback
 	 */
-	fetchCredChain(fqdn, callback) {
+	fetchCredChain(fqdn, highestFqdn, callback) {
 		let credsList = [], nLevels = 0, metaSpare = {};
 		const getNext = (fqdn) => {
 			this.find(fqdn).then(cred => {
@@ -121,17 +122,54 @@ class BeameStoreV2 {
 						return;
 					}
 				}
-				if(credsList[nLevels].metadata.level > 0 && credsList[nLevels].metadata.parent_fqdn){
+				if(credsList[nLevels].metadata.level > 0 && credsList[nLevels].metadata.parent_fqdn &&
+					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn)))){
 					getNext(credsList[nLevels++].metadata.parent_fqdn);
 				}
 				else{
 					callback(null, credsList);
 				}
-			}).catch(error => {//cred.metadata.parent_fqdn //cred.metadata.level
+			}).catch(error => {
 				callback(error, null);
 			});
 		};
 		getNext(fqdn);
+	}
+
+	/**
+	 * Find common ancestor up to highestLevel
+	 * @public
+	 * @method BeameStoreV2.verifyAncestry
+	 * @param {String} srcFqdn
+	 * @param {String} guestFqdn
+	 * @param {String} highestFqdn // up to zero
+	 * @param {function} callback
+	 */
+	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, callback) {
+		this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
+			if(!error && lclChain ){
+				this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
+					if(!error && guestChain){
+						for(let iLcl=0; iLcl<lclChain.length; iLcl++){
+							for(let jGuest=0; jGuest<guestChain.length; jGuest++){
+								// console.log(lclChain[iLcl].fqdn,' <=> ',guestChain[jGuest].fqdn);
+								if(guestChain[jGuest].fqdn === lclChain[iLcl].fqdn){
+									callback(null, true);
+									return;
+								}
+							}
+						}
+						callback(null, false);
+					}
+					else{
+						callback(null, false);
+					}
+				})
+			}
+			else{
+				callback(null, false);
+			}
+		})
 	}
 
 	/**
