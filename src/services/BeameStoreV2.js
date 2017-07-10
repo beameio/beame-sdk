@@ -112,13 +112,18 @@ class BeameStoreV2 {
 			this.find(fqdn).then(cred => {
 				credsList[nLevels] = cred;
 				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
-					if(credsList[nLevels].metadata.message){
-						metaSpare = JSON.parse(credsList[nLevels].metadata.message);
-						credsList[nLevels].metadata.level = metaSpare.level;
-						credsList[nLevels].metadata.parent_fqdn = metaSpare.parent_fqdn;
+
+					let isZeroLevel = cred.fqdn.match(/^\w*\.\w{2}\.\w{1}\.beameio\.net/);
+					if(isZeroLevel){
+						credsList[nLevels].metadata.level = 0;
+						credsList[nLevels].metadata.parent_fqdn = null;
+					}
+					else if(credsList.length > 0){
+						callback(null, credsList);
+						return;
 					}
 					else{
-						callback(null, credsList);
+						callback('invalid metadata', null);
 						return;
 					}
 				}
@@ -137,19 +142,21 @@ class BeameStoreV2 {
 	}
 
 	/**
-	 * Find common ancestor up to highestLevel
+	 * Find common ancestor up to highestLevel down to (current + trustLevel)
 	 * @public
 	 * @method BeameStoreV2.verifyAncestry
 	 * @param {String} srcFqdn
 	 * @param {String} guestFqdn
 	 * @param {String} highestFqdn // up to zero
+	 * @param {String} trustDepth // down to infinity
 	 * @param {function} callback
 	 */
-	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, callback) {
-		this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
-			if(!error && lclChain ){
-				this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
-					if(!error && guestChain){
+	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback) {
+		this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
+			if(!error && guestChain){
+				this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
+					if(!error && lclChain && (!Number.isInteger(trustDepth) ||
+						(guestChain[0].metadata.level <= trustDepth + lclChain[0].metadata.level))){
 						for(let iLcl=0; iLcl<lclChain.length; iLcl++){
 							for(let jGuest=0; jGuest<guestChain.length; jGuest++){
 								// console.log(lclChain[iLcl].fqdn,' <=> ',guestChain[jGuest].fqdn);

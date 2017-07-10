@@ -494,19 +494,26 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
  * @method Creds.verifyAncestry
  * @param {String} fqdn - lowest fqdn to start from
  * @param {String} targetFqdn
- * @param {int} highestFqdn
+ * @param {String} highestFqdn
+ * @param {int} trustDepth
+ * @param {Function} callback
  */
-function verifyAncestry(fqdn, targetFqdn, highestFqdn) {
+function verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, callback) {
+	if(typeof trustDepth !== 'undefined' && trustDepth!= null){
+		if(!Number.isInteger(trustDepth) || trustDepth<=0){
+			console.error('trustDepth should be >= 1 (omit it to allow infinite depth)');
+			process.exit(1);
+		}
+	}
 	const store = new BeameStore();
-	store.verifyAncestry(fqdn, targetFqdn, highestFqdn || null, (error, related) => {
+	store.verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, (error, related) => {
 		if(!error){
 			console.log(fqdn,' & ',targetFqdn,' related => ', related?'YES':'NO');
-			return true;
 		}
 		else{
 			console.error(error);
-			return false;
 		}
+		callback(error, related);
 	});
 }
 
