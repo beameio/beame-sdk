@@ -66,7 +66,9 @@ const parametersSchema = {
 	'useBestProxy':       {required: false},
 	'anyParent':          {required: false},
 	'dnsFqdn':            {required: false},
-	'forceCheck':         {required: false}
+	'forceCheck':         {required: false},
+	'highestFqdn':        {required: false},
+	'trustDepth':         {required: false}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript

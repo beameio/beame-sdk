@@ -99,6 +99,87 @@ class BeameStoreV2 {
 	}
 
 	/**
+	 * Fetch cred tree up to L0 or highestFqdn
+	 * @public
+	 * @method BeameStoreV2.fetchCredChain
+	 * @param {String} fqdn
+	 * @param {String} highestFqdn
+	 * @param {function} callback
+	 */
+	fetchCredChain(fqdn, highestFqdn, callback) {
+		let credsList = [], nLevels = 0, metaSpare = {};
+		const getNext = (fqdn) => {
+			this.find(fqdn).then(cred => {
+				credsList[nLevels] = cred;
+				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
+
+					let isZeroLevel = cred.fqdn.match(/^\w*\.\w{2}\.\w{1}\.beameio\.net/);
+					if(isZeroLevel){
+						credsList[nLevels].metadata.level = 0;
+						credsList[nLevels].metadata.parent_fqdn = null;
+					}
+					else if(credsList.length > 0){
+						callback(null, credsList);
+						return;
+					}
+					else{
+						callback('invalid metadata', null);
+						return;
+					}
+				}
+				if(credsList[nLevels].metadata.level > 0 && credsList[nLevels].metadata.parent_fqdn &&
+					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn)))){
+					getNext(credsList[nLevels++].metadata.parent_fqdn);
+				}
+				else{
+					callback(null, credsList);
+				}
+			}).catch(error => {
+				callback(error, null);
+			});
+		};
+		getNext(fqdn);
+	}
+
+	/**
+	 * Find common ancestor up to highestLevel down to (current + trustLevel)
+	 * @public
+	 * @method BeameStoreV2.verifyAncestry
+	 * @param {String} srcFqdn
+	 * @param {String} guestFqdn
+	 * @param {String} highestFqdn // up to zero
+	 * @param {String} trustDepth // down to infinity
+	 * @param {function} callback
+	 */
+	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback) {
+		this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
+			if(!error && guestChain){
+				this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
+					if(!error && lclChain && (!Number.isInteger(trustDepth) ||
+						(guestChain[0].metadata.level <= trustDepth + lclChain[0].metadata.level))){
+						for(let iLcl=0; iLcl<lclChain.length; iLcl++){
+							for(let jGuest=0; jGuest<guestChain.length; jGuest++){
+								// console.log(lclChain[iLcl].fqdn,' <=> ',guestChain[jGuest].fqdn);
+								if(guestChain[jGuest].fqdn === lclChain[iLcl].fqdn){
+									callback(null, true);
+									return;
+								}
+							}
+						}
+						callback(null, false);
+					}
+					else{
+						callback(null, false);
+					}
+				})
+			}
+			else{
+				callback(null, false);
+			}
+		})
+	}
+
+	/**
 	 * Find local credential or get remote
 	 * @public
 	 * @method BeameStoreV2.find
