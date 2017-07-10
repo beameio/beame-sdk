@@ -101,11 +101,11 @@ class BeameStoreV2 {
 	/**
 	 * Fetch cred tree up to L0
 	 * @public
-	 * @method BeameStoreV2.fetchCredTree
+	 * @method BeameStoreV2.fetchCredChain
 	 * @param {String} fqdn
 	 * @param {function} callback
 	 */
-	fetchCredTree(fqdn, callback) {
+	fetchCredChain(fqdn, callback) {
 		let credsList = [], nLevels = 0, metaSpare = {};
 		const getNext = (fqdn) => {
 			this.find(fqdn).then(cred => {

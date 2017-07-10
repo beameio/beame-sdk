@@ -37,7 +37,7 @@ module.exports = {
 	checkOcsp,
 	setDns,
 	deleteDns,
-	listCredTree
+	listCredChain
 };
 
 
@@ -491,13 +491,13 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 /**
  * Fetch creds up to L0
  * @public
- * @method Creds.listCredTree
+ * @method Creds.listCredChain
  * @param {String} fqdn - lowest fqdn in required chain
  * @param {Function} callback
  */
-function listCredTree(fqdn, callback) {
+function listCredChain(fqdn, callback) {
 	const store = new BeameStore();
-	store.fetchCredTree(fqdn, (error, list) => {
+	store.fetchCredChain(fqdn, (error, list) => {
 		if(!error){
 			callback(null, list);
 		}
@@ -507,7 +507,7 @@ function listCredTree(fqdn, callback) {
 	});
 }
 
-listCredTree.toText = function (list) {
+listCredChain.toText = function (list) {
 	let table = new Table({
 		head:      ['level', 'fqdn'],
 		colWidths: [16, 64]
