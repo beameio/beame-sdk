@@ -117,7 +117,7 @@ class ProxyClient {
 			this._connected = true;
 
 			let token = authToken.create(this._srvFqdn, this._cred, 60);
-
+logger.debug('register_server');
 			socketUtils.emitMessage(this._socketio, 'register_server', socketUtils.formatMessage(null, {
 				hostname:  this._srvFqdn,
 				type:      this._type,
@@ -134,7 +134,7 @@ class ProxyClient {
 		});
 
 		this._socketio.on('hostRegisterFailed', (error) => {
-
+			logger.debug('hostRegisterFailed');
 			try {
 				let parsed = CommonUtils.parse(error);
 
@@ -162,12 +162,13 @@ class ProxyClient {
 		});
 
 		this._socketio.on('create_connection', data => {
-
+			logger.debug('create_connection');
 			//noinspection JSUnresolvedVariable
 			this.createLocalServerConnection(data, this._options && this._options.onConnection);
 		});
 
 		this._socketio.once('hostRegistered', (data) => {
+			logger.debug('hostRegistered');
 			this._options && this._options.onLocalServerCreated && this._options.onLocalServerCreated.call(null, data);
 			//  this.createLocalServerConnection.call(this, data, this._options && this._options.onLocalServerCreated);
 			//logger.debug('hostRegistered', data);

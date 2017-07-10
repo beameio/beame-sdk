@@ -99,6 +99,42 @@ class BeameStoreV2 {
 	}
 
 	/**
+	 * Fetch cred tree up to L0
+	 * @public
+	 * @method BeameStoreV2.fetchCredTree
+	 * @param {String} fqdn
+	 * @param {function} callback
+	 */
+	fetchCredTree(fqdn, callback) {
+		let credsList = [], nLevels = 0, metaSpare = {};
+		const getNext = (fqdn) => {
+			this.find(fqdn).then(cred => {
+				credsList[nLevels] = cred;
+				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
+					if(credsList[nLevels].metadata.message){
+						metaSpare = JSON.parse(credsList[nLevels].metadata.message);
+						credsList[nLevels].metadata.level = metaSpare.level;
+						credsList[nLevels].metadata.parent_fqdn = metaSpare.parent_fqdn;
+					}
+					else{
+						callback(null, credsList);
+						return;
+					}
+				}
+				if(credsList[nLevels].metadata.level > 0 && credsList[nLevels].metadata.parent_fqdn){
+					getNext(credsList[nLevels++].metadata.parent_fqdn);
+				}
+				else{
+					callback(null, credsList);
+				}
+			}).catch(error => {//cred.metadata.parent_fqdn //cred.metadata.level
+				callback(error, null);
+			});
+		};
+		getNext(fqdn);
+	}
+
+	/**
 	 * Find local credential or get remote
 	 * @public
 	 * @method BeameStoreV2.find

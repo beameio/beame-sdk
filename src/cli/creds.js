@@ -36,7 +36,8 @@ module.exports = {
 	renewCert,
 	checkOcsp,
 	setDns,
-	deleteDns
+	deleteDns,
+	listCredTree
 };
 
 
@@ -485,6 +486,42 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 		callback(e, null);
 	}
 }
+
+
+/**
+ * Fetch creds up to L0
+ * @public
+ * @method Creds.listCredTree
+ * @param {String} fqdn - lowest fqdn in required chain
+ * @param {Function} callback
+ */
+function listCredTree(fqdn, callback) {
+	const store = new BeameStore();
+	store.fetchCredTree(fqdn, (error, list) => {
+		if(!error){
+			callback(null, list);
+		}
+		else{
+			callback(error, false);
+		}
+	});
+}
+
+listCredTree.toText = function (list) {
+	let table = new Table({
+		head:      ['level', 'fqdn'],
+		colWidths: [16, 64]
+	});
+
+	const _setStyle = (value, cred) => {
+		let val = value || '';
+		return cred.expired === true ? colors.red(val) : val;
+	};
+	for(let i=0; i<list.length; i++){
+		table.push([_setStyle(list[i].metadata.level, list[i]), _setStyle(list[i].fqdn, list[i])]);
+	}
+	return table;
+};
 
 /**
  * Import credentials exported with exportCredentials method
