@@ -1200,11 +1200,11 @@ class Credential {
 					return;
 				}
 
-				if (!cred.expired  && cred.hasKey("PRIVATE_KEY")) {
+				if (!cred.expired && cred.hasKey("PRIVATE_KEY")) {
 					AuthToken.createAsync(data2Sign || {fqdn}, cred, ttl).then(resolve).catch(reject);
 				}
 				else {
-					let parents = this.getParentsChain(null,fqdn);
+					let parents = this.getParentsChain(null, fqdn);
 
 					if (!parents.length) {
 						reject(`Cred ${fqdn} expired. Parent credential not found`);
@@ -1525,7 +1525,7 @@ class Credential {
 							date:   Date.now()
 						};
 
-						cred.metadata.revoked =     !status;
+						cred.metadata.revoked = !status;
 
 						cred.beameStoreServices.writeMetadataSync(cred.metadata);
 
@@ -2315,7 +2315,8 @@ class Credential {
 			service_name:  metadata.serviceName,
 			service_id:    metadata.serviceId,
 			matching_fqdn: metadata.matchingFqdn,
-			custom_fqdn:   metadata.custom_fqdn
+			custom_fqdn:   metadata.custom_fqdn,
+			src:           metadata.src
 		};
 	}
 
