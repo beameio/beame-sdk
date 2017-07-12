@@ -63,6 +63,13 @@ class BeameStoreDataServices {
 
 	writeMetadataSync(metadata) {
 		this._createDir();
+		if(metadata && metadata.message && (typeof metadata.message === 'string')){
+			let metaJson = JSON.parse(metadata.message);
+			if(metaJson){
+				if(metaJson.level)metadata.level = metaJson.level;
+				if(metaJson.parent_fqdn)metadata.parent_fqdn= metaJson.parent_fqdn;
+			}
+		}
 		DirectoryServices.writeMetadataSync(this._certsDir, this._fqdn, metadata);
 	}
 
