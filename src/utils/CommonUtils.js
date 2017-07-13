@@ -214,7 +214,7 @@ class CommonUtils {
 
 						if(retries == 0){
 							console.error(err);
-							reject(err);
+							resolve();
 							return;
 						}
 
@@ -234,9 +234,10 @@ class CommonUtils {
 					//
 					// console.log("diff is : ",(date.getTime() - local)/1000);
 
-					isTimeValid ? resolve()  : reject(`Machine clock incorrect, diff vs ntp is ${diff} seconds`)
+					if(!isTimeValid)
+						 console.warn(`Machine clock incorrect, diff vs ntp is ${diff} seconds, installation may fail due to timimg issue`);
 
-
+					resolve()
 				});
 			}
 		);
