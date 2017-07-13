@@ -208,7 +208,7 @@ class CommonUtils {
 		      defaultClockFuzz = require('../../config/Config').defaultAllowedClockDiff;
 
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 				ntpClient.getNetworkTime("pool.ntp.org", 123, (err, date) => {
 					if (err) {
 
@@ -235,7 +235,7 @@ class CommonUtils {
 					// console.log("diff is : ",(date.getTime() - local)/1000);
 
 					if(!isTimeValid)
-						 console.warn(`Machine clock incorrect, diff vs ntp is ${diff} seconds, installation may fail due to timimg issue`);
+						 console.warn(`Machine clock incorrect, diff vs ntp is ${diff} seconds, installation may fail due to timing issue`);
 
 					resolve()
 				});
