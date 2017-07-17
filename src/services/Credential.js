@@ -1547,66 +1547,93 @@ class Credential {
 						}
 					}
 
-					//noinspection JSUnresolvedVariable
-					let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+					if (process.env.EXTERNAL_OCSP_FQDN) {
+						const apiConfig = require('../../config/ApiConfig.json');
+						const AuthToken = require('./AuthToken');
 
-					if (!issuerCertUrl) {
+						let authToken = AuthToken.create({fqdn: cred.fqdn}, cred);
 
-						this._updateCertData();
+						if (authToken == null) {
+							reject(`Auth token create for ${cred.fqdn}  failed`);
+							return;
+						}
 
-						issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+						const provisionApi = new ProvisionApi(),
+						      uri = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}/${cred.fqdn}`;
 
-						resolveOnArbitration ? _resolve(true, 'Issuer cert url not found') : reject(new Error(`No Issuer CA Cert url found`));
-						return;
-					}
-
-					let certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1),
-					    certPath = path.join(Config.issuerCertsPath, certName),
-					    pemPath  = path.join(Config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
-
-					const _doOcspRequest = () => {
-						ocsp.check({
-							cert:   cred.getKey("X509"),
-							issuer: DirectoryServices.readFile(pemPath)
-						}, (err, res) => {
-							if (err) {
-								logger.error(`check ocsp for ${cred.fqdn} error`);
-								logger.error(err);
-								_resolve(false, err);
+						provisionApi.makeGetRequest(uri, {}, (error, data) => {
+							if (error) {
+								reject(error)
 							}
 							else {
-								res && res.type && res.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, res);
+								_resolve(data.status, null)
 							}
-
-						});
-					};
-
-					if (DirectoryServices.doesPathExists(pemPath)) {
-						_doOcspRequest();
+						}, authToken, 3);
 					}
 					else {
 
-						if (!DirectoryServices.doesPathExists(config.issuerCertsPath)) {
-							DirectoryServices.createDir(config.issuerCertsPath);
+
+						//noinspection JSUnresolvedVariable
+						let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+
+						if (!issuerCertUrl) {
+
+							this._updateCertData();
+
+							issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+
+							resolveOnArbitration ? _resolve(true, 'Issuer cert url not found') : reject(new Error(`No Issuer CA Cert url found`));
+							return;
 						}
 
-						request.get(
-							issuerCertUrl,
-							{encoding: null},
-							function (error, response, body) {
-								if (!error && response.statusCode === 200) {
+						let certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1),
+						    certPath = path.join(Config.issuerCertsPath, certName),
+						    pemPath  = path.join(Config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
 
-									fs.writeFileSync(certPath, body);
-
-									OpenSSLWrapper.convertCertToPem(certPath, pemPath).then(() => {
-										fs.unlink(certPath);
-										_doOcspRequest();
-									}).catch(e => {
-										_resolve(resolveOnArbitration, e);
-									})
+						const _doOcspRequest = () => {
+							ocsp.check({
+								cert:   cred.getKey("X509"),
+								issuer: DirectoryServices.readFile(pemPath)
+							}, (err, res) => {
+								if (err) {
+									logger.error(`check ocsp for ${cred.fqdn} error`);
+									logger.error(err);
+									_resolve(false, err);
 								}
+								else {
+									res && res.type && res.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, res);
+								}
+
+							});
+						};
+
+						if (DirectoryServices.doesPathExists(pemPath)) {
+							_doOcspRequest();
+						}
+						else {
+
+							if (!DirectoryServices.doesPathExists(config.issuerCertsPath)) {
+								DirectoryServices.createDir(config.issuerCertsPath);
 							}
-						);
+
+							request.get(
+								issuerCertUrl,
+								{encoding: null},
+								function (error, response, body) {
+									if (!error && response.statusCode === 200) {
+
+										fs.writeFileSync(certPath, body);
+
+										OpenSSLWrapper.convertCertToPem(certPath, pemPath).then(() => {
+											fs.unlink(certPath);
+											_doOcspRequest();
+										}).catch(e => {
+											_resolve(resolveOnArbitration, e);
+										})
+									}
+								}
+							);
+						}
 					}
 
 				} catch (e) {
