@@ -62,8 +62,8 @@ const async                  = require('async');
 const _                      = require('underscore');
 const url                    = require('url');
 const provisionSettings      = require('../../config/ApiConfig.json');
-const config                 = require('../../config/Config');
-const module_name            = config.AppModules.BeameStore;
+const Config                 = require('../../config/Config');
+const module_name            = Config.AppModules.BeameStore;
 const logger_level           = "Credential";
 const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger(module_name);
@@ -77,8 +77,8 @@ const apiEntityActions       = require('../../config/ApiConfig.json').Actions.En
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
-const Config                 = require('../../config/Config');
-const timeFuzz               = Config.defaultTimeFuzz * 1000;
+
+const timeFuzz = Config.defaultTimeFuzz * 1000;
 
 const nop = function () {
 };
@@ -322,7 +322,7 @@ class Credential {
 				this.metadata.fqdn      = certData.commonName;
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = certData.commonName;
-				this.beameStoreServices.writeObject(config.CertFileNames.X509, x509);
+				this.beameStoreServices.writeObject(Config.CertFileNames.X509, x509);
 				this._updateCertData();
 			}
 			else {
@@ -369,16 +369,16 @@ class Credential {
 			return;
 		}
 
-		for (let key in config.CertFileNames) {
-			if (config.CertFileNames.hasOwnProperty(key) && importCred.hasOwnProperty(key)) {
+		for (let key in Config.CertFileNames) {
+			if (Config.CertFileNames.hasOwnProperty(key) && importCred.hasOwnProperty(key)) {
 				this[key] = new Buffer(importCred[key]).toString();
 			}
 
 		}
 
-		for (let key in config.MetadataProperties) {
+		for (let key in Config.MetadataProperties) {
 			//noinspection JSUnfilteredForInLoop
-			let value = config.MetadataProperties[key];
+			let value = Config.MetadataProperties[key];
 			if (importCred.metadata.hasOwnProperty(value)) {
 				this.metadata[value] = importCred.metadata[value];
 			}
@@ -408,8 +408,8 @@ class Credential {
 			return;
 		}
 
-		Object.keys(config.CertFileNames).forEach(keyName => {
-			this[keyName] && this.beameStoreServices.writeObject(config.CertFileNames[keyName], this[keyName]);
+		Object.keys(Config.CertFileNames).forEach(keyName => {
+			this[keyName] && this.beameStoreServices.writeObject(Config.CertFileNames[keyName], this[keyName]);
 		});
 
 		try {
@@ -424,9 +424,9 @@ class Credential {
 	 * @ignore
 	 */
 	loadCredentialsObject() {
-		Object.keys(config.CertFileNames).forEach(keyName => {
+		Object.keys(Config.CertFileNames).forEach(keyName => {
 			try {
-				this[keyName] = this.beameStoreServices.readObject(config.CertFileNames[keyName]);
+				this[keyName] = this.beameStoreServices.readObject(Config.CertFileNames[keyName]);
 			} catch (e) {
 				//console.log(`exception ${e}`);
 			}
@@ -460,16 +460,16 @@ class Credential {
 			metadata: {}
 		};
 
-		for (let key in config.CertFileNames) {
-			if (config.CertFileNames.hasOwnProperty(key)) {
+		for (let key in Config.CertFileNames) {
+			if (Config.CertFileNames.hasOwnProperty(key)) {
 				ret[key] = this[key];
 			}
 
 		}
 
-		for (let key in config.MetadataProperties) {
-			if (config.MetadataProperties.hasOwnProperty(key)) {
-				ret.metadata[config.MetadataProperties[key]] = this.metadata[config.MetadataProperties[key]];
+		for (let key in Config.MetadataProperties) {
+			if (Config.MetadataProperties.hasOwnProperty(key)) {
+				ret.metadata[Config.MetadataProperties[key]] = this.metadata[Config.MetadataProperties[key]];
 			}
 		}
 
@@ -917,7 +917,7 @@ class Credential {
 					serviceName,
 					serviceId,
 					matchingFqdn,
-					src: src || config.RegistrationSource.Unknown
+					src: src || Config.RegistrationSource.Unknown
 				};
 
 				let postData = Credential.formatRegisterPostData(metadata),
@@ -987,7 +987,7 @@ class Credential {
 
 				logger.debug("createEntityWithAuthServer(): onEdgeServerSelected");
 
-				let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || config.authServerURL;
+				let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || Config.authServerURL;
 
 				let metadata = {
 					name,
@@ -1079,15 +1079,15 @@ class Credential {
 	}
 
 	createEntityWithRegistrationToken(token, validityPeriod) {
-		let type = token.type || config.RequestType.RequestWithAuthServer;
+		let type = token.type || Config.RequestType.RequestWithAuthServer;
 
 		switch (type) {
-			case config.RequestType.RequestWithAuthServer:
+			case Config.RequestType.RequestWithAuthServer:
 				//noinspection JSCheckFunctionSignatures
 				return this.createEntityWithAuthServer(token.authToken, token.authSrvFqdn, token.name, token.email, validityPeriod);
-			case config.RequestType.RequestWithParentFqdn:
+			case Config.RequestType.RequestWithParentFqdn:
 				return this.createEntityWithAuthToken(token.authToken, token.name, token.email, validityPeriod);
-			case config.RequestType.RequestWithFqdn:
+			case Config.RequestType.RequestWithFqdn:
 
 				//noinspection JSUnresolvedVariable
 				let aut        = CommonUtils.parse(token.authToken),
@@ -1130,7 +1130,7 @@ class Credential {
 							    authToken: authToken,
 							    name:      options.name,
 							    email:     options.email,
-							    type:      config.RequestType.RequestWithFqdn
+							    type:      Config.RequestType.RequestWithFqdn
 						    },
 						    str   = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
 
@@ -1171,7 +1171,7 @@ class Credential {
 							    serviceName:   options.serviceName,
 							    serviceId:     options.serviceId,
 							    matchingFqdn:  options.matchingFqdn,
-							    type:          config.RequestType.RequestWithFqdn,
+							    type:          Config.RequestType.RequestWithFqdn,
 							    imageRequired: options.imageRequired,
 							    gwFqdn:        options.gwFqdn
 						    },
@@ -1241,7 +1241,7 @@ class Credential {
 // createCSR(cred, dirPath) {
 //
 // 	const fqdn       = this.fqdn,
-// 	      pkFileName = config.CertFileNames.PRIVATE_KEY;
+// 	      pkFileName = Config.CertFileNames.PRIVATE_KEY;
 //
 // 	return new Promise(function (resolve, reject) {
 //
@@ -1266,7 +1266,7 @@ class Credential {
 		return new Promise((resolve, reject) => {
 				let postData  = {
 					    fqdn:     fqdn,
-					    validity: options.validityPeriod || config.defaultValidityPeriod,
+					    validity: options.validityPeriod || Config.defaultValidityPeriod,
 					    pub:      pubKeys
 				    },
 				    saveCerts = options.saveCerts || true,
@@ -1371,17 +1371,17 @@ class Credential {
 
 				const _renew = () => {
 
-					OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
+					OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
 						let pubKeys = {
-							pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
-							pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
+							pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY)),
+							pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY)),
 							signature
 						};
 
 						let postData = {
 							    fqdn:     fqdn,
-							    validity: validityPeriod || config.defaultValidityPeriod,
+							    validity: validityPeriod || Config.defaultValidityPeriod,
 							    pub:      pubKeys
 						    },
 						    api      = new ProvisionApi(),
@@ -1415,7 +1415,7 @@ class Credential {
 				//check if public key exists (old API)
 				const path = require('path');
 
-				let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, config.CertFileNames.PUBLIC_KEY));
+				let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, Config.CertFileNames.PUBLIC_KEY));
 
 				if (publicExists) {
 					_renew();
@@ -1426,8 +1426,8 @@ class Credential {
 					async.parallel([
 							cb => {
 								//create public key for existing private
-								let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY),
-								    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY);
+								let pkFile  = beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY),
+								    pubFile = beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY);
 
 								openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
 									cb();
@@ -1438,10 +1438,10 @@ class Credential {
 							cb => {
 								//create backup key pair
 								openSSlWrapper.createPrivateKey().then(pk =>
-									DirectoryServices.saveFile(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
+									DirectoryServices.saveFile(dirPath, Config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
 										if (!error) {
-											let pkFile  = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PRIVATE_KEY),
-											    pubFile = beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY);
+											let pkFile  = beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PRIVATE_KEY),
+											    pubFile = beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY);
 											openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
 												cb(null);
 											}).catch(error => {
@@ -1449,7 +1449,7 @@ class Credential {
 											});
 										}
 										else {
-											let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
+											let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, Config.MessageCodes.OpenSSLError);
 											cb(errMsg);
 										}
 									})
@@ -1550,7 +1550,7 @@ class Credential {
 
 						this.generateOcspRequest(cred).then(req => {
 
-							let digest = CommonUtils.generateDigest(req.data,'sha256','base64');
+							let digest = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
 
 							let authToken = AuthToken.create(digest, cred);
 
@@ -1673,8 +1673,8 @@ class Credential {
 				}
 				else {
 
-					if (!DirectoryServices.doesPathExists(config.issuerCertsPath)) {
-						DirectoryServices.createDir(config.issuerCertsPath);
+					if (!DirectoryServices.doesPathExists(Config.issuerCertsPath)) {
+						DirectoryServices.createDir(Config.issuerCertsPath);
 					}
 
 					request.get(
@@ -1691,6 +1691,10 @@ class Credential {
 								}).catch(e => {
 									reject(e);
 								})
+							}
+							else {
+								logger.error(`Get issuer CA error ${error} status ${response.statusCode} on ${issuerCertUrl}`);
+								reject(`Get issuer CA error ${error} status ${response.statusCode}`);
 							}
 						}
 					);
@@ -2074,7 +2078,7 @@ class Credential {
 	_selectEdge() {
 
 		return new Promise((resolve, reject) => {
-				beameUtils.selectBestProxy(config.loadBalancerURL, 100, 1000, (error, payload) => {
+				beameUtils.selectBestProxy(Config.loadBalancerURL, 100, 1000, (error, payload) => {
 					if (!error) {
 						resolve(payload);
 					}
@@ -2141,7 +2145,7 @@ class Credential {
 								});
 							}
 							else {
-								errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, config.MessageCodes.OpenSSLError);
+								errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, Config.MessageCodes.OpenSSLError);
 								cb(errMsg);
 							}
 						})
@@ -2153,10 +2157,10 @@ class Credential {
 				//noinspection JSUnresolvedFunction
 				async.parallel([
 						cb => {
-							_saveKeyPair(config.CertFileNames.PRIVATE_KEY, config.CertFileNames.PUBLIC_KEY, cb);
+							_saveKeyPair(Config.CertFileNames.PRIVATE_KEY, Config.CertFileNames.PUBLIC_KEY, cb);
 						},
 						cb => {
-							_saveKeyPair(config.CertFileNames.BACKUP_PRIVATE_KEY, config.CertFileNames.BACKUP_PUBLIC_KEY, cb);
+							_saveKeyPair(Config.CertFileNames.BACKUP_PRIVATE_KEY, Config.CertFileNames.BACKUP_PUBLIC_KEY, cb);
 						}
 					],
 					error => {
@@ -2232,11 +2236,11 @@ class Credential {
 						cred._createInitialKeyPairs(dirPath).then(() => {
 							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.KeysCreated, payload.fqdn);
 
-							OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PRIVATE_KEY))).then(signature => {
+							OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
 								let pubKeys = {
-									pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.PUBLIC_KEY)),
-									pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, config.CertFileNames.BACKUP_PUBLIC_KEY)),
+									pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY)),
+									pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY)),
 									signature
 								};
 
@@ -2361,7 +2365,7 @@ class Credential {
 								function (callback) {
 
 									openSSlWrapper.createPfxCert(dirPath, password).then(pwd => {
-										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, config.CertFileNames.PWD), pwd, (error, data) => {
+										directoryServices.saveFileAsync(beameUtils.makePath(dirPath, Config.CertFileNames.PWD), pwd, (error, data) => {
 											if (!error) {
 												callback(null, data)
 											}
@@ -2449,7 +2453,7 @@ class Credential {
 			return true;
 		}
 
-		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+		let parent_fqdn = this.getMetadataKey(Config.MetadataProperties.PARENT_FQDN);
 
 		if (!parent_fqdn) {
 			return false;
@@ -2467,7 +2471,7 @@ class Credential {
 	hasParent(parentFqdn) {
 
 
-		let parent_fqdn = this.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+		let parent_fqdn = this.getMetadataKey(Config.MetadataProperties.PARENT_FQDN);
 
 		if (!parent_fqdn) {
 			return false;
@@ -2486,7 +2490,7 @@ class Credential {
 			return parents;
 		}
 
-		let parent_fqdn = cred.getMetadataKey(config.MetadataProperties.PARENT_FQDN);
+		let parent_fqdn = cred.getMetadataKey(Config.MetadataProperties.PARENT_FQDN);
 
 		if (!parent_fqdn) {
 			return parents;
@@ -2498,12 +2502,12 @@ class Credential {
 			return parents;
 		}
 
-		let hasLevel = parent.hasMetadataKey(config.MetadataProperties.LEVEL),
-		    lvl      = hasLevel ? parent.getMetadataKey(config.MetadataProperties.LEVEL) : null;
+		let hasLevel = parent.hasMetadataKey(Config.MetadataProperties.LEVEL),
+		    lvl      = hasLevel ? parent.getMetadataKey(Config.MetadataProperties.LEVEL) : null;
 
 		parents.push({
 			fqdn:          parent_fqdn,
-			name:          parent.getMetadataKey(config.MetadataProperties.NAME),
+			name:          parent.getMetadataKey(Config.MetadataProperties.NAME),
 			hasPrivateKey: parent.hasKey("PRIVATE_KEY"),
 			level:         hasLevel ? parseInt(lvl) : null,
 			expired:       parent.expired
