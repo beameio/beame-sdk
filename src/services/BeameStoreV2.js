@@ -105,11 +105,12 @@ class BeameStoreV2 {
 	 * @param {String} fqdn
 	 * @param {String} highestFqdn
 	 * @param {function} callback
+	 * @param {function} [allowExpired]
 	 */
-	fetchCredChain(fqdn, highestFqdn, callback) {
+	fetchCredChain(fqdn, highestFqdn, callback, allowExpired = false) {
 		let credsList = [], nLevels = 0, metaSpare = {};
 		const getNext = (fqdn) => {
-			this.find(fqdn).then(cred => {
+			this.find(fqdn, allowExpired).then(cred => {
 				credsList[nLevels] = cred;
 				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
 
@@ -150,8 +151,9 @@ class BeameStoreV2 {
 	 * @param {String} highestFqdn // up to zero
 	 * @param {String} trustDepth // down to infinity
 	 * @param {function} callback
+	 * @param {function} [allowExpired]
 	 */
-	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback) {
+	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback, allowExpired = false) {
 		this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
 			if(!error && guestChain){
 				this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
@@ -171,12 +173,12 @@ class BeameStoreV2 {
 					else{
 						callback(null, false);
 					}
-				})
+				}, allowExpired)
 			}
 			else{
 				callback(null, false);
 			}
-		})
+		}, allowExpired)
 	}
 
 	/**
@@ -185,9 +187,10 @@ class BeameStoreV2 {
 	 * @method BeameStoreV2.find
 	 * @param {String} fqdn
 	 * @param {Boolean} [allowRemote]
+	 * @param {Boolean} [allowExpired] //set only for automatic renewal of crypto-validated remote creds
 	 * @returns {Promise.<Credential>}
 	 */
-	find(fqdn, allowRemote = true) {
+	find(fqdn, allowRemote = true, allowExpired = false) {
 
 		return new Promise((resolve, reject) => {
 				if (!fqdn) {
@@ -217,10 +220,16 @@ class BeameStoreV2 {
 				};
 
 				const _onCredFound = credential => {
-					credential.checkValidity()
-						.then(credential.updateOcspStatus.bind(credential))
-						.then(resolve)
-						.catch(_onValidationError.bind(null, credential));
+					if(allowExpired){
+						credential.updateOcspStatus()
+							.then(resolve)
+							.catch(_onValidationError.bind(null, credential));
+					}
+					else
+						credential.checkValidity()
+							.then(credential.updateOcspStatus.bind(credential))
+							.then(resolve)
+							.catch(_onValidationError.bind(null, credential));
 				};
 
 				let cred = this._getCredential(fqdn);

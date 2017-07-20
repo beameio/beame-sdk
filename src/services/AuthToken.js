@@ -13,7 +13,7 @@ const timeFuzz = config.defaultTimeFuzz;
 class AuthToken {
 
 	//noinspection JSUnusedGlobalSymbols
-	static getRequestAuthToken(req) {
+	static getRequestAuthToken(req, allowExpired = false) {
 		return new Promise((resolve, reject) => {
 				let authHead  = req.get('X-BeameAuthToken'),
 				    /** @type {SignatureToken|null} */
@@ -43,7 +43,7 @@ class AuthToken {
 					return;
 				}
 
-				AuthToken.validate(authToken)
+				AuthToken.validate(authToken, allowExpired)
 					.then(resolve)
 					.catch(reject);
 			}
@@ -116,9 +116,10 @@ class AuthToken {
 	/**
 	 *
 	 * @param {SignatureToken|String} token
+	 * @param {SignatureToken|String} [allowExpired]
 	 * @returns {Promise.<SignatureToken|null>}
 	 */
-	static validate(token) {
+	static validate(token, allowExpired = false) {
 		/** @type {SignatureToken} */
 
 
@@ -149,7 +150,7 @@ class AuthToken {
 
 			const store = new BeameStore();
 
-			store.find(authToken.signedBy).then(signerCreds => {
+			store.find(authToken.signedBy, undefined, allowExpired).then(signerCreds => {
 				signerCreds.checkOcspStatus(signerCreds)
 					.then( resp => {
 
