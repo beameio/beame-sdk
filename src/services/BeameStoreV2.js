@@ -106,11 +106,12 @@ class BeameStoreV2 {
 	 * @param {String} highestFqdn
 	 * @param {function} callback
 	 * @param {function} [allowExpired]
+	 * @param {function} [allowRevoked]
 	 */
-	fetchCredChain(fqdn, highestFqdn, callback, allowExpired = false) {
+	fetchCredChain(fqdn, highestFqdn, callback, allowExpired = false, allowRevoked = false) {
 		let credsList = [], nLevels = 0, metaSpare = {};
 		const getNext = (fqdn) => {
-			this.find(fqdn, allowExpired).then(cred => {
+			this.find(fqdn, undefined, allowExpired, allowRevoked).then(cred => {
 				credsList[nLevels] = cred;
 				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
 
@@ -181,6 +182,7 @@ class BeameStoreV2 {
 		}, allowExpired)
 	}
 
+
 	/**
 	 * Find local credential or get remote
 	 * @public
@@ -188,9 +190,10 @@ class BeameStoreV2 {
 	 * @param {String} fqdn
 	 * @param {Boolean} [allowRemote]
 	 * @param {Boolean} [allowExpired] //set only for automatic renewal of crypto-validated remote creds
+	 * @param {Boolean} [allowRevoked] //set only for automatic renewal of crypto-validated remote creds
 	 * @returns {Promise.<Credential>}
 	 */
-	find(fqdn, allowRemote = true, allowExpired = false) {
+	find(fqdn, allowRemote = true, allowExpired = false, allowRevoked = false) {
 
 		return new Promise((resolve, reject) => {
 				if (!fqdn) {
@@ -220,8 +223,15 @@ class BeameStoreV2 {
 				};
 
 				const _onCredFound = credential => {
-					if(allowExpired){
-						credential.updateOcspStatus()
+					if(allowExpired && allowRevoked)
+						resolve(credential);
+					else if(allowExpired){
+						credential.updateOcspStatus().bind(credential)
+							.then(resolve)
+							.catch(_onValidationError.bind(null, credential));
+					}
+					else if(allowRevoked){
+						credential.checkValidity()
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 					}
@@ -365,11 +375,18 @@ class BeameStoreV2 {
 
 				let expirationDate = new Date(cred.getCertEnd());
 
+				if (options.excludeValid) {
+					return (cred.metadata.revoked == true);
+				}
+
 				if (options.excludeRevoked && cred.metadata.revoked) {
 					return false;
 				}
 
-				if (options.excludeExpired && expirationDate < today) {
+				if (options.excludeActive && expirationDate > today) {
+					return false;
+				}
+				else if (options.excludeExpired && expirationDate < today) {
 					return false;
 				}
 
