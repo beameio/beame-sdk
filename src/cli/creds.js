@@ -319,7 +319,7 @@ function revoke(signerAuthToken, signerFqdn, fqdn, callback) {
 
 	let cred = new Credential(new BeameStore());
 
-	CommonUtils.promise2callback(cred.revoke(authToken, signerFqdn, fqdn), callback);
+	CommonUtils.promise2callback(cred.revokeCert(authToken, signerFqdn, fqdn), callback);
 }
 revoke.toText = _lineToText;
 
