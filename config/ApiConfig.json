@@ -47,6 +47,9 @@
         "OcspApi":{
             "Check":{
                 "endpoint": "/check"
+            },
+            "Time":{
+                "endpoint": "/time/get"
             }
         }
     }

@@ -204,11 +204,20 @@ class CommonUtils {
 	 * @param retries
 	 */
 	static validateMachineClock(fuzz,retries = 3) {
-		const ntpClient        = require('ntp-client'),
-		      defaultClockFuzz = require('../../config/Config').defaultAllowedClockDiff;
 
 
 		return new Promise((resolve) => {
+			const onGotTime = (remoteTime)=>{
+				const defaultClockFuzz = require('../../config/Config').defaultAllowedClockDiff;
+				let diff = Math.abs(Date.now()/1000) - remoteTime;
+				let isTimeValid = diff <= (fuzz || defaultClockFuzz);
+				if(!isTimeValid)
+					console.warn(`Machine clock incorrect, diff vs ntp is ${diff} seconds, installation may fail due to timing issue`);
+				resolve()
+			};
+
+			const getGlobalNtpStamp = (retries) =>{
+				const ntpClient        = require('ntp-client');
 				ntpClient.getNetworkTime("pool.ntp.org", 123, (err, date) => {
 					if (err) {
 
@@ -223,22 +232,39 @@ class CommonUtils {
 						return CommonUtils.validateMachineClock(fuzz,retries);
 					}
 
-					let local = Date.now(),
-					    diff  = Math.abs((date.getTime() - local) / 1000);
+					onGotTime(Math.abs(date.getTime()/1000));
 
-					let isTimeValid = diff <= (fuzz || defaultClockFuzz);
-
-					// console.log("Current ntp time : ",date);
-					//
-					// console.log("Current machine time : ",local);
-					//
-					// console.log("diff is : ",(date.getTime() - local)/1000);
-
-					if(!isTimeValid)
-						 console.warn(`Machine clock incorrect, diff vs ntp is ${diff} seconds, installation may fail due to timing issue`);
-
-					resolve()
 				});
+			};
+
+
+			if (process.env.EXTERNAL_OCSP_FQDN) {
+				const apiConfig = require('../../config/ApiConfig.json');
+				const ProvisionApi           = require('../services/ProvisionApi');
+				const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Time.endpoint}`;
+
+				const request = require('request');
+
+				let opt = {
+					url:      url,
+					method:   'GET',
+				};
+
+				request(opt, (error, response, body) => {
+					if (response.statusCode < 200 || response.statusCode >= 400) {
+						console.warn('Failed to get unix time:',error);
+						getGlobalNtpStamp(1);
+						// resolve();
+					}
+					else {
+						onGotTime(Number(body));
+					}
+				});
+			}
+			else{
+				getGlobalNtpStamp(retries);
+			}
+
 			}
 		);
 

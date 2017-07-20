@@ -1533,7 +1533,7 @@ class Credential {
 	checkOcspStatus(cred, forceCheck = false) {
 		return new Promise((resolve, reject) => {
 				const ocsp                 = require('ocsp');
-				const resolveOnArbitration = process.env.BEAME_OCSP_RESOLVE_ARBITRATION;
+				const resolveOnArbitration = true;
 				const cachePeriod          = process.env.BEAME_OCSP_CACHE_PERIOD || Config.ocspCachePeriod;
 				let lastOcsp               = cred.metadata.ocspStatus;
 
