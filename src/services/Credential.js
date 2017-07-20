@@ -1582,58 +1582,80 @@ class Credential {
 						this.generateOcspRequest(cred).then(req => {
 
 							let digest = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
+							const store = new (require("./BeameStoreV2"))();
 
-							let authToken = AuthToken.create(digest, cred);
 
-							if (authToken == null) {
-								reject(`Auth token create for ${cred.fqdn}  failed`);
-								return;
-							}
-
-							ocsp.getOCSPURI(cred.getKey("X509"), (err, uri) => {
-								if (err) {
-									_resolve(resolveOnArbitration, err);
-								}
-								else {
-									const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}`;
-
-									const request = require('request');
-
-									let opt = {
-										url:      url,
-										headers:  {
-											'X-BeameAuthToken': authToken,
-											'X-BeameOcspUri':   uri,
-											'Content-Type':     'application/ocsp-request',
-											'Content-Length':   req.data.length
-
-										},
-										method:   'POST',
-										body:     req.data,
-										encoding: null
-									};
-
-									request(opt, (error, response, body) => {
-										if (response.statusCode < 200 || response.statusCode >= 400) {
-											_resolve(resolveOnArbitration, response.statusCode);
+							store.fetchCredChain(cred.fqdn,null,(err, creds)=>{
+								if(!err){
+									let signerCred = null;
+									for(let i=0; i<creds.length;i++){
+										if(creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked){
+											signerCred = creds[i];
+											break;
 										}
-										else {
-											ocsp.verify({
-												request:  req,
-												response: body
-											}, (err, resp) => {
-												if (err) {
-													_resolve(resolveOnArbitration, err);
-												}
-												else {
-													resp && resp.type && resp.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, resp);
-												}
-											});
+									}
+									if(signerCred){
+										let authToken = AuthToken.create(digest, signerCred);
+
+										if (authToken == null) {
+											reject(`Auth token create for ${signerCred.fqdn}  failed`);
+											return;
 										}
 
-									});
+										ocsp.getOCSPURI(signerCred.getKey("X509"), (err, uri) => {
+											if (err) {
+												_resolve(resolveOnArbitration, err);
+											}
+											else {
+												const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}`;
+
+												const request = require('request');
+
+												let opt = {
+													url:      url,
+													headers:  {
+														'X-BeameAuthToken': authToken,
+														'X-BeameOcspUri':   uri,
+														'Content-Type':     'application/ocsp-request',
+														'Content-Length':   req.data.length
+
+													},
+													method:   'POST',
+													body:     req.data,
+													encoding: null
+												};
+
+												request(opt, (error, response, body) => {
+													if (response.statusCode < 200 || response.statusCode >= 400) {
+														_resolve(resolveOnArbitration, response.statusCode);
+													}
+													else {
+														ocsp.verify({
+															request:  req,
+															response: body
+														}, (err, resp) => {
+															if (err) {
+																_resolve(resolveOnArbitration, err);
+															}
+															else {
+																resp && resp.type && resp.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, resp);
+															}
+														});
+													}
+
+												});
+											}
+										});
+									}
+									else{
+										reject(`Failed to find valid signer cred for ${cred.fqdn}`);
+									}
 								}
-							});
+								else{
+									reject('Failed to fetch cred chain: '+ err);
+								}
+
+							}, true, true);
 
 
 						}).catch(e => {
