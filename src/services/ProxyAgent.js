@@ -170,8 +170,10 @@ ProxyAgent._makeRequest = function(httpOrHttps, protocol) {
 		} else {
 			options = clone(options);
 		}
-		//force proxy agent on any request
-		options.agent = httpOrHttps.globalAgent;
+		if(!(options.host.startsWith('127.0.0.1') || options.host.startsWith('localhost'))){
+			//force proxy agent on any request
+			options.agent = httpOrHttps.globalAgent;
+		}
 
 		// set the default port ourselves to prevent Node doing it based on the proxy agent protocol
 		if (options.protocol === 'https:' || (!options.protocol && protocol === 'https')) {
