@@ -10,12 +10,11 @@ F create_entity_under_fqdn(fqdn, idx) {
 	entity.fqdn
 }
 
-fqdn = ARGV[0]
-levels = Int(ARGV[1])
-
-for(i;levels) {
-	test("Iteration [${i+1}/$levels] [fqdn $fqdn]") with {
-		global fqdn
-		fqdn = create_entity_under_fqdn(fqdn, i)
+F main(start_fqdn:Str, n:Int) {
+	fqdn = start_fqdn
+	for(i;n) {
+		test("Iteration [${i+1}/$n] [fqdn $fqdn]") with {
+			fqdn = create_entity_under_fqdn(fqdn, i)
+		}
 	}
 }
