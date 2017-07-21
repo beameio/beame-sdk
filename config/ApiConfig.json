@@ -43,6 +43,14 @@
             "Delete": {
                 "endpoint": "/v1/dns/delete/"
             }
+        },
+        "OcspApi":{
+            "Check":{
+                "endpoint": "/check"
+            },
+            "Time":{
+                "endpoint": "/time/get"
+            }
         }
     }
 }

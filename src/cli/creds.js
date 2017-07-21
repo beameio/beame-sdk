@@ -33,7 +33,9 @@ module.exports = {
 	sign,
 	checkSignature,
 	revokeCert,
+	revoke,
 	renewCert,
+	renew,
 	checkOcsp,
 	setDns,
 	deleteDns,
@@ -200,24 +202,59 @@ updateMetadata.toText = _lineToText;
 
 /**
  * @public
- * @method Creds.revokeCert
+ * @method Creds.renewCert
  * @param {String} signerAuthToken
  * @param {String} fqdn
  * @param {Number|null} [validityPeriod] cert validity period in seconds
+ * @param {String} filter
+ * @param {String} regex
  * @param {Function} callback
  */
-function renewCert(signerAuthToken, fqdn, validityPeriod, callback) {
+function renewCert(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
+	renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback);
+}
 
-	if (!signerAuthToken && !fqdn) {
-		throw new Error(`signerAuthToken or fqdn required`);
+/**
+ * @public
+ * @method Creds.renew
+ * @param {String} signerAuthToken
+ * @param {String} fqdn
+ * @param {Number|null} [validityPeriod] cert validity period in seconds
+ * @param {String} filter
+ * @param {String} regex
+ * @param {Function} callback
+ */
+function renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
+	let credList = [];
+	let listMaxIndex = 0, listIndex = 0;
+	function _renew(authToken) {
+		const fqdnX = credList[listIndex++];
+		let cred = new Credential(new BeameStore());
+		logger.info(`Trying to renew ${fqdnX}`);
+		function returnOK() {
+			return Promise.resolve({status: 'ok'});
+		}
+
+		listIndex >= listMaxIndex? CommonUtils.promise2callback(cred.renewCert(authToken, fqdnX, validityPeriod).then(returnOK), callback): cred.renewCert(authToken, fqdnX, validityPeriod)
+				.then(()=>{
+				logger.info(`${fqdnX} renew - done`);
+				_renew();
+		}).catch(e=>{
+			logger.info(`${fqdnX} renew - failed: ${e}`);
+			_renew();
+		});
 	}
 
-	let authToken;
+	if ((!signerAuthToken && !filter && !regex && !fqdn) || ((filter || regex) && (signerAuthToken || fqdn))) {
+		logger.fatal(`Define valid criteria to select creds for renew, use: signerAuthToken && fqdn || fqdn || filter || regex || filter && regex`);
+	}
+
+	let authToken = null;
 
 	if (signerAuthToken) {
 		let parsed = CommonUtils.parse(signerAuthToken, false);
 
-		if (typeof parsed == "object") {
+		if (typeof parsed === "object") {
 			authToken = parsed;
 		}
 		else {
@@ -225,16 +262,17 @@ function renewCert(signerAuthToken, fqdn, validityPeriod, callback) {
 		}
 	}
 
-	let cred = new Credential(new BeameStore());
-
-	function returnOK() {
-		return Promise.resolve({status: 'ok'});
+	if(filter || regex){
+		credList = getFqdnListByFilter(filter, regex, true);
 	}
+	else credList[0] = fqdn;
+	listMaxIndex = credList.length>3?3:credList.length;
 
-	CommonUtils.promise2callback(cred.renewCert(authToken, fqdn, validityPeriod).then(returnOK), callback);
+	_renew(authToken, credList[0]);
+
+
 }
-renewCert.toText = _lineToText;
-
+renew.toText = _lineToText;
 
 /**
  * @public
@@ -245,6 +283,18 @@ renewCert.toText = _lineToText;
  * @param {Function} callback
  */
 function revokeCert(signerAuthToken, signerFqdn, fqdn, callback) {
+	revoke(signerAuthToken, signerFqdn, fqdn, callback);
+}
+
+/**
+ * @public
+ * @method Creds.revoke
+ * @param {String|null} [signerAuthToken]
+ * @param {String|null} [signerFqdn]
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
+function revoke(signerAuthToken, signerFqdn, fqdn, callback) {
 
 	if (!signerAuthToken && !signerFqdn) {
 		throw new Error(`signerAuthToken or signerFqdn required`);
@@ -271,7 +321,7 @@ function revokeCert(signerAuthToken, signerFqdn, fqdn, callback) {
 
 	CommonUtils.promise2callback(cred.revokeCert(authToken, signerFqdn, fqdn), callback);
 }
-revokeCert.toText = _lineToText;
+revoke.toText = _lineToText;
 
 /**
  * @public
@@ -361,12 +411,14 @@ show.toText = _lineToText;
  * @param {Boolean|null} anyParent
  * @returns {Array.<Credential>}
  */
-function list(regex, hasPrivateKey, expiration, anyParent) {
+function list(regex, hasPrivateKey, expiration, anyParent, filter) {
 	logger.debug(`list  ${regex}`);
 	let options = {
 		hasPrivateKey: hasPrivateKey ? hasPrivateKey == 'true' : null,
 		expiration:    expiration ? Number(expiration) : (expiration === 0 ? 0 : null),
-		anyParent:     anyParent || null
+		anyParent:     anyParent || null,
+		excludeActive: filter === 'expired',
+		excludeValid: filter === 'revoked'
 	};
 	return _listCreds(regex || '.', options);
 }
@@ -412,20 +464,46 @@ signers.toText =  function (creds) {
 	return table;
 };
 
+function getFqdnListByFilter(filter, regex, hasPrivateKey) {
+	let options = {
+		excludeActive: filter === 'expired',
+		excludeValid: filter === 'revoked'
+	};
+	let tmpList = _listCreds(regex || '.', options);
+	let credList = [];
+	for(let j=0; j < tmpList.length; j++){
+		if(tmpList[j].hasKey('PRIVATE_KEY'))
+			console.log(j,': ',tmpList[j].fqdn,' revoked => ',tmpList[j].metadata.revoked, ',expired => ', tmpList[j].expired);
+		if(hasPrivateKey && tmpList[j].hasKey('PRIVATE_KEY') || !hasPrivateKey)
+			tmpList[j].fqdn && credList.push(tmpList[j].fqdn);
+	}
+	return credList;
+}
+
 /**
  * Delete local credential folder
  * @public
  * @method Creds.shred
  * @param {String} fqdn
+ * @param {String} filter
+ * @param {String} regex
  */
-function shred(fqdn) {
-	const store = new BeameStore();
-	if (!fqdn) {
-		logger.fatal("FQDN is required in shred");
+function shred(fqdn, filter, regex) {
+	if (!fqdn && !filter && !regex || (fqdn && (filter || regex))) {
+		logger.fatal("shred valid parameters are: fqdn || filter || regex || regex && filter");
 	}
-	store.shredCredentials(fqdn, () => {
-		return 'fqdn has been erased from store';
-	});
+	let credList = [];
+	if(filter || regex){
+		credList = getFqdnListByFilter(filter, regex);
+	}
+	else credList[0] = fqdn;
+	const store = new BeameStore();
+	for(let i=0; i<credList.length; i++){
+		store.shredCredentials(credList[i], () => {
+			logger.info(`${credList[i]} has been erased from store`);
+		});
+	}
+	return 'ok';
 }
 shred.toText = _lineToText;
 

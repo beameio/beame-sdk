@@ -94,7 +94,8 @@ const CredAction = {
 	"RegTokenCreated": "Reg token created",
 	"DnsSaved":        "Dns Saved",
 	"DnsDeleted":      "Dns deleted",
-	"OcspUpdate":      "OCSP status updated"
+	"OcspUpdate":      "OCSP status updated",
+	"RolesUpdate":     "RolesUpdate"
 };
 
 /**
@@ -114,16 +115,17 @@ const CertFileNames = {
 
 
 const MetadataProperties = {
-	LEVEL:       "level",
-	FQDN:        "fqdn",
-	UID:         "uid",
-	NAME:        "name",
-	PARENT_FQDN: "parent_fqdn",
-	PATH:        "path",
-	DNS:         "dnsRecords",
-	REVOKED:     "revoked",
-	ACTIONS:     "actions",
-	OCSP_STATUS: "ocspStatus"
+	LEVEL:         "level",
+	FQDN:          "fqdn",
+	UID:           "uid",
+	NAME:          "name",
+	PARENT_FQDN:   "parent_fqdn",
+	APPROVER_FQDN: "approved_by_fqdn",
+	PATH:          "path",
+	DNS:           "dnsRecords",
+	REVOKED:       "revoked",
+	ACTIONS:       "actions",
+	OCSP_STATUS:   "ocspStatus"
 };
 
 /**

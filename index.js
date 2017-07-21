@@ -13,6 +13,7 @@ module.exports = {
 	Logger:            require('./src/utils/Logger'),
 	ProvApi:           require('./src/services/ProvisionApi'),
 	ProxyClient:       require('./src/services/ProxyClient'),
+	ProxyAgent:        require('./src/services/ProxyAgent'),
 	OpenSSlWrapper:    require('./src/utils/OpenSSLWrapper'),
 	DnsServices:       require('./src/services/DnsServices'),
 	Config:            require('./config/Config')

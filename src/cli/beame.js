@@ -68,7 +68,9 @@ const parametersSchema = {
 	'dnsFqdn':            {required: false},
 	'forceCheck':         {required: false},
 	'highestFqdn':        {required: false},
-	'trustDepth':         {required: false}
+	'trustDepth':         {required: false},
+	'filter':             {required: false, options: ['expired', 'revoked']},
+	'action':             {required: false, options: ['delete', 'renew']}
 };
 
 // http://stackoverflow.com/questions/783818/how-do-i-create-a-custom-error-in-javascript
