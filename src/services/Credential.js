@@ -77,9 +77,7 @@ const apiEntityActions       = require('../../config/ApiConfig.json').Actions.En
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
-const apiConfig              = require('../../config/ApiConfig.json');
-const AuthToken              = require('./AuthToken');
-const request                = require('request');
+
 
 const timeFuzz = Config.defaultTimeFuzz * 1000;
 
@@ -1582,6 +1580,10 @@ class Credential {
 
 					if (process.env.EXTERNAL_OCSP_FQDN) {
 
+						const apiConfig              = require('../../config/ApiConfig.json');
+						const AuthToken              = require('./AuthToken');
+						const request                = require('request');
+
 						this.generateOcspRequest(cred).then(req => {
 
 							let digest  = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
@@ -1743,6 +1745,9 @@ class Credential {
 
 
 					if (process.env.EXTERNAL_OCSP_FQDN) {
+						const apiConfig              = require('../../config/ApiConfig.json');
+						const AuthToken              = require('./AuthToken');
+						const request                = require('request');
 						const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.HttpGetProxy.endpoint}`;
 
 						let authToken = AuthToken.create(cred.fqdn, cred);
