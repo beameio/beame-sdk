@@ -105,13 +105,13 @@ class BeameStoreV2 {
 	 * @param {String} fqdn
 	 * @param {String} highestFqdn
 	 * @param {function} callback
-	 * @param {function} [allowExpired]
-	 * @param {function} [allowRevoked]
+	 * @param {Boolean} [allowExpired]
+	 * @param {Boolean} [allowRevoked]
 	 */
 	fetchCredChain(fqdn, highestFqdn, callback, allowExpired = false, allowRevoked = false) {
-		let credsList = [], nLevels = 0, metaSpare = {};
+		let credsList = [], nLevels = 0;
 		const getNext = (fqdn) => {
-			this.find(fqdn, undefined, allowExpired, allowRevoked).then(cred => {
+			this.find(fqdn, null, allowExpired, allowRevoked).then(cred => {
 				credsList[nLevels] = cred;
 				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
 
