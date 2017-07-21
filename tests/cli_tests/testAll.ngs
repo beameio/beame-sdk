@@ -79,7 +79,7 @@ F prepare_entity_properties() {
 }
 
 doc Tests running site
-F test_server(fqdn:Str, cmd:Command, url:Str) {
+F test_server(fqdn:Str, cmd:CommandsPipeline, url:Str) {
 	threads = [
 		Thread({ $($cmd) })
 	]
