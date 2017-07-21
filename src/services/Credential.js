@@ -78,6 +78,7 @@ const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.Au
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
 
+
 const timeFuzz = Config.defaultTimeFuzz * 1000;
 
 const nop = function () {
@@ -1360,146 +1361,148 @@ class Credential {
 	renewCert(signerAuthToken, fqdn, validityPeriod) {
 		return new Promise((resolve, reject) => {
 
-			let cred = this.store.getCredential(fqdn);
+				let cred = this.store.getCredential(fqdn);
 
-			if (!cred.hasKey("PRIVATE_KEY")) {
-				reject(`Private key not found for ${fqdn}`);
-				return;
-			}
+				if (!cred.hasKey("PRIVATE_KEY")) {
+					reject(`Private key not found for ${fqdn}`);
+					return;
+				}
 
-			function make() {
-				let dirPath = cred.getMetadataKey("path");
+				function make() {
+					let dirPath = cred.getMetadataKey("path");
 
-				const _renew = () => {
+					const _renew = () => {
 
-					OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY))).then(signature => {
+						OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
-						let pubKeys = {
-							pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY)),
-							pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY)),
-							signature
-						};
+							let pubKeys = {
+								pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY)),
+								pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY)),
+								signature
+							};
 
-						let postData = {
-							    fqdn:     fqdn,
-							    validity: validityPeriod || Config.defaultValidityPeriod,
-							    pub:      pubKeys
-						    },
-						    api      = new ProvisionApi(),
-						    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
+							let postData = {
+								    fqdn:     fqdn,
+								    validity: validityPeriod || Config.defaultValidityPeriod,
+								    pub:      pubKeys
+							    },
+							    api      = new ProvisionApi(),
+							    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
 
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
-						let authToken = null;
+							let authToken = null;
 
-						if (!signerAuthToken) {
-							api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+							if (!signerAuthToken) {
+								api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+							}
+							else {
+								authToken = (typeof signerAuthToken === 'object') ? CommonUtils.stringify(signerAuthToken, false) : signerAuthToken;
+							}
+
+
+							api.runRestfulAPI(apiData, (error, payload) => {
+								cred._saveCerts(error, payload).then(certs => {
+									Credential.saveCredAction(cred, {
+										action: Config.CredAction.Renew,
+										date:   Date.now()
+									});
+									resolve(certs);
+								}).catch(reject);
+							}, 'POST', authToken);
+						}).catch(reject);
+
+					};
+
+					//check if public key exists (old API)
+					const path = require('path');
+
+					let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, Config.CertFileNames.PUBLIC_KEY));
+
+					if (publicExists) {
+						_renew();
+					}
+					else {
+
+						//noinspection JSUnresolvedFunction
+						async.parallel([
+								cb => {
+									//create public key for existing private
+									let pkFile  = beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY),
+									    pubFile = beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY);
+
+									openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+										cb();
+									}).catch(error => {
+										cb(error)
+									});
+								},
+								cb => {
+									//create backup key pair
+									openSSlWrapper.createPrivateKey().then(pk =>
+										DirectoryServices.saveFile(dirPath, Config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
+											if (!error) {
+												let pkFile  = beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PRIVATE_KEY),
+												    pubFile = beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY);
+												openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
+													cb(null);
+												}).catch(error => {
+													cb(error)
+												});
+											}
+											else {
+												let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, Config.MessageCodes.OpenSSLError);
+												cb(errMsg);
+											}
+										})
+									).catch(error => {
+										cb(error);
+									});
+								}
+							],
+							error => {
+								if (error) {
+									logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
+									reject(error);
+								}
+
+								_renew();
+							});
+
+					}
+				}
+
+				if (!signerAuthToken) {
+					const store = new (require("./BeameStoreV2"))();
+					store.fetchCredChain(fqdn, null, (err, creds) => {
+						if (!err) {
+							let signerCred = null;
+							for (let i = 0; i < creds.length; i++) {
+								if (creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked) {
+									signerCred = creds[i];
+									break;
+								}
+							}
+							if (signerCred) {
+								signerCred.signWithFqdn(signerCred.fqdn, fqdn).then((token) => {
+									signerAuthToken = token;
+									make();
+									// _renew(new Buffer(token).toString('base64'), fqdn, true);
+								}).catch(e => {
+									logger.error(`Failed to create token with cred ${signerCred.fqdn}`);
+								});
+							}
+							else {
+								reject(`Failed to find valid signer cred for ${fqdn}`);
+							}
 						}
 						else {
-							authToken = (typeof signerAuthToken === 'object')?CommonUtils.stringify(signerAuthToken, false):signerAuthToken;
+							reject('Failed to fetch cred chain: ' + err);
 						}
 
-
-						api.runRestfulAPI(apiData, (error, payload) => {
-							cred._saveCerts(error, payload).then(certs => {
-								Credential.saveCredAction(cred, {
-									action: Config.CredAction.Renew,
-									date:   Date.now()
-								});
-								resolve(certs);
-							}).catch(reject);
-						}, 'POST', authToken);
-					}).catch(reject);
-
-				};
-
-				//check if public key exists (old API)
-				const path = require('path');
-
-				let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, Config.CertFileNames.PUBLIC_KEY));
-
-				if (publicExists) {
-					_renew();
+					}, true, true)
 				}
-				else {
-
-					//noinspection JSUnresolvedFunction
-					async.parallel([
-							cb => {
-								//create public key for existing private
-								let pkFile  = beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY),
-								    pubFile = beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY);
-
-								openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
-									cb();
-								}).catch(error => {
-									cb(error)
-								});
-							},
-							cb => {
-								//create backup key pair
-								openSSlWrapper.createPrivateKey().then(pk =>
-									DirectoryServices.saveFile(dirPath, Config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
-										if (!error) {
-											let pkFile  = beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PRIVATE_KEY),
-											    pubFile = beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY);
-											openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
-												cb(null);
-											}).catch(error => {
-												cb(error)
-											});
-										}
-										else {
-											let errMsg = logger.formatErrorMessage("Failed to save Private Key", module_name, {"error": error}, Config.MessageCodes.OpenSSLError);
-											cb(errMsg);
-										}
-									})
-								).catch(error => {
-									cb(error);
-								});
-							}
-						],
-						error => {
-							if (error) {
-								logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
-								reject(error);
-							}
-
-							_renew();
-						});
-
-				}
-			}
-
-			if(!signerAuthToken){
-				const store = new (require("./BeameStoreV2"))();
-				store.fetchCredChain(fqdn,null,(err, creds)=>{
-					if(!err){
-						let signerCred = null;
-						for(let i=0; i<creds.length;i++){
-							if(creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked){
-								signerCred = creds[i];
-								break;
-							}
-						}
-						if(signerCred){
-							signerCred.signWithFqdn(signerCred.fqdn, fqdn).then((token)=>{
-								signerAuthToken = token;
-								make();
-								// _renew(new Buffer(token).toString('base64'), fqdn, true);
-							}).catch(e=>{logger.error(`Failed to create token with cred ${signerCred.fqdn}`);});
-						}
-						else{
-							reject(`Failed to find valid signer cred for ${fqdn}`);
-						}
-					}
-					else{
-						reject('Failed to fetch cred chain: '+ err);
-					}
-
-				}, true, true)
-			}
-			else make();
+				else make();
 
 			}
 		);
@@ -1576,25 +1579,27 @@ class Credential {
 					}
 
 					if (process.env.EXTERNAL_OCSP_FQDN) {
-						const apiConfig = require('../../config/ApiConfig.json');
-						const AuthToken = require('./AuthToken');
+
+						const apiConfig              = require('../../config/ApiConfig.json');
+						const AuthToken              = require('./AuthToken');
+						const request                = require('request');
 
 						this.generateOcspRequest(cred).then(req => {
 
-							let digest = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
+							let digest  = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
 							const store = new (require("./BeameStoreV2"))();
 
 
-							store.fetchCredChain(cred.fqdn,null,(err, creds)=>{
-								if(!err){
+							store.fetchCredChain(cred.fqdn, null, (err, creds) => {
+								if (!err) {
 									let signerCred = null;
-									for(let i=0; i<creds.length;i++){
-										if(creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked){
+									for (let i = 0; i < creds.length; i++) {
+										if (creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked) {
 											signerCred = creds[i];
 											break;
 										}
 									}
-									if(signerCred){
+									if (signerCred) {
 										let authToken = AuthToken.create(digest, signerCred);
 
 										if (authToken == null) {
@@ -1608,8 +1613,6 @@ class Credential {
 											}
 											else {
 												const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}`;
-
-												const request = require('request');
 
 												let opt = {
 													url:      url,
@@ -1642,17 +1645,16 @@ class Credential {
 															}
 														});
 													}
-
 												});
 											}
 										});
 									}
-									else{
+									else {
 										reject(`Failed to find valid signer cred for ${cred.fqdn}`);
 									}
 								}
-								else{
-									reject('Failed to fetch cred chain: '+ err);
+								else {
+									reject('Failed to fetch cred chain: ' + err);
 								}
 
 							}, true, true);
@@ -1730,27 +1732,70 @@ class Credential {
 						DirectoryServices.createDir(Config.issuerCertsPath);
 					}
 
-					request.get(
-						issuerCertUrl,
-						{encoding: null},
-						function (error, response, body) {
-							if (!error && response.statusCode === 200) {
+					const _onCertReceived = (body) => {
+						fs.writeFileSync(certPath, body);
 
-								fs.writeFileSync(certPath, body);
+						OpenSSLWrapper.convertCertToPem(certPath, pemPath).then(() => {
+							fs.unlink(certPath);
+							resolve(pemPath);
+						}).catch(e => {
+							reject(e);
+						})
+					};
 
-								OpenSSLWrapper.convertCertToPem(certPath, pemPath).then(() => {
-									fs.unlink(certPath);
-									resolve(pemPath);
-								}).catch(e => {
-									reject(e);
-								})
-							}
-							else {
+
+					if (process.env.EXTERNAL_OCSP_FQDN) {
+						const apiConfig              = require('../../config/ApiConfig.json');
+						const AuthToken              = require('./AuthToken');
+						const request                = require('request');
+						const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.HttpGetProxy.endpoint}`;
+
+						let authToken = AuthToken.create(cred.fqdn, cred);
+
+						if (authToken == null) {
+							reject(`Auth token create for ${cred.fqdn}  failed`);
+							return;
+						}
+
+						let opt = {
+							url:      url,
+							headers:  {
+								'X-BeameAuthToken': authToken,
+								'Content-Type':     'application/json'
+
+							},
+							method:   'GET',
+							body:     CommonUtils.stringify({url:issuerCertUrl})
+						};
+
+						request(opt, (error, response, body) => {
+							if (response.statusCode < 200 || response.statusCode >= 400) {
 								logger.error(`Get issuer CA error ${error} status ${response.statusCode} on ${issuerCertUrl}`);
 								reject(`Get issuer CA error ${error} status ${response.statusCode}`);
 							}
-						}
-					);
+							else {
+								_onCertReceived(body);
+							}
+
+						});
+					}
+					else {
+						request.get(
+							issuerCertUrl,
+							{encoding: null},
+							(error, response, body) => {
+								if (!error && response.statusCode === 200) {
+
+									_onCertReceived(body);
+								}
+								else {
+									logger.error(`Get issuer CA error ${error} status ${response.statusCode} on ${issuerCertUrl}`);
+									reject(`Get issuer CA error ${error} status ${response.statusCode}`);
+								}
+							}
+						);
+					}
+
 				}
 			}
 		);

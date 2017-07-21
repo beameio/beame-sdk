@@ -48,6 +48,9 @@
             "Check":{
                 "endpoint": "/check"
             },
+            "HttpGetProxy":{
+                "endpoint": "/http_get"
+            },
             "Time":{
                 "endpoint": "/time/get"
             }
