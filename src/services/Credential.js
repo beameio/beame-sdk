@@ -1745,18 +1745,22 @@ class Credential {
 					if (process.env.EXTERNAL_OCSP_FQDN) {
 						const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.HttpGetProxy.endpoint}`;
 
+						let authToken = AuthToken.create(cred.fqdn, cred);
+
+						if (authToken == null) {
+							reject(`Auth token create for ${cred.fqdn}  failed`);
+							return;
+						}
+
 						let opt = {
 							url:      url,
 							headers:  {
 								'X-BeameAuthToken': authToken,
-								'X-BeameOcspUri':   uri,
-								'Content-Type':     'application/ocsp-request',
-								'Content-Length':   req.data.length
+								'Content-Type':     'application/json'
 
 							},
-							method:   'POST',
-							body:     req.data,
-							encoding: null
+							method:   'GET',
+							body:     CommonUtils.stringify({url:issuerCertUrl})
 						};
 
 						request(opt, (error, response, body) => {
