@@ -113,12 +113,14 @@ class BeameStoreV2 {
 		const getNext = (fqdn) => {
 			this.find(fqdn, null, allowExpired, allowRevoked).then(cred => {
 				credsList[nLevels] = cred;
+				if(!credsList[nLevels].metadata.parent_fqdn)
+					credsList[nLevels].metadata.parent_fqdn = credsList[nLevels].metadata.approved_by_fqdn;
+
 				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
 
 					let isZeroLevel = cred.fqdn.match(/^\w*\.\w{2}\.\w{1}\.beameio\.net/);
 					if(isZeroLevel){
 						credsList[nLevels].metadata.level = 0;
-						credsList[nLevels].metadata.parent_fqdn = null;
 					}
 					else if(credsList.length > 0){
 						callback(null, credsList);
@@ -129,7 +131,7 @@ class BeameStoreV2 {
 						return;
 					}
 				}
-				if(credsList[nLevels].metadata.level > 0 && credsList[nLevels].metadata.parent_fqdn &&
+				if((credsList[nLevels].metadata.level > 0 || credsList[nLevels].metadata.parent_fqdn) &&
 					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn)))){
 					getNext(credsList[nLevels++].metadata.parent_fqdn);
 				}
@@ -137,7 +139,12 @@ class BeameStoreV2 {
 					callback(null, credsList);
 				}
 			}).catch(error => {
-				callback(error, null);
+				if(credsList.length < 1)
+					callback(error, null);
+				else{
+					console.warn(error);
+					callback(null, credsList);
+				}
 			});
 		};
 		getNext(fqdn);
@@ -177,6 +184,7 @@ class BeameStoreV2 {
 				}, allowExpired)
 			}
 			else{
+				console.warn(error);
 				callback(null, false);
 			}
 		}, allowExpired)
@@ -226,7 +234,7 @@ class BeameStoreV2 {
 					if(allowExpired && allowRevoked)
 						resolve(credential);
 					else if(allowExpired){
-						credential.updateOcspStatus().bind(credential)
+						credential.updateOcspStatus()
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 					}
