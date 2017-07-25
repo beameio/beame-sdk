@@ -235,7 +235,9 @@ function renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
 			return Promise.resolve({status: 'ok'});
 		}
 
-		listIndex >= listMaxIndex? CommonUtils.promise2callback(cred.renewCert(authToken, fqdnX, validityPeriod).then(returnOK), callback): cred.renewCert(authToken, fqdnX, validityPeriod)
+		listIndex >= listMaxIndex?
+			CommonUtils.promise2callback(cred.renewCert(authToken, fqdnX, validityPeriod), callback):
+			cred.renewCert(authToken, fqdnX, validityPeriod)
 				.then(()=>{
 				logger.info(`${fqdnX} renew - done`);
 				_renew();
@@ -409,6 +411,7 @@ show.toText = _lineToText;
  * @param {Boolean|null} hasPrivateKey
  * @param {Number|null} expiration in days
  * @param {Boolean|null} anyParent
+ * @param {string} [filter]
  * @returns {Array.<Credential>}
  */
 function list(regex, hasPrivateKey, expiration, anyParent, filter) {

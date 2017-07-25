@@ -55,9 +55,10 @@ class AuthToken {
 	 * @param {Object|String} data
 	 * @param {Credential}signingCreds
 	 * @param {Number|null|undefined} [ttl] => seconds
+	 * @param {boolean} allowExpired
 	 * @returns {string | null}
 	 */
-	static create(data, signingCreds, ttl) {
+	static create(data, signingCreds, ttl, allowExpired = false) {
 
 		try {
 			if (!(signingCreds instanceof Credential)) {
@@ -65,7 +66,7 @@ class AuthToken {
 				return null;
 			}
 
-			if(signingCreds.expired){
+			if(signingCreds.expired && !allowExpired){
 				logger.error(`signingCreds ${signingCreds.fqdn} expired`);
 				return null;
 			}
