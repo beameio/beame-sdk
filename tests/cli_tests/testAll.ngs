@@ -316,7 +316,6 @@ if Path(CREDS_FILE) {
 
 test("Renew", {
 	s = ``$BEAME_BIN creds renewCert --fqdn ${entities[0].fqdn} --format json``
-	assert_hash_keys_values(s, {'status': 'ok'}, "Status OK")
 })
 
 test("OCSP test") with {
