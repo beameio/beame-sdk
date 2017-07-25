@@ -315,7 +315,8 @@ if Path(CREDS_FILE) {
 }
 
 test("Renew", {
-	s = ``$BEAME_BIN creds renewCert --fqdn ${entities[0].fqdn} --format json``
+	$($BEAME_BIN creds renewCert --fqdn ${entities[0].fqdn} --format json)
+	"OK"
 })
 
 test("OCSP test") with {
