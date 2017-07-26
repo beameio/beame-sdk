@@ -111,7 +111,7 @@ class BeameStoreV2 {
 	fetchCredChain(fqdn, highestFqdn, callback, allowExpired = false, allowRevoked = false) {
 		let credsList = [], nLevels = 0;
 		const getNext = (fqdn) => {
-			this.find(fqdn, null, allowExpired, allowRevoked).then(cred => {
+			this.find(fqdn, true, allowExpired, allowRevoked).then(cred => {
 				credsList[nLevels] = cred;
 				if(!credsList[nLevels].metadata.parent_fqdn)
 					credsList[nLevels].metadata.parent_fqdn = credsList[nLevels].metadata.approved_by_fqdn;
