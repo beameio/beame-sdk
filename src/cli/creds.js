@@ -268,7 +268,7 @@ function renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
 		credList = getFqdnListByFilter(filter, regex, true);
 	}
 	else credList[0] = fqdn;
-	listMaxIndex = credList.length>3?3:credList.length;
+	listMaxIndex = credList.length;
 
 	_renew(authToken, credList[0]);
 
@@ -475,8 +475,8 @@ function getFqdnListByFilter(filter, regex, hasPrivateKey) {
 	let tmpList = _listCreds(regex || '.', options);
 	let credList = [];
 	for(let j=0; j < tmpList.length; j++){
-		if(tmpList[j].hasKey('PRIVATE_KEY'))
-			console.log(j,': ',tmpList[j].fqdn,' revoked => ',tmpList[j].metadata.revoked, ',expired => ', tmpList[j].expired);
+		// if(tmpList[j].hasKey('PRIVATE_KEY'))
+		// 	console.log(j,': ',tmpList[j].fqdn,' revoked => ',tmpList[j].metadata.revoked, ',expired => ', tmpList[j].expired);
 		if(hasPrivateKey && tmpList[j].hasKey('PRIVATE_KEY') || !hasPrivateKey)
 			tmpList[j].fqdn && credList.push(tmpList[j].fqdn);
 	}
