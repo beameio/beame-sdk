@@ -140,6 +140,11 @@ ProxyAgent.initialize = function(conf) {
 		http.request = ProxyAgent._makeRequest(http, 'http');
 		https.request = ProxyAgent._makeRequest(https, 'https');
 
+		if(conf.excludes){
+			let s = conf.excludes.replace(/\s/g, '');
+			conf.excludes = s.split(",");
+		}
+
 		ProxyAgent.isProxying = true;
 		ProxyAgent.proxyConfig = clone(conf);
 	} catch (e) {
@@ -170,8 +175,17 @@ ProxyAgent._makeRequest = function(httpOrHttps, protocol) {
 		} else {
 			options = clone(options);
 		}
-		if(!(options.host.startsWith('127.0.0.1') || options.host.startsWith('localhost'))){
-			//force proxy agent on any request
+		let forceGlobalAgent = true;
+		if(ProxyAgent.proxyConfig.excludes && ProxyAgent.proxyConfig.excludes.length > 0){
+			for(let i=0; i<ProxyAgent.proxyConfig.excludes.length; i++){
+				if(options.host.endsWith(ProxyAgent.proxyConfig.excludes[i])){
+					forceGlobalAgent = false;
+					break;
+				}
+			}
+		}
+		if(forceGlobalAgent && !(options.host.startsWith('127.0.0.1') || options.host.startsWith('localhost'))){
+			//force proxy agent
 			options.agent = httpOrHttps.globalAgent;
 		}
 
