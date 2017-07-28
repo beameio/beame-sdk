@@ -336,16 +336,15 @@ function checkOcsp(fqdn, forceCheck, callback){
 	if (!fqdn) {
 		throw new Error(`Fqdn required`);
 	}
+	let check = !!(forceCheck && forceCheck === "true"),
+	    store = new BeameStore();
 
-	let cred = (new BeameStore()).getCredential(fqdn);
+	store.find(fqdn, true).then(cred=>{
+		CommonUtils.promise2callback(cred.checkOcspStatus(cred,check), callback);
+	}).catch(e=>{
+		callback(BeameLogger.formatError(e));
+	});
 
-	if(!cred){
-		throw new Error(`Credential for ${fqdn} not found`);
-	}
-
-	let check = !!(forceCheck && forceCheck === "true");
-
-	CommonUtils.promise2callback(cred.checkOcspStatus(cred,check), callback);
 }
 checkOcsp.toText = x => {
 	return x.status === true ? `Certificate ${x.fqdn} is valid` : x.message;
