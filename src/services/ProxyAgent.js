@@ -142,7 +142,11 @@ ProxyAgent.initialize = function(conf) {
 
 		if(conf.excludes){
 			let s = conf.excludes.replace(/\s/g, '');
-			conf.excludes = s.split(",");
+			s = s.replace(/\./g, '\\.');
+			s = s.replace(/\*/g, '\\S*');
+			s = s.replace(/\//g, '\\/');
+			let splitChar = s.includes(";")?";":",";
+			conf.excludes = s.split(splitChar);
 		}
 
 		ProxyAgent.isProxying = true;
@@ -178,13 +182,13 @@ ProxyAgent._makeRequest = function(httpOrHttps, protocol) {
 		let forceGlobalAgent = true;
 		if(ProxyAgent.proxyConfig.excludes && ProxyAgent.proxyConfig.excludes.length > 0){
 			for(let i=0; i<ProxyAgent.proxyConfig.excludes.length; i++){
-				if(options.host.endsWith(ProxyAgent.proxyConfig.excludes[i])){
+				if(options.host.match(new RegExp(ProxyAgent.proxyConfig.excludes[i]))){
 					forceGlobalAgent = false;
 					break;
 				}
 			}
 		}
-		if(forceGlobalAgent && !(options.host.startsWith('127.0.0.1') || options.host.startsWith('localhost'))){
+		if(forceGlobalAgent){
 			//force proxy agent
 			options.agent = httpOrHttps.globalAgent;
 		}
