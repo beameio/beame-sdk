@@ -196,9 +196,9 @@ class BeameStoreV2 {
 	 * @public
 	 * @method BeameStoreV2.find
 	 * @param {String} fqdn
-	 * @param {Boolean} [allowRemote]
-	 * @param {Boolean} [allowExpired] //set only for automatic renewal of crypto-validated remote creds
-	 * @param {Boolean} [allowRevoked] //set only for automatic renewal of crypto-validated remote creds
+	 * @param {undefined|Boolean} [allowRemote]
+	 * @param {undefined|Boolean} [allowExpired] //set only for automatic renewal of crypto-validated remote creds
+	 * @param {undefined|Boolean} [allowRevoked] //set only for automatic renewal of crypto-validated remote creds
 	 * @returns {Promise.<Credential>}
 	 */
 	find(fqdn, allowRemote = true, allowExpired = false, allowRevoked = false) {

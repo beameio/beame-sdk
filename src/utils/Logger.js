@@ -81,7 +81,7 @@ class BeameLogger {
 	//noinspection JSUnusedGlobalSymbols
 	/**
 	 *
-	 * @param {Object|String} error
+	 * @param {Object|Error|String} error
 	 * @returns {*|string|String}
 	 */
 	static formatError(error) {
@@ -260,7 +260,7 @@ class BeameLogger {
 	}
 
 	/**
-	 * @param {String} message
+	 * @param {String|Error} message
 	 * @param {Object|null|undefined} [data]
 	 * @param {String|null|undefined} [module]
 	 */
