@@ -117,10 +117,10 @@ class AuthToken {
 	/**
 	 *
 	 * @param {SignatureToken|String} token
-	 * @param {SignatureToken|String} [allowExpired]
+	 * @param {undefined|Boolean} [allowExpired]
 	 * @returns {Promise.<SignatureToken|null>}
 	 */
-	static validate(token, allowExpired = false) {
+	static validate(token, allowExpired = false, event = null) {
 		/** @type {SignatureToken} */
 
 
