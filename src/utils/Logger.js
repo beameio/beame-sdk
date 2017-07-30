@@ -3,8 +3,8 @@
  */
 "use strict";
 
-const _           = require('underscore');
 const util        = require('util');
+const log4js      = (require('./Log4js')).getInstance();
 const CommonUtils = require('../utils/CommonUtils');
 const LogLevel    = {
 	"Info":  "INFO",
@@ -22,13 +22,6 @@ const LogLevelVerbosity = {
 	"FATAL": 1
 };
 
-const EntityLevel = {
-	"BeameEntity": "BeameEntity",
-	"Developer":   "Developer",
-	"Atom":        "Atom",
-	"EdgeClient":  "EdgeClient",
-	"LocalClient": "LocalClient"
-};
 
 const StandardFlowEvent = {
 	"Registering":       "Registering",
@@ -51,28 +44,18 @@ const StandardFlowEvent = {
  * @param {Object} data
  */
 
-/**
- * Return a timestamp with the format "m/d/yy h:MM:ss TT"
- */
-const formatJSON = (data) => {
-	return util.inspect(data, {
-		showHidden: true,
-		colors:     true
-	})
-};
-
-const formatPrefix = (module, level) => {
-	return `[${CommonUtils.timeStamp()}] [${module}] ${level}:`;
-};
-
 
 class BeameLogger {
 
 
 	constructor(module) {
+		this._module = '';
+
 		if (module) {
-			this.module = module;
+			this._module = module;
 		}
+
+		this._logger = log4js.getLogger(this._module);
 
 		/** @member {LogLevel} **/
 		this.currentLogLevel = process.env.BEAME_LOG_LEVEL || LogLevel.Error;
@@ -85,17 +68,17 @@ class BeameLogger {
 	 * @returns {*|string|String}
 	 */
 	static formatError(error) {
-		if(error instanceof Error) {
+		if (error instanceof Error) {
 			return error.message;
 		}
 		let type = typeof error;
 		switch (type) {
 			case 'object':
-				if(error instanceof Error){
+				if (error instanceof Error) {
 					return error.message || error.toString();
 				}
 
-				if(error.message){
+				if (error.message) {
 					return error.message;
 				}
 
@@ -116,12 +99,12 @@ class BeameLogger {
 	 * @param {Number|null|undefined} [status]
 	 * @returns {typeof LoggerMessage}
 	 */
-	formatErrorMessage(message, module, data, error_code,status) {
+	formatErrorMessage(message, module, data, error_code, status) {
 		return {
 			message,
-			module: module || this.module,
+			_module: module || this._module,
 			data,
-			code:   error_code,
+			code:    error_code,
 			status
 		}
 	}
@@ -137,36 +120,18 @@ class BeameLogger {
 			return LogLevelVerbosity[level] <= LogLevelVerbosity[this.currentLogLevel];
 		};
 
-		if (!shouldPrint())  return;
+		if (!shouldPrint()) return;
 
-		let message = logMessage.message,
-		    data    = logMessage.data || {},
-		    module  = logMessage.module || this.module,
-		    prefix  = formatPrefix(module, level);
+		let message_logger = logMessage.module ? log4js.getLogger(logMessage.module) : this._logger;
 
-		switch (level) {
-			case LogLevel.Info:
-			case LogLevel.Debug:
-			case LogLevel.Warn:
-				console.warn(`${prefix} ${message}`);
+		message_logger[level.toLocaleLowerCase()](logMessage.message);
 
-				if (level === LogLevel.Debug && !_.isEmpty(data)) {
-					console.warn(`${prefix} ${formatJSON(data)}`);
-				}
+		if(logMessage.data){
+			message_logger[level.toLocaleLowerCase()](logMessage.data);
+		}
 
-				break;
-			case LogLevel.Error:
-			case LogLevel.Fatal:
-				console.error(`${prefix} ${message}`);
-
-				if (level === LogLevel.Debug && !_.isEmpty(data)) {
-					console.warn(`${prefix} ${formatJSON(data)}`);
-				}
-
-				if (level === LogLevel.Fatal) process.exit(1);
-				break;
-			default:
-				return;
+		if(level == LogLevel.Fatal) {
+			process.exit(1);
 		}
 	}
 
@@ -214,7 +179,7 @@ class BeameLogger {
 				return;
 		}
 
-		console.warn(`${formatPrefix(this.module, LogLevel.Info)} ${message}`);
+		this._logger.info(message);
 	}
 
 	/**
@@ -262,18 +227,16 @@ class BeameLogger {
 	/**
 	 * @param {String|Error} message
 	 * @param {Object|null|undefined} [data]
-	 * @param {String|null|undefined} [module]
 	 */
-	error(message, data, module) {
+	error(message, data) {
 		/** @type {typeof LoggerMessage} **/
 		let log = {
 			message,
-			data,
-			module: module || this.module
+			data
 		};
 
-		if(message instanceof Error) {
-			message.stack.split('\n').forEach(line => this.error(line, null, module));
+		if (message instanceof Error) {
+			message.stack.split('\n').forEach(line => this.error(line, null));
 		} else {
 			this.printLogMessage(LogLevel.Error, log);
 		}
@@ -282,14 +245,12 @@ class BeameLogger {
 	/**
 	 * @param {String} message
 	 * @param {Object|null|undefined} [data]
-	 * @param {String|null|undefined} [module]
 	 */
-	fatal(message, data, module) {
+	fatal(message, data) {
 		/** @type {typeof LoggerMessage} **/
 		let log = {
 			message,
-			data,
-			module
+			data
 		};
 
 		this.printLogMessage(LogLevel.Fatal, log);
@@ -301,10 +262,6 @@ class BeameLogger {
 		return LogLevel
 	}
 
-	//noinspection JSUnusedGlobalSymbols
-	static get EntityLevel() {
-		return EntityLevel
-	}
 
 	static get StandardFlowEvent() {
 		return StandardFlowEvent

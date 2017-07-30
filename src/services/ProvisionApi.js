@@ -131,7 +131,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 		if(_isUnauthorizedRequest(response)){
 			retries = 0;
-			logger.error(`API POST on ${url}:: Access Denied`);
+			logger.error(`API POST on ${url}:: Access Denied::${response.message || response.statusCode}`);
 			callback && callback(logger.formatErrorMessage('Access Denied', module_name, {
 				url
 			}, config.MessageCodes.ApiRestError,response.statusCode), null);

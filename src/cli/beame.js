@@ -169,7 +169,7 @@ function main() {
 			if (error instanceof Error) {
 				logger.error(error.stack);
 			}
-			logger.fatal(error.message, error.data, error.module);
+			logger.fatal(error.message, error.data, error._module);
 		}
 
 		if (output === undefined) {

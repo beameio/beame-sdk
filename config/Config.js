@@ -25,6 +25,9 @@ const EnvProfile = {
 /** @const {String} **/
 const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
+/** @const {String} **/
+const cdrDir = process.env.BEAME_CDR_DIR || path.join(home, '.beame_cdr');
+
 
 /** @const {String} **/
 const remotePKsDirV1 = path.join(rootDir, 'pki');
@@ -214,6 +217,7 @@ const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER
 
 module.exports = {
 	rootDir,
+	cdrDir,
 	npmRootDir,
 	EnvProfile,
 	localCertsDirV2,
