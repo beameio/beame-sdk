@@ -33,6 +33,8 @@ const localCertsDirV2 = path.join(rootDir, 'v2');
 
 const issuerCertsPath = path.join(rootDir, 'ocsp-cache');
 
+const localLogDir = path.join(rootDir, 'logs');
+
 /** @const {String} **/
 const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net";
 
@@ -52,6 +54,8 @@ const defaultAllowedClockDiff = 100; //in seconds
 const defaultAuthTokenTtl = defaultAllowedClockDiff;
 
 const defaultTimeFuzz = 10;
+
+const defaultDays2Log = 7;
 
 const ocspCachePeriod = 1000 * 60 * 60 * 24 * 30;
 
@@ -111,6 +115,24 @@ const CertFileNames = {
 	"P7B":                "p7b.cer",
 	"PKCS12":             "cert.pfx",
 	"PWD":                "pwd.txt"
+};
+
+/**
+ * Certificate file names
+ *  @enum {string}
+ */
+const LogFileNames = {
+	"LOGIN_DIARY":        "login_diary.json"
+};
+
+/**
+ * Log Event Codes
+ *  @enum {string}
+ */
+const LogEvents = {
+	"LoginSuccess":        "LoginSuccess",
+	"ExpiredCred":         "ExpiredCred",
+	"RevokedCred":         "RevokedCred"
 };
 
 
@@ -246,5 +268,9 @@ module.exports = {
 	CertValidationError,
 	defaultAllowedClockDiff,
 	defaultAuthTokenTtl,
-	defaultTimeFuzz
+	defaultTimeFuzz,
+	LogFileNames,
+	LogEvents,
+	localLogDir,
+	defaultDays2Log
 };
