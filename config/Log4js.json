@@ -13,8 +13,7 @@
             "compress": true,
             "alwaysIncludePattern": true,
             "layout": {
-                "type": "json",
-                "separator": ","
+                "type": "json"
             }
         }
     },
