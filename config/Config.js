@@ -189,14 +189,6 @@ const MessageCodes = {
 };
 
 
-const ResponseKeys = {
-	"NodeFiles":                 [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
-	"EntityMetadataKeys":        ["fqdn", "parent_fqdn", "name", "email", "level"],
-	"EntityCreateResponseKeys":  ["fqdn"],
-	"CertificateResponseKeys":   ["x509", "pkcs7", "ca"],
-	"RevokeDevCertResponseKeys": ["recovery_code"]
-};
-
 /**
  * Time units
  *  @enum {string}
@@ -211,6 +203,39 @@ const TimeUnits = {
 const CertValidationError = {
 	"InFuture": "InFuture",
 	"Expired":  "Expired"
+};
+
+/**
+ * Log Event Codes
+ *  @enum {string}
+ */
+const CDREvents = {
+	// Keeper BeameAuth Router
+	"AuthGetCredInfo":     "AuthGetCredInfo",
+	"AuthRenewCert":       "AuthRenewCert",
+	"AuthRegister":        "AuthRegister",
+	"AuthCustomerApprove": "AuthCustomerApprove",
+	"AuthSignup":          "AuthSignup",
+
+	//Keeper Socket API Controller
+	"LoginUser":     "LoginUser",
+	"ChooseApp":     "ChooseApp",
+	"Logout":        "Logout",
+	"UpdateProfile": "UpdateProfile",
+
+	// Keeper unauthenticated Router
+	"ClientRegisterServer": "ClientRegisterServer",
+	"ClientRecoverServer":  "ClientRecoverServer",
+	"DirectSignin":         "DirectSignin",
+	"GwAuthenticated":      "GwAuthenticated",
+	"RedirectToHome":       "RedirectToHome",
+	"RegisterCustomer":     "RegisterCustomer",
+	"DownloadCred":         "DownloadCred",
+	"DownloadIoSProfile":   "DownloadIoSProfile",
+
+	//Keeper pairing utils
+	"MobileVerifyToken":  "MobileVerifyToken",
+	"MobileNotifyMobile": "MobileNotifyMobile"
 };
 
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
@@ -231,7 +256,6 @@ module.exports = {
 	CertResponseFields,
 	AppModules,
 	MessageCodes,
-	ResponseKeys,
 	TimeUnits,
 	SNIServerPort,
 	CertEndpoint,
@@ -250,5 +274,6 @@ module.exports = {
 	CertValidationError,
 	defaultAllowedClockDiff,
 	defaultAuthTokenTtl,
-	defaultTimeFuzz
+	defaultTimeFuzz,
+	CDREvents
 };

@@ -11,6 +11,8 @@ module.exports = {
 	DirectoryServices: require('./src/services/DirectoryServices'),
 	EC2AuthInfo:       require('./src/services/EC2AuthInfo'),
 	Logger:            require('./src/utils/Logger'),
+	Log4Js:            require('./src/utils/Log4js'),
+	CDR:               require('./src/utils/CDR'),
 	ProvApi:           require('./src/services/ProvisionApi'),
 	ProxyClient:       require('./src/services/ProxyClient'),
 	ProxyAgent:        require('./src/services/ProxyAgent'),
