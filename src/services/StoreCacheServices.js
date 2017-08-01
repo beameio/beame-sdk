@@ -113,7 +113,7 @@ class StoreCacheServices {
 		setTimeout(_, 0);
 
 		//set
-		//setInterval(_, this._options.ocsp_interval);
+		setInterval(_, this._options.ocsp_interval);
 	}
 
 	/**
