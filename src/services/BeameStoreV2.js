@@ -35,7 +35,8 @@ const DirectoryServices   = require('./DirectoryServices');
 const Config              = require('../../config/Config');
 const CertValidationError = Config.CertValidationError;
 
-let _store = null;
+const storeCacheServices = (require('./StoreCacheServices')).getInstance();
+let _store               = null;
 
 /** Class representing Beame Store*/
 class BeameStoreV2 {
@@ -59,11 +60,21 @@ class BeameStoreV2 {
 		DirectoryServices.createDir(config.rootDir);
 		DirectoryServices.createDir(config.localCertsDirV2);
 
-		this.directoryServices.scanDir(config.localCertsDirV2).forEach(fqdn => {
+		let dir = this.directoryServices.scanDir(config.localCertsDirV2);
+
+		dir.forEach(fqdn => {
 			let cred = new Credential(this);
 			cred.initFromData(fqdn);
 			this.addCredential(cred);
+			storeCacheServices.upsertCredFromStore(cred);
 		});
+
+		//TODO activate checksum
+		// const dirsum = require('dirsum');
+		// dirsum.digest(config.localCertsDirV2, 'sha256', function(err, hashes) {
+		// 	if (err) throw err;
+		// 	console.log(JSON.stringify(hashes, null, 2));
+		// });
 	}
 
 	//noinspection JSUnusedGlobalSymbols
@@ -113,35 +124,35 @@ class BeameStoreV2 {
 		const getNext = (fqdn) => {
 			this.find(fqdn, true, allowExpired, allowRevoked).then(cred => {
 				credsList[nLevels] = cred;
-				if(!credsList[nLevels].metadata.parent_fqdn)
+				if (!credsList[nLevels].metadata.parent_fqdn)
 					credsList[nLevels].metadata.parent_fqdn = credsList[nLevels].metadata.approved_by_fqdn;
 
-				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
+				if (!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)) {
 
 					let isZeroLevel = cred.fqdn.match(/^\w*\.\w{2}\.\w{1}\.beameio\.net/);
-					if(isZeroLevel){
+					if (isZeroLevel) {
 						credsList[nLevels].metadata.level = 0;
 					}
-					else if(credsList.length > 0){
+					else if (credsList.length > 0) {
 						callback(null, credsList);
 						return;
 					}
-					else{
+					else {
 						callback('invalid metadata', null);
 						return;
 					}
 				}
-				if((credsList[nLevels].metadata.level > 0 || credsList[nLevels].metadata.parent_fqdn) &&
-					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn)))){
+				if ((credsList[nLevels].metadata.level > 0 || credsList[nLevels].metadata.parent_fqdn) &&
+					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn)))) {
 					getNext(credsList[nLevels++].metadata.parent_fqdn);
 				}
-				else{
+				else {
 					callback(null, credsList);
 				}
 			}).catch(error => {
-				if(credsList.length < 1)
+				if (credsList.length < 1)
 					callback(error, null);
-				else{
+				else {
 					console.warn(error);
 					callback(null, credsList);
 				}
@@ -163,14 +174,14 @@ class BeameStoreV2 {
 	 */
 	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback, allowExpired = false) {
 		this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
-			if(!error && guestChain){
+			if (!error && guestChain) {
 				this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
-					if(!error && lclChain && (!Number.isInteger(trustDepth) ||
-						(guestChain[0].metadata.level <= trustDepth + lclChain[0].metadata.level))){
-						for(let iLcl=0; iLcl<lclChain.length; iLcl++){
-							for(let jGuest=0; jGuest<guestChain.length; jGuest++){
+					if (!error && lclChain && (!Number.isInteger(trustDepth) ||
+							(guestChain[0].metadata.level <= trustDepth + lclChain[0].metadata.level))) {
+						for (let iLcl = 0; iLcl < lclChain.length; iLcl++) {
+							for (let jGuest = 0; jGuest < guestChain.length; jGuest++) {
 								// console.log(lclChain[iLcl].fqdn,' <=> ',guestChain[jGuest].fqdn);
-								if(guestChain[jGuest].fqdn === lclChain[iLcl].fqdn){
+								if (guestChain[jGuest].fqdn === lclChain[iLcl].fqdn) {
 									callback(null, true);
 									return;
 								}
@@ -178,12 +189,12 @@ class BeameStoreV2 {
 						}
 						callback(null, false);
 					}
-					else{
+					else {
 						callback(null, false);
 					}
 				}, allowExpired)
 			}
-			else{
+			else {
 				console.warn(error);
 				callback(null, false);
 			}
@@ -231,14 +242,14 @@ class BeameStoreV2 {
 				};
 
 				const _onCredFound = credential => {
-					if(allowExpired && allowRevoked)
+					if (allowExpired && allowRevoked)
 						resolve(credential);
-					else if(allowExpired){
+					else if (allowExpired) {
 						credential.updateOcspStatus()
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 					}
-					else if(allowRevoked){
+					else if (allowRevoked) {
 						credential.checkValidity()
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
@@ -361,11 +372,11 @@ class BeameStoreV2 {
 			{children: this.credentials},
 			cred => {
 
-				let allEnvs        = !!options.allEnvs,
-				    envPattern     = config.EnvProfile.FqdnPattern,
-				    approvedZones  = config.ApprovedZones,
-				    zone           = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null,
-					today = new Date();
+				let allEnvs       = !!options.allEnvs,
+				    envPattern    = config.EnvProfile.FqdnPattern,
+				    approvedZones = config.ApprovedZones,
+				    zone          = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null,
+				    today         = new Date();
 
 
 				//TODO fix .v1. hack
@@ -432,7 +443,7 @@ class BeameStoreV2 {
 				let list = this.list(null, {
 					hasPrivateKey:  true,
 					excludeRevoked: true,
-					excludeExpired:true
+					excludeExpired: true
 				});
 
 

@@ -28,6 +28,9 @@ const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 /** @const {String} **/
 const cdrDir = process.env.BEAME_CDR_DIR || path.join(home, '.beame_cdr');
 
+/** @const {String} **/
+const scsDir = process.env.BEAME_SCS_DIR || path.join(home, '.beame_scs');
+
 
 /** @const {String} **/
 const remotePKsDirV1 = path.join(rootDir, 'pki');
@@ -56,7 +59,9 @@ const defaultAuthTokenTtl = defaultAllowedClockDiff;
 
 const defaultTimeFuzz = 10;
 
-const ocspCachePeriod = 1000 * 60 * 60 * 24 * 30;
+const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30;
+
+const certRenewalPeriod = process.env.BEAME_RENEWAL_PERIOD || 1000 * 60 * 60 * 24;
 
 /** @const {String} **/
 const metadataFileName = "metadata.json";
@@ -238,11 +243,24 @@ const CDREvents = {
 	"MobileNotifyMobile": "MobileNotifyMobile"
 };
 
+
+/**
+ * OCSP statuses
+ *  @enum {string}
+ */
+const OcspStatus = {
+	"Good":        "Good",
+	"Bad":         "Bad",
+	"Unavailable": "Unavailable",
+	"Unknown":     "Unknown"
+};
+
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
 	rootDir,
 	cdrDir,
+	scsDir,
 	npmRootDir,
 	EnvProfile,
 	localCertsDirV2,
@@ -271,9 +289,11 @@ module.exports = {
 	ApprovedZones,
 	defaultValidityPeriod,
 	ocspCachePeriod,
+	certRenewalPeriod,
 	CertValidationError,
 	defaultAllowedClockDiff,
 	defaultAuthTokenTtl,
 	defaultTimeFuzz,
-	CDREvents
+	CDREvents,
+	OcspStatus
 };
