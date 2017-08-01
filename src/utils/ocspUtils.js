@@ -10,7 +10,7 @@ const OcspStatus        = (require('../../config/Config')).OcspStatus;
 class ocspUtils {
 
 
-	static _parseOcspResponse (err, res){
+	static _parseOcspResponse (fqdn, err, res){
 		if (err) {
 			logger.warn(`Ocsp check for ${fqdn} error ${err}`);
 			return OcspStatus.Bad;
@@ -41,37 +41,13 @@ class ocspUtils {
 	}
 
 	static check(fqdn, x509, pemPath) {
-		return new Promise((resolve, reject) => {
-				try {
-					ocsp.check({
-						cert:   x509,
-						issuer: DirectoryServices.readFile(pemPath)
-					}, (err, res) => {
-						if (err) {
-							logger.warn(`Ocsp check for ${fqdn} error ${err}`);
-							reject(err);
-						}
-						else {
-							res && res.type && res.type == 'good' ? resolve() : reject(res);
-						}
-
-					});
-				} catch (e) {
-					logger.error(`Ocsp check for ${fqdn} error ${BeameLogger.formatError(e)}`);
-					reject(e);
-				}
-			}
-		);
-	}
-
-	static checkOcspStatus(fqdn, x509, pemPath) {
 		return new Promise((resolve) => {
 				try {
 					ocsp.check({
 						cert:   x509,
 						issuer: DirectoryServices.readFile(pemPath)
 					}, (err, res) => {
-						let status = ocspUtils._parseOcspResponse(err, res);
+						let status = ocspUtils._parseOcspResponse(fqdn, err, res);
 						resolve(status);
 
 					});
@@ -90,7 +66,7 @@ class ocspUtils {
 						request:  req,
 						response: res
 					}, (err, resp) => {
-						let status = ocspUtils._parseOcspResponse(err, resp);
+						let status = ocspUtils._parseOcspResponse(fqdn, err, resp);
 						resolve(status);
 					});
 				} catch (e) {

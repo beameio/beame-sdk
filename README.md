@@ -378,6 +378,6 @@ testCheckSignature({ signedData: 'beameio',
 
 ## Environment variables
 
-* `BEAME_OCSP_RESOLVE_ARBITRATION` - Resolve OCSP check if unavailable or in any other arbitration situation
+* `BEAME_OCSP_IGNORE` - Resolve OCSP check if unavailable or in any other arbitration situation
 * `BEAME_OCSP_CACHE_PERIOD` - Period for caching OCSP results, override default value (30 days)
 * `EXTERNAL_OCSP_FQDN` - External ocsp server 

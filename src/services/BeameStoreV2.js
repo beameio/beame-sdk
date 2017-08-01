@@ -35,8 +35,7 @@ const DirectoryServices   = require('./DirectoryServices');
 const Config              = require('../../config/Config');
 const CertValidationError = Config.CertValidationError;
 
-const storeCacheServices = (require('./StoreCacheServices')).getInstance();
-let _store               = null;
+let _store = null;
 
 /** Class representing Beame Store*/
 class BeameStoreV2 {
@@ -44,15 +43,14 @@ class BeameStoreV2 {
 	constructor() {
 		this.directoryServices = new DirectoryServices();
 
-		if (_store === null) {
-			_store = this;
-		}
-		else {
+		if (_store !== null) {
 			return _store;
 		}
 
 		this.credentials = {};
 		this.init();
+
+		_store = this;
 	}
 
 	init() {
@@ -62,19 +60,29 @@ class BeameStoreV2 {
 
 		let dir = this.directoryServices.scanDir(config.localCertsDirV2);
 
-		dir.forEach(fqdn => {
-			let cred = new Credential(this);
-			cred.initFromData(fqdn);
-			this.addCredential(cred);
-			storeCacheServices.upsertCredFromStore(cred);
-		});
+		let updateCache = true;
 
-		//TODO activate checksum
-		// const dirsum = require('dirsum');
-		// dirsum.digest(config.localCertsDirV2, 'sha256', function(err, hashes) {
-		// 	if (err) throw err;
-		// 	console.log(JSON.stringify(hashes, null, 2));
-		// });
+		const storeCacheServices = (require('./StoreCacheServices')).getInstance();
+
+		const dirsum = require('dirsum');
+		dirsum.digest(config.localCertsDirV2, 'sha256', (err, hashes) => {
+			if (!err && hashes.hash) {
+				let checksum = storeCacheServices.storeState;
+				if (checksum == hashes.hash) {
+					updateCache = false;
+				}
+				else {
+					storeCacheServices.storeState = hashes.hash;
+				}
+			}
+
+			dir.forEach(fqdn => {
+				let cred = new Credential(this);
+				cred.initFromData(fqdn);
+				this.addCredential(cred);
+				updateCache && storeCacheServices.upsertCredFromStore(cred);
+			});
+		});
 	}
 
 	//noinspection JSUnusedGlobalSymbols
@@ -590,6 +598,15 @@ class BeameStoreV2 {
 
 			}
 		);
+	}
+
+
+	static getInstance() {
+		if (_store == null) {
+			new BeameStoreV2();
+		}
+
+		return _store;
 	}
 
 }

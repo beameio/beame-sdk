@@ -63,6 +63,8 @@ const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 *
 
 const certRenewalPeriod = process.env.BEAME_RENEWAL_PERIOD || 1000 * 60 * 60 * 24;
 
+const ocspCheckInterval = process.env.BEAME_OCSP_CHECK_INREVAL || 1000 * 60 * 60 * 24;
+
 /** @const {String} **/
 const metadataFileName = "metadata.json";
 
@@ -155,6 +157,7 @@ const CertResponseFields = {
  *  @enum {string}
  */
 const AppModules = {
+	"Credential":       "Credential",
 	"BeameEntity":      "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
 	"BeameCreds":       "BeameCreds",
@@ -290,6 +293,7 @@ module.exports = {
 	defaultValidityPeriod,
 	ocspCachePeriod,
 	certRenewalPeriod,
+	ocspCheckInterval,
 	CertValidationError,
 	defaultAllowedClockDiff,
 	defaultAuthTokenTtl,

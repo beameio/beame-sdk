@@ -7,6 +7,7 @@ const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require('./BeameStoreV2');
 const Credential  = require('./Credential');
+const OcspStatus  = (require('../../config/Config')).OcspStatus;
 
 const timeFuzz = config.defaultTimeFuzz;
 
@@ -107,8 +108,8 @@ class AuthToken {
 
 				CommonUtils.validateMachineClock()
 					.then(signingCreds.checkOcspStatus.bind(signingCreds, signingCreds))
-					.then(resp => {
-						resp.status ? resolve(AuthToken.create(data, signingCreds, ttl)) : reject(resp.message)
+					.then(status => {
+						status != OcspStatus.Bad ? resolve(AuthToken.create(data, signingCreds, ttl)) : reject(`OCSP status of ${signingCreds.fqdn} is Bad`)
 					}).catch(reject);
 			}
 		);
@@ -162,10 +163,10 @@ class AuthToken {
 
 			store.find(authToken.signedBy, undefined, allowExpired).then(signerCreds => {
 				signerCreds.checkOcspStatus(signerCreds)
-					.then(resp => {
+					.then(status => {
 
-						if (!resp.status) {
-							return _reject(`OCSP check failure ${resp.message}`);
+						if (status === OcspStatus.Bad) {
+							return _reject(`OCSP status is Bad`);
 						}
 
 						const signatureStatus = signerCreds.checkSignature(authToken);
