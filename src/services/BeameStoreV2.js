@@ -82,6 +82,8 @@ class BeameStoreV2 {
 				this.addCredential(cred);
 				updateCache && storeCacheServices.upsertCredFromStore(cred);
 			});
+
+			storeCacheServices.start();
 		});
 	}
 
@@ -601,6 +603,9 @@ class BeameStoreV2 {
 	}
 
 
+	/**
+	 * @returns {BeameStoreV2}
+	 */
 	static getInstance() {
 		if (_store == null) {
 			new BeameStoreV2();

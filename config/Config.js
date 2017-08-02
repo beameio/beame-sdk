@@ -63,7 +63,9 @@ const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 *
 
 const certRenewalPeriod = process.env.BEAME_RENEWAL_PERIOD || 1000 * 60 * 60 * 24;
 
-const ocspCheckInterval = process.env.BEAME_OCSP_CHECK_INREVAL || 1000 * 60 * 60 * 24;
+const ocspCheckInterval = process.env.BEAME_OCSP_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
+
+const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
 
 /** @const {String} **/
 const metadataFileName = "metadata.json";
@@ -294,6 +296,7 @@ module.exports = {
 	ocspCachePeriod,
 	certRenewalPeriod,
 	ocspCheckInterval,
+	renewalCheckInterval,
 	CertValidationError,
 	defaultAllowedClockDiff,
 	defaultAuthTokenTtl,
