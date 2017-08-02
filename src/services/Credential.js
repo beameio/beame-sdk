@@ -1755,9 +1755,7 @@ class Credential {
 
 
 				if (!forceCheck) {
-					storeCacheServices.getOcspStatus(cred.fqdn).then(status => {
-						resolve(status);
-					})
+					storeCacheServices.getOcspStatus(cred.fqdn).then(resolve)
 				}
 				else {
 					const _resolve = (status, error) => {
@@ -1882,10 +1880,10 @@ class Credential {
 							});
 					}
 					else {
-						if(cred.hasKey("X509")){
+						if (cred.hasKey("X509")) {
 							this.doOcspRequest(cred).then(_resolve);
 						}
-						else{
+						else {
 							_resolve(Config.OcspStatus.Unknown, `Cred ${cred.fqdn} has not certificate`);
 						}
 
@@ -1895,16 +1893,24 @@ class Credential {
 		);
 	}
 
-	doOcspRequest(cred){
+	doOcspRequest(cred) {
 		return new Promise((resolve) => {
 
-			this._assertIssuerCert(cred)
-				.then(storeCacheServices.checkOcsp.bind(storeCacheServices, cred.fqdn, cred.getKey("X509")))
-				.then(resolve)
-				.catch(e => {
-					logger.error(`Check ocsp status local for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
-					resolve(Config.OcspStatus.Unavailable);
-				});
+				this._assertIssuerCert(cred)
+					.then(issuerPemPath => {
+						return new Promise((resolve) => {
+								ocspUtils.check(cred.fqdn, cred.getKey("X509"), issuerPemPath).then(status => {
+									storeCacheServices.setOcspStatus(cred.fqdn, status);
+									resolve(status);
+								});
+							}
+						);
+					})
+					.then(resolve)
+					.catch(e => {
+						logger.error(`Check ocsp status local for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
+						resolve(Config.OcspStatus.Unavailable);
+					});
 			}
 		);
 	}
@@ -1915,7 +1921,7 @@ class Credential {
 		const fs      = require('fs');
 		const path    = require('path');
 
-		if(!cred.hasKey("X509")){
+		if (!cred.hasKey("X509")) {
 			return Promise.reject(`Credential ${cred.fqdn} hasn't X509 certificate`);
 		}
 

@@ -8,13 +8,11 @@ const OcspStatus        = Config.OcspStatus;
 const DirectoryServices = require('./DirectoryServices');
 const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger("StoreCacheServices");
-const ocspUtils         = require('../utils/ocspUtils');
 
 /**
  * @typedef {Object} SCSOptions
  * @property {String|undefined} [scs_path]
  * @property {Number|undefined} [cache_period]
- * @property {Number|undefined} [renewal_period]
  * @property {Number|undefined} [ocsp_interval]
  * @property {Number|undefined} [renewal_interval]
  **/
@@ -144,7 +142,7 @@ class StoreCacheServices {
 				ocspStatus: {$ne: OcspStatus.Bad},
 				$and:       [
 					{
-						notAfter: {$lte: (Date.now() - this._options.renewal_interval)}
+						notAfter: {$gte: (Date.now() - this._options.renewal_interval)}
 					}
 				]
 			};
@@ -614,16 +612,6 @@ class StoreCacheServices {
 		);
 	}
 
-	checkOcsp(fqdn, x509, issuerPemPath) {
-		return new Promise((resolve) => {
-				ocspUtils.check(fqdn, x509, issuerPemPath).then(status => {
-					this.setOcspStatus(fqdn, status);
-					resolve(status);
-				});
-			}
-		);
-	}
-
 	setLastLogin(fqdn, date) {
 		try {
 			let query   = {fqdn: fqdn},
@@ -683,7 +671,6 @@ module.exports = {
 		let _default_options = {
 			scs_path:         Config.scsDir,
 			cache_period:     Config.ocspCachePeriod,
-			renewal_period:   Config.certRenewalPeriod,
 			ocsp_interval:    Config.ocspCheckInterval,
 			renewal_interval: Config.renewalCheckInterval
 		};

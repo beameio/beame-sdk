@@ -29,8 +29,7 @@ const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 const cdrDir = process.env.BEAME_CDR_DIR || path.join(home, '.beame_cdr');
 
 /** @const {String} **/
-const scsDir = process.env.BEAME_SCS_DIR || path.join(home, '.beame_scs');
-
+const scsDir = process.env.BEAME_SCS_DIR || path.join(rootDir, '.scs');
 
 /** @const {String} **/
 const remotePKsDirV1 = path.join(rootDir, 'pki');
@@ -60,8 +59,6 @@ const defaultAuthTokenTtl = defaultAllowedClockDiff;
 const defaultTimeFuzz = 10;
 
 const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30;
-
-const certRenewalPeriod = process.env.BEAME_RENEWAL_PERIOD || 1000 * 60 * 60 * 24;
 
 const ocspCheckInterval = process.env.BEAME_OCSP_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
 
@@ -294,7 +291,6 @@ module.exports = {
 	ApprovedZones,
 	defaultValidityPeriod,
 	ocspCachePeriod,
-	certRenewalPeriod,
 	ocspCheckInterval,
 	renewalCheckInterval,
 	CertValidationError,
