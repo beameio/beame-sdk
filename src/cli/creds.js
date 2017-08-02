@@ -51,6 +51,7 @@ module.exports = {
  * @returns {*}
  */
 function _lineToText(line) {
+	/** @type {Object} **/
 	let table = new Table();
 	for (let k in line) {
 		//noinspection JSUnfilteredForInLoop
@@ -68,7 +69,7 @@ function _lineToText(line) {
  * @private
  */
 function _obj2base64(o) {
-	return Buffer(CommonUtils.stringify(o, false)).toString('base64');
+	return new Buffer(CommonUtils.stringify(o, false)).toString('base64');
 }
 
 /**
@@ -231,9 +232,6 @@ function renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
 		const fqdnX = credList[listIndex++];
 		let cred = new Credential(new BeameStore());
 		logger.info(`Trying to renew ${fqdnX}`);
-		function returnOK() {
-			return Promise.resolve({status: 'ok'});
-		}
 
 		listIndex >= listMaxIndex?
 			CommonUtils.promise2callback(cred.renewCert(authToken, fqdnX, validityPeriod), callback):
@@ -426,6 +424,7 @@ function list(regex, hasPrivateKey, expiration, anyParent, filter) {
 }
 
 list.toText = function (creds) {
+	/** @type {Object} **/
 	let table = new Table({
 		head:      ['name', 'fqdn', 'parent', 'Expires', 'priv/k', 'ocsp'],
 		colWidths: [40, 65, 55, 25, 10, 10]
@@ -433,6 +432,7 @@ list.toText = function (creds) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
+		// noinspection JSUnresolvedFunction
 		return cred.expired === true || cred.metadata.revoked ? colors.red(val) : val;
 	};
 
@@ -449,6 +449,7 @@ function signers(callback){
 	CommonUtils.promise2callback(store.getActiveLocalCreds(), callback);
 }
 signers.toText =  function (creds) {
+	/** @type {Object} **/
 	let table = new Table({
 		head:      ['name', 'fqdn'],
 		colWidths: [120, 120]
@@ -456,11 +457,11 @@ signers.toText =  function (creds) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
+		// noinspection JSUnresolvedFunction
 		return cred.expired === true ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
-
 		table.push([_setStyle(item.name, item), _setStyle(item.fqdn, item)]);
 	});
 	return table;
@@ -617,6 +618,7 @@ function listCredChain(fqdn, callback) {
 }
 
 listCredChain.toText = function (list) {
+	/** @type {Object} **/
 	let table = new Table({
 		head:      ['level', 'fqdn'],
 		colWidths: [16, 64]
@@ -624,6 +626,7 @@ listCredChain.toText = function (list) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
+		// noinspection JSUnresolvedFunction
 		return cred.expired === true ? colors.red(val) : val;
 	};
 	for(let i=0; i<list.length; i++){
@@ -759,7 +762,7 @@ encrypt.toText = _obj2base64;
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
  * @public
  * @method Creds.decrypt
- * @param {EncryptedMessage} encryptedData - data to decrypt
+ * @param {Object} encryptedData - data to decrypt
  */
 function decrypt(encryptedData) {
 
@@ -773,7 +776,6 @@ function decrypt(encryptedData) {
 
 		let targetFqdn = encryptedData.encryptedFor || encryptedData.signedData.encryptedFor;
 		console.error(`targetFqdn ${targetFqdn}`);
-		//noinspection JSDeprecatedSymbols
 		let credential = store.getCredential(targetFqdn);
 
 		return credential.decrypt(encryptedData);

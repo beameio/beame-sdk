@@ -160,9 +160,9 @@ class BeameStoreV2 {
 	 * @param {String} srcFqdn
 	 * @param {String} guestFqdn
 	 * @param {String} highestFqdn // up to zero
-	 * @param {String} trustDepth // down to infinity
+	 * @param {Number} trustDepth // down to infinity
 	 * @param {function} callback
-	 * @param {function} [allowExpired]
+	 * @param {Boolean|undefined} [allowExpired]
 	 */
 	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback, allowExpired = false) {
 		this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
@@ -364,6 +364,7 @@ class BeameStoreV2 {
 			{children: this.credentials},
 			cred => {
 
+				// noinspection JSUnresolvedVariable
 				let allEnvs       = !!options.allEnvs,
 				    envPattern    = config.EnvProfile.FqdnPattern,
 				    approvedZones = config.ApprovedZones,
@@ -376,29 +377,36 @@ class BeameStoreV2 {
 					return false;
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
 					return false;
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.hasParent && !cred.hasParent(options.hasParent)) {
 					return false;
 				}
 
 				let expirationDate = new Date(cred.getCertEnd());
 
+				// noinspection JSUnresolvedVariable
 				if (options.excludeValid) {
 					return (cred.metadata.revoked == true);
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.excludeRevoked && cred.metadata.revoked) {
 					return false;
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.excludeActive && expirationDate > today) {
 					return false;
 				}
-				else if (options.excludeExpired && expirationDate < today) {
-					return false;
+				else { // noinspection JSUnresolvedVariable
+					if (options.excludeExpired && expirationDate < today) {
+										return false;
+									}
 				}
 
 				//noinspection JSCheckFunctionSignatures
@@ -416,8 +424,9 @@ class BeameStoreV2 {
 					}
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.expiration || options.expiration === 0) {
-
+					// noinspection JSUnresolvedVariable
 					if (CommonUtils.addDays(null, options.expiration) < expirationDate) {
 						return false;
 					}
@@ -556,6 +565,7 @@ class BeameStoreV2 {
 					}
 				};
 
+				// noinspection JSUnresolvedFunction
 				async.parallel(
 					[
 						(callback) => {

@@ -12,6 +12,7 @@
  * @typedef {Object} MetadataObject
  * @property {String} fqdn
  * @property {String|null} [parent_fqdn]
+ * @property {String|null} [approved_by_fqdn]
  * @property {String|null} [name]
  * @property {String|null} [email]
  * @property {Number} level
