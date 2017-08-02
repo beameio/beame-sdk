@@ -362,6 +362,27 @@ class StoreCacheServices {
 
 	/**
 	 *
+	 * @param {String} collection
+	 * @param {Object} doc
+	 * @private
+	 */
+	_insertDocSync(collection, doc) {
+
+
+		logger.info(`Inserting ${JSON.stringify(doc)} into ${collection}`);
+		this._db[collection]
+			.insert(doc, (err, newDoc) => {
+				if (err) {
+					logger.error(`Insert doc error ${BeameLogger.formatError(err)}`)
+				}
+				else {
+					logger.info(`Doc ${JSON.stringify(doc)} inserted into ${collection}`);
+				}
+			})
+	}
+
+	/**
+	 *
 	 * @param collection
 	 * @param query
 	 * @param update
@@ -451,10 +472,27 @@ class StoreCacheServices {
 					lastOcspCheck = cred.metadata.ocspStatus.date;
 				}
 
-				let query   = {fqdn: cred.fqdn},
-				    options = {upsert: true, returnUpdatedDocs: false},
-				    update  = {
-					    $set: {
+				// let query   = {fqdn: cred.fqdn},
+				//     options = {upsert: true, returnUpdatedDocs: false},
+				//     update  = {
+				// 	    $set: {
+				// 		    fqdn:          cred.fqdn,
+				// 		    notBefore:     validity.start,
+				// 		    notAfter:      validity.end,
+				// 		    hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
+				// 		    revoked:       revoked,
+				// 		    expired:       cred.expired,
+				// 		    lastOcspCheck: lastOcspCheck,
+				// 		    nextOcspCheck: Date.now(),
+				// 		    ocspStatus:    ocspStatus,
+				// 		    lastLoginDate: null,
+				// 		    fingerprints:  cred.certData.fingerprints
+				// 	    }
+				//     };
+				//
+				// this._updateDocSync(CredsCollectionName, query, update, options, nop);
+
+				let doc  =  {
 						    fqdn:          cred.fqdn,
 						    notBefore:     validity.start,
 						    notAfter:      validity.end,
@@ -466,10 +504,10 @@ class StoreCacheServices {
 						    ocspStatus:    ocspStatus,
 						    lastLoginDate: null,
 						    fingerprints:  cred.certData.fingerprints
-					    }
+
 				    };
 
-				this._updateDocSync(CredsCollectionName, query, update, options, nop);
+				this._insertDocSync(CredsCollectionName, doc);
 			};
 
 			this._findDocSync(CredsCollectionName, {fqdn: cred.fqdn}, (err, doc) => {

@@ -80,7 +80,8 @@ class BeameStoreV2 {
 				let cred = new Credential(this);
 				cred.initFromData(fqdn);
 				this.addCredential(cred);
-				updateCache && storeCacheServices.upsertCredFromStore(cred);
+				//updateCache &&
+				storeCacheServices.upsertCredFromStore(cred);
 			});
 
 			storeCacheServices.start();
