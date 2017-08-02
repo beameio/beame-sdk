@@ -73,12 +73,17 @@ class StoreCacheServices {
 
 	}
 
-	start() {
+	/**
+	 * @param {String|undefined} [dir_checksum]
+	 */
+	start(dir_checksum) {
 
 		this._startOcspHandlerRoutine();
 		this._startRenewalRoutine();
 
-		console.log('SCS started');
+		if(dir_checksum){
+			this.storeState = dir_checksum;
+		}
 	}
 
 	//region ocsp and renewal routines

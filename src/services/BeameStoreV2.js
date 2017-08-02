@@ -60,7 +60,7 @@ class BeameStoreV2 {
 
 		let dir = this.directoryServices.scanDir(config.localCertsDirV2);
 
-		let updateCache = true;
+		let updateCache = true, dir_checksum = null;
 
 		const storeCacheServices = (require('./StoreCacheServices')).getInstance();
 
@@ -72,7 +72,7 @@ class BeameStoreV2 {
 					updateCache = false;
 				}
 				else {
-					storeCacheServices.storeState = hashes.hash;
+					dir_checksum = hashes.hash;
 				}
 			}
 
@@ -102,10 +102,10 @@ class BeameStoreV2 {
 
 					}
 				))
-				.then(storeCacheServices.start.bind(storeCacheServices));
+				.then(storeCacheServices.start.bind(storeCacheServices,dir_checksum));
 			}
 			else {
-				storeCacheServices.start();
+				storeCacheServices.start(dir_checksum);
 			}
 
 			console.log('Store  initiated');
