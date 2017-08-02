@@ -144,7 +144,7 @@ class StoreCacheServices {
 		logger.info(`Starting service`);
 
 		this._startOcspHandlerRoutine();
-		//this._startRenewalRoutine();
+		this._startRenewalRoutine();
 
 		if (this._dir_checksum) {
 			this.storeState = this._dir_checksum;
