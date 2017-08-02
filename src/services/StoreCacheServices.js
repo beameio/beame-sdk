@@ -96,14 +96,13 @@ class StoreCacheServices {
 					const store = (require('./BeameStoreV2')).getInstance();
 
 					if (!updateCache) {
-						store.credArray = [];
 						resolve();
 						return;
 					}
 
 					logger.info(`Begin db updating`);
 
-					let cred_to_insert = store.credArray;
+					let cred_to_insert = store.Credentials;
 
 					logger.info(`inserting total ${cred_to_insert.length} creds to cache from store`);
 
@@ -114,7 +113,6 @@ class StoreCacheServices {
 							);
 						}
 					)).then(() => {
-						store.credArray = [];
 						logger.info(`Cache loaded from store`);
 						resolve();
 					});
@@ -129,7 +127,7 @@ class StoreCacheServices {
 		logger.info(`Starting service`);
 
 		this._startOcspHandlerRoutine();
-		this._startRenewalRoutine();
+		//this._startRenewalRoutine();
 
 		if (this._dir_checksum) {
 			this.storeState = this._dir_checksum;
@@ -142,49 +140,34 @@ class StoreCacheServices {
 	}
 
 	//region ocsp and renewal routines
+	_combineOcspQuery(){
+		let  nextCheck =  new Date(Date.now() + this._options.ocsp_interval);
+		return {
+			ocspStatus: {$ne: OcspStatus.Bad},
+			$and:       [
+				{
+					$or: [
+						{nextOcspCheck: null},
+						{nextOcspCheck: {$lte: nextCheck}}
+					]
+				}
+			]
+		};
+	}
+
 	/**
 	 *
 	 * @private
 	 */
 	_startOcspHandlerRoutine() {
 
-		const _ = () => {
-
-			let sleep = OCSP_SLEEP,
-			    nextCheck =  new Date(Date.now() + this._options.ocsp_interval),
-			    query = {
-				    ocspStatus: {$ne: OcspStatus.Bad},
-				    $and:       [
-					    {
-						    $or: [
-							    {nextOcspCheck: null},
-							    {nextOcspCheck: {$lte: nextCheck}}
-						    ]
-					    }
-				    ]
-			    };
-
-			this._findDocs(CredsCollectionName, query).then(docs => {
-				const store = (require('./BeameStoreV2')).getInstance();
-				// noinspection JSUnresolvedFunction
-				async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc) => {
-					let cred = this._findCredential(store, doc.fqdn);
-					if (cred) {
-						this._doOcspCheck(cred, sleep)
-					}
-				});
-
-			}).catch(e => {
-				logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`)
-			})
-
-		};
-
-
 		let doStuff = () => {
-			_();
-			this._ocsp_timeout = setTimeout(doStuff, this._options.ocsp_interval);
-			this._ocsp_timeout.unref();
+			this.updateOcspState().then(()=>{
+				logger.info(`Ocsp state updated. Schedule next`);
+				this._ocsp_timeout = setTimeout(doStuff, this._options.ocsp_interval);
+				this._ocsp_timeout.unref();
+			});
+
 		};
 		doStuff();
 
@@ -257,9 +240,10 @@ class StoreCacheServices {
 	/**
 	 * @param {Number} sleep
 	 * @param {Credential} cred
+	 * @param {Function|undefined} [cb]
 	 * @private
 	 */
-	_doOcspCheck(cred, sleep) {
+	_doOcspCheck(cred, sleep, cb) {
 
 		const _onOcspUnavailable = () => {
 			sleep = parseInt(sleep * (Math.random() + 1.5));
@@ -277,6 +261,7 @@ class StoreCacheServices {
 			} else {
 				logger.info(`Ocsp status of ${cred.fqdn} is ${status}`);
 				this.setOcspStatus(cred.fqdn, status);
+				cb && cb();
 			}
 		})
 
@@ -338,7 +323,7 @@ class StoreCacheServices {
 	/**
 	 *
 	 * @param {String} name
-	 * @param {Array} index
+	 * @param {Object} index
 	 * @private
 	 */
 	_addIndex(name, index) {
@@ -708,7 +693,28 @@ class StoreCacheServices {
 
 	}
 
+	updateOcspState(){
+		let sleep = OCSP_SLEEP,
+		    query = this._combineOcspQuery();
+		return new Promise((resolve) => {
+			this._findDocs(CredsCollectionName, query).then(docs => {
+				const store = (require('./BeameStoreV2')).getInstance();
+				// noinspection JSUnresolvedFunction
+				async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc,callback) => {
+					let cred = this._findCredential(store, doc.fqdn);
+					if (cred) {
+						this._doOcspCheck(cred, sleep,callback)
+					}
+				},()=>{
+					resolve();
+				});
 
+			}).catch(e => {
+				logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`)
+			})
+			}
+		);
+	}
 	//endregion
 
 	set storeState(checksum) {

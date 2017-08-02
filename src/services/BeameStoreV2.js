@@ -40,7 +40,7 @@ let _store = null;
 /** Class representing Beame Store*/
 class BeameStoreV2 {
 
-	constructor(initArray = false) {
+	constructor() {
 		this.directoryServices = new DirectoryServices();
 
 		if (_store !== null) {
@@ -48,22 +48,16 @@ class BeameStoreV2 {
 		}
 
 		this.credentials = {};
-		//using for initial load from SCS
-		this._credArray = [];
-		this.init(initArray);
+		this.init();
 
 		_store = this;
 	}
 
-	set credArray(value){
-		this._credArray = value;
+	get Credentials(){
+		return BeameUtils.findInTree({children: this.credentials},() => {return true});
 	}
 
-	get credArray(){
-		return this._credArray;
-	}
-
-	init(initArray) {
+	init() {
 
 		DirectoryServices.createDir(config.rootDir);
 		DirectoryServices.createDir(config.localCertsDirV2);
@@ -72,7 +66,6 @@ class BeameStoreV2 {
 			let cred = new Credential(this);
 			cred.initFromData(fqdn);
 			this.addCredential(cred);
-			if(initArray) this._credArray.push(cred);
 		});
 	}
 
