@@ -68,9 +68,17 @@ class StoreCacheServices {
 		/** @type {SCSOptions} **/
 		this._options = options;
 		this._datFilePath = path.join(this._options.scs_path, `scs._dat`);
-		this._db = {};
+		this._db          = {};
 		this._initDb();
-		this._startOcspHandlerRoutine();
+
+	}
+
+	start() {
+		logger.info(`Start cache services`);
+		this._findDocs(CredsCollectionName, {}).then(docs => {
+			logger.info(`Total ${docs.length} records found`);
+			this._startOcspHandlerRoutine();
+		});
 	}
 
 	/**
@@ -89,8 +97,8 @@ class StoreCacheServices {
 				    $and:       [
 					    {
 						    $or: [
-							    {nextOcspCheck: null}
-							    //,{nextOcspCheck: {$lte: Date.now()}}
+							    {nextOcspCheck: null},
+							    {nextOcspCheck: {$lte: Date.now()}}
 						    ]
 					    }
 				    ]
@@ -283,19 +291,43 @@ class StoreCacheServices {
 	_insertDoc(collection, doc) {
 		return new Promise((resolve, reject) => {
 
-				logger.info(`Inserting ${JSON.stringify(doc)} into ${collection}`);
+				logger.debug(`Inserting ${JSON.stringify(doc)} into ${collection}`);
 				this._db[collection]
 					.insert(doc, (err, newDoc) => {
 						if (err) {
 							reject(err)
 						}
 						else {
-							logger.info(`Doc ${JSON.stringify(doc)} inserted into ${collection}`);
+							logger.debug(`Doc ${JSON.stringify(doc)} inserted into ${collection}`);
 							resolve(newDoc)
 						}
 					})
 			}
 		);
+	}
+
+	/**
+	 *
+	 * @param {String} collection
+	 * @param {Object} doc
+	 * @param {Function|undefined} [cb]
+	 * @private
+	 */
+	_insertDocSync(collection, doc, cb) {
+
+
+		logger.debug(`Inserting ${JSON.stringify(doc)} into ${collection}`);
+		this._db[collection]
+			.insert(doc, (err) => {
+				if (err) {
+					logger.error(`Insert doc error ${BeameLogger.formatError(err)}`)
+					cb && cb(err)
+				}
+				else {
+					logger.debug(`Doc ${JSON.stringify(doc)} inserted into ${collection}`);
+					cb && cb(null, doc)
+				}
+			})
 	}
 
 	/**
@@ -369,14 +401,21 @@ class StoreCacheServices {
 	//region public methods
 	/**
 	 * @param {Credential} cred
+	 * @param {Function|undefined} [cb]
 	 */
-	upsertCredFromStore(cred) {
+	upsertCredFromStore(cred, cb) {
 		try {
 			const Credential = require('./Credential');
-			if (!(cred instanceof Credential)) return;
+			if (!(cred instanceof Credential)) {
+				cb && cb();
+				return;
+			}
 
-			const insertCred = () =>{
-				if(!cred.hasKey("X509")) return;
+			const insertCred = () => {
+				if (!cred.hasKey("X509")) {
+					cb && cb();
+					return;
+				}
 
 				let ocspStatus    = Config.OcspStatus.Unknown,
 				    lastOcspCheck = null,
@@ -389,29 +428,53 @@ class StoreCacheServices {
 					lastOcspCheck = cred.metadata.ocspStatus.date;
 				}
 
-				let query   = {fqdn: cred.fqdn},
-				    options = {upsert: true, returnUpdatedDocs: false},
-				    update  = {
-					    $set: {
-						    fqdn:          cred.fqdn,
-						    notBefore:     validity.start,
-						    notAfter:      validity.end,
-						    hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
-						    revoked:       revoked,
-						    expired:       cred.expired,
-						    lastOcspCheck: lastOcspCheck,
-						    nextOcspCheck: null,
-						    lastLoginDate: null,
-						    ocspStatus:    ocspStatus
-					    }
-				    };
+				// let query   = {fqdn: cred.fqdn},
+				//     options = {upsert: true, returnUpdatedDocs: false},
+				//     update  = {
+				// 	    $set: {
+				// 		    fqdn:          cred.fqdn,
+				// 		    notBefore:     validity.start,
+				// 		    notAfter:      validity.end,
+				// 		    hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
+				// 		    revoked:       revoked,
+				// 		    expired:       cred.expired,
+				// 		    lastOcspCheck: lastOcspCheck,
+				// 		    nextOcspCheck: null,
+				// 		    lastLoginDate: null,
+				// 		    ocspStatus:    ocspStatus
+				// 	    }
+				//     };
+				//
+				// this._updateDocSync(CredsCollectionName, query, update, options, nop);
 
-				this._updateDocSync(CredsCollectionName, query, update, options, nop);
+				let doc = {
+					fqdn:          cred.fqdn,
+					notBefore:     validity.start,
+					notAfter:      validity.end,
+					hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
+					revoked:       revoked,
+					expired:       cred.expired,
+					lastOcspCheck: lastOcspCheck,
+					nextOcspCheck: null,
+					lastLoginDate: null,
+					ocspStatus:    ocspStatus
+
+				};
+
+				this._insertDocSync(CredsCollectionName, doc, (err, doc) => {
+					if (err) {
+						logger.error(`Insert cred ${cred.fqdn} doc error ${BeameLogger.formatError(err)}`);
+					}
+					cb && cb(err, doc);
+				});
 			};
 
-			this._findDocSync(CredsCollectionName,{fqdn:cred.fqdn},(err,doc)=>{
-				if(!err && !doc){
+			this._findDocSync(CredsCollectionName, {fqdn: cred.fqdn}, (err, doc) => {
+				if (!err && !doc) {
 					insertCred();
+				}
+				else {
+					cb && cb()
 				}
 			})
 
@@ -545,7 +608,7 @@ class StoreCacheServices {
 
 	//endregion
 
-	set storeState(checksum){
+	set storeState(checksum) {
 		try {
 			DirectoryServices.saveFileSync(this._datFilePath, checksum);
 		} catch (e) {
@@ -553,7 +616,7 @@ class StoreCacheServices {
 		}
 	}
 
-	get storeState(){
+	get storeState() {
 		try {
 			return DirectoryServices.doesPathExists(this._datFilePath) ? DirectoryServices.readFile(this._datFilePath).toString() : null;
 		} catch (e) {

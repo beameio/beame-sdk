@@ -76,12 +76,37 @@ class BeameStoreV2 {
 				}
 			}
 
+			let cred_to_insert = [];
+
 			dir.forEach(fqdn => {
 				let cred = new Credential(this);
 				cred.initFromData(fqdn);
 				this.addCredential(cred);
-				updateCache && storeCacheServices.upsertCredFromStore(cred);
+				if (updateCache) {
+					cred_to_insert.push(cred);
+				}
 			});
+
+			if (updateCache && cred_to_insert.length) {
+
+				let total = cred_to_insert.length;
+				console.log(`inserting total ${total}`);
+
+				Promise.all(cred_to_insert.map(cred => {
+						return new Promise((resolve) => {
+								storeCacheServices.upsertCredFromStore(cred, () => {
+									resolve()
+								})
+							}
+						);
+
+					}
+				))
+				.then(storeCacheServices.start.bind(storeCacheServices));
+			}
+			else {
+				storeCacheServices.start();
+			}
 		});
 	}
 
