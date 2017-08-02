@@ -69,11 +69,28 @@ class StoreCacheServices {
 	constructor(options) {
 		/** @type {SCSOptions} **/
 		this._options = options;
-		this._datFilePath      = path.join(this._options.scs_path, `scs._dat`);
-		this._db               = {};
-		this._dir_checksum     = null;
+		this._datFilePath  = path.join(this._options.scs_path, `scs._dat`);
+		this._db           = {};
+		this._dir_checksum = null;
 		this._initDb();
 
+	}
+
+	set storeState(checksum) {
+		try {
+			DirectoryServices.saveFileSync(this._datFilePath, checksum);
+		} catch (e) {
+			return null;
+		}
+	}
+
+	get storeState() {
+		try {
+			return DirectoryServices.doesPathExists(this._datFilePath) ? DirectoryServices.readFile(this._datFilePath).toString() : null;
+		} catch (e) {
+			logger.error(`get store state error ${BeameLogger.formatError(e)}`);
+			return null;
+		}
 	}
 
 	load() {
@@ -135,25 +152,17 @@ class StoreCacheServices {
 	}
 
 	stop() {
-		if (this._ocsp_timeout) clearTimeout(this._ocsp_timeout);
-		if (this._renewal_timeout) clearTimeout(this._renewal_timeout);
+		if (this._ocsp_timeout) {
+			this._ocsp_timeout.unref();
+			clearTimeout(this._ocsp_timeout);
+		}
+		if (this._renewal_timeout) {
+			this._renewal_timeout.unref();
+			clearTimeout(this._renewal_timeout);
+		}
 	}
 
 	//region ocsp and renewal routines
-	_combineOcspQuery(){
-		let  nextCheck =  new Date(Date.now() + this._options.ocsp_interval);
-		return {
-			ocspStatus: {$ne: OcspStatus.Bad},
-			$and:       [
-				{
-					$or: [
-						{nextOcspCheck: null},
-						{nextOcspCheck: {$lte: nextCheck}}
-					]
-				}
-			]
-		};
-	}
 
 	/**
 	 *
@@ -162,10 +171,9 @@ class StoreCacheServices {
 	_startOcspHandlerRoutine() {
 
 		let doStuff = () => {
-			this.updateOcspState().then(()=>{
+			this.updateOcspState().then(() => {
 				logger.info(`Ocsp state updated. Schedule next`);
 				this._ocsp_timeout = setTimeout(doStuff, this._options.ocsp_interval);
-				this._ocsp_timeout.unref();
 			});
 
 		};
@@ -179,41 +187,11 @@ class StoreCacheServices {
 	 */
 	_startRenewalRoutine() {
 
-		const _ = () => {
-
-			let nextCheck =  new Date(Date.now() + this._options.renewal_interval),
-				query = {
-				ocspStatus: {$ne: OcspStatus.Bad},
-				$and:       [
-					{
-						notAfter: {$lte:nextCheck}
-					},
-					{
-						hasPrivateKey: true
-					}
-				]
-			};
-
-			this._findDocs(CredsCollectionName, query).then(docs => {
-				const store = (require('./BeameStoreV2')).getInstance();
-				// noinspection JSUnresolvedFunction
-				async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc) => {
-					let cred = this._findCredential(store, doc.fqdn);
-					if (cred) {
-						this._doRenewal(cred)
-					}
-				});
-
-			}).catch(e => {
-				logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`)
-			})
-
-		};
-
 		let doStuff = () => {
-			_();
-			this._renewal_timeout = setTimeout(doStuff, this._options.renewal_interval);
-			this._renewal_timeout.unref();
+			this.renewState().then(()=>{
+				this._renewal_timeout = setTimeout(doStuff, this._options.renewal_interval);
+			});
+
 		};
 		doStuff();
 
@@ -270,13 +248,16 @@ class StoreCacheServices {
 	/**
 	 *
 	 * @param {Credential} cred
+	 * @param {Function|undefined} [cb]
 	 * @private
 	 */
-	_doRenewal(cred) {
+	_doRenewal(cred, cb) {
 		cred.renewCert(null, cred.fqdn).then(() => {
-			logger.info(`Certificates for ${cred.fqdn} renewed successfully`)
+			logger.info(`Certificates for ${cred.fqdn} renewed successfully`);
+			cb && cb()
 		}).catch(e => {
-			logger.error(`Renew cert for ${cred.fqdn} error ${BeameLogger.formatError(e)}`)
+			logger.error(`Renew cert for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
+			cb && cb()
 		})
 	}
 
@@ -693,46 +674,80 @@ class StoreCacheServices {
 
 	}
 
-	updateOcspState(){
-		let sleep = OCSP_SLEEP,
-		    query = this._combineOcspQuery();
+	updateOcspState() {
+		let sleep     = OCSP_SLEEP,
+		    nextCheck = new Date(Date.now() + this._options.ocsp_interval),
+		    query     = {
+			    ocspStatus: {$ne: OcspStatus.Bad},
+			    $and:       [
+				    {
+					    $or: [
+						    {nextOcspCheck: null},
+						    {nextOcspCheck: {$lte: nextCheck}}
+					    ]
+				    }
+			    ]
+		    };
 		return new Promise((resolve) => {
-			this._findDocs(CredsCollectionName, query).then(docs => {
-				const store = (require('./BeameStoreV2')).getInstance();
-				// noinspection JSUnresolvedFunction
-				async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc,callback) => {
-					let cred = this._findCredential(store, doc.fqdn);
-					if (cred) {
-						this._doOcspCheck(cred, sleep,callback)
-					}
-				},()=>{
-					resolve();
-				});
+				this._findDocs(CredsCollectionName, query).then(docs => {
+					const store = (require('./BeameStoreV2')).getInstance();
+					// noinspection JSUnresolvedFunction
+					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
+						let cred = this._findCredential(store, doc.fqdn);
+						if (cred) {
+							this._doOcspCheck(cred, sleep, callback)
+						}
+					}, () => {
+						resolve();
+					});
 
-			}).catch(e => {
-				logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`)
-			})
+				}).catch(e => {
+					logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`);
+
+					resolve()
+				})
 			}
 		);
 	}
+
+	renewState() {
+		return new Promise((resolve) => {
+				let nextCheck = new Date(Date.now() + this._options.renewal_interval),
+				    query     = {
+					    ocspStatus: {$ne: OcspStatus.Bad},
+					    $and:       [
+						    {
+							    notAfter: {$lte: nextCheck}
+						    },
+						    {
+							    hasPrivateKey: true
+						    }
+					    ]
+				    };
+
+				this._findDocs(CredsCollectionName, query).then(docs => {
+					const store = (require('./BeameStoreV2')).getInstance();
+					// noinspection JSUnresolvedFunction
+					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
+						let cred = this._findCredential(store, doc.fqdn);
+						if (cred) {
+							this._doRenewal(cred, callback)
+						}
+					}, () => {
+						resolve();
+					});
+
+				}).catch(e => {
+					logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for Renew error::${BeameLogger.formatError(e)}. Routine not started!!!`);
+					resolve();
+				})
+			}
+		);
+	}
+
 	//endregion
 
-	set storeState(checksum) {
-		try {
-			DirectoryServices.saveFileSync(this._datFilePath, checksum);
-		} catch (e) {
-			return null;
-		}
-	}
 
-	get storeState() {
-		try {
-			return DirectoryServices.doesPathExists(this._datFilePath) ? DirectoryServices.readFile(this._datFilePath).toString() : null;
-		} catch (e) {
-			logger.error(`get store state error ${BeameLogger.formatError(e)}`);
-			return null;
-		}
-	}
 }
 
 module.exports = {
