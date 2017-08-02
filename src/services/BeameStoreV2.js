@@ -87,26 +87,18 @@ class BeameStoreV2 {
 				}
 			});
 
-			if (updateCache && cred_to_insert.length) {
 
-				let total = cred_to_insert.length;
-				logger.info(`inserting total ${total} creds to cache from store init`);
+			logger.info(`inserting total ${cred_to_insert.length} creds to cache from store init`);
 
-				Promise.all(cred_to_insert.map(cred => {
-						return new Promise((resolve) => {
-								storeCacheServices.insertCredFromStore(cred, () => {
-									resolve()
-								})
-							}
-						);
+			Promise.all(cred_to_insert.map(cred => {
+					return new Promise((resolve) => {
+							storeCacheServices.insertCredFromStore(cred, resolve)
+						}
+					);
+				}
+			))
+			.then(storeCacheServices.start.bind(storeCacheServices,dir_checksum));
 
-					}
-				))
-				.then(storeCacheServices.start.bind(storeCacheServices,dir_checksum));
-			}
-			else {
-				storeCacheServices.start(dir_checksum);
-			}
 
 			console.log('Store  initiated');
 		});

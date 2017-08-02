@@ -93,8 +93,6 @@ class StoreCacheServices {
 	 */
 	_startOcspHandlerRoutine() {
 
-		let $this = this;
-
 		const _ = () => {
 
 			let sleep = OCSP_SLEEP,
@@ -114,9 +112,9 @@ class StoreCacheServices {
 				const store = (require('./BeameStoreV2')).getInstance();
 				// noinspection JSUnresolvedFunction
 				async.each(docs, (doc) => {
-					let cred = $this._findCredential(store, doc.fqdn);
+					let cred = this._findCredential(store, doc.fqdn);
 					if (cred) {
-						$this._doOcspCheck(cred, sleep)
+						this._doOcspCheck(cred, sleep)
 					}
 				});
 
@@ -139,7 +137,6 @@ class StoreCacheServices {
 	 */
 	_startRenewalRoutine() {
 
-		let $this = this;
 
 		const _ = () => {
 
@@ -159,9 +156,9 @@ class StoreCacheServices {
 				const store = (require('./BeameStoreV2')).getInstance();
 				// noinspection JSUnresolvedFunction
 				async.each(docs, (doc) => {
-					let cred = $this._findCredential(store, doc.fqdn);
+					let cred = this._findCredential(store, doc.fqdn);
 					if (cred) {
-						$this._doRenewal(cred)
+						this._doRenewal(cred)
 					}
 				});
 
