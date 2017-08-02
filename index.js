@@ -5,6 +5,7 @@ module.exports = {
 	BeameServer:       require('./src/services/BeameServer'),
 	BaseHttpsServer:   require('./src/services/BaseHttpsServer'),
 	BeameStore:        require('./src/services/BeameStoreV2'),
+	StoreCacheServices:require('./src/services/StoreCacheServices'),
 	BeameUtils:        require('./src/utils/BeameUtils'),
 	CommonUtils:       require('./src/utils/CommonUtils'),
 	Credential:        require('./src/services/Credential'),
