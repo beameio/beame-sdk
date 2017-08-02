@@ -9,12 +9,14 @@ const DirectoryServices = require('./DirectoryServices');
 const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger("StoreCacheServices");
 const ocspUtils         = require('../utils/ocspUtils');
+
 /**
  * @typedef {Object} SCSOptions
  * @property {String|undefined} [scs_path]
  * @property {Number|undefined} [cache_period]
  * @property {Number|undefined} [renewal_period]
  * @property {Number|undefined} [ocsp_interval]
+ * @property {Number|undefined} [renewal_interval]
  **/
 
 /**
@@ -68,17 +70,14 @@ class StoreCacheServices {
 		/** @type {SCSOptions} **/
 		this._options = options;
 		this._datFilePath = path.join(this._options.scs_path, `scs._dat`);
-		this._db          = {};
+		this._db = {};
 		this._initDb();
 
 	}
 
 	start() {
-		logger.info(`Start cache services`);
-		this._findDocs(CredsCollectionName, {}).then(docs => {
-			logger.info(`Total ${docs.length} records found`);
-			this._startOcspHandlerRoutine();
-		});
+		this._startOcspHandlerRoutine();
+		this._startRenewalRoutine();
 	}
 
 	/**
@@ -108,7 +107,10 @@ class StoreCacheServices {
 				const store = (require('./BeameStoreV2')).getInstance();
 				// noinspection JSUnresolvedFunction
 				async.each(docs, (doc) => {
-					$this._doOcspCheck(store, doc.fqdn, sleep)
+					let cred = $this._findCredential(store, doc.fqdn);
+					if (cred) {
+						$this._doOcspCheck(cred, sleep)
+					}
 				});
 
 			}).catch(e => {
@@ -125,13 +127,71 @@ class StoreCacheServices {
 	}
 
 	/**
-	 * @param store
-	 * @param fqdn
-	 * @param sleep
-	 * @param cred
+	 *
 	 * @private
 	 */
-	_doOcspCheck(store, fqdn, sleep, cred = null) {
+	_startRenewalRoutine() {
+
+		let $this = this;
+
+		const _ = () => {
+
+			let query = {
+				ocspStatus: {$ne: OcspStatus.Bad},
+				$and:       [
+					{
+						notAfter: {$lte: (Date.now() - this._options.renewal_interval)}
+					}
+				]
+			};
+
+			this._findDocs(CredsCollectionName, query).then(docs => {
+				const store = (require('./BeameStoreV2')).getInstance();
+				// noinspection JSUnresolvedFunction
+				async.each(docs, (doc) => {
+					let cred = $this._findCredential(store, doc.fqdn);
+					if (cred) {
+						$this._doRenewal(cred)
+					}
+				});
+
+			}).catch(e => {
+				logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`)
+			})
+
+		};
+
+		//start initial process
+		setTimeout(_, 0);
+
+		//set
+		setInterval(_, this._options.renewal_interval);
+	}
+
+	/**
+	 *
+	 * @param {BeameStoreV2} store
+	 * @param {String} fqdn
+	 * @returns {Credential|null}
+	 * @private
+	 */
+	_findCredential(store, fqdn) {
+		let _cred = store.getCredential(fqdn);
+		if (_cred == null) {
+			//Credential not in store
+			this._removeDocSync(CredsCollectionName, {fqdn: fqdn});
+			return null;
+		}
+
+		return _cred;
+	}
+
+	/**
+	 * @param {Number} sleep
+	 * @param {Credential} cred
+	 * @private
+	 */
+	_doOcspCheck(cred, sleep) {
 
 		let $this = this;
 
@@ -139,31 +199,32 @@ class StoreCacheServices {
 			sleep = parseInt(sleep * (Math.random() + 1.5));
 
 			setTimeout(function () {
-				$this._doOcspCheck.bind($this, store, fqdn, sleep, cred);
+				$this._doOcspCheck.bind($this, cred, sleep);
 			}, sleep);
 		};
-
-		if (cred == null) {
-
-			let _cred = store.getCredential(fqdn);
-			if (_cred == null) {
-				//Credential not in store
-				$this._removeDocSync(CredsCollectionName, {fqdn: fqdn});
-				return;
-			}
-
-			cred = _cred;
-		}
 
 		cred.doOcspRequest(cred).then(status => {
 			if (status === OcspStatus.Unavailable) {
 				_onOcspUnavailable()
 			} else {
-				logger.info(`Ocsp status of ${fqdn} is ${status}`);
-				$this.setOcspStatus(fqdn, status);
+				logger.info(`Ocsp status of ${cred.fqdn} is ${status}`);
+				$this.setOcspStatus(cred.fqdn, status);
 			}
 		})
 
+	}
+
+	/**
+	 *
+	 * @param {Credential} cred
+	 * @private
+	 */
+	_doRenewal(cred) {
+		cred.renewCert(null, cred.fqdn).then(() => {
+			logger.info(`Certificates for ${cred.fqdn} renewed successfully`)
+		}).catch(e => {
+			logger.error(`Renew cert for ${cred.fqdn} error ${BeameLogger.formatError(e)}`)
+		})
 	}
 
 	//region init DB
@@ -529,7 +590,8 @@ class StoreCacheServices {
 			    options = {upsert: true, returnUpdatedDocs: false},
 			    update  = {
 				    $set: {
-					    ocspStatus: status
+					    ocspStatus:    status,
+					    lastOcspCheck: Date.now()
 				    }
 			    };
 
@@ -608,7 +670,7 @@ class StoreCacheServices {
 
 	//endregion
 
-	set storeState(checksum) {
+	set storeState(checksum){
 		try {
 			DirectoryServices.saveFileSync(this._datFilePath, checksum);
 		} catch (e) {
@@ -616,7 +678,7 @@ class StoreCacheServices {
 		}
 	}
 
-	get storeState() {
+	get storeState(){
 		try {
 			return DirectoryServices.doesPathExists(this._datFilePath) ? DirectoryServices.readFile(this._datFilePath).toString() : null;
 		} catch (e) {
@@ -633,10 +695,11 @@ module.exports = {
 	init: function (_options) {
 		/** @type {SCSOptions} **/
 		let _default_options = {
-			scs_path:       Config.scsDir,
-			cache_period:   Config.ocspCachePeriod,
-			renewal_period: Config.certRenewalPeriod,
-			ocsp_interval:  Config.ocspCheckInterval
+			scs_path:         Config.scsDir,
+			cache_period:     Config.ocspCachePeriod,
+			renewal_period:   Config.certRenewalPeriod,
+			ocsp_interval:    Config.ocspCheckInterval,
+			renewal_interval: Config.renewalCheckInterval
 		};
 
 		let options = Object.assign({}, _default_options, _options);
