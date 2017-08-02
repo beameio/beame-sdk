@@ -6,6 +6,7 @@ const async             = require('async');
 const Config            = require('../../config/Config');
 const OcspStatus        = Config.OcspStatus;
 const DirectoryServices = require('./DirectoryServices');
+const CommonUtils       = require('../utils/CommonUtils');
 const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger("StoreCacheServices");
 
@@ -35,6 +36,7 @@ let _storeCacheServices = null;
 const nop               = () => {
 };
 const OCSP_SLEEP        = 1000;
+const ASYNC_EACH_LIMIT  = 100;
 
 const Collections = {
 	creds: {
@@ -67,23 +69,76 @@ class StoreCacheServices {
 	constructor(options) {
 		/** @type {SCSOptions} **/
 		this._options = options;
-		this._datFilePath = path.join(this._options.scs_path, `scs._dat`);
-		this._db = {};
+		this._datFilePath      = path.join(this._options.scs_path, `scs._dat`);
+		this._db               = {};
+		this._dir_checksum     = null;
 		this._initDb();
 
 	}
 
-	/**
-	 * @param {String|undefined} [dir_checksum]
-	 */
-	start(dir_checksum) {
+	load() {
+
+		return new Promise((resolve) => {
+				let updateCache = true;
+
+				const dirsum = require('dirsum');
+				dirsum.digest(Config.localCertsDirV2, 'sha256', (err, hashes) => {
+					if (!err && hashes.hash) {
+						let checksum = this.storeState;
+						if (checksum == hashes.hash) {
+							updateCache = false;
+						}
+						else {
+							this._dir_checksum = hashes.hash;
+						}
+					}
+
+					const store = (require('./BeameStoreV2')).getInstance();
+
+					if (!updateCache) {
+						store.credArray = [];
+						resolve();
+						return;
+					}
+
+					logger.info(`Begin db updating`);
+
+					let cred_to_insert = store.credArray;
+
+					logger.info(`inserting total ${cred_to_insert.length} creds to cache from store`);
+
+					Promise.all(cred_to_insert.map(cred => {
+							return new Promise((resolve) => {
+									this.insertCredFromStore(cred, resolve)
+								}
+							);
+						}
+					)).then(() => {
+						store.credArray = [];
+						logger.info(`Cache loaded from store`);
+						resolve();
+					});
+
+				});
+			}
+		);
+	}
+
+	start() {
+
+		logger.info(`Starting service`);
 
 		this._startOcspHandlerRoutine();
 		this._startRenewalRoutine();
 
-		if(dir_checksum){
-			this.storeState = dir_checksum;
+		if (this._dir_checksum) {
+			this.storeState = this._dir_checksum;
 		}
+	}
+
+	stop() {
+		if (this._ocsp_timeout) clearTimeout(this._ocsp_timeout);
+		if (this._renewal_timeout) clearTimeout(this._renewal_timeout);
 	}
 
 	//region ocsp and renewal routines
@@ -96,13 +151,14 @@ class StoreCacheServices {
 		const _ = () => {
 
 			let sleep = OCSP_SLEEP,
+			    nextCheck =  new Date(Date.now() + this._options.ocsp_interval),
 			    query = {
 				    ocspStatus: {$ne: OcspStatus.Bad},
 				    $and:       [
 					    {
 						    $or: [
 							    {nextOcspCheck: null},
-							    {nextOcspCheck: {$lte: Date.now()}}
+							    {nextOcspCheck: {$lte: nextCheck}}
 						    ]
 					    }
 				    ]
@@ -111,7 +167,7 @@ class StoreCacheServices {
 			this._findDocs(CredsCollectionName, query).then(docs => {
 				const store = (require('./BeameStoreV2')).getInstance();
 				// noinspection JSUnresolvedFunction
-				async.each(docs, (doc) => {
+				async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc) => {
 					let cred = this._findCredential(store, doc.fqdn);
 					if (cred) {
 						this._doOcspCheck(cred, sleep)
@@ -124,11 +180,14 @@ class StoreCacheServices {
 
 		};
 
-		//start initial process
-		setTimeout(_, 0);
 
-		//set
-		setInterval(_, this._options.ocsp_interval);
+		let doStuff = () => {
+			_();
+			this._ocsp_timeout = setTimeout(doStuff, this._options.ocsp_interval);
+			this._ocsp_timeout.unref();
+		};
+		doStuff();
+
 	}
 
 	/**
@@ -137,17 +196,17 @@ class StoreCacheServices {
 	 */
 	_startRenewalRoutine() {
 
-
 		const _ = () => {
 
-			let query = {
+			let nextCheck =  new Date(Date.now() + this._options.renewal_interval),
+				query = {
 				ocspStatus: {$ne: OcspStatus.Bad},
 				$and:       [
 					{
-						notAfter: {$gte: (Date.now() - this._options.renewal_interval)}
+						notAfter: {$lte:nextCheck}
 					},
 					{
-						hasPrivateKey:true
+						hasPrivateKey: true
 					}
 				]
 			};
@@ -155,7 +214,7 @@ class StoreCacheServices {
 			this._findDocs(CredsCollectionName, query).then(docs => {
 				const store = (require('./BeameStoreV2')).getInstance();
 				// noinspection JSUnresolvedFunction
-				async.each(docs, (doc) => {
+				async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc) => {
 					let cred = this._findCredential(store, doc.fqdn);
 					if (cred) {
 						this._doRenewal(cred)
@@ -168,11 +227,13 @@ class StoreCacheServices {
 
 		};
 
-		//start initial process
-		setTimeout(_, 0);
+		let doStuff = () => {
+			_();
+			this._renewal_timeout = setTimeout(doStuff, this._options.renewal_interval);
+			this._renewal_timeout.unref();
+		};
+		doStuff();
 
-		//set
-		setInterval(_, this._options.renewal_interval);
 	}
 
 	/**
@@ -200,14 +261,14 @@ class StoreCacheServices {
 	 */
 	_doOcspCheck(cred, sleep) {
 
-		let $this = this;
-
 		const _onOcspUnavailable = () => {
 			sleep = parseInt(sleep * (Math.random() + 1.5));
 
-			setTimeout(function () {
-				$this._doOcspCheck.bind($this, cred, sleep);
+			let ocspTimeout = setTimeout(() => {
+				this._doOcspCheck.bind(this, cred, sleep);
 			}, sleep);
+
+			ocspTimeout.unref();
 		};
 
 		cred.doOcspRequest(cred).then(status => {
@@ -215,7 +276,7 @@ class StoreCacheServices {
 				_onOcspUnavailable()
 			} else {
 				logger.info(`Ocsp status of ${cred.fqdn} is ${status}`);
-				$this.setOcspStatus(cred.fqdn, status);
+				this.setOcspStatus(cred.fqdn, status);
 			}
 		})
 
@@ -233,6 +294,7 @@ class StoreCacheServices {
 			logger.error(`Renew cert for ${cred.fqdn} error ${BeameLogger.formatError(e)}`)
 		})
 	}
+
 	//endregion
 
 	//region init DB
@@ -494,13 +556,13 @@ class StoreCacheServices {
 
 				if (cred.metadata.ocspStatus) {
 					ocspStatus    = revoked ? Config.OcspStatus.Bad : Config.OcspStatus.Good;
-					lastOcspCheck = cred.metadata.ocspStatus.date;
+					lastOcspCheck = CommonUtils.tryParseDate(cred.metadata.ocspStatus.date);
 				}
 
 				let doc = {
 					fqdn:          cred.fqdn,
-					notBefore:     validity.start,
-					notAfter:      validity.end,
+					notBefore:     CommonUtils.tryParseDate(validity.start),
+					notAfter:      CommonUtils.tryParseDate(validity.end),
 					hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
 					revoked:       revoked,
 					expired:       cred.expired,
@@ -539,8 +601,8 @@ class StoreCacheServices {
 			    options = {upsert: true, returnUpdatedDocs: false},
 			    update  = {
 				    $set: {
-					    notBefore: validity.start,
-					    notAfter:  validity.end
+					    notBefore: CommonUtils.tryParseDate(validity.start),
+					    notAfter:  CommonUtils.tryParseDate(validity.end)
 				    }
 			    };
 
@@ -580,7 +642,7 @@ class StoreCacheServices {
 			    update  = {
 				    $set: {
 					    ocspStatus:    status,
-					    lastOcspCheck: Date.now()
+					    lastOcspCheck: new Date()
 				    }
 			    };
 
@@ -592,7 +654,7 @@ class StoreCacheServices {
 					break;
 				case OcspStatus.Good:
 					update.$set["revoked"]       = false;
-					update.$set["nextOcspCheck"] = Date.now() + (this._options.cache_period - this._options.ocsp_interval);
+					update.$set["nextOcspCheck"] = new Date(Date.now() + (this._options.cache_period - this._options.ocsp_interval));
 					break;
 				default:
 					break;
@@ -623,7 +685,7 @@ class StoreCacheServices {
 			    options = {upsert: true, returnUpdatedDocs: false},
 			    update  = {
 				    $set: {
-					    lastLoginDate: date
+					    lastLoginDate: CommonUtils.tryParseDate(date)
 				    }
 			    };
 
@@ -649,7 +711,7 @@ class StoreCacheServices {
 
 	//endregion
 
-	set storeState(checksum){
+	set storeState(checksum) {
 		try {
 			DirectoryServices.saveFileSync(this._datFilePath, checksum);
 		} catch (e) {
@@ -657,7 +719,7 @@ class StoreCacheServices {
 		}
 	}
 
-	get storeState(){
+	get storeState() {
 		try {
 			return DirectoryServices.doesPathExists(this._datFilePath) ? DirectoryServices.readFile(this._datFilePath).toString() : null;
 		} catch (e) {

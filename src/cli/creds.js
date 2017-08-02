@@ -427,18 +427,18 @@ function list(regex, hasPrivateKey, expiration, anyParent, filter) {
 
 list.toText = function (creds) {
 	let table = new Table({
-		head:      ['name', 'fqdn', 'parent', 'Expires', 'priv/k'],
-		colWidths: [40, 65, 55, 25, 10]
+		head:      ['name', 'fqdn', 'parent', 'Expires', 'priv/k', 'ocsp'],
+		colWidths: [40, 65, 55, 25, 10, 10]
 	});
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
-		return cred.expired === true ? colors.red(val) : val;
+		return cred.expired === true || cred.metadata.revoked ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
 
-		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item)]);
+		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item), _setStyle(!!(item.metadata.revoked) ? 'Bad' : 'Good', item)]);
 	});
 	return table;
 };

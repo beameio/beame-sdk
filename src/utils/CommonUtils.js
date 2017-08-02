@@ -144,6 +144,28 @@ class CommonUtils {
 		return ret;
 	}
 
+	static hashToArray(hash) {
+		try {
+			let keys = Object.keys(hash);
+
+			return keys.map((v) => {
+				return hash[v];
+			});
+		} catch (e) {
+			return [];
+		}
+	}
+
+	static tryParseDate(value){
+		try {
+			if(value instanceof Date) return value;
+
+			return new Date(value);
+		} catch (e) {
+			return null;
+		}
+	}
+
 	static isResponseSuccess(statusCode) {
 		return statusCode >= 200 && statusCode < 300;
 	}

@@ -40,7 +40,7 @@ let _store = null;
 /** Class representing Beame Store*/
 class BeameStoreV2 {
 
-	constructor() {
+	constructor(initArray = false) {
 		this.directoryServices = new DirectoryServices();
 
 		if (_store !== null) {
@@ -48,59 +48,31 @@ class BeameStoreV2 {
 		}
 
 		this.credentials = {};
-		this.init();
+		//using for initial load from SCS
+		this._credArray = [];
+		this.init(initArray);
 
 		_store = this;
 	}
 
-	init() {
+	set credArray(value){
+		this._credArray = value;
+	}
+
+	get credArray(){
+		return this._credArray;
+	}
+
+	init(initArray) {
 
 		DirectoryServices.createDir(config.rootDir);
 		DirectoryServices.createDir(config.localCertsDirV2);
 
-		let dir = this.directoryServices.scanDir(config.localCertsDirV2);
-
-		let updateCache = true, dir_checksum = null;
-
-		const storeCacheServices = (require('./StoreCacheServices')).getInstance();
-
-		const dirsum = require('dirsum');
-		dirsum.digest(config.localCertsDirV2, 'sha256', (err, hashes) => {
-			if (!err && hashes.hash) {
-				let checksum = storeCacheServices.storeState;
-				if (checksum == hashes.hash) {
-					updateCache = false;
-				}
-				else {
-					dir_checksum = hashes.hash;
-				}
-			}
-
-			let cred_to_insert = [];
-
-			dir.forEach(fqdn => {
-				let cred = new Credential(this);
-				cred.initFromData(fqdn);
-				this.addCredential(cred);
-				if (updateCache) {
-					cred_to_insert.push(cred);
-				}
-			});
-
-
-			logger.info(`inserting total ${cred_to_insert.length} creds to cache from store init`);
-
-			Promise.all(cred_to_insert.map(cred => {
-					return new Promise((resolve) => {
-							storeCacheServices.insertCredFromStore(cred, resolve)
-						}
-					);
-				}
-			))
-			.then(storeCacheServices.start.bind(storeCacheServices,dir_checksum));
-
-
-			console.log('Store  initiated');
+		this.directoryServices.scanDir(config.localCertsDirV2).forEach((fqdn) => {
+			let cred = new Credential(this);
+			cred.initFromData(fqdn);
+			this.addCredential(cred);
+			if(initArray) this._credArray.push(cred);
 		});
 	}
 
