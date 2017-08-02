@@ -148,6 +148,9 @@ class StoreCacheServices {
 				$and:       [
 					{
 						notAfter: {$gte: (Date.now() - this._options.renewal_interval)}
+					},
+					{
+						hasPrivateKey:true
 					}
 				]
 			};
