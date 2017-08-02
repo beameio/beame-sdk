@@ -94,7 +94,7 @@ class BeameStoreV2 {
 
 				Promise.all(cred_to_insert.map(cred => {
 						return new Promise((resolve) => {
-								storeCacheServices.upsertCredFromStore(cred, () => {
+								storeCacheServices.insertCredFromStore(cred, () => {
 									resolve()
 								})
 							}
@@ -107,6 +107,8 @@ class BeameStoreV2 {
 			else {
 				storeCacheServices.start();
 			}
+
+			console.log('Store  initiated');
 		});
 	}
 

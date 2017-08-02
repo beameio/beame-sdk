@@ -76,10 +76,14 @@ class StoreCacheServices {
 	}
 
 	start() {
+
 		this._startOcspHandlerRoutine();
 		this._startRenewalRoutine();
+
+		console.log('SCS started');
 	}
 
+	//region ocsp and renewal routines
 	/**
 	 *
 	 * @private
@@ -226,6 +230,7 @@ class StoreCacheServices {
 			logger.error(`Renew cert for ${cred.fqdn} error ${BeameLogger.formatError(e)}`)
 		})
 	}
+	//endregion
 
 	//region init DB
 	/**
@@ -381,7 +386,7 @@ class StoreCacheServices {
 		this._db[collection]
 			.insert(doc, (err) => {
 				if (err) {
-					logger.error(`Insert doc error ${BeameLogger.formatError(err)}`)
+					logger.error(`Insert doc error ${BeameLogger.formatError(err)}`);
 					cb && cb(err)
 				}
 				else {
@@ -464,7 +469,7 @@ class StoreCacheServices {
 	 * @param {Credential} cred
 	 * @param {Function|undefined} [cb]
 	 */
-	upsertCredFromStore(cred, cb) {
+	insertCredFromStore(cred, cb) {
 		try {
 			const Credential = require('./Credential');
 			if (!(cred instanceof Credential)) {
@@ -488,25 +493,6 @@ class StoreCacheServices {
 					ocspStatus    = revoked ? Config.OcspStatus.Bad : Config.OcspStatus.Good;
 					lastOcspCheck = cred.metadata.ocspStatus.date;
 				}
-
-				// let query   = {fqdn: cred.fqdn},
-				//     options = {upsert: true, returnUpdatedDocs: false},
-				//     update  = {
-				// 	    $set: {
-				// 		    fqdn:          cred.fqdn,
-				// 		    notBefore:     validity.start,
-				// 		    notAfter:      validity.end,
-				// 		    hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
-				// 		    revoked:       revoked,
-				// 		    expired:       cred.expired,
-				// 		    lastOcspCheck: lastOcspCheck,
-				// 		    nextOcspCheck: null,
-				// 		    lastLoginDate: null,
-				// 		    ocspStatus:    ocspStatus
-				// 	    }
-				//     };
-				//
-				// this._updateDocSync(CredsCollectionName, query, update, options, nop);
 
 				let doc = {
 					fqdn:          cred.fqdn,

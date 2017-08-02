@@ -2419,7 +2419,7 @@ class Credential {
 						}
 
 						cred.syncMetadata(fqdn).then(payload => {
-							storeCacheServices.upsertCredFromStore(cred);
+							storeCacheServices.insertCredFromStore(cred);
 							resolve(payload);
 						}).catch(() => {
 							logger.debug(`retry on sync meta for ${fqdn}`);
