@@ -131,6 +131,9 @@ class StoreCacheServices {
 						}
 					)).then(() => {
 						logger.info(`Cache loaded from store`);
+						if (this._dir_checksum) {
+							this.storeState = this._dir_checksum;
+						}
 						resolve();
 					});
 
@@ -146,9 +149,6 @@ class StoreCacheServices {
 		this._startOcspHandlerRoutine();
 		this._startRenewalRoutine();
 
-		if (this._dir_checksum) {
-			this.storeState = this._dir_checksum;
-		}
 	}
 
 	stop() {
