@@ -334,7 +334,7 @@ test("Revoke", {
 })
 
 test("OCSP test after revocation") with {
-	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``}
+	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``
     assert_eq(s, 'Bad', "Ocsp status ${entities[1].fqdn} revoked")
 }
 
