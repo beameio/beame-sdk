@@ -320,7 +320,7 @@ test("Renew", {
 })
 
 test("OCSP test") with {
-	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``
+	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --forceCheck true --format json``
 	assert_eq(s, 'Good', "Ocsp status ${entities[1].fqdn} is OK")
 }
 
