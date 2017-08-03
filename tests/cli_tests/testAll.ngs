@@ -321,7 +321,7 @@ test("Renew", {
 
 test("OCSP test") with {
 	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``
-	assert_hash_keys_values(s, {'status': true}, "Ocsp status ${entities[1].fqdn} is OK")
+	assert_eq(s, 'Good', "Ocsp status ${entities[1].fqdn} is OK")
 }
 
 test_dns(entities[1].fqdn)
@@ -335,7 +335,7 @@ test("Revoke", {
 
 test("OCSP test after revocation") with {
 	s = retry(body={``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --forceCheck true --format json``},success_predicate={A.status==false},fail_cb={throw TestFail("Check OCSP for ${entities[1].fqdn} failed")})
-    assert_hash_keys_values(s, {'status': false}, "Ocsp status ${entities[1].fqdn} revoked")
+    assert_eq(s, 'Bad', "Ocsp status ${entities[1].fqdn} revoked")
 }
 
 test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {

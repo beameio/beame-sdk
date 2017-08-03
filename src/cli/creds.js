@@ -345,7 +345,7 @@ function checkOcsp(fqdn, forceCheck, callback){
 
 }
 checkOcsp.toText = x => {
-	return x.status === true ? `Certificate ${x.fqdn} is valid` : x.message;
+	return x !== config.OcspStatus.Bad ? `Certificate is valid` : 'Certificate is revoked';
 };
 /**
  * @public
