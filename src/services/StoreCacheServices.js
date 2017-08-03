@@ -231,6 +231,7 @@ class StoreCacheServices {
 	 * @private
 	 */
 	_initDb() {
+		DirectoryServices.createDir(Config.rootDir);
 		DirectoryServices.createDir(this._options.scs_path);
 		this._loadCollection(Collections.creds);
 	}
