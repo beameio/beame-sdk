@@ -126,7 +126,7 @@ class StoreCacheServices {
 			this.updateOcspState().then(() => {
 				logger.info(`Ocsp state updated. Schedule next`);
 				_setInterval(_runRoutine);
-			}).catch(_setInterval.bind(this,_runRoutine));
+			}).catch(_setInterval.bind(this, _runRoutine));
 
 		};
 		_runRoutine();
@@ -145,7 +145,7 @@ class StoreCacheServices {
 			this.renewState().then(() => {
 				logger.info(`Renewal completed. Schedule next`);
 				_setInterval(_runRoutine);
-			}).catch(_setInterval.bind(this,_runRoutine));
+			}).catch(_setInterval.bind(this, _runRoutine));
 		};
 		_runRoutine();
 
@@ -219,7 +219,7 @@ class StoreCacheServices {
 			cb()
 		}).catch(e => {
 			logger.error(`Renew cert for ${fqdn} error ${BeameLogger.formatError(e)}`);
-			cb()
+			cb(e)
 		})
 	}
 
@@ -513,6 +513,10 @@ class StoreCacheServices {
 
 	}
 
+	list(predicate) {
+		return this._findDocs(CredsCollectionName, predicate);
+	}
+
 	get(fqdn) {
 		let query = {fqdn: fqdn};
 		return this._findDoc(CredsCollectionName, query);
@@ -522,8 +526,8 @@ class StoreCacheServices {
 
 		return new Promise((resolve) => {
 				try {
-					let query   = {fqdn: fqdn},
-					    update  = {
+					let query  = {fqdn: fqdn},
+					    update = {
 						    $set: {
 							    ocspStatus:    status,
 							    lastOcspCheck: new Date()
@@ -608,71 +612,95 @@ class StoreCacheServices {
 
 	}
 
-	updateOcspState() {
-		let sleep     = OCSP_SLEEP,
-		    nextCheck = new Date(Date.now() + this._options.ocsp_interval),
-		    query     = {
-			    ocspStatus: {$ne: OcspStatus.Bad},
-			    $and:       [
-				    {
-					    $or: [
-						    {nextOcspCheck: null},
-						    {nextOcspCheck: {$lte: nextCheck}}
-					    ]
-				    }
-			    ]
-		    };
+	/**
+	 *
+	 * @param {Boolean|undefined} [force] => force update all
+	 * @returns {Promise}
+	 */
+	updateOcspState(force = false) {
 		return new Promise((resolve) => {
+
+				let sleep     = OCSP_SLEEP,
+				    nextCheck = new Date(Date.now() + this._options.ocsp_interval),
+				    query     = {
+					    ocspStatus: {$ne: OcspStatus.Bad}
+				    };
+
+				if (!force) {
+					query["$and"] = [
+						{
+							$or: [
+								{nextOcspCheck: null},
+								{nextOcspCheck: {$lte: nextCheck}}
+							]
+						}
+					]
+				}
+
 				this._findDocs(CredsCollectionName, query).then(docs => {
 					const store = (require('./BeameStoreV2')).getInstance();
+					let idx     = 0;
 					// noinspection JSUnresolvedFunction
 					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
 						let fqdn = doc.fqdn;
 						this._findCredential(store, fqdn).then(cred => {
+							idx++;
 							this._doOcspCheck(cred, sleep, callback)
 						}).catch(e => {
 							logger.error(`Update OCSP for ${fqdn} error ${e}`);
 							callback()
 						});
 					}, () => {
-						resolve();
+						resolve(`${idx} credentials updated`);
 					});
 
 				}).catch(e => {
 					logger.error(`Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`);
 
-					resolve()
+					resolve(`Unexpected error ${BeameLogger.formatError(e)}`)
 				})
 			}
 		);
 	}
 
-	renewState() {
+	/**
+	 *
+	 * @param {Boolean|undefined} [force] => force update all
+	 * @returns {Promise}
+	 */
+	renewState(force = false) {
 		return new Promise((resolve) => {
 				let nextCheck = new Date(Date.now() + this._options.renewal_interval),
 				    query     = {
 					    ocspStatus: {$ne: OcspStatus.Bad},
-					    $and:       [
-						    {
-							    notAfter: {$lte: nextCheck}
-						    },
-						    {
-							    hasPrivateKey: true
-						    }
-					    ]
+					    $and:       [{hasPrivateKey: true}]
 				    };
 
+				if (!force) {
+					query["$and"].push({notAfter: {$lte: nextCheck}});
+				}
+
 				this._findDocs(CredsCollectionName, query).then(docs => {
+					let idx = 0, updated = 0;
 					// noinspection JSUnresolvedFunction
 					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
-						this._doRenewal(doc.fqdn, callback)
+						idx++;
+						setTimeout(() => {
+							this._doRenewal(doc.fqdn, (err) => {
+								if (!err) {
+									updated++;
+								}
+
+								callback()
+							})
+						}, idx * 1000)
 					}, () => {
-						resolve();
+						resolve(`${idx} renewal requested, ${updated} completed`);
 					});
 
 				}).catch(e => {
 					logger.error(`Find creds for Renew error::${BeameLogger.formatError(e)}. Routine not started!!!`);
-					resolve();
+					resolve(`Unexpected error ${BeameLogger.formatError(e)}`)
 				})
 			}
 		);

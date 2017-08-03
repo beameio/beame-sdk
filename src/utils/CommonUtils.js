@@ -166,6 +166,15 @@ class CommonUtils {
 		}
 	}
 
+	static formatDate(d){
+
+		if(!d) return d;
+
+		let date = CommonUtils.tryParseDate(d);
+
+		return date ? date.toLocaleString() : null
+	}
+
 	static isResponseSuccess(statusCode) {
 		return statusCode >= 200 && statusCode < 300;
 	}
