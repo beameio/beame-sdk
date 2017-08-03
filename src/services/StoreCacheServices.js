@@ -396,8 +396,9 @@ class StoreCacheServices {
 	//region public methods
 	/**
 	 * @param {Credential} cred
+	 * @param {String|undefined} [status]
 	 */
-	insertCredFromStore(cred) {
+	insertCredFromStore(cred, status = null) {
 
 		return new Promise((resolve) => {
 
@@ -407,7 +408,7 @@ class StoreCacheServices {
 						return;
 					}
 
-					let ocspStatus    = Config.OcspStatus.Unknown,
+					let ocspStatus    = status || Config.OcspStatus.Unknown,
 					    lastOcspCheck = null,
 					    validity      = cred.certData.validity || {start: null, end: null},
 					    revoked       = !!(cred.metadata.revoked);

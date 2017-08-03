@@ -2437,7 +2437,7 @@ class Credential {
 						}
 
 						cred.syncMetadata(fqdn).then(payload => {
-							storeCacheServices.insertCredFromStore(cred).then(() => {
+							storeCacheServices.insertCredFromStore(cred, Config.OcspStatus.Good).then(() => {
 								resolve(payload);
 							});
 						}).catch(() => {
