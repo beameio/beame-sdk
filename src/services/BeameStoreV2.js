@@ -54,7 +54,7 @@ class BeameStoreV2 {
 	}
 
 	get Credentials(){
-		return BeameUtils.findInTree({children: this.credentials},() => {return true});
+		return BeameUtils.findInTree({children: this.credentials},cred => {return cred.fqdn});
 	}
 
 	init() {

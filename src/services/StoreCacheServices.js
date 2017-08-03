@@ -32,15 +32,18 @@ const logger            = new BeameLogger("StoreCacheServices");
  * @property {OcspStatus} ocspStatus
  */
 
-let _storeCacheServices = null;
-const nop               = () => {
+let _storeCacheServices      = null;
+const nop                    = () => {
 };
-const OCSP_SLEEP        = 1000;
-const ASYNC_EACH_LIMIT  = 100;
+const OCSP_SLEEP             = 1000;
+const ASYNC_EACH_LIMIT       = 100;
+const DB_COMPACTION_INTERVAL = 1000 * 60 * 60;
+
+const CredsCollectionName = 'creds';
 
 const Collections = {
 	creds: {
-		name:    'creds',
+		name:    CredsCollectionName,
 		indices: [
 			{
 				fieldName: 'fqdn',
@@ -59,8 +62,6 @@ const Collections = {
 	}
 };
 
-const CredsCollectionName = Collections.creds.name;
-
 class StoreCacheServices {
 
 	/**
@@ -69,83 +70,34 @@ class StoreCacheServices {
 	constructor(options) {
 		/** @type {SCSOptions} **/
 		this._options = options;
-		this._datFilePath  = path.join(this._options.scs_path, `scs._dat`);
-		this._db           = {};
-		this._dir_checksum = null;
+		this._db = {};
 		this._initDb();
 
 	}
 
-	set storeState(checksum) {
-		try {
-			DirectoryServices.saveFileSync(this._datFilePath, checksum);
-		} catch (e) {
-			return null;
-		}
-	}
-
-	get storeState() {
-		try {
-			return DirectoryServices.doesPathExists(this._datFilePath) ? DirectoryServices.readFile(this._datFilePath).toString() : null;
-		} catch (e) {
-			logger.error(`get store state error ${BeameLogger.formatError(e)}`);
-			return null;
-		}
-	}
-
 	load() {
-
 		return new Promise((resolve) => {
-				let updateCache = true;
+				const store = (require('./BeameStoreV2')).getInstance();
 
-				const dirsum = require('dirsum');
-				dirsum.digest(Config.localCertsDirV2, 'sha256', (err, hashes) => {
-					if (!err && hashes.hash) {
-						let checksum = this.storeState;
-						if (checksum == hashes.hash) {
-							updateCache = false;
-						}
-						else {
-							this._dir_checksum = hashes.hash;
-						}
+				let cred_to_insert = store.Credentials;
+
+				logger.info(`loading ${cred_to_insert.length} creds to cache from store`);
+
+				Promise.all(cred_to_insert.map(cred => {
+						return this.insertCredFromStore(cred)
 					}
-
-					const store = (require('./BeameStoreV2')).getInstance();
-
-					if (!updateCache) {
-						resolve();
-						return;
-					}
-
-					logger.info(`Begin db updating`);
-
-					let cred_to_insert = store.Credentials;
-
-					logger.info(`inserting total ${cred_to_insert.length} creds to cache from store`);
-
-					Promise.all(cred_to_insert.map(cred => {
-							return new Promise((resolve) => {
-									this.insertCredFromStore(cred, resolve)
-								}
-							);
-						}
-					)).then(() => {
-						logger.info(`Cache loaded from store`);
-						if (this._dir_checksum) {
-							this.storeState = this._dir_checksum;
-						}
-						resolve();
-					});
-
+				)).then(() => {
+					logger.info(`Cache loaded from store`);
+					resolve();
 				});
 			}
 		);
 	}
 
-	start() {
+	startScheduledRoutines() {
 
 		logger.info(`Starting service`);
-
+		this._db[CredsCollectionName].persistence.setAutocompactionInterval(DB_COMPACTION_INTERVAL);
 		this._startOcspHandlerRoutine();
 		this._startRenewalRoutine();
 
@@ -168,13 +120,13 @@ class StoreCacheServices {
 	 */
 	_startOcspHandlerRoutine() {
 
-		let _setInterval = () => {
-			this._ocsp_timeout = setTimeout(_, this._options.ocsp_interval);
+		let _setInterval = f => {
+			this._ocsp_timeout = setTimeout(f, this._options.ocsp_interval);
 		}, _runRoutine   = () => {
 			this.updateOcspState().then(() => {
 				logger.info(`Ocsp state updated. Schedule next`);
-				_setInterval();
-			}).catch(_setInterval);
+				_setInterval(_runRoutine);
+			}).catch(_setInterval.bind(this,_runRoutine));
 
 		};
 		_runRoutine();
@@ -187,13 +139,13 @@ class StoreCacheServices {
 	 */
 	_startRenewalRoutine() {
 
-		let _setInterval = () => {
-			this._renewal_timeout = setTimeout(_, this._options.renewal_interval);
+		let _setInterval = f => {
+			this._renewal_timeout = setTimeout(f, this._options.renewal_interval);
 		}, _runRoutine   = () => {
 			this.renewState().then(() => {
 				logger.info(`Renewal completed. Schedule next`);
-				_setInterval();
-			}).catch(_setInterval);
+				_setInterval(_runRoutine);
+			}).catch(_setInterval.bind(this,_runRoutine));
 		};
 		_runRoutine();
 
@@ -207,14 +159,23 @@ class StoreCacheServices {
 	 * @private
 	 */
 	_findCredential(store, fqdn) {
-		let _cred = store.getCredential(fqdn);
-		if (_cred == null) {
-			//Credential not in store
-			this._removeDocSync(CredsCollectionName, {fqdn: fqdn});
-			return null;
-		}
 
-		return _cred;
+		return new Promise((resolve, reject) => {
+				let _cred = store.getCredential(fqdn);
+				if (_cred == null) {
+
+					const _reject = () => {
+						reject(`Credential ${fqdn} not found`);
+					};
+					//Credential not in store
+					this._removeDoc(CredsCollectionName, {fqdn: fqdn}).then(_reject).catch(_reject);
+				}
+
+				resolve(_cred);
+			}
+		);
+
+
 	}
 
 	/**
@@ -239,8 +200,7 @@ class StoreCacheServices {
 				_onOcspUnavailable()
 			} else {
 				logger.info(`Ocsp status of ${cred.fqdn} is ${status}`);
-				this.setOcspStatus(cred.fqdn, status);
-				cb();
+				this.setOcspStatus(cred.fqdn, status).then(cb);
 			}
 		})
 
@@ -248,17 +208,18 @@ class StoreCacheServices {
 
 	/**
 	 *
-	 * @param {Credential} cred
+	 * @param {String} fqdn
 	 * @param {Function|undefined} [cb]
 	 * @private
 	 */
-	_doRenewal(cred, cb = nop) {
-		cred.renewCert(null, cred.fqdn).then(() => {
-			logger.info(`Certificates for ${cred.fqdn} renewed successfully`);
-			 cb()
+	_doRenewal(fqdn, cb = nop) {
+		let cred = new (require('./Credential'))((require('./BeameStoreV2')).getInstance());
+		cred.renewCert(null, fqdn).then(() => {
+			logger.info(`Certificates for ${fqdn} renewed successfully`);
+			cb()
 		}).catch(e => {
-			logger.error(`Renew cert for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
-			 cb()
+			logger.error(`Renew cert for ${fqdn} error ${BeameLogger.formatError(e)}`);
+			cb()
 		})
 	}
 
@@ -290,6 +251,7 @@ class StoreCacheServices {
 			};
 
 			this._db[collection.name] = new Datastore(options);
+			this._db[collection.name].persistence.compactDatafile();
 
 			collection.indices.forEach((index) => {
 				this._addIndex(collection.name, index);
@@ -335,26 +297,6 @@ class StoreCacheServices {
 					})
 			}
 		);
-	}
-
-	/**
-	 * @param collection
-	 * @param query
-	 * @param cb
-	 * @private
-	 */
-	_findDocSync(collection, query, cb) {
-
-		this._db[collection]
-			.findOne(query, (err, doc) => {
-				if (err) {
-					cb(err)
-				}
-				else {
-					cb(null, doc)
-				}
-			})
-
 	}
 
 	/**
@@ -406,30 +348,6 @@ class StoreCacheServices {
 
 	/**
 	 *
-	 * @param {String} collection
-	 * @param {Object} doc
-	 * @param {Function|undefined} [cb]
-	 * @private
-	 */
-	_insertDocSync(collection, doc, cb = nop) {
-
-
-		logger.debug(`Inserting ${JSON.stringify(doc)} into ${collection}`);
-		this._db[collection]
-			.insert(doc, (err) => {
-				if (err) {
-					logger.error(`Insert doc error ${BeameLogger.formatError(err)}`);
-					cb(err)
-				}
-				else {
-					logger.debug(`Doc ${JSON.stringify(doc)} inserted into ${collection}`);
-					cb(null, doc)
-				}
-			})
-	}
-
-	/**
-	 *
 	 * @param collection
 	 * @param query
 	 * @param update
@@ -439,30 +357,15 @@ class StoreCacheServices {
 	 */
 	_updateDoc(collection, query, update, options = {}) {
 		return new Promise((resolve, reject) => {
-				try {
-					this._db[collection].update(query, update, options, (err, numReplaced, returnUpdatedDocs) => {
-						if (err) {
-							reject(err)
-						} else {
-							this._db[collection].persistence.compactDatafile();
-							resolve(returnUpdatedDocs);
-						}
-					});
-				} catch (e) {
-					console.log(e)
-				}
+				this._db[collection].update(query, update, options, (err, numReplaced, returnUpdatedDocs) => {
+					if (err) {
+						reject(err)
+					} else {
+						resolve(returnUpdatedDocs);
+					}
+				});
 			}
 		);
-	}
-
-	_updateDocSync(collection, query, update, options = {}, cb = nop) {
-
-		try {
-			this._db[collection].update(query, update, options, cb);
-		} catch (e) {
-			logger.error(`Update ${collection} doc sync error ${BeameLogger.formatError(e)}`)
-		}
-
 	}
 
 	/**
@@ -480,18 +383,11 @@ class StoreCacheServices {
 						reject(err || `Unexpected error`)
 					} else {
 						logger.info(`${numRemoved} records removed from ${collection}`);
-						this._db[collection].persistence.compactDatafile();
 						resolve()
 					}
-					// numRemoved = 1
 				});
 			}
 		);
-	}
-
-	_removeDocSync(collection, query, options = {}) {
-
-		this._db[collection].remove(query, options);
 	}
 
 	//endregion
@@ -499,102 +395,122 @@ class StoreCacheServices {
 	//region public methods
 	/**
 	 * @param {Credential} cred
-	 * @param {Function|undefined} [cb]
 	 */
-	insertCredFromStore(cred, cb = nop) {
-		try {
-			const Credential = require('./Credential');
-			if (!(cred instanceof Credential)) {
-				cb && cb();
-				return;
-			}
+	insertCredFromStore(cred) {
 
-			const insertCred = () => {
-				if (!cred.hasKey("X509")) {
-					cb();
-					return;
-				}
+		return new Promise((resolve) => {
 
-				let ocspStatus    = Config.OcspStatus.Unknown,
-				    lastOcspCheck = null,
-				    validity      = cred.certData.validity || {start: null, end: null},
-				    revoked       = !!(cred.metadata.revoked);
+				const insertCred = () => {
+					if (!cred.hasKey("X509")) {
+						resolve();
+						return;
+					}
+
+					let ocspStatus    = Config.OcspStatus.Unknown,
+					    lastOcspCheck = null,
+					    validity      = cred.certData.validity || {start: null, end: null},
+					    revoked       = !!(cred.metadata.revoked);
 
 
-				if (cred.metadata.ocspStatus) {
-					ocspStatus    = revoked ? Config.OcspStatus.Bad : Config.OcspStatus.Good;
-					lastOcspCheck = CommonUtils.tryParseDate(cred.metadata.ocspStatus.date);
-				}
+					if (cred.metadata.ocspStatus) {
+						ocspStatus    = revoked ? Config.OcspStatus.Bad : Config.OcspStatus.Good;
+						lastOcspCheck = CommonUtils.tryParseDate(cred.metadata.ocspStatus.date);
+					}
 
-				let doc = {
-					fqdn:          cred.fqdn,
-					notBefore:     CommonUtils.tryParseDate(validity.start),
-					notAfter:      CommonUtils.tryParseDate(validity.end),
-					hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
-					revoked:       revoked,
-					expired:       cred.expired,
-					lastOcspCheck: lastOcspCheck,
-					nextOcspCheck: null,
-					lastLoginDate: null,
-					ocspStatus:    ocspStatus
+					let doc = {
+						fqdn:          cred.fqdn,
+						notBefore:     CommonUtils.tryParseDate(validity.start),
+						notAfter:      CommonUtils.tryParseDate(validity.end),
+						hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
+						revoked:       revoked,
+						expired:       cred.expired,
+						lastOcspCheck: lastOcspCheck,
+						nextOcspCheck: null,
+						lastLoginDate: null,
+						ocspStatus:    ocspStatus
 
+					};
+
+					this._insertDoc(CredsCollectionName, doc).then(resolve).catch(resolve);
 				};
 
-				this._insertDocSync(CredsCollectionName, doc, (err, doc) => {
-					if (err) {
-						logger.error(`Insert cred ${cred.fqdn} doc error ${BeameLogger.formatError(err)}`);
+				this._findDoc(CredsCollectionName, {fqdn: cred.fqdn}).then(doc => {
+					if (doc == null) {
+						insertCred()
 					}
-					cb(err, doc);
-				});
-			};
-
-			this._findDocSync(CredsCollectionName, {fqdn: cred.fqdn}, (err, doc) => {
-				if (!err && !doc) {
-					insertCred();
-				}
-				else {
-					cb()
-				}
-			})
-
-		} catch (e) {
-			logger.error(`Update cred from store for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
-		}
+					else {
+						resolve()
+					}
+				}).catch(e => {
+					logger.error(`find credential ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
+					resolve()
+				})
+			}
+		)
 	}
 
-	updateValidity(fqdn, validity) {
-		try {
-			let query   = {fqdn: fqdn},
-			    options = {upsert: true, returnUpdatedDocs: false},
-			    update  = {
-				    $set: {
-					    notBefore: CommonUtils.tryParseDate(validity.start),
-					    notAfter:  CommonUtils.tryParseDate(validity.end)
-				    }
-			    };
+	/**
+	 *
+	 * @param {String} fqdn
+	 * @param {Object} certData
+	 * @returns {Promise}
+	 */
+	updateCertData(fqdn, certData) {
 
-			this._updateDocSync(CredsCollectionName, query, update, options, nop);
-		} catch (e) {
-			logger.error(`Update cache validity for ${fqdn} error ${BeameLogger.formatError(e)}`);
-		}
+		return new Promise((resolve) => {
+				try {
+					let query  = {fqdn: fqdn},
+					    start  = CommonUtils.tryParseDate(certData.validity.start),
+					    end    = CommonUtils.tryParseDate(certData.validity.end),
+					    update = {
+						    $set: {
+							    notBefore: start,
+							    notAfter:  end
+						    }
+					    };
+
+					if (end) {
+						update.$set["expired"] = new Date() > end;
+					}
+
+					this._updateDoc(CredsCollectionName, query, update).then(resolve).catch(e => {
+						logger.error(`Update cert data for ${fqdn} error ${BeameLogger.formatError(e)}`);
+						resolve();
+					});
+				} catch (e) {
+					logger.error(`Save cert data for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					resolve()
+				}
+			}
+		);
+
+
 	}
 
 	saveRevocation(fqdn) {
-		try {
-			let query   = {fqdn: fqdn},
-			    options = {upsert: true, returnUpdatedDocs: false},
-			    update  = {
-				    $set: {
-					    revoked:       true,
-					    ocspStatus:    Config.OcspStatus.Bad,
-					    nextOcspCheck: null
-				    }
-			    };
+		return new Promise((resolve) => {
+				try {
+					let query  = {fqdn: fqdn},
+					    update = {
+						    $set: {
+							    revoked:       true,
+							    ocspStatus:    Config.OcspStatus.Bad,
+							    nextOcspCheck: null
+						    }
+					    };
 
-			this._updateDocSync(CredsCollectionName, query, update, options, nop);
-		} catch (e) {
-			logger.error(`Update cache validity for ${fqdn} error ${BeameLogger.formatError(e)}`);
-		}
+					this._updateDoc(CredsCollectionName, query, update)
+						.then(resolve)
+						.catch(e => {
+							logger.error(`Update cache revocation for ${fqdn} error ${BeameLogger.formatError(e)}`);
+							resolve();
+						});
+				} catch (e) {
+					logger.error(`Save cache revocation for ${fqdn} error ${BeameLogger.formatError(e)}`);
+				}
+			}
+		);
+
 	}
 
 	get(fqdn) {
@@ -603,35 +519,43 @@ class StoreCacheServices {
 	}
 
 	setOcspStatus(fqdn, status) {
-		try {
-			let query   = {fqdn: fqdn},
-			    options = {upsert: true, returnUpdatedDocs: false},
-			    update  = {
-				    $set: {
-					    ocspStatus:    status,
-					    lastOcspCheck: new Date()
-				    }
-			    };
 
-			//TODO handle Unknown and Unavailable statuses
-			switch (status) {
-				case OcspStatus.Bad:
-					update.$set["revoked"]       = true;
-					update.$set["nextOcspCheck"] = null;
-					break;
-				case OcspStatus.Good:
-					update.$set["revoked"]       = false;
-					update.$set["nextOcspCheck"] = new Date(Date.now() + (this._options.cache_period - this._options.ocsp_interval));
-					break;
-				default:
-					break;
+		return new Promise((resolve) => {
+				try {
+					let query   = {fqdn: fqdn},
+					    update  = {
+						    $set: {
+							    ocspStatus:    status,
+							    lastOcspCheck: new Date()
+						    }
+					    };
+
+					switch (status) {
+						case OcspStatus.Bad:
+							update.$set["revoked"]       = true;
+							update.$set["nextOcspCheck"] = null;
+							break;
+						case OcspStatus.Good:
+							update.$set["revoked"]       = false;
+							update.$set["nextOcspCheck"] = new Date(Date.now() + (this._options.cache_period - this._options.ocsp_interval));
+							break;
+						default:
+							break;
+					}
+
+
+					this._updateDoc(CredsCollectionName, query, update)
+						.then(resolve)
+						.catch(e => {
+							logger.error(`Update ocsp status for ${fqdn} error ${BeameLogger.formatError(e)}`);
+							resolve();
+						});
+				} catch (e) {
+					logger.error(`Set ocsp status for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					resolve()
+				}
 			}
-
-
-			this._updateDocSync(CredsCollectionName, query, update, options, nop);
-		} catch (e) {
-			logger.error(`Update cache validity for ${fqdn} error ${BeameLogger.formatError(e)}`);
-		}
+		);
 	}
 
 	getOcspStatus(fqdn) {
@@ -647,19 +571,28 @@ class StoreCacheServices {
 	}
 
 	setLastLogin(fqdn, date) {
-		try {
-			let query   = {fqdn: fqdn},
-			    options = {upsert: true, returnUpdatedDocs: false},
-			    update  = {
-				    $set: {
-					    lastLoginDate: CommonUtils.tryParseDate(date)
-				    }
-			    };
 
-			this._updateDocSync(CredsCollectionName, query, update, options, nop);
-		} catch (e) {
-			logger.error(`Update cache validity for ${fqdn} error ${BeameLogger.formatError(e)}`);
-		}
+		return new Promise((resolve) => {
+				try {
+					let query  = {fqdn: fqdn},
+					    update = {
+						    $set: {
+							    lastLoginDate: CommonUtils.tryParseDate(date)
+						    }
+					    };
+
+					this._updateDoc(CredsCollectionName, query, update)
+						.then(resolve)
+						.catch(e => {
+							logger.error(`Update last login for ${fqdn} error ${BeameLogger.formatError(e)}`);
+							resolve();
+						});
+				} catch (e) {
+					logger.error(`Set last login for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					resolve();
+				}
+			}
+		);
 	}
 
 	getLastLogin(fqdn) {
@@ -694,10 +627,13 @@ class StoreCacheServices {
 					const store = (require('./BeameStoreV2')).getInstance();
 					// noinspection JSUnresolvedFunction
 					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
-						let cred = this._findCredential(store, doc.fqdn);
-						if (cred) {
+						let fqdn = doc.fqdn;
+						this._findCredential(store, fqdn).then(cred => {
 							this._doOcspCheck(cred, sleep, callback)
-						}
+						}).catch(e => {
+							logger.error(`Update OCSP for ${fqdn} error ${e}`);
+							callback()
+						});
 					}, () => {
 						resolve();
 					});
@@ -727,13 +663,9 @@ class StoreCacheServices {
 				    };
 
 				this._findDocs(CredsCollectionName, query).then(docs => {
-					const store = (require('./BeameStoreV2')).getInstance();
 					// noinspection JSUnresolvedFunction
 					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
-						let cred = this._findCredential(store, doc.fqdn);
-						if (cred) {
-							this._doRenewal(cred, callback)
-						}
+						this._doRenewal(doc.fqdn, callback)
 					}, () => {
 						resolve();
 					});

@@ -1350,10 +1350,9 @@ class Credential {
 						date:   Date.now()
 					});
 
-					storeCacheServices.saveRevocation(revokeFqdn);
-
-					resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
-
+					storeCacheServices.saveRevocation(revokeFqdn).then(()=>{
+						resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
+					});
 				};
 
 				api.runRestfulAPI(apiData, _onApiResponse, 'POST', authToken);
@@ -1371,6 +1370,11 @@ class Credential {
 		return new Promise((resolve, reject) => {
 
 				let cred = this.store.getCredential(fqdn);
+
+				if (cred == null) {
+					reject(`Credential ${fqdn} not found`);
+					return;
+				}
 
 				if (!cred.hasKey("PRIVATE_KEY")) {
 					reject(`Private key not found for ${fqdn}`);
@@ -1416,8 +1420,11 @@ class Credential {
 										action: Config.CredAction.Renew,
 										date:   Date.now()
 									});
-									storeCacheServices.updateValidity(cred.fqdn, cred.certData.validity);
-									resolve(certs);
+									storeCacheServices.updateCertData(cred.fqdn, cred.certData)
+										.then(() => {
+												resolve(certs)
+											}
+										);
 								}).catch(reject);
 							}, 'POST', authToken);
 						}).catch(reject);
@@ -1862,8 +1869,10 @@ class Credential {
 										else {
 
 											ocspUtils.verify(cred.fqdn, req, body).then(status => {
-												storeCacheServices.setOcspStatus(cred.fqdn, status);
-												resolve(status)
+												storeCacheServices.setOcspStatus(cred.fqdn, status).then(()=>{
+													resolve(status)
+												});
+
 											})
 										}
 									});
@@ -1901,8 +1910,10 @@ class Credential {
 					.then(issuerPemPath => {
 						return new Promise((resolve) => {
 								ocspUtils.check(cred.fqdn, cred.getKey("X509"), issuerPemPath).then(status => {
-									storeCacheServices.setOcspStatus(cred.fqdn, status);
-									resolve(status);
+									storeCacheServices.setOcspStatus(cred.fqdn, status).then(()=>{
+										resolve(status);
+									});
+
 								});
 							}
 						);
@@ -2426,8 +2437,9 @@ class Credential {
 						}
 
 						cred.syncMetadata(fqdn).then(payload => {
-							storeCacheServices.insertCredFromStore(cred);
-							resolve(payload);
+							storeCacheServices.insertCredFromStore(cred).then(() => {
+								resolve(payload);
+							});
 						}).catch(() => {
 							logger.debug(`retry on sync meta for ${fqdn}`);
 
