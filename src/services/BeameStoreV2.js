@@ -280,7 +280,7 @@ class BeameStoreV2 {
 		    fqdn        = credential.fqdn;
 
 		if (this.credentials[fqdn]) {
-			logger.error(`Credentials for fqdn ${fqdn} are already present`);
+			logger.warn(`Credentials for fqdn ${fqdn} are already present`);
 			return;
 		}
 

@@ -153,11 +153,9 @@ class StoreCacheServices {
 
 	stop() {
 		if (this._ocsp_timeout) {
-			this._ocsp_timeout.unref();
 			clearTimeout(this._ocsp_timeout);
 		}
 		if (this._renewal_timeout) {
-			this._renewal_timeout.unref();
 			clearTimeout(this._renewal_timeout);
 		}
 	}
@@ -170,14 +168,16 @@ class StoreCacheServices {
 	 */
 	_startOcspHandlerRoutine() {
 
-		let doStuff = () => {
+		let _setInterval = () => {
+			this._ocsp_timeout = setTimeout(_, this._options.ocsp_interval);
+		}, _runRoutine   = () => {
 			this.updateOcspState().then(() => {
 				logger.info(`Ocsp state updated. Schedule next`);
-				this._ocsp_timeout = setTimeout(doStuff, this._options.ocsp_interval);
-			});
+				_setInterval();
+			}).catch(_setInterval);
 
 		};
-		doStuff();
+		_runRoutine();
 
 	}
 
@@ -187,13 +187,15 @@ class StoreCacheServices {
 	 */
 	_startRenewalRoutine() {
 
-		let doStuff = () => {
-			this.renewState().then(()=>{
-				this._renewal_timeout = setTimeout(doStuff, this._options.renewal_interval);
-			});
-
+		let _setInterval = () => {
+			this._renewal_timeout = setTimeout(_, this._options.renewal_interval);
+		}, _runRoutine   = () => {
+			this.renewState().then(() => {
+				logger.info(`Renewal completed. Schedule next`);
+				_setInterval();
+			}).catch(_setInterval);
 		};
-		doStuff();
+		_runRoutine();
 
 	}
 
