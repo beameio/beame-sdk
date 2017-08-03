@@ -223,16 +223,15 @@ class StoreCacheServices {
 	 * @param {Function|undefined} [cb]
 	 * @private
 	 */
-	_doOcspCheck(cred, sleep, cb) {
+	_doOcspCheck(cred, sleep, cb = nop) {
 
 		const _onOcspUnavailable = () => {
 			sleep = parseInt(sleep * (Math.random() + 1.5));
 
-			let ocspTimeout = setTimeout(() => {
+			setTimeout(() => {
 				this._doOcspCheck.bind(this, cred, sleep);
 			}, sleep);
 
-			ocspTimeout.unref();
 		};
 
 		cred.doOcspRequest(cred).then(status => {
@@ -241,7 +240,7 @@ class StoreCacheServices {
 			} else {
 				logger.info(`Ocsp status of ${cred.fqdn} is ${status}`);
 				this.setOcspStatus(cred.fqdn, status);
-				cb && cb();
+				cb();
 			}
 		})
 
@@ -253,13 +252,13 @@ class StoreCacheServices {
 	 * @param {Function|undefined} [cb]
 	 * @private
 	 */
-	_doRenewal(cred, cb) {
+	_doRenewal(cred, cb = nop) {
 		cred.renewCert(null, cred.fqdn).then(() => {
 			logger.info(`Certificates for ${cred.fqdn} renewed successfully`);
-			cb && cb()
+			 cb()
 		}).catch(e => {
 			logger.error(`Renew cert for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
-			cb && cb()
+			 cb()
 		})
 	}
 
@@ -412,7 +411,7 @@ class StoreCacheServices {
 	 * @param {Function|undefined} [cb]
 	 * @private
 	 */
-	_insertDocSync(collection, doc, cb) {
+	_insertDocSync(collection, doc, cb = nop) {
 
 
 		logger.debug(`Inserting ${JSON.stringify(doc)} into ${collection}`);
@@ -420,11 +419,11 @@ class StoreCacheServices {
 			.insert(doc, (err) => {
 				if (err) {
 					logger.error(`Insert doc error ${BeameLogger.formatError(err)}`);
-					cb && cb(err)
+					cb(err)
 				}
 				else {
 					logger.debug(`Doc ${JSON.stringify(doc)} inserted into ${collection}`);
-					cb && cb(null, doc)
+					cb(null, doc)
 				}
 			})
 	}
@@ -456,7 +455,7 @@ class StoreCacheServices {
 		);
 	}
 
-	_updateDocSync(collection, query, update, options = {}, cb = null) {
+	_updateDocSync(collection, query, update, options = {}, cb = nop) {
 
 		try {
 			this._db[collection].update(query, update, options, cb);
@@ -502,7 +501,7 @@ class StoreCacheServices {
 	 * @param {Credential} cred
 	 * @param {Function|undefined} [cb]
 	 */
-	insertCredFromStore(cred, cb) {
+	insertCredFromStore(cred, cb = nop) {
 		try {
 			const Credential = require('./Credential');
 			if (!(cred instanceof Credential)) {
@@ -512,7 +511,7 @@ class StoreCacheServices {
 
 			const insertCred = () => {
 				if (!cred.hasKey("X509")) {
-					cb && cb();
+					cb();
 					return;
 				}
 
@@ -545,7 +544,7 @@ class StoreCacheServices {
 					if (err) {
 						logger.error(`Insert cred ${cred.fqdn} doc error ${BeameLogger.formatError(err)}`);
 					}
-					cb && cb(err, doc);
+					cb(err, doc);
 				});
 			};
 
@@ -554,7 +553,7 @@ class StoreCacheServices {
 					insertCred();
 				}
 				else {
-					cb && cb()
+					cb()
 				}
 			})
 
@@ -666,10 +665,10 @@ class StoreCacheServices {
 	getLastLogin(fqdn) {
 		return new Promise((resolve, reject) => {
 				this.get(fqdn).then(doc => {
-					return resolve(doc.lastLoginDate)
+					doc ? resolve(doc.lastLoginDate) : reject(`Doc ${fqdn} not found`)
 				}).catch(e => {
 					logger.error(`Get lastLogin for ${fqdn} error ${BeameLogger.formatError(e)}`);
-					return reject(e);
+					reject(e);
 				});
 			}
 		);
@@ -704,7 +703,7 @@ class StoreCacheServices {
 					});
 
 				}).catch(e => {
-					logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`);
+					logger.error(`Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`);
 
 					resolve()
 				})
@@ -740,7 +739,7 @@ class StoreCacheServices {
 					});
 
 				}).catch(e => {
-					logger.error(`!!!!!!!!!!!!!!!!!IMPORTANT!!!!!!!!!!!!!!!!! Find creds for Renew error::${BeameLogger.formatError(e)}. Routine not started!!!`);
+					logger.error(`Find creds for Renew error::${BeameLogger.formatError(e)}. Routine not started!!!`);
 					resolve();
 				})
 			}
