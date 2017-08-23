@@ -282,7 +282,7 @@ class CommonUtils {
 				};
 
 				request(opt, (error, response, body) => {
-					if (response.statusCode < 200 || response.statusCode >= 400) {
+					if (!response || response.statusCode < 200 || response.statusCode >= 400) {
 						console.warn('Failed to get unix time:',error);
 						getGlobalNtpStamp(1);
 						// resolve();

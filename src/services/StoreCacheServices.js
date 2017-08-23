@@ -411,7 +411,7 @@ class StoreCacheServices {
 					let ocspStatus    = status || Config.OcspStatus.Unknown,
 					    lastOcspCheck = null,
 					    validity      = cred.certData.validity || {start: null, end: null},
-					    revoked       = !!(cred.metadata.revoked);
+					    revoked       = !!(cred.metadata.revoked && (cred.metadata.revoked === 'true' || cred.metadata.revoked));
 
 
 					if (cred.metadata.ocspStatus) {
