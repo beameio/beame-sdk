@@ -20,8 +20,7 @@
  * @property {String|null} parent_fqdn
  */
 
-const path                = require('path');
-const util                = require('util');
+
 const config              = require('../../config/Config');
 const module_name         = config.AppModules.BeameStore;
 const BeameLogger         = require('../utils/Logger');
@@ -110,14 +109,17 @@ class BeameStoreV2 {
 	 * @param {function} callback
 	 * @param {Boolean} [allowExpired]
 	 * @param {Boolean} [allowRevoked]
+	 * @param {Boolean} [allowApprovers]
 	 */
-	fetchCredChain(fqdn, highestFqdn, callback, allowExpired = false, allowRevoked = false) {
+	fetchCredChain(fqdn, highestFqdn, callback, allowExpired = false, allowRevoked = false, allowApprovers = true) {
 		let credsList = [], nLevels = 0;
+
 		const getNext = (fqdn) => {
 			this.find(fqdn, true, allowExpired, allowRevoked).then(cred => {
 				credsList[nLevels] = cred;
-				if (!credsList[nLevels].metadata.parent_fqdn)
+				if (!credsList[nLevels].metadata.parent_fqdn && allowApprovers){
 					credsList[nLevels].metadata.parent_fqdn = credsList[nLevels].metadata.approved_by_fqdn;
+				}
 
 				if (!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)) {
 
@@ -162,9 +164,10 @@ class BeameStoreV2 {
 	 * @param {String} highestFqdn // up to zero
 	 * @param {Number} trustDepth // down to infinity
 	 * @param {function} callback
-	 * @param {Boolean|undefined} [allowExpired]
+	 * @param {Boolean} [allowExpired]
+	 * @param {Boolean} [allowApprovers]
 	 */
-	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback, allowExpired = false) {
+	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback, allowExpired = false, allowApprovers = false) {
 		this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
 			if (!error && guestChain) {
 				this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
@@ -184,13 +187,13 @@ class BeameStoreV2 {
 					else {
 						callback(null, false);
 					}
-				}, allowExpired)
+				}, allowExpired, false, allowApprovers)
 			}
 			else {
 				console.warn(error);
 				callback(null, false);
 			}
-		}, allowExpired)
+		}, allowExpired, false, allowApprovers)
 	}
 
 

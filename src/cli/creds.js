@@ -475,9 +475,10 @@ signers.toText =  function (creds) {
  * @param {String} targetFqdn
  * @param {String} highestFqdn
  * @param {int} trustDepth
+ * @param {Boolean} allowApprovers
  * @param {Function} callback
  */
-function verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, callback) {
+function verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, allowApprovers, callback) {
 	if(typeof trustDepth !== 'undefined' && trustDepth!= null){
 		if(!Number.isInteger(trustDepth) || trustDepth<=0){
 			console.error('trustDepth should be >= 1 (omit it to allow infinite depth)');
@@ -493,7 +494,7 @@ function verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, callback) {
 			console.error(error);
 		}
 		callback(error, related);
-	});
+	},false, CommonUtils.stringToBool(allowApprovers.toString()));
 }
 
 /**
@@ -501,9 +502,10 @@ function verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, callback) {
  * @public
  * @method Creds.listCredChain
  * @param {String} fqdn - lowest fqdn in required chain
+ * @param {Boolean} allowApprovers
  * @param {Function} callback
  */
-function listCredChain(fqdn, callback) {
+function listCredChain(fqdn, allowApprovers, callback) {
 	const store = new BeameStore();
 	store.fetchCredChain(fqdn, null,(error, list) => {
 		if(!error){
@@ -512,7 +514,7 @@ function listCredChain(fqdn, callback) {
 		else{
 			callback(error, false);
 		}
-	});
+	}, false, false, CommonUtils.stringToBool(allowApprovers.toString()));
 }
 
 listCredChain.toText = function (list) {

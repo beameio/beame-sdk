@@ -82,6 +82,19 @@ class CommonUtils {
 
 	}
 
+	static stringToBool(str) {
+		let bool;
+		if (str.match(/^(true|1|yes)$/i) !== null) {
+			bool = true;
+		} else if (str.match(/^(false|0|no)*$/i) !== null) {
+			bool = false;
+		} else {
+			bool = null;
+			//if (console) console.log('"' + str + '" is not a boolean value');
+		}
+		return bool;
+	}
+
 	/**
 	 *
 	 * @param {number|null} [upper]

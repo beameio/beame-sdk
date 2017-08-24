@@ -68,6 +68,7 @@ const parametersSchema = {
 	'dnsFqdn':            {required: false},
 	'forceCheck':         {required: false},
 	'force':              {required: false, default:false},
+	'allowApprovers':     {required: false, default:true},
 	'highestFqdn':        {required: false},
 	'trustDepth':         {required: false},
 	'filter':             {required: false, options: ['expired', 'revoked']},
