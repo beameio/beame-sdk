@@ -3,7 +3,7 @@
   "version": "2.0.56",
   "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "index.js",
-  "engine": "node >= 4.4.0",
+  "engine": "node >= 6.9.0",
   "scripts": {
     "test_local_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_local_creds.js",
     "test_sign_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_signature.js",
