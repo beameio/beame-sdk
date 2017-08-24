@@ -167,7 +167,7 @@ class BeameStoreV2 {
 	 * @param {Boolean} [allowExpired]
 	 * @param {Boolean} [allowApprovers]
 	 */
-	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback, allowExpired = false, allowApprovers = false) {
+	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback, allowExpired = false, allowApprovers = true) {
 		this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
 			if (!error && guestChain) {
 				this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
