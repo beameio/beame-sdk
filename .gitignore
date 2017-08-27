@@ -1,6 +1,7 @@
 .idea
 .beame
 .DS_Store
+package-lock.json
 authData
 node_modules
 # Elastic Beanstalk Files
