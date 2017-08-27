@@ -1,7 +1,5 @@
 "use strict";
 
-const Config = require('../../config/Config');
-
 const Log4Js = require('../../src/utils/Log4js');
 
 let _cdr = null;

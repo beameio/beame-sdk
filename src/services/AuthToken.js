@@ -159,7 +159,9 @@ class AuthToken {
 			}
 
 			const store       = new BeameStore();
-			cdr_event["fqdn"] = authToken.signedBy;
+		    if(cdr_event){
+		    	cdr_event["fqdn"] = authToken.signedBy;
+		    }
 
 			store.find(authToken.signedBy, undefined, allowExpired).then(signerCreds => {
 				signerCreds.checkOcspStatus(signerCreds)
@@ -189,7 +191,9 @@ class AuthToken {
 							return _reject(`authToken.signedData.valid_till ${signedData.valid_till} is in the past - token expired`);
 						}
 
-						cdr_logger.info(cdr_event);
+						if(cdr_event){
+							cdr_logger.info(cdr_event);
+						}
 						resolve(authToken);
 					})
 					.catch(reject)
