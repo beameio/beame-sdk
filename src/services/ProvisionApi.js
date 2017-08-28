@@ -64,7 +64,7 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 	}
 
 	if (error) {
-		logger.error(`parse response error ${BeameLogger.formatError(error)} for type ${type}`, error, module_name);
+		logger.error(`parse response error ${BeameLogger.formatError(error)} for type ${type}`, error);
 		callback(logger.formatErrorMessage("Provision Api response error", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
@@ -77,7 +77,9 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			payload = JSON.parse(body);
 
-			payload = clearJSON(payload);
+			if(typeof JSON.parse(body) === "object"){
+				payload = clearJSON(payload);
+			}
 
 			//delete payload['$id'];
 		}
@@ -96,7 +98,7 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		let msg    = payload.Message || payload.message || (payload.body && payload.body.message);
+		let msg    = payload.Message || payload.message || (payload.body && payload.body.message) || payload;
 		let errMsg = logger.formatErrorMessage(msg || "Provision Api response error", module_name, {
 			"status":  response.statusCode,
 			"message": msg || payload
