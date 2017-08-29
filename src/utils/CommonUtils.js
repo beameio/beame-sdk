@@ -83,6 +83,8 @@ class CommonUtils {
 	}
 
 	static stringToBool(str) {
+		if(typeof str === 'boolean')return str;
+		if(!str || str.length < 1)return false;
 		let bool;
 		if (str.match(/^(true|1|yes)$/i) !== null) {
 			bool = true;
