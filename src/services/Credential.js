@@ -2758,6 +2758,26 @@ class Credential {
 
 //endregion
 
+	//region Auth events
+	saveAuthEvent(signerFqdn, payload){
+		return new Promise((resolve, reject) => {
+				this.store.find(signerFqdn).then(cred=>{
+					const AuthToken = require('./AuthToken');
+					let authToken = AuthToken.create(payload, cred);
+					let api          = new ProvisionApi();
+
+					let apiData  = ProvisionApi.getApiData(apiEntityActions.SaveAuthEvent.endpoint, {});
+
+					api.runRestfulAPI(apiData, (error) => {
+						error ? reject(error) : resolve();
+					}, 'POST', authToken);
+
+				}).then().catch(reject);
+			}
+		);
+	}
+	//endregion
+
 	//region helpers
 	checkValidity() {
 		return new Promise((resolve, reject) => {

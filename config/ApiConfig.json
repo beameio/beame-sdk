@@ -26,6 +26,9 @@
             },
             "CertRenew": {
                 "endpoint": "/api/v1/node/cert/renew"
+            },
+            "SaveAuthEvent":{
+                "endpoint": "/api/v1/node/event/save"
             }
         },
         "AuthServerApi": {

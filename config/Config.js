@@ -145,9 +145,15 @@ const CertResponseFields = {
 	"x509": "x509",
 	"p7b":  "p7b",
 	"ca":   "ca"
-	//"pkcs7": "pkcs7",
-	// ,"beame_ca": "beame_ca"
-	// ,"ca_g2": "ca_g2"
+};
+
+/**
+ * Certificate response fields
+ *  @enum {string}
+ */
+const AuthEventType = {
+	"TokenIssued": "TokenIssued",
+	"Created":  "Created"
 };
 
 
@@ -298,5 +304,6 @@ module.exports = {
 	defaultAuthTokenTtl,
 	defaultTimeFuzz,
 	CDREvents,
-	OcspStatus
+	OcspStatus,
+	AuthEventType
 };
