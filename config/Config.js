@@ -148,13 +148,24 @@ const CertResponseFields = {
 };
 
 /**
- * Certificate response fields
+ * Auth events
  *  @enum {string}
  */
 const AuthEventType = {
 	"TokenIssued": "TokenIssued",
 	"Created":     "Created"
 };
+
+
+/**
+ * SAN prefix
+ *  @enum {string}
+ */
+const AltPrefix = {
+	"Approver": "appr.",
+	"Parent":   "parent."
+};
+
 
 
 /**
@@ -306,5 +317,6 @@ module.exports = {
 	defaultTimeFuzz,
 	CDREvents,
 	OcspStatus,
-	AuthEventType
+	AuthEventType,
+	AltPrefix
 };
