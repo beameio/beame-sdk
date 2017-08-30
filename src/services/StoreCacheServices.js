@@ -218,9 +218,51 @@ class StoreCacheServices {
 			logger.info(`Certificates for ${fqdn} renewed successfully`);
 			cb()
 		}).catch(e => {
-			logger.error(`Renew cert for ${fqdn} error ${BeameLogger.formatError(e)}`);
-			cb(e)
+
+			const _returnError = () => {
+				logger.error(`Renew cert for ${fqdn} error ${BeameLogger.formatError(e)}`);
+				cb(e)
+			};
+
+			if (typeof e == 'object' && e.hasOwnProperty('code') && e['code'] === Config.MessageCodes.SignerNotFound) {
+				this._updateAutoRenewFlag(fqdn, false).then(_returnError).catch(_returnError)
+			}
+			else {
+				_returnError();
+			}
+
 		})
+	}
+
+	/**
+	 *
+	 * @param fqdn
+	 * @param autoRenew
+	 * @returns {Promise}
+	 * @private
+	 */
+	_updateAutoRenewFlag(fqdn, autoRenew) {
+		return new Promise((resolve) => {
+				try {
+					let query  = {fqdn: fqdn},
+					    update = {
+						    $set: {
+							    autoRenew: autoRenew
+						    }
+					    };
+
+					this._updateDoc(CredsCollectionName, query, update)
+						.then(resolve)
+						.catch(e => {
+							logger.error(`Update cache revocation for ${fqdn} error ${BeameLogger.formatError(e)}`);
+							resolve();
+						});
+				} catch (e) {
+					logger.error(`Save cache revocation for ${fqdn} error ${BeameLogger.formatError(e)}`);
+				}
+			}
+		);
+
 	}
 
 	//endregion
@@ -393,6 +435,7 @@ class StoreCacheServices {
 
 	//endregion
 
+
 	//region public methods
 	/**
 	 * @param {Credential} cred
@@ -429,7 +472,8 @@ class StoreCacheServices {
 						lastOcspCheck: lastOcspCheck,
 						nextOcspCheck: null,
 						lastLoginDate: null,
-						ocspStatus:    ocspStatus
+						ocspStatus:    ocspStatus,
+						autoRenew:     true
 
 					};
 
@@ -675,7 +719,7 @@ class StoreCacheServices {
 				let nextCheck = new Date(Date.now() + this._options.renewal_interval),
 				    query     = {
 					    ocspStatus: {$ne: OcspStatus.Bad},
-					    $and:       [{hasPrivateKey: true}]
+					    $and:       [{hasPrivateKey: true, autoRenew: true}]
 				    };
 
 				if (!force) {

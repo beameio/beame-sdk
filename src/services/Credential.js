@@ -61,7 +61,6 @@ const pem                    = require('pem');
 const NodeRsa                = require("node-rsa");
 const async                  = require('async');
 const _                      = require('underscore');
-const url                    = require('url');
 const provisionSettings      = require('../../config/ApiConfig.json');
 const Config                 = require('../../config/Config');
 const module_name            = Config.AppModules.Credential;
@@ -1530,8 +1529,11 @@ class Credential {
 										if (++nPredecessor < creds.length) {
 											requestRenewToken();
 										}
-										else
-											reject(`Failed to find valid signer cred for ${fqdn}`);
+										else{
+											let errMsg = logger.formatErrorMessage(`Failed to find valid signer cred for ${fqdn}`, module_name, {"fqdn": fqdn}, Config.MessageCodes.SignerNotFound);
+
+											reject(errMsg);
+										}
 									};
 
 									// noinspection JSUnresolvedVariable
@@ -2031,7 +2033,6 @@ class Credential {
 	}
 
 	generateOcspRequest(cred) {
-		const ocsp = require('ocsp');
 
 		return new Promise((resolve, reject) => {
 

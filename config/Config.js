@@ -153,7 +153,7 @@ const CertResponseFields = {
  */
 const AuthEventType = {
 	"TokenIssued": "TokenIssued",
-	"Created":  "Created"
+	"Created":     "Created"
 };
 
 
@@ -198,7 +198,8 @@ const MessageCodes = {
 	"NodeFolderNotExists": "NodeFolderNotExists",
 	"NodeFilesMissing":    "NodeFilesMissing",
 	"CSRCreationFailed":   "CSRCreationFailed",
-	"InvalidPayload":      "InvalidPayload"
+	"InvalidPayload":      "InvalidPayload",
+	"SignerNotFound":      "SignerNotFound"
 };
 
 
