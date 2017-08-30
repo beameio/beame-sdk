@@ -317,6 +317,17 @@ class CommonUtils {
 
 	}
 
+	static splitOptions(optionsStr, justSplit){
+		let s = optionsStr.replace(/\s/g, '');
+		let splitChar = s.includes(";")?";":",";
+		if(!justSplit)
+			s = s.replace(/\./g, '\\.')
+			.replace(/\*/g, '\\S*')
+			.replace(/\//g, '\\/');
+
+		return s.split(splitChar);
+	}
+
 	static escapeXmlString(str){
 		return str.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
