@@ -1525,7 +1525,7 @@ class Credential {
 
 								let requestRenewToken = () => {
 									const retryGetToken = (err) => {
-										if (err) console.warn(err);
+										if (err) logger.debug(err);
 										if (++nPredecessor < creds.length) {
 											requestRenewToken();
 										}
