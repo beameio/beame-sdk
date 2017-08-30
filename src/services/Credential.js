@@ -2744,21 +2744,6 @@ class Credential {
 
 //endregion
 
-	static formatRegisterPostData(metadata) {
-		return {
-			name:          metadata.name,
-			email:         metadata.email,
-			parent_fqdn:   metadata.parent_fqdn,
-			service_name:  metadata.serviceName,
-			service_id:    metadata.serviceId,
-			matching_fqdn: metadata.matchingFqdn,
-			custom_fqdn:   metadata.custom_fqdn,
-			src:           metadata.src
-		};
-	}
-
-//endregion
-
 	//region Auth events
 	saveAuthEvent(signerFqdn, payload){
 		return new Promise((resolve, reject) => {
@@ -2779,7 +2764,22 @@ class Credential {
 	}
 	//endregion
 
+	//endregion
+
 	//region helpers
+	static formatRegisterPostData(metadata) {
+		return {
+			name:          metadata.name,
+			email:         metadata.email,
+			parent_fqdn:   metadata.parent_fqdn,
+			service_name:  metadata.serviceName,
+			service_id:    metadata.serviceId,
+			matching_fqdn: metadata.matchingFqdn,
+			custom_fqdn:   metadata.custom_fqdn,
+			src:           metadata.src
+		};
+	}
+
 	checkValidity() {
 		return new Promise((resolve, reject) => {
 			const validity = this.certData.validity;
@@ -2867,7 +2867,7 @@ class Credential {
 		return this.getParentsChain(parent, parent_fqdn, parents);
 	}
 
-//endregion
+	//endregion
 
 	//region live credential
 	/**
