@@ -1490,7 +1490,16 @@ class Credential {
 
 				if (!signerAuthToken) {
 					const store = new (require("./BeameStoreV2"))();
-					store.fetchCredChain(fqdn, null, (err, creds) => {
+
+					/** @type {FetchCredChainOptions}**/
+					let cred_options = {
+						highestFqdn:null,
+						allowRevoked:true,
+						allowExpired:true,
+						allowApprovers: true
+					};
+
+					store.fetchCredChain(fqdn, cred_options, (err, creds) => {
 						if (!err) {
 							let signerCred = null;
 							for (let i = 0; i < creds.length; i++) {
@@ -1559,7 +1568,7 @@ class Credential {
 							reject('Failed to fetch cred chain: ' + err);
 						}
 
-					}, true, true)
+					})
 				}
 				else make();
 
@@ -1812,7 +1821,16 @@ class Credential {
 							const store = new (require("./BeameStoreV2"))();
 
 							return new Promise((resolve, reject) => {
-									store.fetchCredChain(fqdn, null, (err, creds) => {
+
+									/** @type {FetchCredChainOptions}**/
+									let cred_options = {
+										highestFqdn:null,
+										allowRevoked:true,
+										allowExpired:true,
+										allowApprovers: true
+									};
+
+									store.fetchCredChain(fqdn, cred_options, (err, creds) => {
 										if (!err) {
 											let signerCred = null;
 											for (let i = 0; i < creds.length; i++) {
@@ -1831,8 +1849,7 @@ class Credential {
 										else {
 											reject('Failed to fetch cred chain: ' + err);
 										}
-
-									}, true, true);
+									});
 								}
 							);
 						};
