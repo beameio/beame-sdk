@@ -120,7 +120,7 @@ class BeameStoreV2 {
 	}
 
 	getParent(cred) {
-		let altParents = cred.certData.altNames.filter(x => x.startsWith(Config.AltPrefix.Parent));
+		let altParents = cred.certData &&  cred.certData.altNames ? cred.certData.altNames.filter(x => x.startsWith(Config.AltPrefix.Parent)) : [];
 
 		if (altParents.length === 1) {
 			let parent = altParents[0];
@@ -132,7 +132,7 @@ class BeameStoreV2 {
 	}
 
 	getApprover(cred) {
-		let altApprovers = cred.certData.altNames.filter(x => x.startsWith(Config.AltPrefix.Approver));
+		let altApprovers = cred.certData &&  cred.certData.altNames ? cred.certData.altNames.filter(x => x.startsWith(Config.AltPrefix.Approver)) : [];
 
 		if (altApprovers.length === 1) {
 			let approver = altApprovers[0];
