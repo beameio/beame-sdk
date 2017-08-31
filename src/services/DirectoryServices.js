@@ -219,6 +219,10 @@ class DataServices {
 	scanDir(src) {
 		return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());
 	}
+
+	static readDirFiles(src) {
+		return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isFile());
+	}
 }
 
 
