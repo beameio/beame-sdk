@@ -69,6 +69,8 @@ const parametersSchema = {
 	'forceCheck':         {required: false},
 	'force':              {required: false, default:false},
 	'allowApprovers':     {required: false, default:true},
+	'allowExpired':       {required: false, default:false},
+	'allowRevoked':       {required: false, default:false},
 	'highestFqdn':        {required: false},
 	'trustDepth':         {required: false},
 	'filter':             {required: false, options: ['expired', 'revoked']},
