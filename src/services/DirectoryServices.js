@@ -217,11 +217,17 @@ class DataServices {
 	}
 
 	scanDir(src) {
-		return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());
+		if(fs.existsSync(src)){
+			return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());;
+		}
+
+		return {};
 	}
 
 	static readDirFiles(src) {
-		return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isFile());
+		if(fs.existsSync(src))
+			return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isFile());
+		return null;
 	}
 }
 

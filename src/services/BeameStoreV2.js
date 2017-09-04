@@ -144,6 +144,97 @@ class BeameStoreV2 {
 	}
 
 	/**
+	 * identityIsInRange
+	 *
+	 * verify if identity satisfies provided conditions by using
+	 * accessConfig file or default settings
+	 *
+	 * *********** accessConfig format: **********************
+	 * {
+	* "ACL":"zzz.bbb.beameio.net, yyy.xxx.beameio.net, *.nnn.beameio.net, *.yyy.*",
+	* "ANCHOR":"ggg.kkk.beameio.net, iii.beameio.net",
+	* "HIGH":"ddd.beameio.net",
+	* "DEPTH":3
+	* }
+	 * ********************************************************
+	 *
+	 * ANCHOR is used as valid HIGH from out-of-band tree with same provided DEPTH
+	 *
+	 * default DEPTH = 99
+	 * default HIGH = localAuthFqdn
+	 *
+	 **/
+	identityIsInRange(ownFqdn, guestFqdn, accessConfig) {
+		return new Promise((resolve, reject) => {
+			try {
+				let accObj = typeof accessConfig === 'object' ? accessConfig : JSON.parse(accessConfig);
+
+				let acl         = accObj['ACL'] ? CommonUtils.splitOptions(accObj['ACL']) : null;
+				let anchor      = accObj['ANCHOR'] ? CommonUtils.splitOptions(accObj['ANCHOR'], true) : null;
+				let highestFqdn = accObj['HIGH'] ? accObj['HIGH'] : ownFqdn;
+				let depth       = accObj['DEPTH'] ? Number.isInteger(parseInt(accObj['DEPTH'])) ? parseInt(accObj['DEPTH']) : 99 : 99;
+				if (acl) {//if ACL, required explicit HIGH to allow local creds, or ANCHOR to allow remote creds
+					for (let i = 0; i < acl.length; i++) {
+						if (guestFqdn.match(new RegExp(acl[i]))) {
+							resolve();
+							return;
+						}
+
+					}
+					if (!anchor && !accObj['HIGH'] && !(anchor || anchor && (anchor.length < 1))) {
+						reject();
+						return;
+					}
+				}
+
+				/** @type {VerifyAncestryOptions} **/
+				let options = {
+					highestFqdn: highestFqdn,
+					trustDepth:  depth
+				};
+
+				const _cb = (error, related) => {
+					if (!related) {
+						let ndx       = 0;
+						let isRelated = (i) => {
+							if (i < anchor.length) {
+
+								/** @type {VerifyAncestryOptions} **/
+								let opt = {
+									highestFqdn: anchor[i],
+									trustDepth:  depth
+								};
+
+								const _cb1 = (error, status) => {
+									if (status) {
+										related = true;
+										resolve();
+									}
+									else
+										isRelated(++ndx);
+								};
+
+								this.verifyAncestry(anchor[i], guestFqdn, opt, _cb1);
+							}
+							else
+								reject();
+						};
+						isRelated(ndx);
+					}
+					else resolve();
+				};
+
+				this.verifyAncestry(ownFqdn, guestFqdn, options, _cb);
+			}
+			catch (e) {
+				console.error('Failed to verify access for:', guestFqdn, '..', e);
+				reject();
+			}
+		});
+
+	}
+
+	/**
 	 * Fetch cred tree up to L0 or highestFqdn
 	 * @public
 	 * @method BeameStoreV2.fetchCredChain
