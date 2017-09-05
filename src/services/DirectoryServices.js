@@ -80,6 +80,13 @@ class DataServices {
 		rimraf(dirPath, callback);
 	}
 
+	static deleteFile(_path){
+		try {
+			fs.unlink(_path);
+		} catch (e) {
+		}
+	}
+
 	static readMetadataSync(dir, fqdn) {
 		let p         = BeameUtils.makePath(dir, fqdn, config.metadataFileName),
 		    metadata  = DataServices.readJSON(p);
