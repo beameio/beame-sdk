@@ -225,7 +225,7 @@ class DataServices {
 
 	scanDir(src) {
 		if(fs.existsSync(src)){
-			return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());;
+			return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());
 		}
 
 		return {};
