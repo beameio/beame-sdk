@@ -1772,7 +1772,7 @@ class Credential {
 						fs.writeFileSync(certPath, body);
 
 						OpenSSLWrapper.convertCertToPem(certPath, pemPath).then(() => {
-							fs.unlink(certPath);
+							fs.unlinkSync(certPath);
 							resolve(pemPath);
 						}).catch(e => {
 							reject(e);
