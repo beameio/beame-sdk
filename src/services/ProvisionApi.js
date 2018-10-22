@@ -126,7 +126,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 	retries--;
 
 	let onApiError =  (error,response) => {
-		logger.warn("Provision Api post error", {
+		logger.error("Provision Api post error", {
 			"error": error,
 			"url":   url
 		});
