@@ -32,7 +32,7 @@ function createWithLocalCreds(local_fqdn, data) {
 		let parent_fqdn = local_fqdn || process.env.local_fqdn;
 
 		data = data || _getRandomRegistrationData(`${parent_fqdn}-child-`);
-
+		console.log('*** createEntityWithLocalCreds data', data);
 		let parent_cred;
 
 		before(function (done) {
@@ -77,6 +77,69 @@ function createWithLocalCreds(local_fqdn, data) {
 
 }
 
+function createCustomWithLocalCreds(local_fqdn, custom_fqdn, data) {
+	describe('Test create with local creds', function () {
+		this.timeout(1000000);
+		const rnd = config.beameUtils.randomString(8).toLowerCase();
+
+
+		let parent_fqdn = local_fqdn || process.env.local_fqdn;
+		if(!custom_fqdn) {
+			if (process.env.custom_fqdn) {
+				custom_fqdn = process.env.custom_fqdn;
+			} else {
+				custom_fqdn = `c-${rnd}.tests`;
+			}
+		}
+
+		data = data || _getRandomRegistrationData(`${parent_fqdn}-child-`);
+		console.log('*** createCustomWithLocalCreds data', data);
+		console.log('*** createCustomWithLocalCreds parent_fqdn custom_fqdn', parent_fqdn, custom_fqdn);
+		let parent_cred;
+
+		before(function (done) {
+
+			assert.isString(parent_fqdn, 'Parent fqdn required');
+
+			logger.info('find local creds');
+
+			parent_cred = store.getCredential(parent_fqdn);
+
+			assert.isNotNull(parent_cred, 'Parent credential not found');
+
+			done()
+		});
+
+		it('Should create entity', function (done) {
+
+			parent_cred.createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, data.name, data.email).then(metadata => {
+
+				logger.info(`metadata received `, metadata);
+
+				assert.isNotNull(metadata, `expected metadata`);
+				assert.isNotNull(metadata.fqdn, `expected fqdn`);
+
+				let cred = store.getCredential(metadata.fqdn);
+
+				assert.isNotNull(cred, 'New credential not found inn store');
+
+
+				done();
+
+			}).catch(error=> {
+				console.error(error);
+				console.error(error.EntityValidationErrors);
+				var msg = config.Logger.formatError(error);
+
+				logger.error(msg, error);
+				assert.fail(0, 1, msg);
+				done();
+			});
+		});
+
+	});
+
+}
 
 /**
  * CMD to run from console
@@ -312,6 +375,9 @@ switch (test) {
 		break;
 	case 'local':
 		createWithLocalCreds();
+		break;
+	case 'local_custom':
+		createCustomWithLocalCreds();
 		break;
 }
 
