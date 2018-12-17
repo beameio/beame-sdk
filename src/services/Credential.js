@@ -2093,17 +2093,30 @@ class Credential {
 
 	getDnsValue() {
 		return new Promise((resolve, reject) => {
+				let doSetDns = true;
 				if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
-					resolve(this.metadata.dnsRecords[0].value);
-					return;
+
+					let expected_ip = util.promisify(dns.lookup)(this.metadata.dnsRecords[0].value);
+					let real_ip = util.promisify(dns.lookup)(this.fqdn);
+					Promise.all([expected_ip, real_ip]).then(ips => {
+						if(ips[0] === ips[1]) {
+							doSetDns = false;
+                        }
+                    }).catch(e => {
+                    	logger.error(e);
+                    });
 				}
 
-				this.setDns(this.fqdn, null, true).then(value => {
-					resolve(value);
-				}).catch(e => {
-					logger.error(e);
-					reject();
-				})
+				if (doSetDns) {
+                    this.setDns(this.fqdn, null, true).then(value => {
+                        resolve(value);
+                    }).catch(e => {
+                        logger.error(e);
+                        reject();
+                    })
+                } else {
+                    resolve(this.metadata.dnsRecords[0].value);
+                }
 			}
 		);
 	}
