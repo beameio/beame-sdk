@@ -2091,32 +2091,25 @@ class Credential {
 		);
 	}
 
-	getDnsValue() {
+	ensureDnsValue() {
 		return new Promise((resolve, reject) => {
-				let doSetDns = true;
 				if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
-
 					let expected_ip = util.promisify(dns.lookup)(this.metadata.dnsRecords[0].value);
 					let real_ip = util.promisify(dns.lookup)(this.fqdn);
 					Promise.all([expected_ip, real_ip]).then(ips => {
 						if(ips[0] === ips[1]) {
-							doSetDns = false;
+							resolve(this.metadata.dnsRecords[0].value);
+							return;
                         }
-                    }).catch(e => {
-                    	logger.error(e);
-                    });
+                    }).catch(e => logger.error(e));
 				}
 
-				if (doSetDns) {
-                    this.setDns(this.fqdn, null, true).then(value => {
-                        resolve(value);
-                    }).catch(e => {
-                        logger.error(e);
-                        reject();
-                    })
-                } else {
-                    resolve(this.metadata.dnsRecords[0].value);
-                }
+				this.setDns(this.fqdn, null, true).then(value => {
+					resolve(value);
+				}).catch( e => {
+					logger.error(e);
+					reject(e);
+				})
 			}
 		);
 	}
