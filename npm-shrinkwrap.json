@@ -4232,6 +4232,7 @@
       "resolved": "https://registry.npmjs.org/wmic/-/wmic-0.1.0.tgz",
       "integrity": "sha1-eLQasR0VTLgSgZ4SkWdNrVXY4dc=",
       "requires": {
+        "async": "^2.6.1",
         "iconv-lite": "^0.4.13"
       },
       "dependencies": {
