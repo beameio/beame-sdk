@@ -79,7 +79,6 @@ const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
 const util					 = require('util');
 const dns					 = require('dns');
-const {promisify} 			 = require('util');
 
 const timeFuzz = Config.defaultTimeFuzz * 1000;
 
@@ -2094,27 +2093,15 @@ class Credential {
 		);
 	}
 
-	ensureDnsValue() {
-		return new Promise((resolve, reject) => {
-				if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
-					let expected_ip = util.promisify(dns.lookup)(this.metadata.dnsRecords[0].value);
-					let real_ip = util.promisify(dns.lookup)(this.fqdn);
-					Promise.all([expected_ip, real_ip]).then(ips => {
-						if(ips[0] === ips[1]) {
-							resolve(this.metadata.dnsRecords[0].value);
-							return;
-                        }
-                    }).catch(e => logger.error(e));
-				}
-
-				this.setDns(this.fqdn, null, true).then(value => {
-					resolve(value);
-				}).catch( e => {
-					logger.error(e);
-					reject(e);
-				})
+	async ensureDnsValue() {
+		if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
+			const expected_ip = await util.promisify(dns.lookup)(this.metadata.dnsRecords[0].value);
+			const real_ip = await util.promisify(dns.lookup)(this.fqdn);
+			if (expected_ip.address === real_ip.address) {
+				return this.metadata.dnsRecords[0].value;
 			}
-		);
+		}
+		return await this.setDns(this.fqdn, null, true);
 	}
 
 	static _updateDnsRecords(cred, dnsFqdn, dnsRecord) {
