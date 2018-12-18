@@ -88,7 +88,7 @@ class ProxyClient {
 	start() {
 
 		return new Promise((resolve, reject) => {
-				this._cred.getDnsValue().then(value => {
+				this._cred.ensureDnsValue().then(value => {
 					this._edgeServerHostname = value;
 
 					this._initSocket();

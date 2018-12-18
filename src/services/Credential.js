@@ -77,6 +77,8 @@ const apiEntityActions       = require('../../config/ApiConfig.json').Actions.En
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
+const util                   = require('util');
+const dns                    = require('dns');
 
 const timeFuzz = Config.defaultTimeFuzz * 1000;
 
@@ -2091,21 +2093,15 @@ class Credential {
 		);
 	}
 
-	getDnsValue() {
-		return new Promise((resolve, reject) => {
-				if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
-					resolve(this.metadata.dnsRecords[0].value);
-					return;
-				}
-
-				this.setDns(this.fqdn, null, true).then(value => {
-					resolve(value);
-				}).catch(e => {
-					logger.error(e);
-					reject();
-				})
+	async ensureDnsValue() {
+		if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
+			const expected_ip = await util.promisify(dns.lookup)(this.metadata.dnsRecords[0].value);
+			const real_ip = await util.promisify(dns.lookup)(this.fqdn);
+			if (expected_ip.address === real_ip.address) {
+				return this.metadata.dnsRecords[0].value;
 			}
-		);
+		}
+		return await this.setDns(this.fqdn, null, true);
 	}
 
 	static _updateDnsRecords(cred, dnsFqdn, dnsRecord) {
