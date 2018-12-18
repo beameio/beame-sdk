@@ -77,6 +77,9 @@ const apiEntityActions       = require('../../config/ApiConfig.json').Actions.En
 const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
+const util					 = require('util');
+const dns					 = require('dns');
+const {promisify} 			 = require('util');
 
 const timeFuzz = Config.defaultTimeFuzz * 1000;
 
