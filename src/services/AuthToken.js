@@ -77,7 +77,7 @@ class AuthToken {
 			}
 
 			if(!signingCreds.hasKey("PRIVATE_KEY")){
-				logger.error(`signingCreds ${signingCreds.fqdn} must has private key`);
+				logger.warn(`signingCreds ${signingCreds.fqdn} must have private key`);
 				return null;
 			}
 
