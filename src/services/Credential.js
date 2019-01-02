@@ -81,6 +81,7 @@ const util                   = require('util');
 const dns                    = require('dns');
 
 const timeFuzz = Config.defaultTimeFuzz * 1000;
+const maxRetries = 5;
 
 const nop = function () {
 };
@@ -1702,33 +1703,38 @@ class Credential {
 							_resolve(resolveOnArbitration, e);
 						});
 
-
 					}
 					else {
-
-						const _doOcspRequest = (pemPath) => {
-							ocsp.check({
-								cert:   cred.getKey("X509"),
-								issuer: DirectoryServices.readFile(pemPath)
-							}, (err, res) => {
-								if (err) {
-									logger.error(`check ocsp for ${cred.fqdn} error`);
-									logger.warn(err);
-									_resolve(false, err);
+						const sleep = util.promisify(setTimeout);
+						const _doOcspCheck = (pemPath) => util.promisify(ocsp.check.bind(ocsp))({
+																cert: cred.getKey("X509"),
+																issuer: DirectoryServices.readFile(pemPath)
+															});
+						this._validateIssuerCert(cred)
+							.then(async pemPath => {
+								let error = "";
+								for (let i = 1; i <= maxRetries; ++i) { // retry
+									try {
+										const res = await _doOcspCheck(pemPath);
+										res && res.type && res.type === 'good' ? _resolve(true) : _resolve(resolveOnArbitration, res);
+										error = "";
+										break;
+									} catch (e) {
+										const time = Math.pow(2, i) * 1000;
+										logger.warn(`OCSP check for ${cred.fqdn} failed '${e}'. Retrying ${i}/${maxRetries}` + (i<maxRetries ? `. Waiting ${time}` : ""));
+										if(i<maxRetries) await sleep(time);
+										error = e;
+									}
 								}
-								else {
-									res && res.type && res.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, res);
+								if(error) {
+									logger.error(`OCSP check for ${cred.fqdn} failed. No retries left. Last error was ' ${error}'`);
+									_resolve(false, error);
 								}
-
+							})
+							.catch(e => {
+								_resolve(resolveOnArbitration, e);
 							});
-						};
-
-						this._validateIssuerCert(cred).then(_doOcspRequest).catch(e => {
-							_resolve(resolveOnArbitration, e);
-						});
-
 					}
-
 				} catch (e) {
 					_resolve(resolveOnArbitration, e);
 				}

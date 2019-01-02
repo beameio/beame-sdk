@@ -257,7 +257,7 @@ class BeameLogger {
 			data
 		};
 
-		this.printLogMessage(LogLevel.Debug, log);
+		this.printLogMessage(LogLevel.Warn, log);
 	}
 
 	/**
