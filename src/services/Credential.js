@@ -1644,7 +1644,7 @@ class Credential {
 											return;
 										}
 
-										const _doOcspUri = () => util.promisify(ocsp.getOCSPURI.bind(ocsp))(signerCred.getKey("X509"))
+										const _doOcspUri = () => util.promisify(ocsp.getOCSPURI.bind(ocsp))(signerCred.getKey("X509"));
 										CommonUtils.retry(_doOcspUri)
 												   .then(uri => {
 													   const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}`;
@@ -1671,7 +1671,7 @@ class Credential {
 															   const _doOcspVerify = () => util.promisify(ocsp.verify.bind(ocsp))({
 																   request:  req,
 																   response: body
-															   })
+															   });
 															   CommonUtils.retry(_doOcspVerify)
 																   .then(resp => resp && resp.type && resp.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, resp))
 																   .catch(err => {
@@ -1706,7 +1706,7 @@ class Credential {
 						const _doOcspCheck = (pemPath) => util.promisify(ocsp.check.bind(ocsp))({
 																cert: cred.getKey("X509"),
 																issuer: DirectoryServices.readFile(pemPath)
-															})
+															});
 						this._validateIssuerCert(cred)
 							.then(pemPath => CommonUtils.retry(_doOcspCheck.bind(this, pemPath))
 																  .then(res => res && res.type && res.type === 'good' ? _resolve(true) : _resolve(resolveOnArbitration, res))
