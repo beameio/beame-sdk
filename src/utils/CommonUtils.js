@@ -87,8 +87,17 @@ class CommonUtils {
 	 * @param {number|null} [upper]
 	 * @returns {number}
 	 */
-	static randomTimeout(upper) {
+	static randomTime(upper) {
 		return Math.floor((Math.random() * (upper || 10)) + 1) * 1000 * Math.random()
+	}
+
+	/**
+	 *
+	 * @param {number} [iteration]
+	 * @returns {number}
+	 */
+	static exponentialTime(i) {
+		return parseInt(Math.pow(2, i) * 1000 + CommonUtils.randomTime(1));
 	}
 
 	static addDays(date, days) {
@@ -277,7 +286,30 @@ class CommonUtils {
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&apos;');
+	}
 
+	/**
+	 * Retries a function before finally failing
+	 * @param {function} obj
+	 * @param {number|null} retries
+	 * @returns {*} funtion result
+	 * @throws {string} final fail if all retries expired
+	 */
+	static async retry(func, retries = 5) {
+		let error = "";
+		const sleep = require('util').promisify(setTimeout);
+
+		for (let i = 1; i <= retries; ++i) { // retry
+			try {
+				return await func();
+			} catch (e) {
+				const time = CommonUtils.exponentialTime(i);
+				error = e;
+				console.warn(`Call failed with error '${error}'. Retry [${i}/${retries}]` + (i < retries ? ` waiting ${time}ms` : ""));
+				if (i < retries) await sleep(time);
+			}
+		}
+		throw error;
 	}
 }
 

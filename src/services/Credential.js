@@ -81,7 +81,6 @@ const util                   = require('util');
 const dns                    = require('dns');
 
 const timeFuzz = Config.defaultTimeFuzz * 1000;
-const maxRetries = 5;
 
 const nop = function () {
 };
@@ -1628,7 +1627,6 @@ class Credential {
 							let digest  = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
 							const store = new (require("./BeameStoreV2"))();
 
-
 							store.fetchCredChain(cred.fqdn, null, (err, creds) => {
 								if (!err) {
 									let signerCred = null;
@@ -1646,47 +1644,47 @@ class Credential {
 											return;
 										}
 
-										ocsp.getOCSPURI(signerCred.getKey("X509"), (err, uri) => {
-											if (err) {
-												_resolve(resolveOnArbitration, err);
-											}
-											else {
-												const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}`;
+										const _doOcspUri = () => util.promisify(ocsp.getOCSPURI.bind(ocsp))(signerCred.getKey("X509"))//.then(function() { throw "fail ocsp uri"});
+										CommonUtils.retry(_doOcspUri)
+												   .then(uri => {
+													   const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}`;
 
-												let opt = {
-													url:      url,
-													headers:  {
-														'X-BeameAuthToken': authToken,
-														'X-BeameOcspUri':   uri,
-														'Content-Type':     'application/ocsp-request',
-														'Content-Length':   req.data.length
+													   let opt = {
+														   url:      url,
+														   headers:  {
+															   'X-BeameAuthToken': authToken,
+															   'X-BeameOcspUri':   uri,
+															   'Content-Type':     'application/ocsp-request',
+															   'Content-Length':   req.data.length
 
-													},
-													method:   'POST',
-													body:     req.data,
-													encoding: null
-												};
+														   },
+														   method:   'POST',
+														   body:     req.data,
+														   encoding: null
+													   };
 
-												request(opt, (error, response, body) => {
-													if (response.statusCode < 200 || response.statusCode >= 400) {
-														_resolve(resolveOnArbitration, response.statusCode);
-													}
-													else {
-														ocsp.verify({
-															request:  req,
-															response: body
-														}, (err, resp) => {
-															if (err) {
-																_resolve(resolveOnArbitration, err);
-															}
-															else {
-																resp && resp.type && resp.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, resp);
-															}
-														});
-													}
-												});
-											}
-										});
+													   request(opt, (error, response, body) => {
+														   if (response.statusCode < 200 || response.statusCode >= 400) {
+															   _resolve(resolveOnArbitration, response.statusCode);
+														   }
+														   else {
+															   const _doOcspVerify = () => util.promisify(ocsp.verify.bind(ocsp))({
+																   request:  req,
+																   response: body
+															   })//.then(function() { throw "fail ocsp verify"});
+															   CommonUtils.retry(_doOcspVerify)
+																   .then(resp => resp && resp.type && resp.type == 'good' ? _resolve(true) : _resolve(resolveOnArbitration, resp))
+																   .catch(err => {
+																	   logger.error(`OCSP verify for ${cred.fqdn} failed. No retries left. Last error was ' ${err}'`);
+																	   _resolve(resolveOnArbitration, err);
+																   })
+														   }
+													   });
+												   })
+												   .catch(err => {
+														logger.error(`OCSP get uri for ${cred.fqdn} failed. No retries left. Last error was ' ${err}'`);
+														_resolve(resolveOnArbitration, err);
+												   });
 									}
 									else {
 										reject(`Failed to find valid signer cred for ${cred.fqdn}`);
@@ -1698,39 +1696,24 @@ class Credential {
 
 							}, true, true);
 
-
 						}).catch(e => {
 							_resolve(resolveOnArbitration, e);
 						});
 
 					}
 					else {
-						const sleep = util.promisify(setTimeout);
+
 						const _doOcspCheck = (pemPath) => util.promisify(ocsp.check.bind(ocsp))({
 																cert: cred.getKey("X509"),
 																issuer: DirectoryServices.readFile(pemPath)
-															});
+															})//.then(function() { throw "fail ocsp check"});
 						this._validateIssuerCert(cred)
-							.then(async pemPath => {
-								let error = "";
-								for (let i = 1; i <= maxRetries; ++i) { // retry
-									try {
-										const res = await _doOcspCheck(pemPath);
-										res && res.type && res.type === 'good' ? _resolve(true) : _resolve(resolveOnArbitration, res);
-										error = "";
-										break;
-									} catch (e) {
-										const time = Math.pow(2, i) * 1000;
-										logger.warn(`OCSP check for ${cred.fqdn} failed '${e}'. Retrying ${i}/${maxRetries}` + (i<maxRetries ? `. Waiting ${time}` : ""));
-										if(i<maxRetries) await sleep(time);
-										error = e;
-									}
-								}
-								if(error) {
-									logger.error(`OCSP check for ${cred.fqdn} failed. No retries left. Last error was ' ${error}'`);
-									_resolve(false, error);
-								}
-							})
+							.then(pemPath => CommonUtils.retry(_doOcspCheck.bind(this, pemPath))
+																  .then(res => res && res.type && res.type === 'good' ? _resolve(true) : _resolve(resolveOnArbitration, res))
+																  .catch(err => {
+																	logger.error(`OCSP check for ${cred.fqdn} failed. No retries left. Last error was ' ${err}'`);
+																	_resolve(false, err)
+																  }))
 							.catch(e => {
 								_resolve(resolveOnArbitration, e);
 							});
