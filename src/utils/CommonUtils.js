@@ -11,8 +11,8 @@ class CommonUtils {
 		}
 
 		let d     = new Date(),
-		    dash  = "-",
-		    colon = ":";
+			dash  = "-",
+			colon = ":";
 
 		return d.getFullYear() + dash +
 			pad(d.getMonth() + 1) + dash +
@@ -73,13 +73,11 @@ class CommonUtils {
 		const crypto = require('crypto');
 
 		crypto.randomBytes(len || 256, (error, buf) => {
-				if (error) {
-					return null;
-				}
-				return buf.toString('hex');
+			if (error) {
+				return null;
 			}
-		);
-
+			return buf.toString('hex');
+		});
 	}
 
 	/**
@@ -92,14 +90,32 @@ class CommonUtils {
 	}
 
 	/**
-	 *
-	 * @param {number} [iteration]
+	 * Exponential jitter implementation based on backo2 (https://github.com/mokesmokes/backo/)
+	 * @param attempt {number} - attempt number
+	 * @param min {number} needs to be > 0
+	 * @param max {number|0} 0 means max is disabled
+	 * @param factor {number}
+	 * @param jitter {number} value between 0..1
 	 * @returns {number}
 	 */
-	static exponentialTime(i) {
-		return parseInt(Math.pow(2, i) * 1000 + CommonUtils.randomTime(1));
+	static exponentialTimeWithJitter(attempt, min = 400, max = 0, factor = 2, jitter = 0.2)
+	{
+		let ms = min * Math.pow(factor, attempt);
+		if(jitter > 0 && jitter <= 1) {
+			const rand =  Math.random();
+			const deviation = Math.floor(rand * jitter * ms);
+			ms = (Math.floor(rand * 10) & 1) === 0 ? ms - deviation : ms + deviation;
+		}
+		if(max !== 0)
+			ms = Math.min(ms, max);
+		return ms | 0;
 	}
 
+	/**
+	 * @param date {Date}
+	 * @param days {number}
+	 * @returns {Date}
+	 */
 	static addDays(date, days) {
 		let result = new Date(date || new Date());
 		result.setDate(result.getDate() + days);
@@ -184,7 +200,7 @@ class CommonUtils {
 			if (os.platform() == 'win32') {
 
 				let cmdArgs = ["/c", this.getSequelizeBinaryPath(sequelizeModule)],
-				    allArgs = cmdArgs.concat(args);
+					allArgs = cmdArgs.concat(args);
 
 
 				execFile('cmd', allArgs, (error) => {
@@ -274,8 +290,7 @@ class CommonUtils {
 				getGlobalNtpStamp(retries);
 			}
 
-			}
-		);
+		});
 
 
 	}
@@ -303,7 +318,7 @@ class CommonUtils {
 			try {
 				return await func();
 			} catch (e) {
-				const time = CommonUtils.exponentialTime(i);
+				const time = CommonUtils.exponentialTimeWithJitter(i);
 				error = e;
 				console.warn(`Call failed with error '${error}'. Retry [${i}/${retries}]` + (i < retries ? ` waiting ${time}ms` : ""));
 				if (i < retries) await sleep(time);

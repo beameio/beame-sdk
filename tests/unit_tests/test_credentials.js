@@ -3,22 +3,25 @@
  */
 "use strict";
 
-var config        = require('./config');
-const appConfig   = require('../../config/Config');
-const async       = require('async');
-var assert        = config.assert;
-var store         = config.beameStore;
-var logger        = new config.Logger("TestCredential");
-var provApi       = config.ProvisionApi;
-const CommonUtils = config.CommonUtils;
-
+const async = require('async');
+const assert = require('assert');
+const appConfig = require('../../config/Config');
+const commonUtils = require('../../src/utils/CommonUtils');
+const beameUtils = require('../../src/utils/BeameUtils');
+const store = new (require("../../src/services/BeameStoreV2"))();
+const logger = new (require('../../src/utils/Logger'))("test_credentials");
+const provApi = new (require('../../src/services/ProvisionApi'))();
 
 function _getRandomRegistrationData(prefix) {
-	let rnd = config.beameUtils.randomString(8);
+	let rnd = beameUtils.randomString(8);
 	return {
 		name:  prefix + rnd,
 		email: rnd + '@example.com'
 	};
+}
+
+function isString(str) {
+	return str && ((typeof str === 'string') || (str instanceof String));
 }
 
 /**
@@ -29,7 +32,7 @@ function createWithLocalCreds(local_fqdn, data) {
 	describe('Test create with local creds', function () {
 		this.timeout(1000000);
 
-		let parent_fqdn = local_fqdn || process.env.local_fqdn;
+		let parent_fqdn = local_fqdn || process.env.BEAME_TESTS_LOCAL_FQDN;
 
 		data = data || _getRandomRegistrationData(`${parent_fqdn}-child-`);
 		console.log('*** createEntityWithLocalCreds data', data);
@@ -37,13 +40,13 @@ function createWithLocalCreds(local_fqdn, data) {
 
 		before(function (done) {
 
-			assert.isString(parent_fqdn, 'Parent fqdn required');
+			assert(isString(parent_fqdn), 'Parent fqdn required');
 
 			logger.info('find local creds');
 
 			parent_cred = store.getCredential(parent_fqdn);
 
-			assert.isNotNull(parent_cred, 'Parent credential not found');
+			assert(parent_cred, 'Parent credential not found');
 
 			done()
 		});
@@ -54,12 +57,12 @@ function createWithLocalCreds(local_fqdn, data) {
 
 				logger.info(`metadata received `, metadata);
 
-				assert.isNotNull(metadata, `expected metadata`);
-				assert.isNotNull(metadata.fqdn, `expected fqdn`);
+				assert(metadata, `expected metadata`);
+				assert(metadata.fqdn, `expected fqdn`);
 
 				let cred = store.getCredential(metadata.fqdn);
 
-				assert.isNotNull(cred, 'New credential not found inn store');
+				assert(cred, 'New credential not found inn store');
 
 
 				done();
@@ -68,7 +71,7 @@ function createWithLocalCreds(local_fqdn, data) {
 				var msg = config.Logger.formatError(error);
 
 				logger.error(msg, error);
-				assert.fail(0, 1, msg);
+				assert.fail(msg);
 				done();
 			});
 		});
@@ -83,10 +86,10 @@ function createCustomWithLocalCreds(local_fqdn, custom_fqdn, data) {
 		const rnd = config.beameUtils.randomString(8).toLowerCase();
 
 
-		let parent_fqdn = local_fqdn || process.env.local_fqdn;
+		let parent_fqdn = local_fqdn || process.env.BEAME_TESTS_LOCAL_FQDN;
 		if(!custom_fqdn) {
-			if (process.env.custom_fqdn) {
-				custom_fqdn = process.env.custom_fqdn;
+			if (process.env.BEAME_TESTS_CUSTOM_FQDN) {
+				custom_fqdn = process.env.BEAME_TESTS_CUSTOM_FQDN;
 			} else {
 				custom_fqdn = `c-${rnd}.tests`;
 			}
@@ -99,13 +102,13 @@ function createCustomWithLocalCreds(local_fqdn, custom_fqdn, data) {
 
 		before(function (done) {
 
-			assert.isString(parent_fqdn, 'Parent fqdn required');
+			assert(isString(parent_fqdn), 'Parent fqdn required');
 
 			logger.info('find local creds');
 
 			parent_cred = store.getCredential(parent_fqdn);
 
-			assert.isNotNull(parent_cred, 'Parent credential not found');
+			assert(parent_cred, 'Parent credential not found');
 
 			done()
 		});
@@ -116,13 +119,12 @@ function createCustomWithLocalCreds(local_fqdn, custom_fqdn, data) {
 
 				logger.info(`metadata received `, metadata);
 
-				assert.isNotNull(metadata, `expected metadata`);
-				assert.isNotNull(metadata.fqdn, `expected fqdn`);
+				assert(metadata, `expected metadata`);
+				assert(metadata.fqdn, `expected fqdn`);
 
 				let cred = store.getCredential(metadata.fqdn);
 
-				assert.isNotNull(cred, 'New credential not found inn store');
-
+				assert(cred, 'New credential not found inn store');
 
 				done();
 
@@ -132,7 +134,7 @@ function createCustomWithLocalCreds(local_fqdn, custom_fqdn, data) {
 				var msg = config.Logger.formatError(error);
 
 				logger.error(msg, error);
-				assert.fail(0, 1, msg);
+				assert.fail(msg);
 				done();
 			});
 		});
@@ -149,7 +151,7 @@ function signAndCreate(signing_fqdn, data) {
 	describe('Test create with local signature', function () {
 		this.timeout(1000000);
 
-		let parent_fqdn = signing_fqdn || process.env.signing_fqdn;
+		let parent_fqdn = signing_fqdn || process.env.BEAME_TESTS_SIGNING_FQDN;
 
 		data = data || _getRandomRegistrationData(`${parent_fqdn}-child-`);
 
@@ -157,30 +159,30 @@ function signAndCreate(signing_fqdn, data) {
 
 		before(function (done) {
 
-			assert.isString(parent_fqdn, 'Parent fqdn required');
+			assert(isString(parent_fqdn), 'Parent fqdn required');
 
 			logger.info(`find local creds for ${parent_fqdn}`);
 
 			signing_cred = store.getCredential(parent_fqdn);
 
-			assert.isNotNull(signing_cred, 'Parent credential not found');
+			assert(signing_cred, 'Parent credential not found');
 
 			done()
 		});
 
 		it('Should create entity', function (done) {
 
-			signing_cred.signWithFqdn(parent_fqdn, CommonUtils.generateDigest(data)).then(authToken=> {
+			signing_cred.signWithFqdn(parent_fqdn, commonUtils.generateDigest(data)).then(authToken=> {
 				signing_cred.createEntityWithAuthToken(authToken, data.name, data.email).then(metadata => {
 
 					logger.info(`metadata received `, metadata);
 
-					assert.isNotNull(metadata, `expected metadata`);
-					assert.isNotNull(metadata.fqdn, `expected fqdn`);
+					assert(metadata, `expected metadata`);
+					assert(metadata.fqdn, `expected fqdn`);
 
 					let cred = store.getCredential(metadata.fqdn);
 
-					assert.isNotNull(cred, 'New credential not found inn store');
+					assert(cred, 'New credential not found inn store');
 
 
 					done();
@@ -208,14 +210,14 @@ function testFlow() {
 		this.timeout(1000000);
 
 		let devCreds,
-		    fqdn          = process.env.signing_fqdn || appConfig.beameDevCredsFqdn,
+		    fqdn          = process.env.BEAME_TESTS_SIGNING_FQDN || appConfig.beameDevCredsFqdn,
 		    zeroLevelData = _getRandomRegistrationData('zero-level');
 
 		before(function (done) {
 
 			devCreds = store.getCredential(fqdn);
 
-			assert.isNotNull(devCreds, 'Parent credential not found');
+			assert(devCreds, 'Parent credential not found');
 
 			done()
 		});
@@ -225,7 +227,7 @@ function testFlow() {
 		it('Should create authToken', (done) => {
 			devCreds.signWithFqdn(fqdn, zeroLevelData).then(t=> {
 
-				assert.isNotNull(t);
+				assert(t);
 				initialAuthToken = t;
 				logger.info(`auth token received ${initialAuthToken}`);
 				done();
@@ -246,11 +248,11 @@ function testFlow() {
 					logger.error(error);
 					process.exit(2);
 				}
-				assert.isNotNull(payload);
+				assert(payload);
 
-				registrationAuthToken = CommonUtils.parse(payload.authToken);
+				registrationAuthToken = commonUtils.parse(payload.authToken);
 
-				assert.isNotNull(registrationAuthToken);
+				assert(registrationAuthToken);
 
 				logger.debug(`auth token received from server`, registrationAuthToken);
 
@@ -262,16 +264,16 @@ function testFlow() {
 
 		it('Should complete registration with received server auth token', done=> {
 
-			devCreds.createEntityWithAuthServer(CommonUtils.stringify(registrationAuthToken, false), null, zeroLevelData.name, zeroLevelData.email).then(metadata => {
+			devCreds.createEntityWithAuthServer(commonUtils.stringify(registrationAuthToken, false), null, zeroLevelData.name, zeroLevelData.email).then(metadata => {
 
 				logger.debug(`metadata received `, metadata);
 
-				assert.isNotNull(metadata, `expected metadata`);
-				assert.isNotNull(metadata.fqdn, `expected fqdn`);
+				assert(metadata, `expected metadata`);
+				assert(metadata.fqdn, `expected fqdn`);
 
 				let cred = store.getCredential(metadata.fqdn);
 
-				assert.isNotNull(cred, 'New credential not found inn store');
+				assert(cred, 'New credential not found inn store');
 
 				zeroLevelFqdn = metadata.fqdn;
 
@@ -309,7 +311,7 @@ function testFlow() {
 				let newData2 = _getRandomRegistrationData(`${ind}-${zeroLevelFqdn}-child-1-`);
 				logger.info(`Creating entity ${newData2.name} under ${zeroLevelFqdn}`);
 
-				devCreds.signWithFqdn(zeroLevelFqdn, CommonUtils.generateDigest(newData2)).then(authToken=> {
+				devCreds.signWithFqdn(zeroLevelFqdn, commonUtils.generateDigest(newData2)).then(authToken=> {
 					devCreds.createEntityWithAuthToken(authToken, newData2.name, newData2.email).then(metadata => {
 
 						logger.info(`metadata received for ${newData2.name}`, metadata);
@@ -346,7 +348,7 @@ function testFlow() {
 					if (error) {
 						logger.error(`create children`, error);
 					}
-					assert.isNull(error);
+					assert(!error);
 					done();
 				}
 			);
@@ -357,7 +359,7 @@ function testFlow() {
 
 }
 
-var test = process.env.test_type;
+var test = process.env.BEAME_TESTS_TYPE;
 
 if (!test) {
 	logger.error(`test type required`);
@@ -388,27 +390,27 @@ switch (test) {
 //
 // 	describe('Test create with auth token', function () {
 // 		this.timeout(1000000);
-// 		let authToken = process.env.token;
+// 		let authToken = process.env.BEAME_TESTS_TOKEN;
 //
 // 		before(function (done) {
 //
-// 			assert.isString(authToken, 'Parent fqdn required');
+// 			assert(isString(authToken), 'Parent fqdn required');
 //
 // 			done()
 // 		});
 //
 // 		it('Should create entity', function (done) {
 //
-// 			credential.createEntityWithAuthServer(authToken, null, name || process.env.name || config.beameUtils.randomString(8), null).then(metadata => {
+// 			credential.createEntityWithAuthServer(authToken, null, name || process.env.BEAME_TESTS_NAME || config.beameUtils.randomString(8), null).then(metadata => {
 //
 // 				logger.info(`metadata received `, metadata);
 //
-// 				assert.isNotNull(metadata, `expected metadata`);
-// 				assert.isNotNull(metadata.fqdn, `expected fqdn`);
+// 				assert(metadata, `expected metadata`);
+// 				assert(metadata.fqdn, `expected fqdn`);
 //
 // 				let cred = store.getCredential(metadata.fqdn);
 //
-// 				assert.isNotNull(cred, 'New credential not found inn store');
+// 				assert(cred, 'New credential not found inn store');
 //
 // 				done();
 //
@@ -429,31 +431,31 @@ switch (test) {
 // }
 //
 // function createAuthToken(data) {
-// 	console.log(`env signed fqdn is ${process.env.signed_fqdn}`);
-// 	let fqdn = process.env.signed_fqdn || config.BeameConfig.beameDevCredsFqdn;
+// 	console.log(`env signed fqdn is ${process.env.BEAME_TESTS_SIGNED_FQDN}`);
+// 	let fqdn = process.env.BEAME_TESTS_SIGNED_FQDN || config.BeameConfig.beameDevCredsFqdn;
 //
 // 	let cred;
 //
 // 	before(function (done) {
 //
-// 		assert.isString(fqdn, 'Parent fqdn required');
+// 		assert(isString(fqdn), 'Parent fqdn required');
 //
 // 		logger.info(`find local creds for ${fqdn}`);
 //
 // 		cred = store.getCredential(fqdn);
 //
-// 		assert.isNotNull(cred, 'Parent credential not found');
+// 		assert(cred, 'Parent credential not found');
 //
 // 		done()
 // 	});
 //
 // 	it('Should create entity', function (done) {
 //
-// 		cred.signWithFqdn(fqdn, data || process.env.data_to_sign).then(authToken=> {
+// 		cred.signWithFqdn(fqdn, data || process.env.BEAME_TESTS_DATA_TO_SIGN).then(authToken=> {
 //
-// 			assert.isString(authToken);
+// 			assert(isString(authToken));
 //
-// 			console.log(CommonUtils.stringify(authToken, false));
+// 			console.log(commonUtils.stringify(authToken, false));
 //
 // 			done();
 // 		}).catch(error=> {
@@ -470,7 +472,7 @@ switch (test) {
 // }
 //
 // function createSnsTopic() {
-// 	let fqdn = process.env.fqdn || config.BeameConfig.beameDevCredsFqdn;
+// 	let fqdn = process.env.BEAME_TESTS_LOCAL_FQDN || config.BeameConfig.beameDevCredsFqdn;
 //
 // 	let cred;
 //
@@ -480,13 +482,13 @@ switch (test) {
 //
 // 		before(function (done) {
 //
-// 			assert.isString(fqdn, 'Fqdn required');
+// 			assert(isString(fqdn), 'Fqdn required');
 //
 // 			logger.info(`find local creds for ${fqdn}`);
 //
 // 			cred = store.getCredential(fqdn);
 //
-// 			assert.isNotNull(cred, 'Parent credential not found');
+// 			assert(cred, 'Parent credential not found');
 //
 // 			done()
 // 		});

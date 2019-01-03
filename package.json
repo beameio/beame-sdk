@@ -5,11 +5,9 @@
   "main": "index.js",
   "engine": "node >= 4.4.0",
   "scripts": {
-    "test_local_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_local_creds.js",
-    "test_sign_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_signature.js",
-    "test_auth_token_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_auth_token.js",
-    "test_auth_token": "mocha ./tests/unit_tests/single_tests/create_auth_token.js",
-    "startChat": "node ./examples/example1.js"
+    "test_credentials": "mocha ./tests/unit_tests/test_credentials.js",
+    "test_ocsp": "mocha ./tests/unit_tests/test_ocsp.js",
+    "test_ntp": "mocha ./tests/unit_tests/test_ntp.js"
   },
   "bin": {
     "beame": "src/cli/beame.js"
@@ -67,12 +65,11 @@
     "test": "tests"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
     "eslint": "^5.11.1",
     "gulp": "^3.9.1",
     "gulp-jsdoc3": "^0.3.0",
     "jsdoc": "^3.5.5",
     "mocha": "^5.2.0",
-    "mock-require": "^3.0.2"
+    "simple-mock": "^0.8.0"
   }
 }

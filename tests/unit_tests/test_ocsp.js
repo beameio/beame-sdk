@@ -1,75 +1,99 @@
-const config        = require('./config');
-const assert        = config.assert;
-const store         = config.beameStore;
-const logger        = new config.Logger("TestCredential");
-const mock 			= require('mock-require');
+"use strict";
 
-var local_fqdn = process.env.local_fqdn ;
+const assert = require('assert');
+const simple = require('simple-mock');
+const commonUtils = require('../../src/utils/CommonUtils');
+const store = new (require("../../src/services/BeameStoreV2"))();
 
+const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN || "z5ketgz6qmz9fcz2.dlpvwtwy4jj2x5ab.v1.p.beameio.net";
 if (!local_fqdn) {
-	logger.error(`local fqdn is required`);
+	console.error(`local fqdn is required`);
 	process.exit(1)
 }
 
-let cred = store.getCredential(local_fqdn);
+const cred = store.getCredential(local_fqdn);
 if (!cred) {
 	throw new Error(`Credential for ${local_fqdn} not found`);
 }
 
-describe('Test ocsp check on fqdn', function() {
-	this.timeout(10000);
-
-	beforeEach(() => {
-		process.env.EXTERNAL_OCSP_FQDN = "";
+function mockRetryFn() {
+	return simple.mock(commonUtils, "retry").callFn(async function (func, retries = 5) {
+		let error = "";
+		for (let i = 1; i <= retries; ++i) { // retry
+			try {
+				return await func();
+			} catch (e) {
+				error = e;
+				console.log(`Call failed with error '${error}'. Retry [${i}/${retries}]`);
+			}
+		}
+		throw error;
 	});
+}
 
-	it('without force', async () => {
-		const result = await cred.checkOcspStatus(cred, false);
-		console.log(result);
-		assert(result && result.status)
-	});
+describe('Test ocsp check', function () {
+	this.timeout(100000);
 
-	it('with force', async () => {
-		const result = await cred.checkOcspStatus(cred, true);
-		console.log(result);
-		assert(result && result.status)
-	});
+	beforeEach(() => process.env.BEAME_THROW_OCSP = "");
+	afterEach(() => simple.restore());
 
-	it('with failing ocsp check', async () => {
-		mock('ocsp', { check: function() {
-			console.log('ocsp.check called');
-		}});
-		const result = await cred.checkOcspStatus(cred, true);
-		console.log(result);
-		assert(result && !result.status);
-	});
-});
+	const runs = [
+		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", function_name: "checkOcspStatusWithoutExternalOcsp" },
+		{desc: '[With Proxy] ', external_ocsp_fqdn: "iep9bs1p7cj3cmit.tl5h1ipgobrdqsj6.v1.p.beameio.net", function_name: "checkOcspStatusWithExternalOcsp"}
+	];
+	runs.forEach(function (run) {
 
-describe('Test ocsp check on fqdn with EXTERNAL_OCSP_FQDN', function() {
-	this.timeout(10000);
+		it(run.desc + 'without forceCheck', async () => {
+			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+			const result = await cred.checkOcspStatus(cred, false);
 
-	beforeEach(() => {
-		process.env.EXTERNAL_OCSP_FQDN = "iep9bs1p7cj3cmit.tl5h1ipgobrdqsj6.v1.p.beameio.net";
-	});
+			console.log(result);
+			assert(result);
+			assert(result.status);
+			assert(!result.message);
+		});
 
-	it('without force', async () => {
-		const result = await cred.checkOcspStatus(cred, false);
-		console.log(result);
-		assert(result && result.status);
-	});
+		it(run.desc + 'with forceCheck', async () => {
+			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+			const result = await cred.checkOcspStatus(cred, true);
 
-	it('with force', async () => {
-		const result = await cred.checkOcspStatus(cred, true);
-		console.log(result);
-		assert(result && result.status)
-	});
+			console.log(result);
+			assert(result);
+			assert(result.status);
+			assert(!result.message);
+		});
 
-	it('with failing ocsp verify', async () => {
-		mock('ocsp', { verify: function() {
-			console.log('ocsp.verify called');
-		}});
-		const result = await cred.checkOcspStatus(cred, true);
-		console.log(result);
-		assert(result && !result.status);
+		it(run.desc + 'with failing ocsp', async () => {
+			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+			const errorMessage = run.function_name + " test error";
+			const checkOCSPFn = simple.mock(cred, run.function_name).throwWith(new Error(errorMessage));
+			const retryFn = mockRetryFn();
+			const result = await cred.checkOcspStatus(cred, true);
+
+			console.log(result);
+			assert(result);
+			assert(result.status);
+			assert.strictEqual(result.message, errorMessage);
+			assert.strictEqual(retryFn.callCount, 1);
+			assert.strictEqual(checkOCSPFn.callCount, 5);
+		});
+
+		it(run.desc + 'with failing ocsp & BEAME_THROW_OCSP', async () => {
+			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+			process.env.BEAME_THROW_OCSP = true;
+			const errorMessage = run.function_name + " test error";
+			const checkOCSPFn = simple.mock(cred, run.function_name).throwWith(new Error(errorMessage));
+			const retryFn = mockRetryFn();
+
+			try {
+				await cred.checkOcspStatus(cred, true);
+				assert.fail("Should have thrown exception");
+			} catch (e) {
+				console.log(`expected catch => error was '${e.message}'`);
+				assert.strictEqual(e.message, errorMessage);
+				assert.strictEqual(retryFn.callCount, 1);
+				assert.strictEqual(checkOCSPFn.callCount, 5);
+			}
+		});
 	});
 });

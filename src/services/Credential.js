@@ -1663,7 +1663,7 @@ class Credential {
 		const ocsp = require('ocsp');
 
 		const pemPath = await this._validateIssuerCert(cred);
-		const ocspResponse = util.promisify(ocsp.check.bind(ocsp))({
+		const ocspResponse = await util.promisify(ocsp.check.bind(ocsp))({
 			cert: cred.getKey("X509"),
 			issuer: DirectoryServices.readFile(pemPath)
 		});
@@ -1679,9 +1679,8 @@ class Credential {
 	 */
 	async checkOcspStatus(cred, forceCheck = false) {
 
-		const cachePeriod = process.env.BEAME_OCSP_CACHE_PERIOD || Config.ocspCachePeriod;
 		let lastOcsp = cred.metadata.ocspStatus;
-
+		const cachePeriod = process.env.BEAME_OCSP_CACHE_PERIOD || Config.ocspCachePeriod;
 		if(lastOcsp && !forceCheck && (Date.now() - lastOcsp.date < cachePeriod)) {
 			return {status: lastOcsp.status, fqdn: cred.fqdn, message: null};
 		}
@@ -1695,7 +1694,7 @@ class Credential {
 
 		let status;
 		try {
-			status = await checker.bind(this)(cred); // TODO retry
+			status = await CommonUtils.retry(checker.bind(this,cred)); // TODO retry
 		} catch(e) {
 			if (process.env.BEAME_THROW_OCSP) {
 				throw e;
@@ -1704,7 +1703,6 @@ class Credential {
 		}
 
 		// save - start
-
 		cred.metadata.ocspStatus = {
 			status: status,
 			date:   Date.now()
@@ -1718,11 +1716,9 @@ class Credential {
 			action: Config.CredAction.OcspUpdate,
 			date:   Date.now()
 		});
-
 		// save - end
 
 		return {status, fqdn: cred.fqdn, message: null};
-
 	}
 
 	_validateIssuerCert(cred) {
