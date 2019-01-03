@@ -5,7 +5,7 @@ const simple = require('simple-mock');
 const commonUtils = require('../../src/utils/CommonUtils');
 const store = new (require("../../src/services/BeameStoreV2"))();
 
-const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN || "z5ketgz6qmz9fcz2.dlpvwtwy4jj2x5ab.v1.p.beameio.net";
+const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN;
 if (!local_fqdn) {
 	console.error(`local fqdn is required`);
 	process.exit(1)
@@ -32,7 +32,7 @@ function mockRetryFn() {
 }
 
 describe('Test ocsp check', function () {
-	this.timeout(100000);
+	this.timeout(10000);
 
 	beforeEach(() => process.env.BEAME_THROW_OCSP = "");
 	afterEach(() => simple.restore());

@@ -1,6 +1,7 @@
 
 const assert = require('assert');
 const commonUtils = require('../../src/utils/CommonUtils');
+const simple = require('simple-mock');
 
 describe('exponentialTimeWithJitter tests', () => {
 	it('default ', () => {
@@ -51,4 +52,62 @@ describe('exponentialTimeWithJitter tests', () => {
 		assert.strictEqual(n, max);
 	});
 
+});
+
+
+describe('retry tests', () => {
+
+	it('ok function, no retry', async () => {
+		const fn = simple.stub().returnWith(true);
+		const result = await commonUtils.retry(fn);
+		assert.strictEqual(fn.callCount, 1);
+		assert(result);
+	});
+
+	it('bad function with wait', async function() {
+		this.timeout(10000);
+		const retries = 2;
+		const errorMessage = "error on retry func";
+		const fn = simple.stub().throwWith(new Error(errorMessage));
+		try {
+			await commonUtils.retry(fn, retries);
+			assert.fail("Should have failed");
+		}
+		catch(e) {
+			assert.strictEqual(e.message, errorMessage);
+			assert.strictEqual(fn.callCount, retries);
+		}
+	});
+
+	it('bad function without wait', async function() {
+		const retries = 10;
+		const errorMessage = "error on retry func";
+		const fn = simple.stub().throwWith(new Error(errorMessage));
+		try {
+			await commonUtils.retry(fn, retries,false);
+			assert.fail("Should have failed");
+		}
+		catch(e) {
+			assert.strictEqual(e.message, errorMessage);
+			assert.strictEqual(fn.callCount, retries);
+		}
+	});
+
+	it('bad function that turns good without wait', async function() {
+		const retries = 10;
+		const errorMessage = "error on retry func";
+
+		let fncalled = 0;
+		const fn = simple.stub().callFn(function() {
+			if(fncalled < 7) {
+				fncalled++;
+				throw new Error(errorMessage);
+			}
+			return true;
+		});
+
+		const result = await commonUtils.retry(fn, retries,false);
+		assert(result);
+		assert.strictEqual(fn.callCount, fncalled+1);
+	});
 });
