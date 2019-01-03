@@ -311,6 +311,20 @@ class CommonUtils {
 		}
 		throw error;
 	}
+
+	static async requestAsync(opts) {
+		return new Promise((resolve, reject) => {
+			const cb = (err, response, body) => {
+				if(err) {
+					reject(err);
+				} else {
+					resolve([response, body]);
+				}
+			};
+			const request = require('request');
+			request(opts, cb);
+		});
+	}
 }
 
 module.exports = CommonUtils;
