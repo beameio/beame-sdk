@@ -15,7 +15,7 @@ describe('NTP test', () => {
 		console.log("Current ntp time is: ", date);
 		assert(date);
 		console.log("Current machine time is: ", local);
-		assert(local)
+		assert(local);
 
 		const diff =  (date.getTime() - local.getTime()) / 1000;
 		console.log("diff is : ",diff);

@@ -210,8 +210,8 @@ function testFlow() {
 		this.timeout(1000000);
 
 		let devCreds,
-		    fqdn          = process.env.BEAME_TESTS_SIGNING_FQDN || appConfig.beameDevCredsFqdn,
-		    zeroLevelData = _getRandomRegistrationData('zero-level');
+			fqdn = process.env.BEAME_TESTS_SIGNING_FQDN || appConfig.beameDevCredsFqdn,
+			zeroLevelData = _getRandomRegistrationData('zero-level');
 
 		before(function (done) {
 
@@ -369,18 +369,18 @@ if (!test) {
 //createWithLocalCreds('tl5h1ipgobrdqsj6.v1.p.beameio.net',{name:'Instance Information Services',email:null});
 
 switch (test) {
-	case 'flow':
-		testFlow();
-		break;
-	case 'sign_and_create':
-		signAndCreate();
-		break;
-	case 'local':
-		createWithLocalCreds();
-		break;
-	case 'local_custom':
-		createCustomWithLocalCreds();
-		break;
+case 'flow':
+	testFlow();
+	break;
+case 'sign_and_create':
+	signAndCreate();
+	break;
+case 'local':
+	createWithLocalCreds();
+	break;
+case 'local_custom':
+	createCustomWithLocalCreds();
+	break;
 }
 
 
