@@ -1,6 +1,6 @@
 "use strict";
 
-const assert = require('assert');
+const assert = require('assert').strict;
 const ntpClient = require('ntp-client');
 const util = require('util');
 const debug = require("debug")("test_ntp");

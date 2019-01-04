@@ -4,7 +4,7 @@
 "use strict";
 
 const async = require('async');
-const assert = require('assert');
+const assert = require('assert').strict;
 const appConfig = require('../../config/Config');
 const commonUtils = require('../../src/utils/CommonUtils');
 const beameUtils = require('../../src/utils/BeameUtils');
