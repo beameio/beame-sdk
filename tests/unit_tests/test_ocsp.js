@@ -1,6 +1,6 @@
 "use strict";
 
-const assert = require('assert');
+const assert = require('assert').strict;
 const simple = require('simple-mock');
 const commonUtils = require('../../src/utils/CommonUtils');
 const store = new (require("../../src/services/BeameStoreV2"))();
@@ -74,9 +74,9 @@ describe('Test ocsp check', function () {
 			debug(result);
 			assert(result);
 			assert(result.status);
-			assert.strictEqual(result.message, errorMessage);
-			assert.strictEqual(retryFn.callCount, 1);
-			assert.strictEqual(checkOCSPFn.callCount, 5);
+			assert.equal(result.message, errorMessage);
+			assert.equal(retryFn.callCount, 1);
+			assert.equal(checkOCSPFn.callCount, 5);
 		});
 
 		it(run.desc + 'with failing ocsp & BEAME_THROW_OCSP', async () => {
@@ -91,9 +91,9 @@ describe('Test ocsp check', function () {
 				assert.fail("Should have thrown exception");
 			} catch (e) {
 				debug(`expected catch => error was '${e.message}'`);
-				assert.strictEqual(e.message, errorMessage);
-				assert.strictEqual(retryFn.callCount, 1);
-				assert.strictEqual(checkOCSPFn.callCount, 5);
+				assert.equal(e.message, errorMessage);
+				assert.equal(retryFn.callCount, 1);
+				assert.equal(checkOCSPFn.callCount, 5);
 			}
 		});
 	});

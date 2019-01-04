@@ -50,7 +50,7 @@ describe('exponentialTimeWithJitter tests', () => {
 			n = commonUtils.exponentialTimeWithJitter(i, min, max);
 			debug(`${i}: ${n}`);
 		}
-		assert.strictEqual(n, max);
+		assert.equal(n, max);
 	});
 
 });
@@ -60,7 +60,7 @@ describe('retry tests', () => {
 	it('ok function, no retry', async () => {
 		const fn = simple.stub().returnWith(true);
 		const result = await commonUtils.retry(fn);
-		assert.strictEqual(fn.callCount, 1);
+		assert.equal(fn.callCount, 1);
 		assert(result);
 	});
 
@@ -73,8 +73,8 @@ describe('retry tests', () => {
 			assert.fail("Should have failed");
 		}
 		catch(e) {
-			assert.strictEqual(e.message, errorMessage);
-			assert.strictEqual(fn.callCount, retries);
+			assert.equal(e.message, errorMessage);
+			assert.equal(fn.callCount, retries);
 		}
 	});
 
@@ -87,8 +87,8 @@ describe('retry tests', () => {
 			assert.fail("Should have failed");
 		}
 		catch(e) {
-			assert.strictEqual(e.message, errorMessage);
-			assert.strictEqual(fn.callCount, retries);
+			assert.equal(e.message, errorMessage);
+			assert.equal(fn.callCount, retries);
 		}
 	});
 
@@ -106,7 +106,7 @@ describe('retry tests', () => {
 		});
 
 		const result = await commonUtils.retry(fn, retries,false);
-		assert.strictEqual(fn.callCount, fncalled+1);
+		assert.equal(fn.callCount, fncalled+1);
 		assert(result);
 	});
 });
