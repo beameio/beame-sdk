@@ -4,6 +4,7 @@ const assert = require('assert');
 const simple = require('simple-mock');
 const commonUtils = require('../../src/utils/CommonUtils');
 const store = new (require("../../src/services/BeameStoreV2"))();
+const debug = require("debug")("test_ocsp");
 
 const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN;
 if (!local_fqdn) {
@@ -24,7 +25,7 @@ function mockRetryFn() {
 				return await func();
 			} catch (e) {
 				error = e;
-				console.log(`Call failed with error '${error}'. Retry [${i}/${retries}]`);
+				debug(`Call failed with error '${error}'. Retry [${i}/${retries}]`);
 			}
 		}
 		throw error;
@@ -32,7 +33,7 @@ function mockRetryFn() {
 }
 
 describe('Test ocsp check', function () {
-	this.timeout(10000);
+	this.timeout(100000);
 
 	beforeEach(() => process.env.BEAME_THROW_OCSP = "");
 	afterEach(() => simple.restore());
@@ -47,7 +48,7 @@ describe('Test ocsp check', function () {
 			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
 			const result = await cred.checkOcspStatus(cred, false);
 
-			console.log(result);
+			debug(result);
 			assert(result);
 			assert(result.status);
 			assert(!result.message);
@@ -57,7 +58,7 @@ describe('Test ocsp check', function () {
 			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
 			const result = await cred.checkOcspStatus(cred, true);
 
-			console.log(result);
+			debug(result);
 			assert(result);
 			assert(result.status);
 			assert(!result.message);
@@ -70,7 +71,7 @@ describe('Test ocsp check', function () {
 			const retryFn = mockRetryFn();
 			const result = await cred.checkOcspStatus(cred, true);
 
-			console.log(result);
+			debug(result);
 			assert(result);
 			assert(result.status);
 			assert.strictEqual(result.message, errorMessage);
@@ -80,7 +81,7 @@ describe('Test ocsp check', function () {
 
 		it(run.desc + 'with failing ocsp & BEAME_THROW_OCSP', async () => {
 			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
-			process.env.BEAME_THROW_OCSP = true;
+			process.env.BEAME_THROW_OCSP = "true";
 			const errorMessage = run.function_name + " test error";
 			const checkOCSPFn = simple.mock(cred, run.function_name).throwWith(new Error(errorMessage));
 			const retryFn = mockRetryFn();
@@ -89,7 +90,7 @@ describe('Test ocsp check', function () {
 				await cred.checkOcspStatus(cred, true);
 				assert.fail("Should have thrown exception");
 			} catch (e) {
-				console.log(`expected catch => error was '${e.message}'`);
+				debug(`expected catch => error was '${e.message}'`);
 				assert.strictEqual(e.message, errorMessage);
 				assert.strictEqual(retryFn.callCount, 1);
 				assert.strictEqual(checkOCSPFn.callCount, 5);

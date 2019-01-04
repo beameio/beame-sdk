@@ -99,7 +99,7 @@ class BeameStoreV2 {
 
 	}
 
-	async fetchCredChainAsync(fqdn, highestFqdn, allowExpired = false, allowRevoked = false) {
+	fetchCredChainAsync(fqdn, highestFqdn, allowExpired = false, allowRevoked = false) {
 		return new Promise((resolve, reject) => {
 			const cb = (err, data) => {
 				if(err) {

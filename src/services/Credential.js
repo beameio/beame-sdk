@@ -1612,8 +1612,8 @@ class Credential {
 		if(!signerCred) {
 			throw new Error(`checkOcspStatusWithExternalOcsp() - Failed to find valid signer cred for ${cred.fqdn}`);
 		}
-		let authToken = AuthToken.create(digest, signerCred);
 
+		let authToken = AuthToken.create(digest, signerCred);
 		if(authToken == null) {
 			throw new Error(`checkOcspStatusWithExternalOcsp() - Auth token create for ${signerCred.fqdn} failed`);
 		}
@@ -1694,7 +1694,7 @@ class Credential {
 
 		let status;
 		try {
-			status = await CommonUtils.retry(checker.bind(this,cred)); // TODO retry
+			status = await CommonUtils.retry(checker.bind(this,cred));
 		} catch(e) {
 			if (process.env.BEAME_THROW_OCSP) {
 				throw e;

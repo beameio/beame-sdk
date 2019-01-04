@@ -1,14 +1,15 @@
 
-const assert = require('assert');
+const assert = require('assert').strict;
 const commonUtils = require('../../src/utils/CommonUtils');
 const simple = require('simple-mock');
+const debug = require("debug")("test_commonutils");
 
 describe('exponentialTimeWithJitter tests', () => {
 	it('default ', () => {
 		let base = 0;
 		for(let i = 0; i <= 20; i++) {
 			const n = commonUtils.exponentialTimeWithJitter(i);
-			console.log(`${i}: ${n}`);
+			debug(`${i}: ${n}`);
 			assert(n > base);
 			base = n;
 		}
@@ -18,7 +19,7 @@ describe('exponentialTimeWithJitter tests', () => {
 		let min = 10;
 		for(let i = 0; i<=50; i++) {
 			const n0 = commonUtils.exponentialTimeWithJitter(0, min);
-			console.log(n0);
+			debug(n0);
 			assert(n0 > 0);
 		}
 	});
@@ -26,8 +27,8 @@ describe('exponentialTimeWithJitter tests', () => {
 	it('min 0 all 0', () => {
 		for(let i = 0; i<=50; i++) {
 			const n0 = commonUtils.exponentialTimeWithJitter(i, 0);
-			console.log(n0);
-			assert.strictEqual(n0, 0);
+			debug(n0);
+			assert.equal(n0, 0);
 		}
 	});
 
@@ -36,8 +37,8 @@ describe('exponentialTimeWithJitter tests', () => {
 		let factor = 2;
 		for(let i = 0; i <= 20; i++) {
 			const n = commonUtils.exponentialTimeWithJitter(i, min, 0, factor, 0);
-			console.log(`${i}: ${n}`);
-			assert.strictEqual(n, min * Math.pow(factor, i));
+			debug(`${i}: ${n}`);
+			assert.equal(n, min * Math.pow(factor, i));
 		}
 	});
 
@@ -47,7 +48,7 @@ describe('exponentialTimeWithJitter tests', () => {
 		let n = 0;
 		for(let i = 0; i <= 12; i++) {
 			n = commonUtils.exponentialTimeWithJitter(i, min, max);
-			console.log(`${i}: ${n}`);
+			debug(`${i}: ${n}`);
 		}
 		assert.strictEqual(n, max);
 	});
