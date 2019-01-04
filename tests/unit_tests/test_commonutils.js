@@ -33,7 +33,7 @@ describe('exponentialTimeWithJitter tests', () => {
 	});
 
 	it('no jitter leaves the exponential', () => {
-		let min = 100;
+		let min = 200;
 		let factor = 2;
 		for(let i = 0; i <= 20; i++) {
 			const n = commonUtils.exponentialTimeWithJitter(i, min, 0, factor, 0);
@@ -83,7 +83,7 @@ describe('retry tests', () => {
 		const errorMessage = "error on retry func";
 		const fn = simple.stub().throwWith(new Error(errorMessage));
 		try {
-			await commonUtils.retry(fn, retries,false);
+			await commonUtils.retry(fn, retries,(() => 0));
 			assert.fail("Should have failed");
 		}
 		catch(e) {
@@ -105,7 +105,7 @@ describe('retry tests', () => {
 			return true;
 		});
 
-		const result = await commonUtils.retry(fn, retries,false);
+		const result = await commonUtils.retry(fn, retries,(() => 0));
 		assert.equal(fn.callCount, fncalled+1);
 		assert(result);
 	});

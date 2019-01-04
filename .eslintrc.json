@@ -13,6 +13,7 @@
         "indent": [
             "warn",
             "tab"
-        ]
+        ],
+        "no-console": "off"
     }
 }

@@ -307,22 +307,22 @@ class CommonUtils {
 	 * Retries a function before finally failing
 	 * @param func {function}
 	 * @param retries {number|null}
-	 * @param waitOnError {boolean}
+	 * @param sleepTimeFunc {function} time
 	 * @returns {*} funtion result
 	 * @throws {string} final fail if all retries expired
 	 */
-	static async retry(func, retries = 5, waitOnError = true) {
+	static async retry(func, retries = 5, sleepTimeFunc = CommonUtils.exponentialTimeWithJitter) {
 		let error = "";
 		const sleep = require('util').promisify(setTimeout);
 
-		for (let i = 1; i <= retries; ++i) { // retry
+		for (let i = 1; i <= retries; ++i) {
 			try {
 				return await func();
 			} catch (e) {
-				const time = CommonUtils.exponentialTimeWithJitter(i);
 				error = e;
-				console.warn(`Call failed with error '${error}'. Retry [${i}/${retries}]` + (i < retries && waitOnError ? ` waiting ${time}ms` : ""));
-				if (i < retries && waitOnError) await sleep(time);
+				const time = sleepTimeFunc(i);
+				console.warn(`Call failed with error '${error}'. Retry [${i}/${retries}]` + (i < retries ? ` waiting ${time}ms` : ""));
+				if (i < retries) await sleep(time);
 			}
 		}
 		throw error;
