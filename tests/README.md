@@ -18,12 +18,13 @@ Tests the Common Utils.
 ### tests_credentials.js
 Tests on the credentials functionality
 
-Requires `BEAME_TESTS_TYPE` as one of the values: `flow`, `sign_and_create`, `local` or `local_custom`
+Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
+Optionally `BEAME_TESTS_CUSTOM_FQDN` can be passed for a custom fqdn creation in the custom fqdn test.
+
 
 Depending on the test it may use:
-* `BEAME_TESTS_LOCAL_FQDN`
-* `BEAME_TESTS_CUSTOM_FQDN`
-* `BEAME_TESTS_SIGNING_FQDN`
+* `BEAME_TESTS_LOCAL_FQDN` - local available credential (any)
+* `BEAME_TESTS_LOCAL_ROOT_FQDN` - local available root credential
 * `BEAME_TESTS_TOKEN`
 * `BEAME_TESTS_NAME`
 * `BEAME_TESTS_SIGNED_FQDN`
