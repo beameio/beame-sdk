@@ -32,7 +32,7 @@ function mockRetryFn() {
 	});
 }
 
-describe('Test ocsp check', function () {
+describe('ocsp', function () {
 	this.timeout(100000);
 
 	beforeEach(() => process.env.BEAME_THROW_OCSP = "");

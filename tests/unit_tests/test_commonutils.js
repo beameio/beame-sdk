@@ -4,7 +4,7 @@ const commonUtils = require('../../src/utils/CommonUtils');
 const simple = require('simple-mock');
 const debug = require("debug")("test_commonutils");
 
-describe('exponentialTimeWithJitter tests', () => {
+describe('exponentialTimeWithJitter', () => {
 	it('default ', () => {
 		let base = 0;
 		for(let i = 0; i <= 20; i++) {
@@ -56,7 +56,7 @@ describe('exponentialTimeWithJitter tests', () => {
 });
 
 
-describe('retry tests', () => {
+describe('retry', () => {
 	it('ok function, no retry', async () => {
 		const fn = simple.stub().returnWith(true);
 		const result = await commonUtils.retry(fn);

@@ -8,7 +8,7 @@ const debug = require("debug")("test_ntp");
 const ntpServer = process.env.BEAME_TESTS_NTP_SERVER || "pool.ntp.org";
 const ntpServerPort = process.env.BEAME_TESTS_NTP_SERVER_PORT || 123;
 
-describe('NTP test', () => {
+describe('ntp', () => {
 	it('check date', async () => {
 		const date = await util.promisify(ntpClient.getNetworkTime.bind(ntpClient, ntpServer, ntpServerPort))();
 		const local = new Date();
