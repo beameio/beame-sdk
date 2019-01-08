@@ -21,15 +21,6 @@ Tests on the credentials functionality
 Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
 Optionally `BEAME_TESTS_CUSTOM_FQDN` can be passed for a custom fqdn creation in the custom fqdn test.
 
-
-Depending on the test it may use:
-* `BEAME_TESTS_LOCAL_FQDN` - local available credential (any)
-* `BEAME_TESTS_LOCAL_ROOT_FQDN` - local available root credential
-* `BEAME_TESTS_TOKEN`
-* `BEAME_TESTS_NAME`
-* `BEAME_TESTS_SIGNED_FQDN`
-* `BEAME_TESTS_DATA_TO_SIGN`
-
 ### test_ntp.js
 Tests the ntp base functionality.
 
