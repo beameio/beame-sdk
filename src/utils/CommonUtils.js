@@ -73,11 +73,13 @@ class CommonUtils {
 		const crypto = require('crypto');
 
 		crypto.randomBytes(len || 256, (error, buf) => {
-			if (error) {
-				return null;
+				if (error) {
+					return null;
+				}
+				return buf.toString('hex');
 			}
-			return buf.toString('hex');
-		});
+		);
+
 	}
 
 	/**
