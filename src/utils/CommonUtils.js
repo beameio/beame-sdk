@@ -11,8 +11,8 @@ class CommonUtils {
 		}
 
 		let d     = new Date(),
-			dash  = "-",
-			colon = ":";
+		    dash  = "-",
+		    colon = ":";
 
 		return d.getFullYear() + dash +
 			pad(d.getMonth() + 1) + dash +
@@ -200,7 +200,7 @@ class CommonUtils {
 			if (os.platform() == 'win32') {
 
 				let cmdArgs = ["/c", this.getSequelizeBinaryPath(sequelizeModule)],
-					allArgs = cmdArgs.concat(args);
+				    allArgs = cmdArgs.concat(args);
 
 
 				execFile('cmd', allArgs, (error) => {
@@ -290,7 +290,8 @@ class CommonUtils {
 				getGlobalNtpStamp(retries);
 			}
 
-		});
+			}
+		);
 
 
 	}
