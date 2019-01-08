@@ -5,6 +5,7 @@
   "main": "index.js",
   "engine": "node >= 4.4.0",
   "scripts": {
+    "test_commonutils": "mocha ./tests/unit_tests/test_commonutils.js",
     "test_credentials": "mocha ./tests/unit_tests/test_credentials.js",
     "test_ocsp": "mocha ./tests/unit_tests/test_ocsp.js",
     "test_ntp": "mocha ./tests/unit_tests/test_ntp.js"
