@@ -99,6 +99,19 @@ class BeameStoreV2 {
 
 	}
 
+	fetchCredChainAsync(fqdn, highestFqdn, allowExpired = false, allowRevoked = false) {
+		return new Promise((resolve, reject) => {
+			const cb = (err, data) => {
+				if(err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			};
+			this.fetchCredChain(fqdn, highestFqdn, cb, allowExpired, allowRevoked);
+		})
+	}
+
 	/**
 	 * Fetch cred tree up to L0 or highestFqdn
 	 * @public

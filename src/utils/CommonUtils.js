@@ -87,10 +87,37 @@ class CommonUtils {
 	 * @param {number|null} [upper]
 	 * @returns {number}
 	 */
-	static randomTimeout(upper) {
+	static randomTime(upper) {
 		return Math.floor((Math.random() * (upper || 10)) + 1) * 1000 * Math.random()
 	}
 
+	/**
+	 * Exponential jitter implementation based on backo2 (https://github.com/mokesmokes/backo/)
+	 * @param attempt {number} - attempt number
+	 * @param min {number} needs to be > 0
+	 * @param max {number|0} 0 means max is disabled
+	 * @param factor {number}
+	 * @param jitter {number} value between 0..1
+	 * @returns {number}
+	 */
+	static exponentialTimeWithJitter(attempt, min = 400, max = 0, factor = 2, jitter = 0.2)
+	{
+		let ms = min * Math.pow(factor, attempt);
+		if(jitter > 0 && jitter <= 1) {
+			const rand =  Math.random();
+			const deviation = Math.floor(rand * jitter * ms);
+			ms = (Math.floor(rand * 10) & 1) === 0 ? ms - deviation : ms + deviation;
+		}
+		if(max !== 0)
+			ms = Math.min(ms, max);
+		return ms | 0;
+	}
+
+	/**
+	 * @param date {Date}
+	 * @param days {number}
+	 * @returns {Date}
+	 */
 	static addDays(date, days) {
 		let result = new Date(date || new Date());
 		result.setDate(result.getDate() + days);
@@ -277,7 +304,44 @@ class CommonUtils {
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&apos;');
+	}
 
+	/**
+	 * Retries a function before finally failing
+	 * @param func {function}
+	 * @param retries {number|null}
+	 * @param sleepTimeFunc {function} time
+	 * @returns {*} funtion result
+	 * @throws {string} final fail if all retries expired
+	 */
+	static async retry(func, retries = 5, sleepTimeFunc = CommonUtils.exponentialTimeWithJitter) {
+		let error = "";
+		const sleep = require('util').promisify(setTimeout);
+
+		for (let i = 1; i <= retries; ++i) {
+			try {
+				return await func();
+			} catch (e) {
+				error = e;
+				const time = sleepTimeFunc(i);
+				console.warn(`Call failed with error '${error}'. Retry [${i}/${retries}]` + (i < retries ? ` waiting ${time}ms` : ""));
+				if (i < retries) await sleep(time);
+			}
+		}
+		throw error;
+	}
+
+	static requestAsync(opts) {
+		return new Promise((resolve, reject) => {
+			const cb = (err, response, body) => {
+				if(err) {
+					reject(err);
+				} else {
+					resolve([response, body]);
+				}
+			};
+			require('request')(opts, cb);
+		});
 	}
 }
 
