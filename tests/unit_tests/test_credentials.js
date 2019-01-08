@@ -16,10 +16,6 @@ function _getRandomRegistrationData(prefix) {
 	};
 }
 
-function isString(str) {
-	return str && ((typeof str === 'string') || (str instanceof String));
-}
-
 if(!process.env.BEAME_TESTS_LOCAL_ROOT_FQDN)
 	throw "Env BEAME_TESTS_LOCAL_ROOT_FQDN is required";
 
@@ -32,7 +28,7 @@ describe('local_creds_create', function () {
 	let parent_cred;
 
 	before(function () {
-		assert(isString(parent_fqdn), 'Parent fqdn required');
+		assert(parent_fqdn, 'Parent fqdn required');
 		debug('find local creds');
 		parent_cred = store.getCredential(parent_fqdn);
 		assert(parent_cred, 'Parent credential not found');
@@ -70,7 +66,7 @@ describe('local_creds_custom_create', function () {
 	let parent_cred;
 
 	before(function () {
-		assert(isString(parent_fqdn), 'Parent fqdn required');
+		assert(parent_fqdn, 'Parent fqdn required');
 		debug('find local creds');
 		parent_cred = store.getCredential(parent_fqdn);
 		assert(parent_cred, 'Parent credential not found');
@@ -103,7 +99,7 @@ describe("auth_server_creds_create", function () {
 	debug(`env signed fqdn is ${fqdn}`);
 
 	before(function () {
-		assert(isString(fqdn), 'Parent fqdn required');
+		assert(fqdn, 'Parent fqdn required');
 		debug(`find local creds for ${fqdn}`);
 
 		cred = store.getCredential(fqdn);
@@ -112,7 +108,7 @@ describe("auth_server_creds_create", function () {
 
 	it('Should create entity', function (done) {
 		cred.signWithFqdn(fqdn, data || process.env.BEAME_TESTS_DATA_TO_SIGN).then(authToken=> {
-			assert(isString(authToken));
+			assert(authToken);
 			debug(commonUtils.stringify(authToken, false));
 			cred.createEntityWithAuthServer(authToken, null,process.env.BEAME_TESTS_CUSTOM_FQDN || beameUtils.randomString(8), null).then(metadata => {
 				debug(`metadata received ${metadata}`);
@@ -140,7 +136,7 @@ describe('sign_and_create', function () {
 	let signing_cred;
 
 	before(function () {
-		assert(isString(parent_fqdn), 'Parent fqdn required');
+		assert(parent_fqdn, 'Parent fqdn required');
 		debug(`find local creds for ${parent_fqdn}`);
 		signing_cred = store.getCredential(parent_fqdn);
 		assert(signing_cred, 'Parent credential not found');
@@ -174,7 +170,7 @@ describe('sns_topic', function () {
 	let cred;
 
 	before(function () {
-		assert(isString(fqdn), 'Fqdn required');
+		assert(fqdn, 'Fqdn required');
 		debug(`find local creds for ${fqdn}`);
 		cred = store.getCredential(fqdn);
 		assert(cred, 'Parent credential not found');
