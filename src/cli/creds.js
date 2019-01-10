@@ -1,7 +1,7 @@
 "use strict";
 /** @namespace Creds **/
 
-const Table = require('cli-table2');
+const Table = require('cli-table3');
 
 require('../../initWin');
 

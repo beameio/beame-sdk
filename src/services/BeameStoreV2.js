@@ -77,6 +77,7 @@ class BeameStoreV2 {
 
 		DirectoryServices.createDir(config.rootDir);
 		DirectoryServices.createDir(config.localCertsDirV2);
+		DirectoryServices.createDir(config.localLogDir);
 
 		this.directoryServices.scanDir(config.localCertsDirV2).forEach((fqdn) => {
 			let cred = new Credential(this);
@@ -446,7 +447,7 @@ class BeameStoreV2 {
 		    fqdn        = credential.fqdn;
 
 		if (this.credentials[fqdn]) {
-			logger.warn(`Credentials for fqdn ${fqdn} are already present`);
+			logger.info(`Credentials for fqdn ${fqdn} are already present`);
 			return;
 		}
 

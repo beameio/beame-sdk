@@ -1,0 +1,4 @@
+./config/ApiConfig.json merge=ours
+./config/Config.js merge=ours
+package.json merge=ours
+

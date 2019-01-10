@@ -1,7 +1,7 @@
 "use strict";
 /** @namespace Token **/
 
-const Table         = require('cli-table2');
+const Table         = require('cli-table3');
 
 const CommonUtils   = require('../utils/CommonUtils');
 const BeameStore    = new (require('../services/BeameStoreV2'))();

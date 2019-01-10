@@ -1,5 +1,10 @@
 <img align="right" src="img/beame.png">
-_The Beame SDK allows you to establish a HTTPS session between machines without public IPs. This SDK  allows you to create credentials and use them to identify machines. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for services that host credentials to require users to prove identity._  
+
+# Beame SDK
+
+[![Build Status](https://travis-ci.org/beameio/beame-sdk.svg?branch=master)](https://travis-ci.org/beameio/beame-sdk) [![npm version](https://badge.fury.io/js/beame-sdk.svg)](https://www.npmjs.com/package/beame-sdk) [![HitCount](http://hits.dwyl.io/beameio/beame-sdk.svg)](https://github.com/beameio/beame-sdk)
+
+The Beame SDK allows you to establish a HTTPS session between machines without public IPs. This SDK  allows you to create credentials and use them to identify machines. It’s a simple way to use encryption-based identity in web and mobile applications. This transparent security infrastructure can be used in any network, global or local, to create credentials, bind them to users’ hardware, and get strong, crypto-based authentication. This mitigates risk for services that host credentials to require users to prove identity._
 [Click to Get Started Now!](https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net/)  
 
 
@@ -19,7 +24,7 @@ _The Beame SDK allows you to establish a HTTPS session between machines without 
  - [Environment Variables](#environment-variables)
 
 ## Beame SDK Networking basics
-_Beame-SDK, by design, provides full set of tools to implement fully functional, secure private network. Beame-SDK employs hierarchical network structure. The most top level is the Layer-0 (L0) - the network root. L1 is created underneath L0 and considered "child" of L0. L0 may have any number of "children" (L1's), each of those, in turn, can have its own "children" L2's and so on. Any lower level "child" can be tracked, by cryptography, up to its L0 "parent". This is the base for building a private network with proprietary chain of trust._  
+Beame-SDK, by design, provides full set of tools to implement fully functional, secure private network. Beame-SDK employs hierarchical network structure. The most top level is the Layer-0 (L0) - the network root. L1 is created underneath L0 and considered "child" of L0. L0 may have any number of "children" (L1's), each of those, in turn, can have its own "children" L2's and so on. Any lower level "child" can be tracked, by cryptography, up to its L0 "parent". This is the base for building a private network with proprietary chain of trust._
 
 ## Common Uses for Beame SDK Network Infrastructure
 
