@@ -5,10 +5,11 @@
   "main": "index.js",
   "engine": "node >= 4.4.0",
   "scripts": {
-    "test_commonutils": "mocha ./tests/unit_tests/test_commonutils.js",
-    "test_credentials": "mocha ./tests/unit_tests/test_credentials.js",
-    "test_ocsp": "mocha ./tests/unit_tests/test_ocsp.js",
-    "test_ntp": "mocha ./tests/unit_tests/test_ntp.js"
+    "test_local_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_local_creds.js",
+    "test_sign_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_signature.js",
+    "test_auth_token_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_auth_token.js",
+    "test_auth_token": "mocha ./tests/unit_tests/single_tests/create_auth_token.js",
+    "startChat": "node ./examples/example1.js"
   },
   "bin": {
     "beame": "src/cli/beame.js"
@@ -38,8 +39,8 @@
   "dependencies": {
     "async": "^2.0.0-rc.6",
     "cli-table3": "0.5.0",
-    "colors": "^1.3.3",
-    "debug": "^4.1.1",
+    "colors": "^1.1.2",
+    "debug": "^2.2.0",
     "express": "^4.14.0",
     "http-proxy": "^1.14.0",
     "https-proxy-agent": "^2.0.0",
@@ -66,11 +67,10 @@
     "test": "tests"
   },
   "devDependencies": {
-    "eslint": "^5.11.1",
+    "chai": "^3.5.0",
     "gulp": "^3.9.1",
     "gulp-jsdoc3": "^0.3.0",
-    "jsdoc": "^3.5.5",
-    "mocha": "^5.2.0",
-    "simple-mock": "^0.8.0"
+    "jsdoc": "^3.4.0",
+    "mocha": "^2.5.3"
   }
 }

@@ -10,6 +10,7 @@ const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
 const BeameLogger = require('../utils/Logger');
 const logger      = new BeameLogger(module_name);
+const CommonUtils = require('../utils/CommonUtils');
 
 function nop() {}
 
