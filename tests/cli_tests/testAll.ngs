@@ -160,7 +160,7 @@ encrypted_data = null
 
 test("Encrypt data / json", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --format json`
-	enc = encrypted_data.parse()
+	enc = encrypted_data.decode()
 	enc.assert_hash_keys(%[rsaCipheredKeys data encryptedFor], "Encrypted data hash keys")
 	enc.encryptedFor != entities[0].fqdn throws TestFail("encryptedFor mismatch")
 	enc
@@ -170,7 +170,7 @@ test_decrypt_json(encrypted_data)
 
 test("Encrypt and sign data / json", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --signingFqdn ${entities[0].fqdn} --format json`
-	enc = encrypted_data.parse()
+	enc = encrypted_data.decode()
 	enc.assert_hash_keys(%[signedData signedBy signature], "Encrypted data hash keys")
 	enc.signedData.encryptedFor != entities[0].fqdn throws TestFail("encryptedFor mismatch")
 	enc

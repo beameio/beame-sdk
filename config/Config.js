@@ -11,6 +11,62 @@ const home       = os.homedir();
 const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
 
+const ActionsApiConfig = {
+	"EntityApi": {
+		"RegisterEntity": {
+			"endpoint": "/api/v1/node/register"
+		},
+		"CompleteRegistration": {
+			"endpoint": "/api/v1/node/register/complete"
+		},
+		"UpdateEntity": {
+			"endpoint": "/api/v1/node/update"
+		},
+		"GetMetadata": {
+			"endpoint": "/api/v1/node/get/meta"
+		},
+		"SubscribeRegistration": {
+			"endpoint": "/api/v1/node/subscribe/registration"
+		},
+		"CertRevoke": {
+			"endpoint": "/api/v1/node/cert/revoke"
+		},
+		"CertRenew": {
+			"endpoint": "/api/v1/node/cert/renew"
+		},
+		"SaveAuthEvent":{
+			"endpoint": "/api/v1/node/event/save"
+		}
+	},
+	"AuthServerApi": {
+		"RegisterEntity": {
+			"endpoint": "/node/auth/register"
+		}
+	},
+	"DnsApi": {
+		"Set": {
+			"endpoint": "/v1/dns/set/"
+		},
+		"Get": {
+			"endpoint": "/v1/dns/list/"
+		},
+		"Delete": {
+			"endpoint": "/v1/dns/delete/"
+		}
+	},
+	"OcspApi":{
+		"Check":{
+			"endpoint": "/check"
+		},
+		"HttpGetProxy":{
+			"endpoint": "/http_get"
+		},
+		"Time":{
+			"endpoint": "/time/get"
+		}
+	}
+};
+
 const _envProfile = {
 	dev: {
 		Name: 'Dev',
@@ -18,7 +74,11 @@ const _envProfile = {
 		CertEndpoint:  'https://beameio-net-certs-dev.s3.amazonaws.com',
 		AuthServerURL: 'https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net',
 		LoadBalancerURL: 'https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net',
-		BeameDevCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net'
+		BeameDevCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net',
+		BaseUrl: 'https://xmq6hpvgzt7h8m76.mpk3nobb568nycf5.v1.d.beameio.net',
+		BaseDNSUrl:'https://t24w58ow5jkkmkhu.mpk3nobb568nycf5.v1.d.beameio.net',
+		RetryAttempts: 10,
+		Actions: ActionsApiConfig
 	},
 
 	prod: {
@@ -27,7 +87,11 @@ const _envProfile = {
 		CertEndpoint: 'https://beameio-net-certs.s3.amazonaws.com',
 		AuthServerURL: 'https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net',
 		LoadBalancerURL: 'https://ioigl3wzx6lajrx6.tl5h1ipgobrdqsj6.v1.p.beameio.net',
-		BeameDevCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net'
+		BeameDevCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net',
+		BaseUrl: 'https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net',
+		BaseDNSUrl:'https://lcram0sj9ox726l1.tl5h1ipgobrdqsj6.v1.p.beameio.net',
+		RetryAttempts: 10,
+		Actions: ActionsApiConfig
 	},
 };
 const SelectedProfile = (process.env.BEAME_ENV_PROFILE && _envProfile[process.env.BEAME_ENV_PROFILE.toLowerCase()]) || _envProfile.prod;
@@ -365,5 +429,6 @@ module.exports = {
 	LogFileNames,
 	LogEvents,
 	localLogDir,
-	defaultDays2Log
+	defaultDays2Log,
+	SelectedProfile
 };

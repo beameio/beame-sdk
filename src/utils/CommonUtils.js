@@ -285,9 +285,8 @@ class CommonUtils {
 
 
 			if (process.env.EXTERNAL_OCSP_FQDN) {
-				const apiConfig = require('../../config/ApiConfig.json');
-				const ProvisionApi           = require('../services/ProvisionApi');
-				const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Time.endpoint}`;
+				const envProfile = require('../../config/Config').SelectedProfile;
+				const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${envProfile.Actions.OcspApi.Time.endpoint}`;
 
 				const request = require('request');
 

@@ -61,8 +61,8 @@ const pem                    = require('pem');
 const NodeRsa                = require("node-rsa");
 const async                  = require('async');
 const _                      = require('underscore');
-const provisionSettings      = require('../../config/ApiConfig.json');
 const Config                 = require('../../config/Config');
+const envProfile             = Config.SelectedProfile;
 const module_name            = Config.AppModules.Credential;
 const logger_level           = "Credential";
 const BeameLogger            = require('../utils/Logger');
@@ -73,8 +73,8 @@ const openSSlWrapper         = new OpenSSLWrapper();
 const beameUtils             = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
 const ProvisionApi           = require('../services/ProvisionApi');
-const apiEntityActions       = require('../../config/ApiConfig.json').Actions.EntityApi;
-const apiAuthServerActions   = require('../../config/ApiConfig.json').Actions.AuthServerApi;
+const apiEntityActions       = envProfile.Actions.EntityApi;
+const apiAuthServerActions   = envProfile.Actions.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
 const storeCacheServices     = (require('./StoreCacheServices')).getInstance();
@@ -1646,7 +1646,7 @@ class Credential {
 	//
 	// 				if (process.env.EXTERNAL_OCSP_FQDN) {
 	//
-	// 					const apiConfig = require('../../config/ApiConfig.json');
+	// 					const apiConfig = require('../../config/envProfile.json');
 	// 					const AuthToken = require('./AuthToken');
 	// 					const request   = require('request');
 	//
@@ -1678,7 +1678,7 @@ class Credential {
 	// 											_resolve(resolveOnArbitration, err);
 	// 										}
 	// 										else {
-	// 											const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}`;
+	// 											const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${envProfile.Actions.OcspApi.Check.endpoint}`;
 	//
 	// 											let opt = {
 	// 												url:      url,
@@ -1804,7 +1804,7 @@ class Credential {
 
 					if (process.env.EXTERNAL_OCSP_FQDN) {
 
-						const apiConfig = require('../../config/ApiConfig.json');
+						const envProfile = require('../../config/Config').SelectedProfile;
 						const AuthToken = require('./AuthToken');
 						const request   = require('request');
 
@@ -1867,7 +1867,7 @@ class Credential {
 										return;
 									}
 
-									const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Check.endpoint}`;
+									const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${envProfile.Actions.OcspApi.Check.endpoint}`;
 
 									let opt = {
 										url:      url,
@@ -1995,10 +1995,10 @@ class Credential {
 
 
 					if (process.env.EXTERNAL_OCSP_FQDN) {
-						const apiConfig = require('../../config/ApiConfig.json');
+						const envProfile = require('../../config/Config').SelectedProfile;
 						const AuthToken = require('./AuthToken');
 
-						const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.HttpGetProxy.endpoint}`;
+						const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${envProfile.Actions.OcspApi.HttpGetProxy.endpoint}`;
 
 						let authToken = AuthToken.create(cred.fqdn, cred);
 
@@ -2438,7 +2438,7 @@ class Credential {
 						return;
 					}
 
-					const retries = provisionSettings.RetryAttempts + 1,
+					const retries = envProfile.RetryAttempts + 1,
 					      sleep   = 1000;
 
 					const _syncMeta = (retries, sleep) => {

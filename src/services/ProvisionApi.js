@@ -1,8 +1,8 @@
 "use strict";
 const path = require('path');
 
-const provisionSettings = require('../../config/ApiConfig.json');
 const config            = require('../../config/Config');
+const envProfile        = config.SelectedProfile;
 const module_name       = config.AppModules.ProvisionApi;
 const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger(module_name);
@@ -276,7 +276,7 @@ class ProvApiService {
 
 	constructor(baseUrl) {
 		/** @member {String} **/
-		this.provApiEndpoint = baseUrl || provisionSettings.Endpoints.BaseUrl;
+		this.provApiEndpoint = baseUrl || envProfile.BaseUrl;
 	}
 
 
@@ -354,10 +354,10 @@ class ProvApiService {
 
 		switch (_method) {
 			case 'POST' :
-				postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
+				postToProvisionApi(apiEndpoint, options, apiData.api, envProfile.RetryAttempts, 1000, callback);
 				return;
 			case 'GET' :
-				getFromProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
+				getFromProvisionApi(apiEndpoint, options, apiData.api, envProfile.RetryAttempts, 1000, callback);
 				return;
 			default:
 				callback('Invalid method', null);
@@ -387,7 +387,7 @@ class ProvApiService {
 
 		options = ProvApiService.setUserAgent(options);
 
-		postToProvisionApi(url, options, "custom_post", retries || provisionSettings.RetryAttempts, 1000, callback);
+		postToProvisionApi(url, options, "custom_post", retries || envProfile.RetryAttempts, 1000, callback);
 	}
 
 	//noinspection JSUnusedGlobalSymbols
@@ -400,13 +400,13 @@ class ProvApiService {
 				"X-BeameAuthToken": authToken
 			};
 		}
-		getFromProvisionApi(url, options, "custom_get", retries || provisionSettings.RetryAttempts, 1000, callback);
+		getFromProvisionApi(url, options, "custom_get", retries || envProfile.RetryAttempts, 1000, callback);
 	}
 
 	static getRequest(url, callback) {
 		let options = ProvApiService.setUserAgent({});
 
-		getFromProvisionApi(url, options, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
+		getFromProvisionApi(url, options, "custom_get", envProfile.RetryAttempts, 1000, callback);
 	}
 }
 

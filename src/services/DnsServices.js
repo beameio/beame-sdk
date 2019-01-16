@@ -5,8 +5,8 @@
 
 const CommonUtils   = require('../utils/CommonUtils');
 const ProvisionApi  = require('../services/ProvisionApi');
-const apiConfig     = require('../../config/ApiConfig.json');
-const apiDnsActions = apiConfig.Actions.DnsApi;
+const envProfile     = require('../../config/Config').SelectedProfile;
+const apiDnsActions = envProfile.Actions.DnsApi;
 const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger("DnsServices");
 class DnsServices {
@@ -57,7 +57,7 @@ class DnsServices {
 		return new Promise((resolve, reject) => {
 				this._getToken(fqdn, value).then(authToken => {
 					let provisionApi = new ProvisionApi();
-					provisionApi.postRequest(`${apiConfig.Endpoints.BaseDNSUrl}${apiDnsActions.Set.endpoint}${dnsFqdn || fqdn}`, {authToken},resolve);
+					provisionApi.postRequest(`${envProfile.BaseDNSUrl}${apiDnsActions.Set.endpoint}${dnsFqdn || fqdn}`, {authToken},resolve);
 				}).catch(reject);
 			}
 		);
@@ -69,7 +69,7 @@ class DnsServices {
 		return new Promise((resolve, reject) => {
 				this._getToken(fqdn, fqdn).then(authToken => {
 					let provisionApi = new ProvisionApi();
-					provisionApi.postRequest(`${apiConfig.Endpoints.BaseDNSUrl}${apiDnsActions.Delete.endpoint}${dnsFqdn || fqdn}`, {authToken},resolve);
+					provisionApi.postRequest(`${envProfile.BaseDNSUrl}${apiDnsActions.Delete.endpoint}${dnsFqdn || fqdn}`, {authToken},resolve);
 				}).catch(reject);
 			}
 		);
