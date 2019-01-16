@@ -11,8 +11,29 @@ const home       = os.homedir();
 const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
 
+const EnvProfile = {
+	dev: {
+		Name: 'Dev',
+		FqdnPattern: '.d.',
+		CertEndpoint:  'https://beameio-net-certs-dev.s3.amazonaws.com',
+		AuthServerURL: 'https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net',
+		LoadBalancerURL: 'https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net',
+		BeameDevCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net'
+	},
 
-const CertEndpoint = "https://beameio-net-certs-dev.s3.amazonaws.com";
+	prod: {
+		Name: 'Prod',
+		FqdnPattern: '.p.',
+		CertEndpoint: 'https://beameio-net-certs.s3.amazonaws.com',
+		AuthServerURL: 'https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net',
+		LoadBalancerURL: 'https://ioigl3wzx6lajrx6.tl5h1ipgobrdqsj6.v1.p.beameio.net',
+		BeameDevCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net'
+	},
+};
+const SelectedProfile = (process.env.BEAME_ENV_PROFILE && EnvProfile[process.env.BEAME_ENV_PROFILE.toLowerCase()]) || EnvProfile.prod;
+
+
+const CertEndpoint = SelectedProfile.CertEndpoint;
 
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
@@ -41,12 +62,12 @@ const issuerCertsPath = path.join(rootDir, 'ocsp-cache');
 const localLogDir = path.join(rootDir, 'logs');
 
 /** @const {String} **/
-const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
+const authServerURL = process.env.BEAME_AUTH_SRVR_URL || SelectedProfile.AuthServerURL;
 
 /** @const {String} **/
-const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || "https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net";
+const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || SelectedProfile.LoadBalancerURL;
 
-const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net";
+const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || SelectedProfile.BeameDevCredsFqdn;
 
 const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
 
