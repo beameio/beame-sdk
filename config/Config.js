@@ -11,7 +11,7 @@ const home       = os.homedir();
 const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
 
-const EnvProfile = {
+const _envProfile = {
 	dev: {
 		Name: 'Dev',
 		FqdnPattern: '.d.',
@@ -30,7 +30,7 @@ const EnvProfile = {
 		BeameDevCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net'
 	},
 };
-const SelectedProfile = (process.env.BEAME_ENV_PROFILE && EnvProfile[process.env.BEAME_ENV_PROFILE.toLowerCase()]) || EnvProfile.prod;
+const SelectedProfile = (process.env.BEAME_ENV_PROFILE && _envProfile[process.env.BEAME_ENV_PROFILE.toLowerCase()]) || _envProfile.prod;
 
 
 const CertEndpoint = SelectedProfile.CertEndpoint;
@@ -39,8 +39,8 @@ const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 
 const EnvProfile = {
-	Name:        'Dev',
-	FqdnPattern: '.d.'
+	Name:        SelectedProfile.Name,
+	FqdnPattern: SelectedProfile.FqdnPattern
 };
 
 /** @const {String} **/
