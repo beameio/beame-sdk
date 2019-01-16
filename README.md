@@ -46,8 +46,6 @@ See the example folder to copy-paste and try it for yourself!
 1. Quickly host a public HTTPS server on a local machine (does not require public static IP, DMZ, nor port forwarding);
 2. Generate credentials and assign your own meaning to them (identity);
 3. Deploy services that are accessible from the Internet or only from your LAN without network reconfiguration.
-
-:heavy_exclamation_mark: **Note: for the documentation that matches the latest NPM, please see the [`prod_v2` branch](https://github.com/beameio/beame-sdk/tree/prod).**
  
 ## Installation Guide
 _If you already know how Beame-SDK is working and want to skip the intro, [jump directly to start!](#beame-cli)_
