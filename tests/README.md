@@ -39,4 +39,4 @@ Tests in the oscp functionality
 
 Requires `BEAME_TESTS_LOCAL_FQDN` (fqdn of a local available cred) in order to run the ocsp tests againts.
 
-Sets internally `EXTERNAL_OCSP_FQDN` and `BEAME_THROW_OCSP` as required to test the functionality
+Sets internally `EXTERNAL_OCSP_FQDN` and `BEAME_OCSP_IGNORE` as required to test the functionality

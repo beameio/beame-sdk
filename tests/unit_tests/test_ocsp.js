@@ -21,7 +21,7 @@ if (!cred) {
 describe('ocsp', function () {
 	this.timeout(100000);
 
-	beforeEach(() => process.env.BEAME_THROW_OCSP = "");
+	beforeEach(() => process.env.BEAME_OCSP_IGNORE = "");
 	afterEach(() => simple.restore());
 
 	const runs = [
@@ -75,7 +75,6 @@ describe('ocsp', function () {
 
 			process.env.BEAME_OCSP_IGNORE = "true";
 			const result = await cred.checkOcspStatus(cred, true);
-			process.env.BEAME_OCSP_IGNORE = "";
 
 			debug(result);
 			assert.equal(result, config.OcspStatus.Good);
