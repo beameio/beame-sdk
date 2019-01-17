@@ -1884,7 +1884,7 @@ class Credential {
 									};
 
 									request(opt, (error, response, body) => {
-										if (response.statusCode < 200 || response.statusCode >= 400) {
+										if (!response || response.statusCode < 200 || response.statusCode >= 400) {
 											resolve(Config.OcspStatus.Unavailable);
 										}
 										else {
