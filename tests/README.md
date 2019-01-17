@@ -4,12 +4,14 @@
 
 `BEAME_ENV_PROFILE=dev` to run tests against dev environment
 
-`BEAME_ENV_PROFILE=prod` to run tests against dev environment
+`BEAME_ENV_PROFILE=prod` to run tests against prod environment
 
 ## cli_tests
+
 Integration tests done using [NGS](https://github.com/ngs-lang/ngs)
 
 ## unit_tests
+
 Unit tests for the internal functionality
 
 Currently using the libraries:

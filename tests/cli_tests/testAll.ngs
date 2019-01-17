@@ -93,9 +93,10 @@ F test_server(fqdn:Str, cmd:CommandsPipeline, url:Str) {
 	]
 	assert_resolvable(fqdn)
 	$(sleep 10)
-	ret = try `curl --silent --max-time 30 $url`
+	ret = try `curl -vvv --max-time 30 $url`
 	$(pkill -f 'beame.js servers')
 	threads.join()
+	assert_string(ret, "Failed to fetch response from the server")
 	ret
 }
 
@@ -276,6 +277,7 @@ test("[Import credentials] Test credentials exist after import", test_creds_exis
 # TODO: add checks
 test("[Registration token] Generate") do {
 	global reg_token = `$BEAME_BIN creds getRegToken --fqdn ${entities[0].fqdn} --name $child_entity_name --email $child_entity_email`
+	assert(reg_token, "Registration token should be non-empty string")
 }
 
 test("[Registration token] Use") do {
