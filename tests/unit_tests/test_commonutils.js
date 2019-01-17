@@ -1,8 +1,10 @@
 
 const assert = require('assert').strict;
-const commonUtils = require('../../src/utils/CommonUtils');
 const simple = require('simple-mock');
-const debug = require("debug")("test_commonutils");
+
+const commonUtils = require('../../src/utils/CommonUtils');
+const config = require("../../config/Config");
+const debug = require("debug")(config.debug_prefix + "unittests:commonutils");
 
 describe('exponentialTimeWithJitter', () => {
 	it('default ', () => {
