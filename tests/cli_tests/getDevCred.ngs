@@ -1,0 +1,75 @@
+#!/usr/bin/env ngs
+
+# NGS language - https://github.com/ilyash/ngs/
+
+# ---------- Environment sanity checks ----------
+
+assert('BEAME_INTERNAL_AUTH_SERVER_FQDN' in ENV, 'Environment variable BEAME_INTERNAL_AUTH_SERVER_FQDN must be set')
+
+HOME = ENV.HOME
+
+BEAME_DIR = HOME / '.beame'
+BEAME_BIN = '../../src/cli/beame.js'
+if not(File(BEAME_BIN)) {
+   die("Could not find beame binary. Please make sure you are running this script from the tests/cli_tests directory")
+}
+BEAME_AUTH_FQDN = ENV.get('BEAME_AUTH_FQDN', 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net')
+
+# ---------- Tests library ----------
+
+doc Copies Beame test requests signing credential into store for L0 entity creation
+F copy_to_store() {
+	$(cp -a "$HOME/$BEAME_AUTH_FQDN" "$HOME/.beame/v2/$BEAME_AUTH_FQDN")
+	'Copied'
+}
+
+doc Creates token needed for signing request for level 0 entity
+F create_token() {
+	global token = ``$BEAME_BIN token create --fqdn $BEAME_AUTH_FQDN --data NONE --format json``
+	assert_string(token, "Token is a string")
+	TestMessage(token)
+}
+
+doc Emulate site registration
+F register_on_site() {
+	global registration = ``curl -s -X POST -H "X-BeameAuthToken: $token" "https://${ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN}/test/sdk/register" -d "email=$entity_email&name=$entity_name"``
+	assert_hash(registration, "Registration must be hash")
+	'authToken' not in registration throws TestFail("Registration has no authToken")
+	registration
+}
+
+doc Creates an entity
+F create_entity() {
+	global entity = ``$BEAME_BIN creds getCreds --token ${registration.authToken.encode_json()} --format json``
+	entity is not Hash throws TestFail("Entity must be hash, not '$entity'")
+	entity.get('parent_fqdn', null) throws TestFail("Entity has parent FQDN: ${entity.parent_fqdn}")
+	entity.level != 0 throws TestFail("Entity has non-zero level: ${entity.level}")
+	entity.email != entity_email throws TestFail("Entity email mismatch")
+	entity.name != entity_name throws TestFail("Entity name mismatch")
+	entity
+}
+
+F prepare_entity_properties() {
+	global entity_name = "sdk-test-${time()}"
+	global entity_email = "$entity_name@example.com"
+	global child_entity_name = "${entity_name}-child"
+	global child_entity_email = "$child_entity_name@example.com"
+}
+
+
+F finished_ok(p:Process) {
+	guard p.command.argv == [BEAME_BIN]
+	p.exit_code == 1
+}
+test("Run without arguments", {
+	out = `$BEAME_BIN`
+	'beame.js creds list' not in out throws TestFail("Expected text not found")
+	"OK"
+})
+test("Copying signing cred to store", copy_to_store)
+test("Prepare entity", prepare_entity_properties)
+test("Create token for an entity", create_token)
+test("Emulate site registration", register_on_site)
+test("Create test entity", create_entity)
+
+echo("Credential is: ${entity.fqdn}")

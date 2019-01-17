@@ -46,8 +46,7 @@ const async               = require('async');
 const BeameUtils          = require('../utils/BeameUtils');
 const CommonUtils         = require('../utils/CommonUtils');
 const DirectoryServices   = require('./DirectoryServices');
-const Config              = require('../../config/Config');
-const CertValidationError = Config.CertValidationError;
+const CertValidationError = config.CertValidationError;
 
 let _store = null;
 
@@ -55,30 +54,18 @@ let _store = null;
 class BeameStoreV2 {
 
 	constructor() {
-		this.directoryServices = new DirectoryServices();
-
 		if (_store !== null) {
 			return _store;
 		}
+		_store = this;
 
 		this.credentials = {};
-		this.init();
-
-		_store = this;
-	}
-
-	get Credentials() {
-		return BeameUtils.findInTree({children: this.credentials}, cred => {
-			return cred.fqdn
-		});
-	}
-
-	init() {
 
 		DirectoryServices.createDir(config.rootDir);
 		DirectoryServices.createDir(config.localCertsDirV2);
 		DirectoryServices.createDir(config.localLogDir);
 
+		this.directoryServices = new DirectoryServices();
 		this.directoryServices.scanDir(config.localCertsDirV2).forEach((fqdn) => {
 			let cred = new Credential(this);
 			cred.initFromData(fqdn);
@@ -121,24 +108,24 @@ class BeameStoreV2 {
 	}
 
 	getParent(cred) {
-		let altParents = cred.certData &&  cred.certData.altNames ? cred.certData.altNames.filter(x => x.startsWith(Config.AltPrefix.Parent)) : [];
+		let altParents = cred.certData &&  cred.certData.altNames ? cred.certData.altNames.filter(x => x.startsWith(config.AltPrefix.Parent)) : [];
 
 		if (altParents.length === 1) {
 			let parent = altParents[0];
 
-			return parent.substr(Config.AltPrefix.Parent.length);
+			return parent.substr(config.AltPrefix.Parent.length);
 		}
 
 		return cred.metadata.parent_fqdn && cred.metadata.parent_fqdn.length ? cred.metadata.parent_fqdn : null;
 	}
 
 	getApprover(cred) {
-		let altApprovers = cred.certData &&  cred.certData.altNames ? cred.certData.altNames.filter(x => x.startsWith(Config.AltPrefix.Approver)) : [];
+		let altApprovers = cred.certData &&  cred.certData.altNames ? cred.certData.altNames.filter(x => x.startsWith(config.AltPrefix.Approver)) : [];
 
 		if (altApprovers.length === 1) {
 			let approver = altApprovers[0];
 
-			return approver.substr(Config.AltPrefix.Approver.length);
+			return approver.substr(config.AltPrefix.Approver.length);
 		}
 
 		return cred.metadata.approved_by_fqdn && cred.metadata.approved_by_fqdn.length ? cred.metadata.approved_by_fqdn : null;
@@ -420,7 +407,7 @@ class BeameStoreV2 {
 							.catch(_onValidationError.bind(null, credential));
 				};
 
-				let cred = this._getCredential(fqdn);
+				let cred = this.getCredential(fqdn);
 
 				if (cred) {
 					//refresh metadata info
@@ -451,7 +438,7 @@ class BeameStoreV2 {
 			return;
 		}
 
-		let parentNode = parent_fqdn && this._getCredential(parent_fqdn);
+		let parentNode = parent_fqdn && this.getCredential(parent_fqdn);
 		if (parentNode) {
 			parentNode.children.push(credential);
 			credential.parent = parentNode;
@@ -474,6 +461,12 @@ class BeameStoreV2 {
 		});
 	}
 
+	get Credentials() {
+		return BeameUtils.findInTree({children: this.credentials}, cred => {
+			return cred.fqdn
+		});
+	}
+
 	/**
 	 * Return credential from local Beame store
 	 * @public
@@ -482,17 +475,6 @@ class BeameStoreV2 {
 	 * @returns {Credential}
 	 */
 	getCredential(fqdn) {
-		return this._getCredential(fqdn);
-	}
-
-	/**
-	 * Return credential from local Beame store
-	 * @private
-	 * @method BeameStoreV2._getCredential
-	 * @param {String} fqdn
-	 * @returns {Credential}
-	 */
-	_getCredential(fqdn) {
 		let results = BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn, 1);
 		return results.length == 1 ? results[0] : null;
 	}
@@ -511,7 +493,7 @@ class BeameStoreV2 {
 	shredCredentials(fqdn, callback) {
 		// XXX: Fix callback to getMetadataKey (err, data) instead of (data)
 		// XXX: Fix exit code
-		let item = this._getCredential(fqdn);
+		let item = this.getCredential(fqdn);
 		if (item) {
 			item.shred(callback);
 		}
@@ -766,10 +748,9 @@ class BeameStoreV2 {
 	 * @returns {BeameStoreV2}
 	 */
 	static getInstance() {
-		if (_store == null) {
+		if (_store === null) {
 			new BeameStoreV2();
 		}
-
 		return _store;
 	}
 
