@@ -40,7 +40,7 @@ F register_on_site() {
 
 doc Creates an entity
 F create_entity() {
-	entity = ``$BEAME_BIN creds getCreds --token ${registration.authToken.encode_json()} --format json``
+	global entity = ``$BEAME_BIN creds getCreds --token ${registration.authToken.encode_json()} --format json``
 	entity is not Hash throws TestFail("Entity must be hash, not '$entity'")
 	entity.get('parent_fqdn', null) throws TestFail("Entity has parent FQDN: ${entity.parent_fqdn}")
 	entity.level != 0 throws TestFail("Entity has non-zero level: ${entity.level}")
@@ -70,6 +70,6 @@ test("Copying signing cred to store", copy_to_store)
 test("Prepare entity", prepare_entity_properties)
 test("Create token for an entity", create_token)
 test("Emulate site registration", register_on_site)
-test("Create test entity", create_entity);
+test("Create test entity", create_entity)
 
-
+echo("Credential is: ${entity.fqdn}")

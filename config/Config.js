@@ -74,7 +74,7 @@ const _envProfile = {
 		FqdnPattern: '.d.',
 		CertEndpoint:  'https://beameio-net-certs-dev.s3.amazonaws.com',
 		AuthServerURL: 'https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net',
-		LoadBalancerURL: 'https://may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net',
+		LoadBalancerFqdn: 'may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net',
 		BeameDevCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net',
 		BaseUrl: 'https://xmq6hpvgzt7h8m76.mpk3nobb568nycf5.v1.d.beameio.net',
 		BaseDNSUrl:'https://t24w58ow5jkkmkhu.mpk3nobb568nycf5.v1.d.beameio.net',
@@ -88,7 +88,7 @@ const _envProfile = {
 		FqdnPattern: '.p.',
 		CertEndpoint: 'https://beameio-net-certs.s3.amazonaws.com',
 		AuthServerURL: 'https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net',
-		LoadBalancerURL: 'https://ioigl3wzx6lajrx6.tl5h1ipgobrdqsj6.v1.p.beameio.net',
+		LoadBalancerFqdn: 'ioigl3wzx6lajrx6.tl5h1ipgobrdqsj6.v1.p.beameio.net',
 		BeameDevCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net',
 		BaseUrl: 'https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net',
 		BaseDNSUrl:'https://lcram0sj9ox726l1.tl5h1ipgobrdqsj6.v1.p.beameio.net',
@@ -132,7 +132,7 @@ const localLogDir = path.join(rootDir, 'logs');
 const authServerURL = process.env.BEAME_AUTH_SRVR_URL || SelectedProfile.AuthServerURL;
 
 /** @const {String} **/
-const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || SelectedProfile.LoadBalancerURL;
+const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || "https://" + SelectedProfile.LoadBalancerFqdn;
 
 const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || SelectedProfile.BeameDevCredsFqdn;
 
