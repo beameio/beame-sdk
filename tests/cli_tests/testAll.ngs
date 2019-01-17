@@ -81,7 +81,15 @@ F prepare_entity_properties() {
 doc Tests running site
 F test_server(fqdn:Str, cmd:CommandsPipeline, url:Str) {
 	threads = [
-		Thread({ $($cmd) })
+		Thread({
+			try {
+				$($cmd)
+			} catch(e:ProcessFail) {
+				# We are expecting the process to be killed
+				guard e.process.exit_signal
+				null
+			}
+		})
 	]
 	assert_resolvable(fqdn)
 	$(sleep 10)
