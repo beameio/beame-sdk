@@ -133,10 +133,8 @@ if (process.env.BEAME_LOAD_BALANCER_URL) {
 	process.exit(1);
 }
 
-const loadBalancerFqdn = env.LoadBalancerFqdn;
-
 /** @const {String} **/
-const loadBalancerURL = "https://" + loadBalancerFqdn;
+const loadBalancerURL = "https://" + env.LoadBalancerFqdn;
 
 const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || SelectedProfile.BeameDevCredsFqdn;
 
@@ -401,7 +399,6 @@ module.exports = {
 	localCertsDirV2,
 	remotePKsDirV1,
 	issuerCertsPath,
-	loadBalancerFqdn,
 	loadBalancerURL,
 	beameDevCredsFqdn,
 	metadataFileName,

@@ -1,15 +1,14 @@
 {
   "name": "beame-sdk",
-  "version": "2.0.60",
+  "version": "2.0.61",
   "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "index.js",
   "engine": "node >= 6.9.0",
   "scripts": {
-    "test_local_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_local_creds.js",
-    "test_sign_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_signature.js",
-    "test_auth_token_credential": "mocha ./tests/unit_tests/single_tests/create_creds_with_auth_token.js",
-    "test_auth_token": "mocha ./tests/unit_tests/single_tests/create_auth_token.js",
-    "startChat": "node ./examples/example1.js"
+    "test_commonutils": "mocha ./tests/unit_tests/test_commonutils.js",
+    "test_credentials": "mocha ./tests/unit_tests/test_credentials.js",
+    "test_ocsp": "mocha ./tests/unit_tests/test_ocsp.js",
+    "test_ntp": "mocha ./tests/unit_tests/test_ntp.js"
   },
   "bin": {
     "beame": "src/cli/beame.js"
