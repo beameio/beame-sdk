@@ -91,7 +91,7 @@ F test_server(fqdn:Str, cmd:CommandsPipeline, url:Str) {
 			}
 		})
 	]
-	echo("+ Waiting for host ${fqdn} to be resolvable")
+	echo("  Waiting for host ${fqdn} to be resolvable")
 	addr = retry(
 		times = 45
 		sleep = 2
@@ -99,6 +99,9 @@ F test_server(fqdn:Str, cmd:CommandsPipeline, url:Str) {
 		fail_cb = { throw TestFail("No resolve for $fqdn").set('host', fqdn) }
     )[-1]
 
+	echo("  Waiting for the server to come up")
+	$(sleep 10)
+	echo("  Fetching ${url} using resolve ${fqdn}:443:${addr}")
 	# curl was unable to resolve the host so had to manually give curl the IP
 	ret = try `curl --silent --max-time 30 --resolve "${fqdn}:443:${addr}" $url`
 	$(pkill -f 'beame.js servers')

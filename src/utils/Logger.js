@@ -14,6 +14,9 @@ const LogLevel    = {
 	"Fatal": "FATAL"
 };
 
+// Pitfall alert: "INFO" is how the regular messages of interest to the user are printed.
+// Pitfall alert: printStandardEvent() prints at "INFO" and it doesn't seem to be controlled
+//                using the BEAME_LOG_LEVEL environment variable, so it's printing anyway.
 const LogLevelVerbosity = {
 	"INFO":  0,
 	"DEBUG": 4,
@@ -146,7 +149,7 @@ class BeameLogger {
 		let message;
 		switch (event) {
 			case StandardFlowEvent.Registering:
-				message = `Registering ${entity.toLowerCase()} ${fqdn} ...`;
+				message = `Registering new ${entity.toLowerCase()} under ${fqdn} ...`;
 				break;
 			case StandardFlowEvent.Registered:
 				message = `${entity} ${fqdn} registered successfully ...`;
