@@ -3,7 +3,6 @@
 const assert = require('assert').strict;
 const simple = require('simple-mock');
 
-const commonUtils = require('../../src/utils/CommonUtils');
 const store = require("../../src/services/BeameStoreV2").getInstance();
 const config = require("../../config/Config");
 const debug = require("debug")(config.debug_prefix + "unittests:ocsp");
@@ -19,31 +18,40 @@ if (!cred) {
 	throw new Error(`Credential for ${local_fqdn} not found`);
 }
 
-function mockRetryFn() {
-	return simple.mock(commonUtils, "retry").callFn(async function (func, retries = 5) {
-		let error = "";
-		for (let i = 1; i <= retries; ++i) { // retry
-			try {
-				return await func();
-			} catch (e) {
-				error = e;
-				debug(`Call failed with error '${error}'. Retry [${i}/${retries}]`);
-			}
-		}
-		throw error;
-	});
-}
-
 describe('ocsp', function () {
 	this.timeout(100000);
 
-	beforeEach(() => process.env.BEAME_THROW_OCSP = "");
+	beforeEach(() => process.env.BEAME_OCSP_IGNORE = "");
 	afterEach(() => simple.restore());
 
 	const runs = [
-		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", function_name: "checkOcspStatusWithoutExternalOcsp" },
-		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.ExternalOcspProxyFqdn, function_name: "checkOcspStatusWithExternalOcsp"}
+		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", function_name: "check" },
+		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.ExternalOcspProxyFqdn, function_name: "verify"}
 	];
+
+	async function runOcspWithForceStatu(run, set_status) {
+		process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+
+		const credential = require("../../src/services/Credential");
+		const ocspUtils = require("../../src/utils/ocspUtils");
+		const storeCacheServices = (require('../../src/services/StoreCacheServices')).getInstance();
+
+		const mockSaveCredsAction = simple.mock(credential, "saveCredAction").returnWith();
+		const mockSetOcspStatus = simple.mock(storeCacheServices, "setOcspStatus").returnWith(new Promise(resolve => resolve(set_status)));
+		const mockOcspUtils = simple.mock(ocspUtils, run.function_name).returnWith(new Promise(resolve => resolve(set_status)));
+
+		const result = await cred.checkOcspStatus(cred, true);
+
+		debug(result);
+		assert(result);
+		assert.equal(result, set_status);
+		assert.equal(mockSaveCredsAction.callCount, 1);
+		assert.equal(mockSetOcspStatus.callCount, 1);
+		assert.equal(mockOcspUtils.callCount, 1);
+
+		return cred;
+	}
+
 	runs.forEach(function (run) {
 
 		it(run.desc + 'without forceCheck', async () => {
@@ -59,41 +67,32 @@ describe('ocsp', function () {
 			const result = await cred.checkOcspStatus(cred, true);
 
 			debug(result);
-			assert(result === config.OcspStatus.Good);
+			assert.equal(result, config.OcspStatus.Good);
 		});
 
-/*		it(run.desc + 'with failing ocsp', async () => {
+		it(run.desc + 'with ocsp ignore', async () => {
 			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
-			const errorMessage = run.function_name + " test error";
-			const checkOCSPFn = simple.mock(cred, run.function_name).throwWith(new Error(errorMessage));
-			const retryFn = mockRetryFn();
+
+			process.env.BEAME_OCSP_IGNORE = "true";
 			const result = await cred.checkOcspStatus(cred, true);
 
 			debug(result);
-			assert(result);
-			assert(result.status);
-			assert.equal(result.message, errorMessage);
-			assert.equal(retryFn.callCount, 1);
-			assert.equal(checkOCSPFn.callCount, 5);
+			assert.equal(result, config.OcspStatus.Good);
 		});
 
-		it(run.desc + 'with failing ocsp & BEAME_THROW_OCSP', async () => {
-			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
-			process.env.BEAME_THROW_OCSP = "true";
-			const errorMessage = run.function_name + " test error";
-			const checkOCSPFn = simple.mock(cred, run.function_name).throwWith(new Error(errorMessage));
-			const retryFn = mockRetryFn();
-
-			try {
-				await cred.checkOcspStatus(cred, true);
-				assert.fail("Should have thrown exception");
-			} catch (e) {
-				debug(`expected catch => error was '${e.message}'`);
-				assert.equal(e.message, errorMessage);
-				assert.equal(retryFn.callCount, 1);
-				assert.equal(checkOCSPFn.callCount, 5);
-			}
+		it(run.desc + 'with Bad verify = revoked cred', async () => {
+			let cred = await runOcspWithForceStatu(run,config.OcspStatus.Bad);
+			assert(cred.metadata.revoked);
 		});
-		*/
+
+		it(run.desc + 'with Unknown verify != revoked cred', async () => {
+			let cred = await runOcspWithForceStatu(run,config.OcspStatus.Unknown);
+			assert(!cred.metadata.revoked);
+		});
+
+		it(run.desc + 'with Unavailable verify != revoked cred', async () => {
+			let cred = await runOcspWithForceStatu(run,config.OcspStatus.Unavailable);
+			assert(!cred.metadata.revoked);
+		});
 	});
 });
