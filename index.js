@@ -19,6 +19,6 @@ module.exports = {
 	ProxyAgent:        require('./src/services/ProxyAgent'),
 	OpenSSlWrapper:    require('./src/utils/OpenSSLWrapper'),
 	DnsServices:       require('./src/services/DnsServices'),
-	Config:            require('./config/Config')
+	PublicConfig:      require('./config/env')
 };
 

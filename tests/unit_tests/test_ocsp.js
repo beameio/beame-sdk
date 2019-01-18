@@ -26,7 +26,7 @@ describe('ocsp', function () {
 
 	const runs = [
 		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", function_name: "check" },
-		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.ExternalOcspProxyFqdn, function_name: "verify"}
+		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.OcspProxyFqdn, function_name: "verify"}
 	];
 
 	async function runOcspWithForceStatus(run, set_status) {

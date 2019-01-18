@@ -2,9 +2,9 @@
 
 # Beame SDK - tests
 
-`BEAME_ENV_PROFILE=dev` to run tests against dev environment
+`BEAME_ENV=dev` to run tests against dev environment
 
-`BEAME_ENV_PROFILE=prod` to run tests against prod environment
+`BEAME_ENV=prod` to run tests against prod environment
 
 ## cli_tests
 
