@@ -1655,8 +1655,6 @@ class Credential {
 						};
 
 						const _getSignerCred = (fqdn, [req, uri]) => {
-							const store = new (require("./BeameStoreV2"))();
-
 							return new Promise((resolve, reject) => {
 
 									/** @type {FetchCredChainOptions}**/
@@ -1666,7 +1664,7 @@ class Credential {
 										allowExpired:true,
 										allowApprovers: true
 									};
-
+									const store = require("./BeameStoreV2").getInstance();
 									store.fetchCredChain(fqdn, cred_options, (err, creds) => {
 										if (!err) {
 											let signerCred = null;
