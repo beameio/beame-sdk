@@ -13,15 +13,15 @@ if (!local_fqdn) {
 	process.exit(1)
 }
 
-const cred = store.getCredential(local_fqdn);
-if (!cred) {
-	throw new Error(`Credential for ${local_fqdn} not found`);
-}
-
 describe('ocsp', function () {
 	this.timeout(100000);
+	let cred;
 
-	beforeEach(() => process.env.BEAME_OCSP_IGNORE = "");
+	beforeEach(() => {
+		process.env.BEAME_OCSP_IGNORE = "";
+		cred = store.getCredential(local_fqdn);
+		assert(cred);
+	});
 	afterEach(() => simple.restore());
 
 	const runs = [
@@ -29,7 +29,7 @@ describe('ocsp', function () {
 		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.ExternalOcspProxyFqdn, function_name: "verify"}
 	];
 
-	async function runOcspWithForceStatu(run, set_status) {
+	async function runOcspWithForceStatus(run, set_status) {
 		process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
 
 		const credential = require("../../src/services/Credential");
@@ -38,6 +38,7 @@ describe('ocsp', function () {
 
 		const mockSaveCredsAction = simple.mock(credential, "saveCredAction").returnWith();
 		const mockSetOcspStatus = simple.mock(storeCacheServices, "setOcspStatus").returnWith(new Promise(resolve => resolve(set_status)));
+		const mockWriteMetadata = simple.mock(cred.beameStoreServices, "writeMetadataSync").returnWith();
 		const mockOcspUtils = simple.mock(ocspUtils, run.function_name).returnWith(new Promise(resolve => resolve(set_status)));
 
 		const result = await cred.checkOcspStatus(cred, true);
@@ -47,9 +48,8 @@ describe('ocsp', function () {
 		assert.equal(result, set_status);
 		assert.equal(mockSaveCredsAction.callCount, 1);
 		assert.equal(mockSetOcspStatus.callCount, 1);
+		assert.equal(mockWriteMetadata.callCount, 1);
 		assert.equal(mockOcspUtils.callCount, 1);
-
-		return cred;
 	}
 
 	runs.forEach(function (run) {
@@ -81,17 +81,17 @@ describe('ocsp', function () {
 		});
 
 		it(run.desc + 'with Bad verify = revoked cred', async () => {
-			let cred = await runOcspWithForceStatu(run,config.OcspStatus.Bad);
+			await runOcspWithForceStatus(run,config.OcspStatus.Bad);
 			assert(cred.metadata.revoked);
 		});
 
 		it(run.desc + 'with Unknown verify != revoked cred', async () => {
-			let cred = await runOcspWithForceStatu(run,config.OcspStatus.Unknown);
+			await runOcspWithForceStatus(run,config.OcspStatus.Unknown);
 			assert(!cred.metadata.revoked);
 		});
 
 		it(run.desc + 'with Unavailable verify != revoked cred', async () => {
-			let cred = await runOcspWithForceStatu(run,config.OcspStatus.Unavailable);
+			await runOcspWithForceStatus(run,config.OcspStatus.Unavailable);
 			assert(!cred.metadata.revoked);
 		});
 	});
