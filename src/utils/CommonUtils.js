@@ -300,9 +300,8 @@ class CommonUtils {
 							return;
 						}
 
-						retries--;
-
-						return CommonUtils.validateMachineClock(fuzz,retries);
+						getGlobalNtpStamp(retries - 1);
+						return;
 					}
 
 					onGotTime(Math.abs(date.getTime()/1000));
