@@ -2138,7 +2138,13 @@ class Credential {
 	async ensureDnsValue() {
 		if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
 			const expected_ip = await util.promisify(dns.lookup)(this.metadata.dnsRecords[0].value);
-			const real_ip = await util.promisify(dns.lookup)(this.fqdn);
+			let real_ip;
+			try {
+				real_ip = await util.promisify(dns.lookup)(this.fqdn);
+			} catch(e) {
+				logger.warn(`Failed to resolve ${this.fqdn}, will try to set DNS record`, e);
+				real_ip = {address: null};
+			}
 			if (expected_ip.address === real_ip.address) {
 				return this.metadata.dnsRecords[0].value;
 			}

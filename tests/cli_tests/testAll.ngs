@@ -91,18 +91,16 @@ F test_server(fqdn:Str, cmd:CommandsPipeline, url:Str) {
 			}
 		})
 	]
-	assert_resolvable(fqdn)
-
+	echo("+ Waiting for host ${fqdn} to be resolvable")
 	addr = retry(
 		times = 45
 		sleep = 2
-		title = "Check that host ${fqdn} is resolvable"
 		body = { `dig "+short" $fqdn`.lines() }
-		fail_cb = { throw TestFail("$title: no resolve for $fqdn").set('host', fqdn) }
+		fail_cb = { throw TestFail("No resolve for $fqdn").set('host', fqdn) }
     )[-1]
 
 	# curl was unable to resolve the host so had to manually give curl the IP
-	ret = try `curl -vvv --max-time 30 --resolve "${fqdn}:443:${addr}" $url`
+	ret = try `curl --silent --max-time 30 --resolve "${fqdn}:443:${addr}" $url`
 	$(pkill -f 'beame.js servers')
 	threads.join()
 	assert_string(ret, "Failed to fetch response from the server")
