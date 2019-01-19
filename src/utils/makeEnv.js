@@ -5,7 +5,7 @@ const debug = require('debug')('beame:sdk:env');
 
 function makeEnv(environments, options) {
 
-	const opts = Object.assign({protectedProperties: []}, options);
+	const opts = Object.assign({protectedProperties: []}, options || {});
 
 	debug(`makeEnv.js: BEAME_ENV=${process.env.BEAME_ENV || '(UNSET)'}`);
 
