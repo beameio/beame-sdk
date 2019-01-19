@@ -10,7 +10,7 @@ const os         = require('os');
 const home       = os.homedir();
 const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
-const debug_prefix = 'beame:sdk:';
+const debugPrefix = 'beame:sdk:';
 const env = require('./env');
 
 const ActionsApiConfig = {
@@ -390,7 +390,7 @@ const OcspStatus = {
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
-	debug_prefix,
+	debugPrefix,
 	rootDir,
 	cdrDir,
 	scsDir,

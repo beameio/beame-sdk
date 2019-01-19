@@ -5,7 +5,7 @@ const ntpClient = require('ntp-client');
 const util = require('util');
 
 const config = require("../../config/Config");
-const debug = require("debug")(config.debug_prefix + "unittests:ntp");
+const debug = require("debug")(config.debugPrefix + "unittests:ntp");
 
 const ntpServer = process.env.BEAME_TESTS_NTP_SERVER || "pool.ntp.org";
 const ntpServerPort = process.env.BEAME_TESTS_NTP_SERVER_PORT || 123;

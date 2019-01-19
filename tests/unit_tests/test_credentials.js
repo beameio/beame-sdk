@@ -4,7 +4,7 @@ const commonUtils = require('../../src/utils/CommonUtils');
 const beameUtils = require('../../src/utils/BeameUtils');
 const store = new (require("../../src/services/BeameStoreV2"))();
 const config = require("../../config/Config");
-const debug = require("debug")(config.debug_prefix + "unittests:credentials");
+const debug = require("debug")(config.debugPrefix + "unittests:credentials");
 
 function _getRandomRegistrationData(prefix) {
 	let rnd = beameUtils.randomString(8);

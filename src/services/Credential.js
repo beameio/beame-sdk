@@ -82,7 +82,7 @@ const ocspUtils              = require('../utils/ocspUtils');
 const timeFuzz               = Config.defaultTimeFuzz * 1000;
 const util                   = require('util');
 const dns                    = require('dns');
-const debug_dns              = require('debug')(Config.debug_prefix + 'dns');
+const debug_dns              = require('debug')(Config.debugPrefix + 'dns');
 
 const nop = function () {
 };

@@ -5,7 +5,7 @@ const simple = require('simple-mock');
 
 const store = require("../../src/services/BeameStoreV2").getInstance();
 const config = require("../../config/Config");
-const debug = require("debug")(config.debug_prefix + "unittests:ocsp");
+const debug = require("debug")(config.debugPrefix + "unittests:ocsp");
 
 const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN;
 if (!local_fqdn) {

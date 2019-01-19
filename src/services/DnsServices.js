@@ -10,7 +10,7 @@ const BeameLogger = require('../utils/Logger');
 const logger = new BeameLogger("DnsServices");
 
 const Config = require('../../config/Config');
-const debug_dns = require('debug')(Config.debug_prefix + 'dns');
+const debug_dns = require('debug')(Config.debugPrefix + 'dns');
 
 const AuthToken = require('./AuthToken');
 const provisionApi = new ProvisionApi();

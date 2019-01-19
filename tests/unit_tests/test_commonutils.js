@@ -4,7 +4,7 @@ const simple = require('simple-mock');
 
 const commonUtils = require('../../src/utils/CommonUtils');
 const config = require("../../config/Config");
-const debug = require("debug")(config.debug_prefix + "unittests:commonutils");
+const debug = require("debug")(config.debugPrefix + "unittests:commonutils");
 
 describe('exponentialTimeWithJitter', () => {
 	it('default ', () => {
