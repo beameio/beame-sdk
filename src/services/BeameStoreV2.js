@@ -518,7 +518,7 @@ class BeameStoreV2 {
 
 				// noinspection JSUnresolvedVariable
 				let allEnvs       = !!options.allEnvs,
-				    envPattern    = config.EnvProfile.FqdnPattern,
+				    envPattern    = config.SelectedProfile.FqdnPattern,
 				    approvedZones = config.ApprovedZones,
 				    zone          = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null,
 				    today         = new Date();
@@ -721,11 +721,11 @@ class BeameStoreV2 {
 				async.parallel(
 					[
 						(callback) => {
-							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
+							let requestPath = config.SelectedProfile.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
 							provisionApi.makeGetRequest(requestPath, null, _onMetaReceived.bind(this, callback), null, 3);
 						},
 						(callback) => {
-							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
+							let requestPath = config.SelectedProfile.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
 							provisionApi.makeGetRequest(requestPath, null, _onX509Received.bind(this, callback), null, 3);
 						}
 

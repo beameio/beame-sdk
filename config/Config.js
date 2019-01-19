@@ -13,7 +13,7 @@ const npmRootDir = npmPrefix();
 const debugPrefix = 'beame:sdk:';
 const env = require('./env');
 
-const ActionsApiConfig = {
+const ActionsApi = {
 	"EntityApi": {
 		"RegisterEntity": {
 			"endpoint": "/api/v1/node/register"
@@ -69,43 +69,33 @@ const ActionsApiConfig = {
 	}
 };
 
-const _envProfile = {
+const environments = {
 	dev: {
 		FqdnPattern: '.d.',
 		CertEndpoint:  'https://beameio-net-certs-dev.s3.amazonaws.com',
 		AuthServerURL: 'https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net',
-		BeameDevCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net',
+		TestsCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net',
 		BaseUrl: 'https://xmq6hpvgzt7h8m76.mpk3nobb568nycf5.v1.d.beameio.net',
 		BaseDNSUrl:'https://t24w58ow5jkkmkhu.mpk3nobb568nycf5.v1.d.beameio.net',
 		OcspProxyFqdn: "i6zirg0jsrzrk3dk.mpk3nobb568nycf5.v1.d.beameio.net",
-		RetryAttempts: 10,
-		Actions: ActionsApiConfig
+		RetryAttempts: 10
 	},
 
 	prod: {
 		FqdnPattern: '.p.',
 		CertEndpoint: 'https://beameio-net-certs.s3.amazonaws.com',
 		AuthServerURL: 'https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net',
-		BeameDevCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net',
+		TestsCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net',
 		BaseUrl: 'https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net',
 		BaseDNSUrl:'https://lcram0sj9ox726l1.tl5h1ipgobrdqsj6.v1.p.beameio.net',
 		OcspProxyFqdn: "iep9bs1p7cj3cmit.tl5h1ipgobrdqsj6.v1.p.beameio.net",
-		RetryAttempts: 10,
-		Actions: ActionsApiConfig
+		RetryAttempts: 10
 	},
 };
-const SelectedProfile = (process.env.BEAME_ENV && _envProfile[process.env.BEAME_ENV.toLowerCase()]) || _envProfile.prod;
-
-
-const CertEndpoint = SelectedProfile.CertEndpoint;
+const SelectedProfile = require('../src/utils/makeEnv')(environments, {protectedProperties: ['FqdnPattern']});
 
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
-
-const EnvProfile = {
-	Name:        env.Name,
-	FqdnPattern: SelectedProfile.FqdnPattern
-};
 
 /** @const {String} **/
 const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
@@ -125,9 +115,6 @@ const issuerCertsPath = path.join(rootDir, 'ocsp-cache');
 
 const localLogDir = path.join(rootDir, 'logs');
 
-/** @const {String} **/
-const authServerURL = process.env.BEAME_AUTH_SRVR_URL || SelectedProfile.AuthServerURL;
-
 if (process.env.BEAME_LOAD_BALANCER_URL) {
 	console.error("BEAME_LOAD_BALANCER_URL environment variable is not used anymore. Please use BEAME_LOAD_BALANCER_FQDN.");
 	process.exit(1);
@@ -135,8 +122,6 @@ if (process.env.BEAME_LOAD_BALANCER_URL) {
 
 /** @const {String} **/
 const loadBalancerURL = "https://" + env.LoadBalancerFqdn;
-
-const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || SelectedProfile.BeameDevCredsFqdn;
 
 const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
 
@@ -395,12 +380,10 @@ module.exports = {
 	cdrDir,
 	scsDir,
 	npmRootDir,
-	EnvProfile,
 	localCertsDirV2,
 	remotePKsDirV1,
 	issuerCertsPath,
 	loadBalancerURL,
-	beameDevCredsFqdn,
 	metadataFileName,
 	s3MetadataFileName,
 	CertFileNames,
@@ -409,12 +392,10 @@ module.exports = {
 	MessageCodes,
 	TimeUnits,
 	SNIServerPort,
-	CertEndpoint,
 	InitFirstRemoteEdgeClient,
 	PinAtomPKbyDefault,
 	MetadataProperties,
 	CredAction,
-	authServerURL,
 	beameForceEdgeFqdn,
 	beameForceEdgeIP,
 	RegistrationSource,
@@ -436,5 +417,6 @@ module.exports = {
 	LogEvents,
 	localLogDir,
 	defaultDays2Log,
-	SelectedProfile
+	SelectedProfile,
+	ActionsApi
 };
