@@ -64,7 +64,7 @@ const _                      = require('underscore');
 const Config                 = require('../../config/Config');
 const envProfile             = Config.SelectedProfile;
 const module_name            = Config.AppModules.Credential;
-const logger_level           = "Credential";
+const logger_entity          = "Credential";
 const BeameLogger            = require('../utils/Logger');
 const logger                 = new BeameLogger(module_name);
 const BeameStoreDataServices = require('../services/BeameStoreDataServices');
@@ -773,7 +773,7 @@ class Credential {
 
 				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error, payload) => {
@@ -821,7 +821,7 @@ class Credential {
 
 				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error, payload) => {
@@ -874,7 +874,7 @@ class Credential {
 
 				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error, payload) => {
@@ -935,7 +935,7 @@ class Credential {
 
 				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error, payload) => {
@@ -989,7 +989,7 @@ class Credential {
 						return;
 					}
 
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
+					logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
 					this._requestCerts(payload, metadata, validityPeriod).then(this._syncMetadataOnCertReceived.bind(this, payload.fqdn)).then(resolve).catch(reject);
 				};
@@ -1004,7 +1004,7 @@ class Credential {
 				};
 				let api      = new ProvisionApi();
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, authServerFqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, authServerFqdn);
 
 				api.postRequest(
 					authServerFqdn + apiAuthServerActions.RegisterEntity.endpoint,
@@ -1056,7 +1056,7 @@ class Credential {
 						return;
 					}
 
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
+					logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registered, payload.fqdn);
 
 					payload.sign = authToken;
 
@@ -1070,7 +1070,7 @@ class Credential {
 					parent_fqdn: tokenObj.signedBy
 				};
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.Registering, metadata.parent_fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, metadata.parent_fqdn);
 
 				let postData = Credential.formatRegisterPostData(metadata),
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
@@ -1282,7 +1282,7 @@ class Credential {
 				    api       = new ProvisionApi(),
 				    apiData   = ProvisionApi.getApiData(apiEntityActions.CompleteRegistration.endpoint, postData);
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error, payload) => {
@@ -1403,7 +1403,7 @@ class Credential {
 							    api      = new ProvisionApi(),
 							    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
 
-							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
+							logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 
 							let authToken = null;
 
@@ -1949,11 +1949,11 @@ class Credential {
 
 				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.UpdatingMetadata, fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.UpdatingMetadata, fqdn);
 
 				api.runRestfulAPI(apiData, (error, metadata) => {
 					if (!error) {
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.MetadataUpdated, fqdn);
+						logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.MetadataUpdated, fqdn);
 						resolve(metadata);
 					}
 					else {
@@ -2405,18 +2405,18 @@ class Credential {
 					return;
 				}
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.parent_fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.parent_fqdn);
 
 				this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
 					cred => {
 
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GeneratingKeys, payload.fqdn);
+						logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
+						logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.GeneratingKeys, payload.fqdn);
 
 						let dirPath = cred.getMetadataKey("path");
 
 						cred._createInitialKeyPairs(dirPath).then(() => {
-							logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.KeysCreated, payload.fqdn);
+							logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.KeysCreated, payload.fqdn);
 
 							OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
@@ -2478,7 +2478,7 @@ class Credential {
 					return;
 				}
 
-				logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.parent_fqdn);
+				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.GettingAuthCreds, payload.parent_fqdn);
 
 				this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
 					cred => {
@@ -2486,7 +2486,7 @@ class Credential {
 						path = cred.getMetadataKey("path");
 						deleteCredFolder();
 
-						logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
+						logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
 
 						cred._createTempKeys().then(keys => {
 
@@ -2537,7 +2537,7 @@ class Credential {
 					let dirPath           = this.getMetadataKey("path"),
 					    directoryServices = this.store.directoryServices;
 
-					logger.printStandardEvent(logger_level, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
+					logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
 
 					directoryServices.saveCerts(dirPath, payload).then(() => {
 
