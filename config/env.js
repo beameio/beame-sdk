@@ -14,4 +14,4 @@ const environments = {
 	},
 };
 
-module.exports = require('../src/utils/makeEnv', environments, {protectedProperties: ['Name']});
+module.exports = require('../src/utils/makeEnv')(environments, {protectedProperties: ['Name']});
