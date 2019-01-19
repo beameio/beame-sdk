@@ -34,7 +34,7 @@ describe('local_creds_create', function () {
 
 	it('Should create entity', function (done) {
 		parent_cred.createEntityWithLocalCreds(parent_fqdn, data.name, data.email).then(metadata => {
-			debug(`metadata received ${metadata}`);
+			debug('metadata received %j', metadata);
 
 			assert(metadata, `expected metadata`);
 			assert(metadata.fqdn, `expected fqdn`);
@@ -72,7 +72,7 @@ describe('local_creds_custom_create', function () {
 
 	it('Should create entity', function (done) {
 		parent_cred.createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, data.name, data.email).then(metadata => {
-			debug(`metadata received ${metadata}`);
+			debug('metadata received %j', metadata);
 			assert(metadata, `expected metadata`);
 			assert(metadata.fqdn, `expected fqdn`);
 
@@ -109,7 +109,7 @@ describe("auth_server_creds_create", function () {
 			assert(authToken);
 			debug(commonUtils.stringify(authToken, false));
 			cred.createEntityWithAuthServer(authToken, null,process.env.BEAME_TESTS_CUSTOM_FQDN || beameUtils.randomString(8), null).then(metadata => {
-				debug(`metadata received ${metadata}`);
+				debug('metadata received %j', metadata);
 
 				assert(metadata, `expected metadata`);
 				assert(metadata.fqdn, `expected fqdn`);
@@ -143,7 +143,7 @@ describe('sign_and_create', function () {
 	it('Should create entity', function (done) {
 		signing_cred.signWithFqdn(parent_fqdn, commonUtils.generateDigest(data)).then(authToken=> {
 			signing_cred.createEntityWithAuthToken(authToken, data.name, data.email).then(metadata => {
-				debug(`metadata received ${metadata}`);
+				debug('metadata received %j', metadata);
 
 				assert(metadata, `expected metadata`);
 				assert(metadata.fqdn, `expected fqdn`);
