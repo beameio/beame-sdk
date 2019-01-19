@@ -31,5 +31,6 @@ function makeEnv(environments, options) {
 	}
 
 	debug('makeEnv.js: environment=%j', environment);
+	return environment;
 }
 module.exports = makeEnv;
