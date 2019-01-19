@@ -112,3 +112,28 @@ describe('retry', () => {
 		assert(result);
 	});
 });
+
+describe('withTimeout', () => {
+	let p;
+
+	beforeEach(() => {
+		p = new Promise(resolve => {
+			setTimeout(resolve.bind(null, 10), 1000);
+		});
+	});
+
+	it('should return original promise response when not timing out', async () => {
+		const result = await commonUtils.withTimeout(p, 1500, new Error("FAIL"));
+		assert.equal(result, 10);
+	});
+
+	it('should fail on timeout', async () => {
+		await assert.rejects(() => commonUtils.withTimeout(p, 500, new Error("FAIL")), Error, 'Expected to fail');
+	});
+
+	it('should forward catch', async () => {
+		function MyError() {}
+		await assert.rejects(() => commonUtils.withTimeout(Promise.reject(new MyError()), 500, new Error("FAIL")), MyError, 'Expected to fail');
+	});
+
+});

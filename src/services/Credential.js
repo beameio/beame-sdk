@@ -82,6 +82,7 @@ const ocspUtils              = require('../utils/ocspUtils');
 const timeFuzz               = Config.defaultTimeFuzz * 1000;
 const util                   = require('util');
 const dns                    = require('dns');
+const debug_dns              = require('debug')(Config.debug_prefix + 'dns');
 
 const nop = function () {
 };
@@ -2136,19 +2137,37 @@ class Credential {
 	}
 
 	async ensureDnsValue() {
+
+		const resolveDns = (fqdn) => {
+			const promise = util.promisify(dns.lookup)(fqdn).catch(reason => {
+				debug_dns(`Failed to resolve ${fqdn} (${reason})`);
+				throw reason;
+			});
+			return CommonUtils.withTimeout(promise, 3000, new Error('DNS resolution timed out'));
+		};
+
 		if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
-			const expected_ip = await util.promisify(dns.lookup)(this.metadata.dnsRecords[0].value);
-			let real_ip;
+			// Make these different so if they are not resolved
+			let expected_ip = {address: 'n/a-1'};
+			let real_ip = {address: 'n/a-2'};
 			try {
-				real_ip = await util.promisify(dns.lookup)(this.fqdn);
+				debug_dns(`resolving expected=${this.metadata.dnsRecords[0].value} fqdn=${this.fqdn}`);
+				[expected_ip, real_ip] = await Promise.all([
+					resolveDns(this.metadata.dnsRecords[0].value),
+					resolveDns(this.fqdn)
+				]);
 			} catch(e) {
-				logger.warn(`Failed to resolve ${this.fqdn}, will try to set DNS record`, e);
-				real_ip = {address: null};
+				debug_dns('Failed to resolve');
 			}
 			if (expected_ip.address === real_ip.address) {
+				debug_dns('DNS record is OK, not calling setDns');
 				return this.metadata.dnsRecords[0].value;
 			}
+			debug_dns(`DNS records were expected_ip=${expected_ip} real_ip=${real_ip}`);
+		} else {
+			debug_dns(`There were no DNS records for ${this.fqdn} in metadata, will call setDns`);
 		}
+
 		return await this.setDns(this.fqdn, null, true);
 	}
 
