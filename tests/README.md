@@ -32,7 +32,8 @@ Optionally `BEAME_TESTS_CUSTOM_FQDN` can be passed for a custom fqdn creation in
 ### test_ntp.js
 Tests the ntp base functionality.
 
-Uses `BEAME_TESTS_NTP_SERVER` (default "pool.ntp.org") and `BEAME_TESTS_NTP_SERVER_PORT` (default 123)
+* Uses `BEAME_TESTS_NTP_SERVER` (default "pool.ntp.org") and `BEAME_TESTS_NTP_SERVER_PORT` (default 123)
+* Uses `BEAME_TEST_NTP_RANGE` (default 10) - acceptable NTP time difference
 
 ### test_ocsp.js
 Tests in the oscp functionality

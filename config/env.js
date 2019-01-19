@@ -1,5 +1,4 @@
-const changeCase = require('change-case');
-const debug = require('debug')('beame:sdk:env');
+'use strict';
 
 const environments = {
 	dev: {
@@ -15,33 +14,4 @@ const environments = {
 	},
 };
 
-const protectedProperties = ['Name'];
-
-debug(`config/env.js: BEAME_ENV=${process.env.BEAME_ENV || '(UNSET)'}`);
-
-if(process.env.BEAME_ENV_PROFILE) {
-	console.warn(`Warning: ignoring environment variable BEAME_ENV_PROFILE. Please use BEAME_ENV`);
-}
-
-/**
- *
- * @var { {Name, LoadBalancerFqdn, OcspProxyFqdn} }
- */
-const environment = (process.env.BEAME_ENV && environments[process.env.BEAME_ENV.toLowerCase()]) || environments.prod;
-
-for(const k of Object.keys(environment)) {
-	const envVarName = 'BEAME_' + changeCase.constantCase(k);
-	if (protectedProperties.includes(k)) {
-		if(process.env[envVarName]) {
-			console.warn(`Warning: ignoring environment variable ${envVarName}`);
-		}
-		continue;
-	}
-	if (process.env[envVarName]) {
-		console.warn(`Warning: env: using environment setting override from environment variable ${envVarName} which has value ${process.env[envVarName]}`);
-		environment[k] = process.env[envVarName];
-	}
-}
-
-debug('config/env.js: environment=%j', environment);
-module.exports = environment;
+module.exports = require('../src/utils/makeEnv', environments, {protectedProperties: ['Name']});
