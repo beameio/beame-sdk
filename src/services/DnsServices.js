@@ -4,8 +4,9 @@
 "use strict";
 
 const ProvisionApi = require('../services/ProvisionApi');
-const envProfile = require('../../config/Config').SelectedProfile;
-const apiDnsActions = envProfile.Actions.DnsApi;
+const config = require('../../config/Config');
+const envProfile = config.SelectedProfile;
+const apiDnsActions = config.ActionsApi.DnsApi;
 const BeameLogger = require('../utils/Logger');
 const logger = new BeameLogger("DnsServices");
 

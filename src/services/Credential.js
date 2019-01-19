@@ -62,6 +62,7 @@ const NodeRsa                = require("node-rsa");
 const async                  = require('async');
 const _                      = require('underscore');
 const Config                 = require('../../config/Config');
+const actionsApi             = Config.ActionsApi;
 const envProfile             = Config.SelectedProfile;
 const module_name            = Config.AppModules.Credential;
 const logger_entity          = "Credential";
@@ -73,8 +74,8 @@ const openSSlWrapper         = new OpenSSLWrapper();
 const beameUtils             = require('../utils/BeameUtils');
 const CommonUtils            = require('../utils/CommonUtils');
 const ProvisionApi           = require('../services/ProvisionApi');
-const apiEntityActions       = envProfile.Actions.EntityApi;
-const apiAuthServerActions   = envProfile.Actions.AuthServerApi;
+const apiEntityActions       = actionsApi.EntityApi;
+const apiAuthServerActions   = actionsApi.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
 const storeCacheServices     = (require('./StoreCacheServices')).getInstance();
@@ -997,7 +998,7 @@ class Credential {
 
 				logger.debug("createEntityWithAuthServer(): onEdgeServerSelected");
 
-				let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || Config.authServerURL;
+				let authServerFqdn = (authSrvFqdn && 'https://' + authSrvFqdn) || Config.SelectedProfile.AuthServerURL;
 
 				let metadata = {
 					name,
@@ -1640,7 +1641,6 @@ class Credential {
 
 					if (process.env.EXTERNAL_OCSP_FQDN) {
 
-						const envProfile = require('../../config/Config').SelectedProfile;
 						const AuthToken = require('./AuthToken');
 						const request   = require('request');
 
@@ -1701,7 +1701,7 @@ class Credential {
 										return;
 									}
 
-									const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${envProfile.Actions.OcspApi.Check.endpoint}`;
+									const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.Check.endpoint}`;
 
 									let opt = {
 										url:      url,
@@ -1828,10 +1828,9 @@ class Credential {
 
 
 					if (process.env.EXTERNAL_OCSP_FQDN) {
-						const envProfile = require('../../config/Config').SelectedProfile;
 						const AuthToken = require('./AuthToken');
 
-						const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${envProfile.Actions.OcspApi.HttpGetProxy.endpoint}`;
+						const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.HttpGetProxy.endpoint}`;
 
 						let authToken = AuthToken.create(cred.fqdn, cred);
 
