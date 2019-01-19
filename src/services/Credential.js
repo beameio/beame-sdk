@@ -2021,6 +2021,9 @@ class Credential {
 	 * @param {String|null|undefined} [dnsFqdn] => could be different from fqdn in case of local ip
 	 */
 	setDns(fqdn, value, useBestProxy, dnsFqdn) {
+
+		debug_dns(`Credential#setDns() fqdn=${fqdn} value=${value} useBestProxy=${useBestProxy} dnsFqdn=${dnsFqdn}`);
+
 		return new Promise((resolve, reject) => {
 
 				if (!fqdn) {
@@ -2036,10 +2039,10 @@ class Credential {
 				this.store.find(fqdn, false).then(cred => {
 					let val = null;
 
-					const dnsServices = new (require('./DnsServices'))();
+					const DnsServices = require('./DnsServices');
 
 					const _setDns = () => {
-						return dnsServices.setDns(fqdn, val, dnsFqdn);
+						return DnsServices.setDns(fqdn, val, dnsFqdn);
 					};
 
 					const _updateEntityMeta = () => {
@@ -2108,8 +2111,8 @@ class Credential {
 				this.store.find(fqdn, false).then(cred => {
 
 					const _deleteDns = () => {
-						const dnsServices = new (require('./DnsServices'))();
-						return dnsServices.deleteDns(fqdn, dnsFqdn);
+						const DnsServices = require('./DnsServices');
+						return DnsServices.deleteDns(fqdn, dnsFqdn);
 					};
 
 					const _updateEntityMeta = () => {
@@ -2163,7 +2166,7 @@ class Credential {
 				debug_dns('DNS record is OK, not calling setDns');
 				return this.metadata.dnsRecords[0].value;
 			}
-			debug_dns(`DNS records were expected_ip=${expected_ip} real_ip=${real_ip}`);
+			debug_dns(`DNS records were expected_ip=${JSON.stringify(expected_ip)} real_ip=${JSON.stringify(real_ip)}`);
 		} else {
 			debug_dns(`There were no DNS records for ${this.fqdn} in metadata, will call setDns`);
 		}
