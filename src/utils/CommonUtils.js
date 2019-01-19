@@ -387,6 +387,21 @@ class CommonUtils {
 		throw error;
 	}
 
+	/**
+	 * Make a new promise based on existing one but adding timeout functionality.
+	 * @param promise - Original promise
+	 * @param ms - timeout in milliseconds
+	 * @param reject_value - promise rejection value in case of timeout
+	 * @returns {Promise<any>}
+	 */
+	static withTimeout(promise, ms, reject_value) {
+		return Promise.race([
+			promise,
+			new Promise((resolve, reject) => {
+				setTimeout(() => reject(reject_value), ms);
+			})
+		]);
+	}
 }
 
 module.exports = CommonUtils;

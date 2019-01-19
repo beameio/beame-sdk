@@ -1,5 +1,6 @@
 "use strict";
-const path = require('path');
+
+const util = require('util');
 
 const config            = require('../../config/Config');
 const envProfile        = config.SelectedProfile;
@@ -388,6 +389,13 @@ class ProvApiService {
 		options = ProvApiService.setUserAgent(options);
 
 		postToProvisionApi(url, options, "custom_post", retries || envProfile.RetryAttempts, 1000, callback);
+	}
+
+	postRequestAsync(url, postData, authToken, retries, inOptions) {
+		const adapter = (url, postData, authToken, retries, inOptions, cb) => {
+			this.postRequest(url, postData, cb, authToken, retries, inOptions);
+		};
+		return util.promisify(adapter)(url, postData, authToken, retries, inOptions);
 	}
 
 	//noinspection JSUnusedGlobalSymbols

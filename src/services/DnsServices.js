@@ -3,79 +3,43 @@
  */
 "use strict";
 
-const CommonUtils   = require('../utils/CommonUtils');
-const ProvisionApi  = require('../services/ProvisionApi');
-const envProfile     = require('../../config/Config').SelectedProfile;
+const ProvisionApi = require('../services/ProvisionApi');
+const envProfile = require('../../config/Config').SelectedProfile;
 const apiDnsActions = envProfile.Actions.DnsApi;
-const BeameLogger            = require('../utils/Logger');
-const logger                 = new BeameLogger("DnsServices");
-class DnsServices {
+const BeameLogger = require('../utils/Logger');
+const logger = new BeameLogger("DnsServices");
 
-	setDns(fqdn, value, dnsFqdn) {
+const Config = require('../../config/Config');
+const debug_dns = require('debug')(Config.debugPrefix + 'dns');
 
-		return new Promise((resolve, reject) => {
-				this._setDns(fqdn, value, dnsFqdn).then(()=>{
-					logger.info(`DNS update record for ${fqdn} requested`);
-					resolve();
-				}).catch(reject);
-			}
-		);
+const AuthToken = require('./AuthToken');
+const provisionApi = new ProvisionApi();
+const store = new (require('./BeameStoreV2'))();
 
-	}
-
-	deleteDns(fqdn, dnsFqdn) {
-
-		return new Promise((resolve, reject) => {
-				this._deleteDns(fqdn,  dnsFqdn).then(()=>{
-					logger.info(`DNS deleted record for ${fqdn} requested`);
-					resolve();
-				}).catch(reject);
-			}
-		);
-
-	}
-
-	_getToken(fqdn, value) {
-		return new Promise((resolve, reject) => {
-				const store = new (require('./BeameStoreV2'))();
-
-				store.find(fqdn, false).then(cred => {
-					const AuthToken = require('./AuthToken'),
-					      data      = {fqdn, value: value};
-
-					AuthToken.createAsync(data, cred)
-							.then(resolve)
-							.catch(reject);
-
-				}).catch(reject);
-			}
-		);
-	}
-
-	_setDns(fqdn, value, dnsFqdn) {
-
-		return new Promise((resolve, reject) => {
-				this._getToken(fqdn, value).then(authToken => {
-					let provisionApi = new ProvisionApi();
-					provisionApi.postRequest(`${envProfile.BaseDNSUrl}${apiDnsActions.Set.endpoint}${dnsFqdn || fqdn}`, {authToken},resolve);
-				}).catch(reject);
-			}
-		);
-
-	}
-
-	_deleteDns(fqdn, dnsFqdn) {
-
-		return new Promise((resolve, reject) => {
-				this._getToken(fqdn, fqdn).then(authToken => {
-					let provisionApi = new ProvisionApi();
-					provisionApi.postRequest(`${envProfile.BaseDNSUrl}${apiDnsActions.Delete.endpoint}${dnsFqdn || fqdn}`, {authToken},resolve);
-				}).catch(reject);
-			}
-		);
-
-	}
+async function _getToken(fqdn, value) {
+	const cred = await store.find(fqdn, false);
+	return await AuthToken.createAsync({fqdn, value}, cred);
 }
 
+async function setDns(fqdn, value, dnsFqdn) {
+	debug_dns(`DnsServices.setDns() fqdn=${fqdn} value=${value} dnsFqdn=${dnsFqdn}`);
+	const authToken = await _getToken(fqdn, value);
+	const result = await provisionApi.postRequestAsync(`${envProfile.BaseDNSUrl}${apiDnsActions.Set.endpoint}${dnsFqdn || fqdn}`, {authToken});
+	logger.info(`DNS update record for ${fqdn} requested`);
+	debug_dns(`DnsServices.setDns() returns ${JSON.stringify(result)}`);
+	return result;
+}
 
-module.exports = DnsServices;
+async function deleteDns(fqdn, dnsFqdn) {
+	debug_dns(`DnsServices.deleteDns() fqdn=${fqdn} dnsFqdn=${dnsFqdn}`);
+	const authToken = await _getToken(fqdn, fqdn);
+	const result = await provisionApi.postRequestAsync(`${envProfile.BaseDNSUrl}${apiDnsActions.Delete.endpoint}${dnsFqdn || fqdn}`, {authToken});
+	logger.info(`DNS deleted record for ${fqdn} requested`);
+	debug_dns(`DnsServices.debug_dns() returns ${JSON.stringify(result)}`);
+	return result;
+}
+
+module.exports = {
+	setDns,
+	deleteDns
+};
