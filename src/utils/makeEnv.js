@@ -5,6 +5,16 @@ const debug = require('debug')('beame:sdk:env');
 
 function makeEnv(environments, options) {
 
+	function getEnv() {
+		if(opts.env) {
+			return opts.env.toLowerCase();
+		}
+		if (process.env.BEAME_ENV) {
+			return process.env.BEAME_ENV.toLowerCase();
+		}
+		return 'prod';
+	}
+
 	const opts = Object.assign({protectedProperties: []}, options || {});
 
 	debug(`makeEnv.js: BEAME_ENV=${process.env.BEAME_ENV || '(UNSET)'}`);
@@ -14,7 +24,7 @@ function makeEnv(environments, options) {
 		process.exit(1);
 	}
 
-	const environment = (process.env.BEAME_ENV && environments[process.env.BEAME_ENV.toLowerCase()]) || environments.prod;
+	const environment = environments[getEnv()];
 
 	for(const k of Object.keys(environment)) {
 		const envVarName = 'BEAME_' + changeCase.constantCase(k);
