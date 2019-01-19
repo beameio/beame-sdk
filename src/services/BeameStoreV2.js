@@ -475,6 +475,9 @@ class BeameStoreV2 {
 	 * @returns {Credential}
 	 */
 	getCredential(fqdn) {
+		if(!fqdn) {
+			throw new Error('BeameStoreV2#getCredential called without fqdn');
+		}
 		let results = BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn, 1);
 		return results.length == 1 ? results[0] : null;
 	}
