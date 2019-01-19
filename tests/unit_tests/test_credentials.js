@@ -22,7 +22,7 @@ describe('local_creds_create', function () {
 
 	let parent_fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
 	let data = _getRandomRegistrationData(`${parent_fqdn}-child-`);
-	console.log('*** createEntityWithLocalCreds data', data);
+	debug('*** createEntityWithLocalCreds data %j', data);
 	let parent_cred;
 
 	before(function () {
@@ -59,8 +59,8 @@ describe('local_creds_custom_create', function () {
 	let parent_fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
 	let custom_fqdn = process.env.BEAME_TESTS_CUSTOM_FQDN || `c-${rnd}.tests`;
 	let data = _getRandomRegistrationData(`${parent_fqdn}-child-`);
-	console.log('*** createCustomWithLocalCreds data', data);
-	console.log('*** createCustomWithLocalCreds parent_fqdn custom_fqdn', parent_fqdn, custom_fqdn);
+	debug('*** createCustomWithLocalCreds data %j', data);
+	debug('*** createCustomWithLocalCreds parent_fqdn=%s custom_fqdn=%s', parent_fqdn, custom_fqdn);
 	let parent_cred;
 
 	before(function () {

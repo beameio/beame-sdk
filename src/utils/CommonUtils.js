@@ -3,6 +3,9 @@
  */
 "use strict";
 
+const Config = require('../../config/Config');
+const debug = require('debug')(Config.debugPrefix + 'commonutils');
+
 class CommonUtils {
 
 	static timeStamp() {
@@ -92,7 +95,7 @@ class CommonUtils {
 			bool = false;
 		} else {
 			bool = null;
-			//if (console) console.log('"' + str + '" is not a boolean value');
+			debug('"' + str + '" is not a boolean value');
 		}
 		return bool;
 	}
@@ -380,7 +383,7 @@ class CommonUtils {
 			} catch (e) {
 				error = e;
 				const time = sleepTimeFunc(i);
-				console.warn(`Call failed with error '${error}'. Retry [${i}/${retries}]` + (i < retries ? ` waiting ${time}ms` : ""));
+				debug(`Call failed with error '${error}'. Retry [${i}/${retries}]` + (i < retries ? ` waiting ${time}ms` : ""));
 				if (i < retries) await sleep(time);
 			}
 		}
