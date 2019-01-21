@@ -202,5 +202,6 @@ describe('local_creds_isrevoked', function() {
 		assert(cred, 'New credential not found inn store');
 		assert(!cred.isRevoked(), 'Should not be revoked at first');
 		await cred.revokeCert(null, cred.fqdn, cred.fqdn);
+		assert(cred.isRevoked(), 'Should be revoked after revocation');
 	});
 });
