@@ -191,7 +191,7 @@ describe('local_creds_isrevoked', function() {
 
 	let parent_fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
 
-	it('Crearte and revoke entity', async () => {
+	it('Create, revoke entity and check revoked state', async () => {
 		const data = _getRandomRegistrationData(`${parent_fqdn}-child-`);
 		const parent_cred = store.getCredential(parent_fqdn);
 		const metadata = await parent_cred.createEntityWithLocalCreds(parent_fqdn, data.name, data.email);
@@ -200,8 +200,11 @@ describe('local_creds_isrevoked', function() {
 		assert(metadata.fqdn, `expected fqdn`);
 		let cred = store.getCredential(metadata.fqdn);
 		assert(cred, 'New credential not found inn store');
-		assert(!cred.isRevoked(), 'Should not be revoked at first');
+		assert(!await cred.isRevoked(), 'Should not be revoked at first');
 		await cred.revokeCert(null, cred.fqdn, cred.fqdn);
-		assert(cred.isRevoked(), 'Should be revoked after revocation');
+		assert(await cred.isRevoked(), 'Should be revoked after revocation');
 	});
+
+	// TODO: check with external revokation
+	// TODO: check with force = true
 });
