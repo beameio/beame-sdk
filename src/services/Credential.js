@@ -2788,6 +2788,11 @@ class Credential {
 
 	}
 
+	async isRevoked(forceCheck=false) {
+		const status = await this.checkOcspStatus(this, forceCheck);
+		return status === Config.OcspStatus.Bad;
+	}
+
 //endregion
 }
 
