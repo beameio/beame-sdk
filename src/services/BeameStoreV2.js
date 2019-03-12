@@ -59,11 +59,14 @@ class BeameStoreV2 {
 		}
 		_store = this;
 
-		this.credentials = {};
-
 		DirectoryServices.createDir(config.rootDir);
 		DirectoryServices.createDir(config.localCertsDirV2);
 		DirectoryServices.createDir(config.localLogDir);
+		this.reload();
+	}
+
+	reload() {
+		this.credentials = {};
 
 		this.directoryServices = new DirectoryServices();
 		this.directoryServices.scanDir(config.localCertsDirV2).forEach((fqdn) => {
@@ -73,7 +76,6 @@ class BeameStoreV2 {
 		});
 	}
 
-	//noinspection JSUnusedGlobalSymbols
 	fetch(fqdn) {
 
 		if (!fqdn) {
