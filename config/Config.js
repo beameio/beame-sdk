@@ -113,7 +113,7 @@ const localCertsDirV2 = path.join(rootDir, 'v2');
 
 const issuerCertsPath = path.join(rootDir, 'ocsp-cache');
 
-const localLogDir = path.join(rootDir, 'logs');
+const localLogDir = process.env.BEAME_LOG_DIR || path.join(rootDir, 'logs');
 
 if (process.env.BEAME_LOAD_BALANCER_URL) {
 	console.error("BEAME_LOAD_BALANCER_URL environment variable is not used anymore. Please use BEAME_LOAD_BALANCER_FQDN.");

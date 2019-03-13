@@ -386,6 +386,12 @@ testCheckSignature({ signedData: 'beameio',
 * `BEAME_OCSP_CACHE_PERIOD` - Period for caching OCSP results, override default value (30 days)
 * `EXTERNAL_OCSP_FQDN` - External ocsp server 
 * `BEAME_ENV` - Defines the environment profile to run in: prod or dev
+* `BEAME_LOG_LEVEL` - Can be set to DEBUG or other beame log levels
+* `BEAME_LOG_TO_FILE` - Activates log console to file. Can be true or false.
+* `BEAME_DIR`
+* `BEAME_LOG_DIR` - log folder (default is logs inside .beame)
+* `BEAME_SCS_DIR` - scs folder (default is .scs inside .beame)
+* `BEAME_CDR_DIR` - cdr folder (default is .beame_cdr)
 
 ## Tests
 [Readme](tests/README.md)

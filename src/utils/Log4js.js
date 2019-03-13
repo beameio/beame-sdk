@@ -46,6 +46,13 @@ class Log4Js {
 		config.appenders.cdr.filename = path.join(this._options.cdr_path, this._options.cdr_file_name);
 		config.appenders.cdr.pattern  = this._options.cdr_roll_strategy.pattern;
 
+		config.appenders.file.filename = path.join(this._options.log_path, this._options.log_file_name);
+		config.appenders.file.pattern = this._options.log_roll_strategy.pattern;
+
+		if(process.env.BEAME_LOG_TO_FILE && process.env.BEAME_LOG_TO_FILE.toLowerCase() === "true") {
+			config.categories.default.appenders.push("file");
+		}
+
 		this._log4js.configure(config);
 	}
 
@@ -66,7 +73,10 @@ module.exports = {
 		let _default_options = {
 			cdr_path:          Config.cdrDir,
 			cdr_file_name:     'cdr',
-			cdr_roll_strategy: LogRollingStrategy.Day
+			cdr_roll_strategy: LogRollingStrategy.Day,
+			log_path:          Config.localLogDir,
+			log_file_name:     'log',
+			log_roll_strategy: LogRollingStrategy.Day
 		};
 
 		let options = Object.assign({}, _default_options, _options);
