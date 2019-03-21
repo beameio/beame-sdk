@@ -390,7 +390,7 @@ testCheckSignature({ signedData: 'beameio',
 * `BEAME_LOG_TO_FILE` - Activates log console to file. Can be true or false.
 * `BEAME_DIR`
 * `BEAME_LOG_DIR` - log folder (default is logs inside .beame)
-* `BEAME_SCS_DIR` - scs folder (default is .scs inside .beame)
+* `BEAME_SCS_DIR` - scs folder (default is scs inside .beame)
 * `BEAME_CDR_DIR` - cdr folder (default is .beame_cdr)
 
 ## Tests
