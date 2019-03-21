@@ -104,7 +104,7 @@ const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 const cdrDir = process.env.BEAME_CDR_DIR || path.join(home, '.beame_cdr');
 
 /** @const {String} **/
-const scsDir = process.env.BEAME_SCS_DIR || path.join(rootDir, '.scs');
+const scsDir = process.env.BEAME_SCS_DIR || path.join(rootDir, 'scs');
 
 /** @const {String} **/
 const remotePKsDirV1 = path.join(rootDir, 'pki');
