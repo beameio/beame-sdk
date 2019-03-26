@@ -192,6 +192,10 @@ ProxyAgent._makeRequest = function(httpOrHttps, protocol) {
 		if(forceGlobalAgent){
 			//force proxy agent
 			options.agent = httpOrHttps.globalAgent;
+		} else {
+			if(options.agent === httpOrHttps.globalAgent) {
+				options.agent = ORIGINALS[protocol].globalAgent;
+			}
 		}
 
 		// set the default port ourselves to prevent Node doing it based on the proxy agent protocol
