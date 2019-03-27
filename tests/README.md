@@ -28,9 +28,8 @@ Tests on the credentials functionality
 
 Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
 
-### tests_custom_credentials.js (requires special credentials)
+### tests_custom_credentials.js (requires special level of credentials)
 Tests on the creation of custom credentials.
-This test requires a special level of credentials
 
 Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
 Optionally `BEAME_TESTS_CUSTOM_FQDN` can be passed for a custom fqdn creation in the custom fqdn test.
@@ -48,7 +47,10 @@ Requires `BEAME_TESTS_LOCAL_FQDN` (fqdn of a local available cred) in order to r
 
 Sets internally `EXTERNAL_OCSP_FQDN` and `BEAME_OCSP_IGNORE` as required to test the functionality
 
-## Running examples
+## Running cli_tests
+ToDo
+
+## Running unit_tests
 
 From the tests folder run:
 
@@ -59,4 +61,4 @@ From the tests folder run:
 
 For debugging information on the tests, add the `DEBUG=beame:sdk:unittests:*`
 
-In production environment, just use a `.p.beameio.net` credential and remove the `BEAME_ENV=dev`.
+In production environment, just use a `.p.beameio.net` credential and change the `BEAME_ENV=dev` to `BEAME_ENV=prod`.
