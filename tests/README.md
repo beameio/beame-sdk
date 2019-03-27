@@ -54,9 +54,9 @@ ToDo
 
 From the tests folder run:
 
-`BEAME_TESTS_LOCAL_ROOT_FQDN=jadtndigzadmevz7.v1.d.beameio.net BEAME_ENV=dev ../node_modules/mocha/bin/mocha unit_tests/test_credentials.js`
+`BEAME_TESTS_LOCAL_ROOT_FQDN=xxxxxxxxxxxxxxx.v1.d.beameio.net BEAME_ENV=dev ../node_modules/mocha/bin/mocha unit_tests/test_credentials.js`
 
-`BEAME_TESTS_LOCAL_FQDN=jadtndigzadmevz7.v1.d.beameio.net BEAME_ENV=dev ../node_modules/mocha/bin/mocha unit_tests/test_ocsp.js`
+`BEAME_TESTS_LOCAL_FQDN=xxxxxxxxxxxxxxxxx.v1.d.beameio.net BEAME_ENV=dev ../node_modules/mocha/bin/mocha unit_tests/test_ocsp.js`
 
 
 For debugging information on the tests, add the `DEBUG=beame:sdk:unittests:*`
