@@ -3,6 +3,9 @@
  */
 "use strict";
 
+const Config = require('../../config/Config');
+const debug = require('debug')(Config.debugPrefix + 'commonutils');
+
 class CommonUtils {
 
 	static timeStamp() {
@@ -82,6 +85,21 @@ class CommonUtils {
 
 	}
 
+	static stringToBool(str) {
+		if(typeof str === 'boolean')return str;
+		if(!str || str.length < 1)return false;
+		let bool;
+		if (str.match(/^(true|1|yes)$/i) !== null) {
+			bool = true;
+		} else if (str.match(/^(false|0|no)*$/i) !== null) {
+			bool = false;
+		} else {
+			bool = null;
+			debug('"' + str + '" is not a boolean value');
+		}
+		return bool;
+	}
+
 	/**
 	 *
 	 * @param {number|null} [upper]
@@ -91,6 +109,33 @@ class CommonUtils {
 		return Math.floor((Math.random() * (upper || 10)) + 1) * 1000 * Math.random()
 	}
 
+	/**
+	 * Exponential jitter implementation based on backo2 (https://github.com/mokesmokes/backo/)
+	 * @param attempt {number} - attempt number
+	 * @param min {number} needs to be > 0
+	 * @param max {number|0} 0 means max is disabled
+	 * @param factor {number}
+	 * @param jitter {number} value between 0..1
+	 * @returns {number}
+	 */
+	static exponentialTimeWithJitter(attempt, min = 400, max = 0, factor = 2, jitter = 0.2)
+	{
+		let ms = min * Math.pow(factor, attempt);
+		if(jitter > 0 && jitter <= 1) {
+			const rand =  Math.random();
+			const deviation = Math.floor(rand * jitter * ms);
+			ms = (Math.floor(rand * 10) & 1) === 0 ? ms - deviation : ms + deviation;
+		}
+		if(max !== 0)
+			ms = Math.min(ms, max);
+		return ms | 0;
+	}
+
+	/**
+	 * @param date {Date}
+	 * @param days {number}
+	 * @returns {Date}
+	 */
 	static addDays(date, days) {
 		let result = new Date(date || new Date());
 		result.setDate(result.getDate() + days);
@@ -142,6 +187,37 @@ class CommonUtils {
 			}
 		}
 		return ret;
+	}
+
+	static hashToArray(hash) {
+		try {
+			let keys = Object.keys(hash);
+
+			return keys.map((v) => {
+				return hash[v];
+			});
+		} catch (e) {
+			return [];
+		}
+	}
+
+	static tryParseDate(value){
+		try {
+			if(value instanceof Date) return value;
+
+			return new Date(value);
+		} catch (e) {
+			return null;
+		}
+	}
+
+	static formatDate(d){
+
+		if(!d) return d;
+
+		let date = CommonUtils.tryParseDate(d);
+
+		return date ? date.toLocaleString() : null
 	}
 
 	static isResponseSuccess(statusCode) {
@@ -227,9 +303,8 @@ class CommonUtils {
 							return;
 						}
 
-						retries--;
-
-						return CommonUtils.validateMachineClock(fuzz,retries);
+						getGlobalNtpStamp(retries - 1);
+						return;
 					}
 
 					onGotTime(Math.abs(date.getTime()/1000));
@@ -239,9 +314,8 @@ class CommonUtils {
 
 
 			if (process.env.EXTERNAL_OCSP_FQDN) {
-				const apiConfig = require('../../config/ApiConfig.json');
-				const ProvisionApi           = require('../services/ProvisionApi');
-				const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${apiConfig.Actions.OcspApi.Time.endpoint}`;
+				const actionsApi = require('../../config/Config').ActionsApi;
+				const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.Time.endpoint}`;
 
 				const request = require('request');
 
@@ -251,7 +325,7 @@ class CommonUtils {
 				};
 
 				request(opt, (error, response, body) => {
-					if (response.statusCode < 200 || response.statusCode >= 400) {
+					if (!response || response.statusCode < 200 || response.statusCode >= 400) {
 						console.warn('Failed to get unix time:',error);
 						getGlobalNtpStamp(1);
 						// resolve();
@@ -271,6 +345,17 @@ class CommonUtils {
 
 	}
 
+	static splitOptions(optionsStr, justSplit){
+		let s = optionsStr.replace(/\s/g, '');
+		let splitChar = s.includes(";")?";":",";
+		if(!justSplit)
+			s = s.replace(/\./g, '\\.')
+			.replace(/\*/g, '\\S*')
+			.replace(/\//g, '\\/');
+
+		return s.split(splitChar);
+	}
+
 	static escapeXmlString(str){
 		return str.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
@@ -278,6 +363,47 @@ class CommonUtils {
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&apos;');
 
+	}
+
+	/**
+	 * Retries a function before finally failing
+	 * @param func {function}
+	 * @param retries {number|null}
+	 * @param sleepTimeFunc {function} time
+	 * @returns {*} funtion result
+	 * @throws {string} final fail if all retries expired
+	 */
+	static async retry(func, retries = 5, sleepTimeFunc = CommonUtils.exponentialTimeWithJitter) {
+		let error = "";
+		const sleep = require('util').promisify(setTimeout);
+
+		for (let i = 1; i <= retries; ++i) {
+			try {
+				return await func();
+			} catch (e) {
+				error = e;
+				const time = sleepTimeFunc(i);
+				debug(`Call failed with error '${error}'. Retry [${i}/${retries}]` + (i < retries ? ` waiting ${time}ms` : ""));
+				if (i < retries) await sleep(time);
+			}
+		}
+		throw error;
+	}
+
+	/**
+	 * Make a new promise based on existing one but adding timeout functionality.
+	 * @param promise - Original promise
+	 * @param ms - timeout in milliseconds
+	 * @param reject_value - promise rejection value in case of timeout
+	 * @returns {Promise<any>}
+	 */
+	static withTimeout(promise, ms, reject_value) {
+		return Promise.race([
+			promise,
+			new Promise((resolve, reject) => {
+				setTimeout(() => reject(reject_value), ms);
+			})
+		]);
 	}
 }
 

@@ -20,8 +20,22 @@
  * @property {String|null} parent_fqdn
  */
 
-const path                = require('path');
-const util                = require('util');
+/**
+ * @typedef {Object} VerifyAncestryOptions
+ * @property {String|undefined} [highestFqdn]  up to zero
+ * @property {Number|undefined} [trustDepth] down to infinity
+ * @property {Boolean|undefined} [allowExpired] = false
+ * @property {Boolean|undefined} [allowApprovers] = true
+ */
+
+ /**
+ * @typedef {Object} FetchCredChainOptions
+ * @property {String|undefined} [highestFqdn]  up to zero
+ * @property {Boolean|undefined} [allowRevoked] = false
+ * @property {Boolean|undefined} [allowExpired] = false
+ * @property {Boolean|undefined} [allowApprovers] = true
+ */
+
 const config              = require('../../config/Config');
 const module_name         = config.AppModules.BeameStore;
 const BeameLogger         = require('../utils/Logger');
@@ -32,8 +46,7 @@ const async               = require('async');
 const BeameUtils          = require('../utils/BeameUtils');
 const CommonUtils         = require('../utils/CommonUtils');
 const DirectoryServices   = require('./DirectoryServices');
-const Config              = require('../../config/Config');
-const CertValidationError = Config.CertValidationError;
+const CertValidationError = config.CertValidationError;
 
 let _store = null;
 
@@ -41,33 +54,28 @@ let _store = null;
 class BeameStoreV2 {
 
 	constructor() {
-		this.directoryServices = new DirectoryServices();
-
-		if (_store === null) {
-			_store = this;
-		}
-		else {
+		if (_store !== null) {
 			return _store;
 		}
-
-		this.credentials = {};
-		this.init();
-	}
-
-	init() {
+		_store = this;
 
 		DirectoryServices.createDir(config.rootDir);
 		DirectoryServices.createDir(config.localCertsDirV2);
 		DirectoryServices.createDir(config.localLogDir);
+		this.reload();
+	}
 
-		this.directoryServices.scanDir(config.localCertsDirV2).forEach(fqdn => {
+	reload() {
+		this.credentials = {};
+
+		this.directoryServices = new DirectoryServices();
+		this.directoryServices.scanDir(config.localCertsDirV2).forEach((fqdn) => {
 			let cred = new Credential(this);
 			cred.initFromData(fqdn);
 			this.addCredential(cred);
 		});
 	}
 
-	//noinspection JSUnusedGlobalSymbols
 	fetch(fqdn) {
 
 		if (!fqdn) {
@@ -90,6 +98,8 @@ class BeameStoreV2 {
 			);
 		};
 
+		console.log('******************', fqdn);
+
 		if (config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name))) {
 			return this.getRemoteCreds(fqdn).then(_saveCreds);
 		}
@@ -99,55 +109,179 @@ class BeameStoreV2 {
 
 	}
 
+	getParent(cred) {
+		let altParents = cred.certData &&  cred.certData.altNames ? cred.certData.altNames.filter(x => x.startsWith(config.AltPrefix.Parent)) : [];
+
+		if (altParents.length === 1) {
+			let parent = altParents[0];
+
+			return parent.substr(config.AltPrefix.Parent.length);
+		}
+
+		return cred.metadata.parent_fqdn && cred.metadata.parent_fqdn.length ? cred.metadata.parent_fqdn : null;
+	}
+
+	getApprover(cred) {
+		let altApprovers = cred.certData &&  cred.certData.altNames ? cred.certData.altNames.filter(x => x.startsWith(config.AltPrefix.Approver)) : [];
+
+		if (altApprovers.length === 1) {
+			let approver = altApprovers[0];
+
+			return approver.substr(config.AltPrefix.Approver.length);
+		}
+
+		return cred.metadata.approved_by_fqdn && cred.metadata.approved_by_fqdn.length ? cred.metadata.approved_by_fqdn : null;
+	}
+
+	/**
+	 * identityIsInRange
+	 *
+	 * verify if identity satisfies provided conditions by using
+	 * accessConfig file or default settings
+	 *
+	 * *********** accessConfig format: **********************
+	 * {
+	* "ACL":"zzz.bbb.beameio.net, yyy.xxx.beameio.net, *.nnn.beameio.net, *.yyy.*",
+	* "ANCHOR":"ggg.kkk.beameio.net, iii.beameio.net",
+	* "HIGH":"ddd.beameio.net",
+	* "DEPTH":3
+	* }
+	 * ********************************************************
+	 *
+	 * ANCHOR is used as valid HIGH from out-of-band tree with same provided DEPTH
+	 *
+	 * default DEPTH = 99
+	 * default HIGH = localAuthFqdn
+	 *
+	 **/
+	identityIsInRange(ownFqdn, guestFqdn, accessConfig) {
+		return new Promise((resolve, reject) => {
+			try {
+				let accObj = typeof accessConfig === 'object' ? accessConfig : JSON.parse(accessConfig);
+
+				let acl         = accObj['ACL'] ? CommonUtils.splitOptions(accObj['ACL']) : null;
+				let anchor      = accObj['ANCHOR'] ? CommonUtils.splitOptions(accObj['ANCHOR'], true) : null;
+				let highestFqdn = accObj['HIGH'] ? accObj['HIGH'] : ownFqdn;
+				let depth       = accObj['DEPTH'] ? Number.isInteger(parseInt(accObj['DEPTH'])) ? parseInt(accObj['DEPTH']) : 99 : 99;
+				if (acl) {//if ACL, required explicit HIGH to allow local creds, or ANCHOR to allow remote creds
+					for (let i = 0; i < acl.length; i++) {
+						if (guestFqdn.match(new RegExp(acl[i]))) {
+							resolve();
+							return;
+						}
+
+					}
+					if (!anchor && !accObj['HIGH'] && !(anchor || anchor && (anchor.length < 1))) {
+						reject();
+						return;
+					}
+				}
+
+				/** @type {VerifyAncestryOptions} **/
+				let options = {
+					highestFqdn: highestFqdn,
+					trustDepth:  depth
+				};
+
+				const _cb = (error, related) => {
+					if (!related) {
+						let ndx       = 0;
+						let isRelated = (i) => {
+							if (i < anchor.length) {
+
+								/** @type {VerifyAncestryOptions} **/
+								let opt = {
+									highestFqdn: anchor[i],
+									trustDepth:  depth
+								};
+
+								const _cb1 = (error, status) => {
+									if (status) {
+										related = true;
+										resolve();
+									}
+									else
+										isRelated(++ndx);
+								};
+
+								this.verifyAncestry(anchor[i], guestFqdn, opt, _cb1);
+							}
+							else
+								reject();
+						};
+						isRelated(ndx);
+					}
+					else resolve();
+				};
+
+				this.verifyAncestry(ownFqdn, guestFqdn, options, _cb);
+			}
+			catch (e) {
+				console.error('Failed to verify access for:', guestFqdn, '..', e);
+				reject();
+			}
+		});
+
+	}
+
 	/**
 	 * Fetch cred tree up to L0 or highestFqdn
 	 * @public
 	 * @method BeameStoreV2.fetchCredChain
 	 * @param {String} fqdn
-	 * @param {String} highestFqdn
+	 * @param {FetchCredChainOptions} options
 	 * @param {function} callback
-	 * @param {Boolean} [allowExpired]
-	 * @param {Boolean} [allowRevoked]
 	 */
-	fetchCredChain(fqdn, highestFqdn, callback, allowExpired = false, allowRevoked = false) {
+	fetchCredChain(fqdn, options, callback) {
+
+		let highestFqdn = options.highestFqdn,
+		    allowExpired = options.allowExpired == undefined ? false : options.allowExpired,
+		    allowRevoked = options.allowRevoked == undefined ? false : options.allowRevoked,
+		    allowApprovers = options.allowApprovers == undefined ? true : options.allowApprovers;
+
 		let credsList = [], nLevels = 0;
+
 		const getNext = (fqdn) => {
 			this.find(fqdn, true, allowExpired, allowRevoked).then(cred => {
 				credsList[nLevels] = cred;
-				if(!credsList[nLevels].metadata.parent_fqdn)
-					credsList[nLevels].metadata.parent_fqdn = credsList[nLevels].metadata.approved_by_fqdn;
+				let approverFqdn   = this.getApprover(cred),
+				    parentFqdn     = this.getParent(cred),
+				    nextFqdn       = parentFqdn || (allowApprovers && approverFqdn);
 
-				if(!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)){
+				if (!(credsList[nLevels].metadata && credsList[nLevels].metadata.level)) {
 
-					let isZeroLevel = cred.fqdn.match(/^\w*\.\w{2}\.\w{1}\.beameio\.net/);
-					if(isZeroLevel){
+					let isZeroLevel = cred.fqdn.match(/^\w*\.\w{2}\.\w{1}\.beameio\.net$/);
+					if (isZeroLevel) {
 						credsList[nLevels].metadata.level = 0;
 					}
-					else if(credsList.length > 0){
+					else if (credsList.length > 0) {
 						callback(null, credsList);
 						return;
 					}
-					else{
+					else {
 						callback('invalid metadata', null);
 						return;
 					}
 				}
-				if((credsList[nLevels].metadata.level > 0 || credsList[nLevels].metadata.parent_fqdn) &&
-					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn)))){
-					getNext(credsList[nLevels++].metadata.parent_fqdn);
+				if ((credsList[nLevels].metadata.level > 0 || nextFqdn) &&
+					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn)))) {
+
+					nLevels++;
+					getNext(nextFqdn);
 				}
-				else{
+				else {
 					callback(null, credsList);
 				}
 			}).catch(error => {
-				if(credsList.length < 1)
+				if (credsList.length < 1)
 					callback(error, null);
-				else{
-					console.warn(error);
+				else {
+					logger.error(error);
 					callback(null, credsList);
 				}
 			});
 		};
+
 		getNext(fqdn);
 	}
 
@@ -157,38 +291,62 @@ class BeameStoreV2 {
 	 * @method BeameStoreV2.verifyAncestry
 	 * @param {String} srcFqdn
 	 * @param {String} guestFqdn
-	 * @param {String} highestFqdn // up to zero
-	 * @param {String} trustDepth // down to infinity
+	 * @param {VerifyAncestryOptions} options
 	 * @param {function} callback
-	 * @param {function} [allowExpired]
 	 */
-	verifyAncestry(srcFqdn, guestFqdn, highestFqdn, trustDepth, callback, allowExpired = false) {
-		this.fetchCredChain(guestFqdn, null, (error, guestChain) => {
-			if(!error && guestChain){
-				this.fetchCredChain(srcFqdn, highestFqdn, (error, lclChain) => {
-					if(!error && lclChain && (!Number.isInteger(trustDepth) ||
-						(guestChain[0].metadata.level <= trustDepth + lclChain[0].metadata.level))){
-						for(let iLcl=0; iLcl<lclChain.length; iLcl++){
-							for(let jGuest=0; jGuest<guestChain.length; jGuest++){
-								// console.log(lclChain[iLcl].fqdn,' <=> ',guestChain[jGuest].fqdn);
-								if(guestChain[jGuest].fqdn === lclChain[iLcl].fqdn){
-									callback(null, true);
-									return;
-								}
-							}
+	verifyAncestry(srcFqdn, guestFqdn, options, callback) {
+
+		let highestFqdn    = options.highestFqdn,
+		    trustDepth     = options.trustDepth,
+		    allowExpired   = options.allowExpired == undefined ? false : options.allowExpired,
+		    allowApprovers = options.allowApprovers == undefined ? true : options.allowApprovers;
+
+		const localChainCallback = (guestChain, error, lclChain) => {
+			if (!error && lclChain && (!Number.isInteger(trustDepth) ||
+					(guestChain[0].metadata.level <= trustDepth + lclChain[0].metadata.level))) {
+				for (let iLcl = 0; iLcl < lclChain.length; iLcl++) {
+					for (let jGuest = 0; jGuest < guestChain.length; jGuest++) {
+						if (guestChain[jGuest].fqdn === lclChain[iLcl].fqdn) {
+							callback(null, true);
+							return;
 						}
-						callback(null, false);
 					}
-					else{
-						callback(null, false);
-					}
-				}, allowExpired)
-			}
-			else{
-				console.warn(error);
+				}
 				callback(null, false);
 			}
-		}, allowExpired)
+			else {
+				callback(null, false);
+			}
+		};
+
+		const guestChainCallback = (error, guestChain) => {
+			if (!error && guestChain) {
+
+				/** @type {FetchCredChainOptions} **/
+				let optLocal = {
+					highestFqdn,
+					allowExpired,
+					allowRevoked:false,
+					allowApprovers
+				};
+
+				this.fetchCredChain(srcFqdn, optLocal, localChainCallback.bind(this, guestChain))
+			}
+			else {
+				logger.error(`verifyAncestry::guestChain error ${BeameLogger.formatError(error)}`);
+				callback(null, false);
+			}
+		};
+
+		/** @type {FetchCredChainOptions} **/
+		let optGuest = {
+			highestFqdn : null,
+			allowExpired,
+			allowRevoked:false,
+			allowApprovers
+		};
+
+		this.fetchCredChain(guestFqdn, optGuest, guestChainCallback)
 	}
 
 
@@ -197,9 +355,9 @@ class BeameStoreV2 {
 	 * @public
 	 * @method BeameStoreV2.find
 	 * @param {String} fqdn
-	 * @param {Boolean} [allowRemote]
-	 * @param {Boolean} [allowExpired] //set only for automatic renewal of crypto-validated remote creds
-	 * @param {Boolean} [allowRevoked] //set only for automatic renewal of crypto-validated remote creds
+	 * @param {undefined|Boolean} [allowRemote]
+	 * @param {undefined|Boolean} [allowExpired] //set only for automatic renewal of crypto-validated remote creds
+	 * @param {undefined|Boolean} [allowRevoked] //set only for automatic renewal of crypto-validated remote creds
 	 * @returns {Promise.<Credential>}
 	 */
 	find(fqdn, allowRemote = true, allowExpired = false, allowRevoked = false) {
@@ -232,14 +390,14 @@ class BeameStoreV2 {
 				};
 
 				const _onCredFound = credential => {
-					if(allowExpired && allowRevoked)
+					if (allowExpired && allowRevoked)
 						resolve(credential);
-					else if(allowExpired){
+					else if (allowExpired) {
 						credential.updateOcspStatus()
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 					}
-					else if(allowRevoked){
+					else if (allowRevoked) {
 						credential.checkValidity()
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
@@ -251,7 +409,7 @@ class BeameStoreV2 {
 							.catch(_onValidationError.bind(null, credential));
 				};
 
-				let cred = this._getCredential(fqdn);
+				let cred = this.getCredential(fqdn);
 
 				if (cred) {
 					//refresh metadata info
@@ -282,7 +440,7 @@ class BeameStoreV2 {
 			return;
 		}
 
-		let parentNode = parent_fqdn && this._getCredential(parent_fqdn);
+		let parentNode = parent_fqdn && this.getCredential(parent_fqdn);
 		if (parentNode) {
 			parentNode.children.push(credential);
 			credential.parent = parentNode;
@@ -305,6 +463,12 @@ class BeameStoreV2 {
 		});
 	}
 
+	get Credentials() {
+		return BeameUtils.findInTree({children: this.credentials}, cred => {
+			return cred.fqdn
+		});
+	}
+
 	/**
 	 * Return credential from local Beame store
 	 * @public
@@ -313,17 +477,9 @@ class BeameStoreV2 {
 	 * @returns {Credential}
 	 */
 	getCredential(fqdn) {
-		return this._getCredential(fqdn);
-	}
-
-	/**
-	 * Return credential from local Beame store
-	 * @private
-	 * @method BeameStoreV2._getCredential
-	 * @param {String} fqdn
-	 * @returns {Credential}
-	 */
-	_getCredential(fqdn) {
+		if(!fqdn) {
+			throw new Error('BeameStoreV2#getCredential called without fqdn');
+		}
 		let results = BeameUtils.findInTree({children: this.credentials}, cred => cred.fqdn == fqdn, 1);
 		return results.length == 1 ? results[0] : null;
 	}
@@ -342,7 +498,7 @@ class BeameStoreV2 {
 	shredCredentials(fqdn, callback) {
 		// XXX: Fix callback to getMetadataKey (err, data) instead of (data)
 		// XXX: Fix exit code
-		let item = this._getCredential(fqdn);
+		let item = this.getCredential(fqdn);
 		if (item) {
 			item.shred(callback);
 		}
@@ -362,11 +518,12 @@ class BeameStoreV2 {
 			{children: this.credentials},
 			cred => {
 
-				let allEnvs        = !!options.allEnvs,
-				    envPattern     = config.EnvProfile.FqdnPattern,
-				    approvedZones  = config.ApprovedZones,
-				    zone           = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null,
-					today = new Date();
+				// noinspection JSUnresolvedVariable
+				let allEnvs       = !!options.allEnvs,
+				    envPattern    = config.SelectedProfile.FqdnPattern,
+				    approvedZones = config.ApprovedZones,
+				    zone          = cred.fqdn ? cred.fqdn.split('.').slice(-2).join('.') : null,
+				    today         = new Date();
 
 
 				//TODO fix .v1. hack
@@ -374,29 +531,36 @@ class BeameStoreV2 {
 					return false;
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.anyParent && !cred.hasLocalParentAtAnyLevel(options.anyParent)) {
 					return false;
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.hasParent && !cred.hasParent(options.hasParent)) {
 					return false;
 				}
 
 				let expirationDate = new Date(cred.getCertEnd());
 
+				// noinspection JSUnresolvedVariable
 				if (options.excludeValid) {
 					return (cred.metadata.revoked == true);
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.excludeRevoked && cred.metadata.revoked) {
 					return false;
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.excludeActive && expirationDate > today) {
 					return false;
 				}
-				else if (options.excludeExpired && expirationDate < today) {
-					return false;
+				else { // noinspection JSUnresolvedVariable
+					if (options.excludeExpired && expirationDate < today) {
+						return false;
+					}
 				}
 
 				//noinspection JSCheckFunctionSignatures
@@ -408,12 +572,15 @@ class BeameStoreV2 {
 				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
 					return false;
 				}
-				else if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
-					return false;
+				else { //noinspection JSUnresolvedVariable
+					if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
+						return false;
+					}
 				}
 
+				// noinspection JSUnresolvedVariable
 				if (options.expiration || options.expiration === 0) {
-
+					// noinspection JSUnresolvedVariable
 					if (CommonUtils.addDays(null, options.expiration) < expirationDate) {
 						return false;
 					}
@@ -431,7 +598,7 @@ class BeameStoreV2 {
 				let list = this.list(null, {
 					hasPrivateKey:  true,
 					excludeRevoked: true,
-					excludeExpired:true
+					excludeExpired: true
 				});
 
 
@@ -552,14 +719,15 @@ class BeameStoreV2 {
 					}
 				};
 
+				// noinspection JSUnresolvedFunction
 				async.parallel(
 					[
 						(callback) => {
-							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
+							let requestPath = config.SelectedProfile.CertEndpoint + '/' + fqdn + '/' + config.s3MetadataFileName;
 							provisionApi.makeGetRequest(requestPath, null, _onMetaReceived.bind(this, callback), null, 3);
 						},
 						(callback) => {
-							let requestPath = config.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
+							let requestPath = config.SelectedProfile.CertEndpoint + '/' + fqdn + '/' + config.CertFileNames.X509;
 							provisionApi.makeGetRequest(requestPath, null, _onX509Received.bind(this, callback), null, 3);
 						}
 
@@ -578,6 +746,17 @@ class BeameStoreV2 {
 
 			}
 		);
+	}
+
+
+	/**
+	 * @returns {BeameStoreV2}
+	 */
+	static getInstance() {
+		if (_store === null) {
+			new BeameStoreV2();
+		}
+		return _store;
 	}
 
 }

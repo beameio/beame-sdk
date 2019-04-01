@@ -12,7 +12,7 @@ const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require("../services/BeameStoreV2");
 const Credential  = require('../services/Credential');
-const AuthToken   = require('../services/AuthToken');
+//const AuthToken   = require('../services/AuthToken');
 const path        = require('path');
 const fs          = require('fs');
 const colors      = require('colors');
@@ -51,6 +51,7 @@ module.exports = {
  * @returns {*}
  */
 function _lineToText(line) {
+	/** @type {Object} **/
 	let table = new Table();
 	for (let k in line) {
 		//noinspection JSUnfilteredForInLoop
@@ -68,7 +69,7 @@ function _lineToText(line) {
  * @private
  */
 function _obj2base64(o) {
-	return Buffer(CommonUtils.stringify(o, false)).toString('base64');
+	return new Buffer(CommonUtils.stringify(o, false)).toString('base64');
 }
 
 /**
@@ -82,6 +83,7 @@ function _listCreds(regex, options) {
 	const store = new BeameStore();
 	return store.list(regex, options);
 }
+
 //endregion
 
 //region Entity management
@@ -99,6 +101,7 @@ const _getCreds = (token, validityPeriod) => {
 	return cred.createEntityWithRegistrationToken(token, validityPeriod);
 
 };
+
 /**
  * Get credentials with Auth Token or for existing local Credential by fqdn
  * AuthToken(token) or Local Credential(fqdn) required
@@ -138,6 +141,7 @@ function getCreds(regToken, token, authSrvFqdn, fqdn, name, email, validityPerio
 
 	CommonUtils.promise2callback(promise, callback);
 }
+
 getCreds.toText = _lineToText;
 
 /**
@@ -181,6 +185,7 @@ function getRegToken(fqdn, name, email, userId, ttl, src, serviceName, serviceId
 	CommonUtils.promise2callback(_get(), callback);
 
 }
+
 getRegToken.toText = x => x;
 
 
@@ -197,6 +202,7 @@ function updateMetadata(fqdn, name, email, callback) {
 
 	CommonUtils.promise2callback(cred.updateMetadata(fqdn, name, email), callback);
 }
+
 updateMetadata.toText = _lineToText;
 
 
@@ -225,26 +231,24 @@ function renewCert(signerAuthToken, fqdn, validityPeriod, filter, regex, callbac
  * @param {Function} callback
  */
 function renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
-	let credList = [];
+	let credList     = [];
 	let listMaxIndex = 0, listIndex = 0;
+
 	function _renew(authToken) {
 		const fqdnX = credList[listIndex++];
-		let cred = new Credential(new BeameStore());
+		let cred    = new Credential(new BeameStore());
 		logger.info(`Trying to renew ${fqdnX}`);
-		function returnOK() {
-			return Promise.resolve({status: 'ok'});
-		}
 
-		listIndex >= listMaxIndex?
-			CommonUtils.promise2callback(cred.renewCert(authToken, fqdnX, validityPeriod), callback):
+		listIndex >= listMaxIndex ?
+			CommonUtils.promise2callback(cred.renewCert(authToken, fqdnX, validityPeriod), callback) :
 			cred.renewCert(authToken, fqdnX, validityPeriod)
-				.then(()=>{
-				logger.info(`${fqdnX} renew - done`);
+				.then(() => {
+					logger.info(`${fqdnX} renew - done`);
+					_renew();
+				}).catch(e => {
+				logger.info(`${fqdnX} renew - failed: ${e}`);
 				_renew();
-		}).catch(e=>{
-			logger.info(`${fqdnX} renew - failed: ${e}`);
-			_renew();
-		});
+			});
 	}
 
 	if ((!signerAuthToken && !filter && !regex && !fqdn) || ((filter || regex) && (signerAuthToken || fqdn))) {
@@ -264,7 +268,7 @@ function renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
 		}
 	}
 
-	if(filter || regex){
+	if (filter || regex) {
 		credList = getFqdnListByFilter(filter, regex, true);
 	}
 	else credList[0] = fqdn;
@@ -274,6 +278,7 @@ function renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
 
 
 }
+
 renew.toText = _lineToText;
 
 /**
@@ -323,6 +328,7 @@ function revoke(signerAuthToken, signerFqdn, fqdn, callback) {
 
 	CommonUtils.promise2callback(cred.revokeCert(authToken, signerFqdn, fqdn), callback);
 }
+
 revoke.toText = _lineToText;
 
 /**
@@ -332,24 +338,25 @@ revoke.toText = _lineToText;
  * @param {Boolean|null} [forceCheck] => ignoring cache, when set to true
  * @param {Function} callback
  */
-function checkOcsp(fqdn, forceCheck, callback){
+function checkOcsp(fqdn, forceCheck, callback) {
 	if (!fqdn) {
 		throw new Error(`Fqdn required`);
 	}
+	let check = !!(forceCheck && forceCheck === "true"),
+	    store = new BeameStore();
 
-	let cred = (new BeameStore()).getCredential(fqdn);
+	store.find(fqdn, true).then(cred => {
+		CommonUtils.promise2callback(cred.checkOcspStatus(cred, check), callback);
+	}).catch(e => {
+		callback(BeameLogger.formatError(e));
+	});
 
-	if(!cred){
-		throw new Error(`Credential for ${fqdn} not found`);
-	}
-
-	let check = !!(forceCheck && forceCheck === "true");
-
-	CommonUtils.promise2callback(cred.checkOcspStatus(cred,check), callback);
 }
+
 checkOcsp.toText = x => {
-	return x.status === true ? `Certificate ${x.fqdn} is valid` : x.message;
+	return x !== config.OcspStatus.Bad ? `Certificate is valid` : 'Certificate is revoked';
 };
+
 /**
  * @public
  * @method Creds.setDns
@@ -365,6 +372,7 @@ function setDns(fqdn, value, useBestProxy, dnsFqdn, callback) {
 	CommonUtils.promise2callback(cred.setDns(fqdn, value, useBestProxy || !value, dnsFqdn), callback);
 
 }
+
 setDns.toText = x => `DNS set to ${x}`;
 
 /**
@@ -380,6 +388,7 @@ function deleteDns(fqdn, dnsFqdn, callback) {
 	CommonUtils.promise2callback(cred.deleteDns(fqdn, dnsFqdn), callback);
 
 }
+
 deleteDns.toText = x => `DNS record for ${x} has been deleted`;
 //endregion
 
@@ -421,35 +430,39 @@ function list(regex, hasPrivateKey, expiration, anyParent, filter) {
 		expiration:    expiration ? Number(expiration) : (expiration === 0 ? 0 : null),
 		anyParent:     anyParent || null,
 		excludeActive: filter === 'expired',
-		excludeValid: filter === 'revoked'
+		excludeValid:  filter === 'revoked'
 	};
 	return _listCreds(regex || '.', options);
 }
 
 list.toText = function (creds) {
+	/** @type {Object} **/
 	let table = new Table({
-		head:      ['name', 'fqdn', 'parent', 'Expires', 'priv/k'],
-		colWidths: [40, 65, 55, 25, 10]
+		head:      ['name', 'fqdn', 'parent', 'Expires', 'priv/k', 'ocsp'],
+		colWidths: [40, 65, 55, 25, 10, 10]
 	});
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
-		return cred.expired === true ? colors.red(val) : val;
+		// noinspection JSUnresolvedFunction
+		return cred.expired === true || cred.metadata.revoked ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
 
-		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item)]);
+		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item), _setStyle(!!(item.metadata.revoked) ? 'Bad' : 'Good', item)]);
 	});
 	return table;
 };
 
-function signers(callback){
+function signers(callback) {
 	const store = new BeameStore();
 
 	CommonUtils.promise2callback(store.getActiveLocalCreds(), callback);
 }
-signers.toText =  function (creds) {
+
+signers.toText = function (creds) {
+	/** @type {Object} **/
 	let table = new Table({
 		head:      ['name', 'fqdn'],
 		colWidths: [120, 120]
@@ -457,27 +470,120 @@ signers.toText =  function (creds) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
+		// noinspection JSUnresolvedFunction
 		return cred.expired === true ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
-
 		table.push([_setStyle(item.name, item), _setStyle(item.fqdn, item)]);
 	});
 	return table;
 };
 
-function getFqdnListByFilter(filter, regex, hasPrivateKey) {
+/**
+ * Check if two creds have common relative up to highestFqdn
+ * @public
+ * @method Creds.verifyAncestry
+ * @param {String} fqdn - lowest fqdn to start from
+ * @param {String} targetFqdn
+ * @param {String} highestFqdn
+ * @param {Number} trustDepth
+ * @param {Boolean} allowApprovers
+ * @param {Boolean} allowExpired
+ * @param {Function} callback
+ */
+function verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, allowApprovers, allowExpired, callback) {
+	if (typeof trustDepth !== 'undefined' && trustDepth != null) {
+		if (!Number.isInteger(trustDepth) || trustDepth <= 0) {
+			console.error('trustDepth should be >= 1 (omit it to allow infinite depth)');
+			process.exit(1);
+		}
+	}
+	const store = new BeameStore();
+
+	/** @type {VerifyAncestryOptions} **/
 	let options = {
-		excludeActive: filter === 'expired',
-		excludeValid: filter === 'revoked'
+		highestFqdn,
+		trustDepth,
+		allowExpired:   CommonUtils.stringToBool(allowExpired ? allowExpired.toString() : false),
+		allowApprovers: CommonUtils.stringToBool(allowApprovers ? allowApprovers.toString() : true)
 	};
-	let tmpList = _listCreds(regex || '.', options);
+
+	const _cb = (error, related) => {
+
+		let result = null;
+		if (!error) {
+			result = `${fqdn}  & ${targetFqdn} related => ${related ? 'YES' : 'NO'}`;
+		}
+		callback(error, result);
+	};
+
+	store.verifyAncestry(fqdn, targetFqdn, options, _cb);
+}
+
+verifyAncestry.toText = x => x;
+
+/**
+ * Fetch creds up to L0
+ * @public
+ * @method Creds.listCredChain
+ * @param {String} fqdn - lowest fqdn in required chain
+ * @param {String|undefined} [highestFqdn]
+ * @param {Boolean} allowApprovers
+ * @param {Function} callback
+ */
+function listCredChain(fqdn, highestFqdn, allowApprovers, callback) {
+	const store = new BeameStore();
+
+	/** @type {FetchCredChainOptions}**/
+	let options = {
+		highestFqdn,
+		allowRevoked:false,
+		allowExpired:false,
+		allowApprovers: CommonUtils.stringToBool(allowApprovers ? allowApprovers.toString() : true)
+	};
+
+	const _cb = (error, list) => {
+		if (!error) {
+			callback(null, list);
+		}
+		else {
+			callback(error, false);
+		}
+	};
+
+	store.fetchCredChain(fqdn, options, _cb);
+}
+
+listCredChain.toText = function (list) {
+	/** @type {Object} **/
+	let table = new Table({
+		head:      ['level', 'fqdn'],
+		colWidths: [16, 64]
+	});
+
+	const _setStyle = (value, cred) => {
+		let val = value || '';
+		// noinspection JSUnresolvedFunction
+		return cred.expired === true ? colors.red(val) : val;
+	};
+	for (let i = 0; i < list.length; i++) {
+		table.push([_setStyle(list[i].metadata.level, list[i]), _setStyle(list[i].fqdn, list[i])]);
+	}
+	return table;
+};
+
+function getFqdnListByFilter(filter, regex, hasPrivateKey) {
+	let options  = {
+		excludeActive: filter === 'expired',
+		excludeValid:  filter === 'revoked'
+	};
+	let tmpList  = _listCreds(regex || '.', options);
 	let credList = [];
-	for(let j=0; j < tmpList.length; j++){
+	for (let j = 0; j < tmpList.length; j++) {
 		// if(tmpList[j].hasKey('PRIVATE_KEY'))
 		// 	console.log(j,': ',tmpList[j].fqdn,' revoked => ',tmpList[j].metadata.revoked, ',expired => ', tmpList[j].expired);
-		if(hasPrivateKey && tmpList[j].hasKey('PRIVATE_KEY') || !hasPrivateKey)
+		if (hasPrivateKey && tmpList[j].hasKey('PRIVATE_KEY') || !hasPrivateKey)
 			tmpList[j].fqdn && credList.push(tmpList[j].fqdn);
 	}
 	return credList;
@@ -496,18 +602,19 @@ function shred(fqdn, filter, regex) {
 		logger.fatal("shred valid parameters are: fqdn || filter || regex || regex && filter");
 	}
 	let credList = [];
-	if(filter || regex){
+	if (filter || regex) {
 		credList = getFqdnListByFilter(filter, regex);
 	}
 	else credList[0] = fqdn;
 	const store = new BeameStore();
-	for(let i=0; i<credList.length; i++){
+	for (let i = 0; i < credList.length; i++) {
 		store.shredCredentials(credList[i], () => {
 			logger.info(`${credList[i]} has been erased from store`);
 		});
 	}
 	return 'ok';
 }
+
 shred.toText = _lineToText;
 
 //endregion
@@ -569,69 +676,6 @@ function exportCredentials(fqdn, targetFqdn, signingFqdn, file, callback) {
 	}
 }
 
-/**
- * Check if two creds have common relative up to highestFqdn
- * @public
- * @method Creds.verifyAncestry
- * @param {String} fqdn - lowest fqdn to start from
- * @param {String} targetFqdn
- * @param {String} highestFqdn
- * @param {int} trustDepth
- * @param {Function} callback
- */
-function verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, callback) {
-	if(typeof trustDepth !== 'undefined' && trustDepth!= null){
-		if(!Number.isInteger(trustDepth) || trustDepth<=0){
-			console.error('trustDepth should be >= 1 (omit it to allow infinite depth)');
-			process.exit(1);
-		}
-	}
-	const store = new BeameStore();
-	store.verifyAncestry(fqdn, targetFqdn, highestFqdn, trustDepth, (error, related) => {
-		if(!error){
-			console.log(fqdn,' & ',targetFqdn,' related => ', related?'YES':'NO');
-		}
-		else{
-			console.error(error);
-		}
-		callback(error, related);
-	});
-}
-
-/**
- * Fetch creds up to L0
- * @public
- * @method Creds.listCredChain
- * @param {String} fqdn - lowest fqdn in required chain
- * @param {Function} callback
- */
-function listCredChain(fqdn, callback) {
-	const store = new BeameStore();
-	store.fetchCredChain(fqdn, null,(error, list) => {
-		if(!error){
-			callback(null, list);
-		}
-		else{
-			callback(error, false);
-		}
-	});
-}
-
-listCredChain.toText = function (list) {
-	let table = new Table({
-		head:      ['level', 'fqdn'],
-		colWidths: [16, 64]
-	});
-
-	const _setStyle = (value, cred) => {
-		let val = value || '';
-		return cred.expired === true ? colors.red(val) : val;
-	};
-	for(let i=0; i<list.length; i++){
-		table.push([_setStyle(list[i].metadata.level, list[i]), _setStyle(list[i].fqdn, list[i])]);
-	}
-	return table;
-};
 
 /**
  * Import credentials exported with exportCredentials method
@@ -723,6 +767,7 @@ function importCredentials(file, callback) {
 function importLiveCredentials(fqdn) {
 	Credential.importLiveCredentials(fqdn);
 }
+
 //endregion
 
 //region Encrypt/Decrypt
@@ -760,7 +805,7 @@ encrypt.toText = _obj2base64;
  * Decrypts given data. You must have the private key of the entity that the data was encrypted for.
  * @public
  * @method Creds.decrypt
- * @param {EncryptedMessage} encryptedData - data to decrypt
+ * @param {Object} encryptedData - data to decrypt
  */
 function decrypt(encryptedData) {
 
@@ -774,7 +819,6 @@ function decrypt(encryptedData) {
 
 		let targetFqdn = encryptedData.encryptedFor || encryptedData.signedData.encryptedFor;
 		console.error(`targetFqdn ${targetFqdn}`);
-		//noinspection JSDeprecatedSymbols
 		let credential = store.getCredential(targetFqdn);
 
 		return credential.decrypt(encryptedData);
@@ -783,6 +827,7 @@ function decrypt(encryptedData) {
 		return null;
 	}
 }
+
 //endregion
 
 //region Sign/Check Signature
@@ -803,7 +848,9 @@ function sign(data, fqdn) {
 	}
 	logger.fatal("sign data with fqdn, element not found ");
 }
+
 sign.toText = _obj2base64;
+
 /**
  * Checks signature.
  * @public

@@ -1,0 +1,41 @@
+{
+    "appenders": {
+        "default": {
+            "type": "stderr",
+            "layout": {
+                "type": "colored"
+            }
+        },
+        "file": {
+            "type": "dateFile",
+            "filename": "",
+            "pattern": "",
+            "compress": true,
+            "alwaysIncludePattern": true
+        },
+        "cdr": {
+            "type": "dateFile",
+            "filename": "",
+            "pattern": "",
+            "compress": true,
+            "alwaysIncludePattern": true,
+            "layout": {
+                "type": "json"
+            }
+        }
+    },
+    "categories": {
+        "default": {
+            "appenders": [
+                "default"
+            ],
+            "level": "trace"
+        },
+        "cdr": {
+            "appenders": [
+                "cdr"
+            ],
+            "level": "info"
+        }
+    }
+}

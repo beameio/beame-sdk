@@ -7,13 +7,14 @@ const logger      = new BeameLogger(module_name);
 const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require('./BeameStoreV2');
 const Credential  = require('./Credential');
+const OcspStatus  = (require('../../config/Config')).OcspStatus;
 
 const timeFuzz = config.defaultTimeFuzz;
 
 class AuthToken {
 
 	//noinspection JSUnusedGlobalSymbols
-	static getRequestAuthToken(req, allowExpired = false) {
+	static getRequestAuthToken(req, allowExpired = false, event = null) {
 		return new Promise((resolve, reject) => {
 				let authHead  = req.get('X-BeameAuthToken'),
 				    /** @type {SignatureToken|null} */
@@ -43,7 +44,7 @@ class AuthToken {
 					return;
 				}
 
-				AuthToken.validate(authToken, allowExpired)
+				AuthToken.validate(authToken, allowExpired, event)
 					.then(resolve)
 					.catch(reject);
 			}
@@ -66,12 +67,12 @@ class AuthToken {
 				return null;
 			}
 
-			if(signingCreds.expired && !allowExpired){
+			if (signingCreds.expired && !allowExpired) {
 				logger.error(`signingCreds ${signingCreds.fqdn} expired`);
 				return null;
 			}
 
-			if(signingCreds.metadata.revoked){
+			if (signingCreds.metadata.revoked) {
 				logger.error(`signingCreds ${signingCreds.fqdn} revoked`);
 				return null;
 			}
@@ -107,8 +108,8 @@ class AuthToken {
 
 				CommonUtils.validateMachineClock()
 					.then(signingCreds.checkOcspStatus.bind(signingCreds, signingCreds))
-					.then(resp => {
-					   resp.status ? resolve(AuthToken.create(data, signingCreds, ttl)) : reject(resp.message)
+					.then(status => {
+						status != OcspStatus.Bad ? resolve(AuthToken.create(data, signingCreds, ttl)) : reject(`OCSP status of ${signingCreds.fqdn} is Bad`)
 					}).catch(reject);
 			}
 		);
@@ -117,75 +118,81 @@ class AuthToken {
 	/**
 	 *
 	 * @param {SignatureToken|String} token
-	 * @param {SignatureToken|String} [allowExpired]
+	 * @param {undefined|Boolean} [allowExpired]
+	 * @param {Object|undefined} [event]
 	 * @returns {Promise.<SignatureToken|null>}
 	 */
-	static validate(token, allowExpired = false) {
-		/** @type {SignatureToken} */
+	static validate(token, allowExpired = false, event = null) {
 
+		const cdr_logger = require('../../src/utils/CDR').getInstance();
+
+		/** @type {String} **/
+		let cdr_event = event;
 
 		return new Promise((resolve, reject) => {
+
+			const _reject = (msg) => {
+				logger.error(msg);
+				if (cdr_event) {
+					cdr_event["error"] = msg;
+					cdr_event["token"] = token;
+					cdr_logger.error(cdr_event);
+				}
+
+				reject({message: msg});
+			};
+
 			let authToken = CommonUtils.parse(token);
 
 			if (!authToken) {
-				logger.error('Could not decode authToken JSON. authToken must be a valid JSON');
-				reject({message: 'Could not decode authToken JSON. authToken must be a valid JSON'});
-				return;
+				return _reject('Could not decode authToken JSON. authToken must be a valid JSON');
 			}
 
 			if (!authToken.signedData) {
-				logger.error('authToken has no .signedData');
-				reject({message: 'authToken has no .signedData'});
-				return;
+				return _reject('authToken has no .signedData');
 			}
 			if (!authToken.signedBy) {
-				logger.error('authToken has no .signedBy');
-				reject({message: 'authToken has no .signedBy'});
-				return;
+				return _reject('authToken has no .signedBy');
 			}
 			if (!authToken.signature) {
-				logger.error('authToken has no .signature');
-				reject({message: 'authToken has no .signature'});
-				return;
+				return _reject('authToken has no .signature');
 			}
 
-			const store = new BeameStore();
+			const store       = new BeameStore();
+		    if(cdr_event){
+		    	cdr_event["fqdn"] = authToken.signedBy;
+		    }
 
 			store.find(authToken.signedBy, undefined, allowExpired).then(signerCreds => {
 				signerCreds.checkOcspStatus(signerCreds)
-					.then( resp => {
+					.then(status => {
 
-						if(!resp.status){
-							reject(resp.message || ``);
-							return;
+						if (status === OcspStatus.Bad) {
+							return _reject(`OCSP status is Bad`);
 						}
 
 						const signatureStatus = signerCreds.checkSignature(authToken);
 						if (!signatureStatus) {
-							logger.error(`Bad signature`);
-							reject({message: `Bad signature`});
-							return;
+							return _reject(`Bad signature`);
 						}
 
 						let signedData = CommonUtils.parse(authToken.signedData);
 						if (!signedData) {
-							logger.error('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
-							reject({message: 'Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON'});
-							return;
+							return _reject('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
 						}
 
 						const now = Math.round(Date.now() / 1000);
 
 						if (signedData.created_at - config.defaultAllowedClockDiff > now + timeFuzz) {
-							logger.error(`authToken.signedData.created_at ${signedData.created_at} is in future - invalid token or incorrect clock`);
-							reject({message: `authToken.signedData.created_at is in future - invalid token or incorrect clock`});
-							return;
+							return _reject(`authToken.signedData.created_at ${signedData.created_at} is in future - invalid token or incorrect clock`);
 						}
 
 						if (signedData.valid_till + config.defaultAllowedClockDiff < now - timeFuzz) {
-							logger.error(`authToken.signedData.valid_till ${signedData.valid_till} is in the past - token expired`);
-							reject({message: `authToken.signedData.valid_till is in the past - token expired`});
-							return;
+							return _reject(`authToken.signedData.valid_till ${signedData.valid_till} is in the past - token expired`);
+						}
+
+						if(cdr_event){
+							cdr_logger.info(cdr_event);
 						}
 						resolve(authToken);
 					})

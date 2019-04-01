@@ -1,8 +1,9 @@
 "use strict";
-const path = require('path');
 
-const provisionSettings = require('../../config/ApiConfig.json');
+const util = require('util');
+
 const config            = require('../../config/Config');
+const envProfile        = config.SelectedProfile;
 const module_name       = config.AppModules.ProvisionApi;
 const BeameLogger       = require('../utils/Logger');
 const logger            = new BeameLogger(module_name);
@@ -64,7 +65,7 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 	}
 
 	if (error) {
-		logger.error(`parse response error ${BeameLogger.formatError(error)} for type ${type}`, error, module_name);
+		logger.error(`parse response error ${BeameLogger.formatError(error)} for type ${type}`, error);
 		callback(logger.formatErrorMessage("Provision Api response error", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
@@ -77,7 +78,9 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies
 			payload = JSON.parse(body);
 
-			payload = clearJSON(payload);
+			if(typeof JSON.parse(body) === "object"){
+				payload = clearJSON(payload);
+			}
 
 			//delete payload['$id'];
 		}
@@ -96,7 +99,7 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 	}
 	else {
 		//noinspection JSUnresolvedVariable
-		let msg    = payload.Message || payload.message || (payload.body && payload.body.message);
+		let msg    = payload.Message || payload.message || (payload.body && payload.body.message) || payload;
 		let errMsg = logger.formatErrorMessage(msg || "Provision Api response error", module_name, {
 			"status":  response.statusCode,
 			"message": msg || payload
@@ -124,14 +127,14 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 	retries--;
 
 	let onApiError =  (error,response) => {
-		logger.warn("Provision Api post error", {
+		logger.error("Provision Api post error", {
 			"error": error,
 			"url":   url
 		});
 
 		if(_isUnauthorizedRequest(response)){
 			retries = 0;
-			logger.error(`API POST on ${url}:: Access Denied`);
+			logger.error(`API POST on ${url}:: Access Denied::${response.message || response.statusCode}`);
 			callback && callback(logger.formatErrorMessage('Access Denied', module_name, {
 				url
 			}, config.MessageCodes.ApiRestError,response.statusCode), null);
@@ -274,7 +277,7 @@ class ProvApiService {
 
 	constructor(baseUrl) {
 		/** @member {String} **/
-		this.provApiEndpoint = baseUrl || provisionSettings.Endpoints.BaseUrl;
+		this.provApiEndpoint = baseUrl || envProfile.BaseUrl;
 	}
 
 
@@ -352,10 +355,10 @@ class ProvApiService {
 
 		switch (_method) {
 			case 'POST' :
-				postToProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
+				postToProvisionApi(apiEndpoint, options, apiData.api, envProfile.RetryAttempts, 1000, callback);
 				return;
 			case 'GET' :
-				getFromProvisionApi(apiEndpoint, options, apiData.api, provisionSettings.RetryAttempts, 1000, callback);
+				getFromProvisionApi(apiEndpoint, options, apiData.api, envProfile.RetryAttempts, 1000, callback);
 				return;
 			default:
 				callback('Invalid method', null);
@@ -385,7 +388,14 @@ class ProvApiService {
 
 		options = ProvApiService.setUserAgent(options);
 
-		postToProvisionApi(url, options, "custom_post", retries || provisionSettings.RetryAttempts, 1000, callback);
+		postToProvisionApi(url, options, "custom_post", retries || envProfile.RetryAttempts, 1000, callback);
+	}
+
+	postRequestAsync(url, postData, authToken, retries, inOptions) {
+		const adapter = (url, postData, authToken, retries, inOptions, cb) => {
+			this.postRequest(url, postData, cb, authToken, retries, inOptions);
+		};
+		return util.promisify(adapter)(url, postData, authToken, retries, inOptions);
 	}
 
 	//noinspection JSUnusedGlobalSymbols
@@ -398,13 +408,13 @@ class ProvApiService {
 				"X-BeameAuthToken": authToken
 			};
 		}
-		getFromProvisionApi(url, options, "custom_get", retries || provisionSettings.RetryAttempts, 1000, callback);
+		getFromProvisionApi(url, options, "custom_get", retries || envProfile.RetryAttempts, 1000, callback);
 	}
 
 	static getRequest(url, callback) {
 		let options = ProvApiService.setUserAgent({});
 
-		getFromProvisionApi(url, options, "custom_get", provisionSettings.RetryAttempts, 1000, callback);
+		getFromProvisionApi(url, options, "custom_get", envProfile.RetryAttempts, 1000, callback);
 	}
 }
 

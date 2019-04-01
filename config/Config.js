@@ -10,21 +10,101 @@ const os         = require('os');
 const home       = os.homedir();
 const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
+const debugPrefix = 'beame:sdk:';
+const env = require('./env');
 
+const ActionsApi = {
+	"EntityApi": {
+		"RegisterEntity": {
+			"endpoint": "/api/v1/node/register"
+		},
+		"CompleteRegistration": {
+			"endpoint": "/api/v1/node/register/complete"
+		},
+		"UpdateEntity": {
+			"endpoint": "/api/v1/node/update"
+		},
+		"GetMetadata": {
+			"endpoint": "/api/v1/node/get/meta"
+		},
+		"SubscribeRegistration": {
+			"endpoint": "/api/v1/node/subscribe/registration"
+		},
+		"CertRevoke": {
+			"endpoint": "/api/v1/node/cert/revoke"
+		},
+		"CertRenew": {
+			"endpoint": "/api/v1/node/cert/renew"
+		},
+		"SaveAuthEvent":{
+			"endpoint": "/api/v1/node/event/save"
+		}
+	},
+	"AuthServerApi": {
+		"RegisterEntity": {
+			"endpoint": "/node/auth/register"
+		}
+	},
+	"DnsApi": {
+		"Set": {
+			"endpoint": "/v1/dns/set/"
+		},
+		"Get": {
+			"endpoint": "/v1/dns/list/"
+		},
+		"Delete": {
+			"endpoint": "/v1/dns/delete/"
+		}
+	},
+	"OcspApi":{
+		"Check":{
+			"endpoint": "/check"
+		},
+		"HttpGetProxy":{
+			"endpoint": "/http_get"
+		},
+		"Time":{
+			"endpoint": "/time/get"
+		}
+	}
+};
 
-const CertEndpoint = "https://beameio-net-certs.s3.amazonaws.com";
+const environments = {
+	dev: {
+		FqdnPattern: '.d.',
+		CertEndpoint:  'https://beameio-net-certs-dev.s3.amazonaws.com',
+		AuthServerURL: 'https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net',
+		TestsCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net',
+		BaseUrl: 'https://xmq6hpvgzt7h8m76.mpk3nobb568nycf5.v1.d.beameio.net',
+		BaseDNSUrl:'https://t24w58ow5jkkmkhu.mpk3nobb568nycf5.v1.d.beameio.net',
+		OcspProxyFqdn: "i6zirg0jsrzrk3dk.mpk3nobb568nycf5.v1.d.beameio.net",
+		RetryAttempts: 10
+	},
+
+	prod: {
+		FqdnPattern: '.p.',
+		CertEndpoint: 'https://beameio-net-certs.s3.amazonaws.com',
+		AuthServerURL: 'https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net',
+		TestsCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net',
+		BaseUrl: 'https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net',
+		BaseDNSUrl:'https://lcram0sj9ox726l1.tl5h1ipgobrdqsj6.v1.p.beameio.net',
+		OcspProxyFqdn: "iep9bs1p7cj3cmit.tl5h1ipgobrdqsj6.v1.p.beameio.net",
+		RetryAttempts: 10
+	},
+};
+const SelectedProfile = require('../src/utils/makeEnv')(environments, {protectedProperties: ['FqdnPattern']});
 
 const InitFirstRemoteEdgeClient = true;
 const PinAtomPKbyDefault        = false;
 
-const EnvProfile = {
-	Name : 'Prod',
-	FqdnPattern: '.p.'
-};
-
 /** @const {String} **/
 const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 
+/** @const {String} **/
+const cdrDir = process.env.BEAME_CDR_DIR || path.join(home, '.beame_cdr');
+
+/** @const {String} **/
+const scsDir = process.env.BEAME_SCS_DIR || path.join(rootDir, 'scs');
 
 /** @const {String} **/
 const remotePKsDirV1 = path.join(rootDir, 'pki');
@@ -33,15 +113,15 @@ const localCertsDirV2 = path.join(rootDir, 'v2');
 
 const issuerCertsPath = path.join(rootDir, 'ocsp-cache');
 
-const localLogDir = path.join(rootDir, 'logs');
+const localLogDir = process.env.BEAME_LOG_DIR || path.join(rootDir, 'logs');
+
+if (process.env.BEAME_LOAD_BALANCER_URL) {
+	console.error("BEAME_LOAD_BALANCER_URL environment variable is not used anymore. Please use BEAME_LOAD_BALANCER_FQDN.");
+	process.exit(1);
+}
 
 /** @const {String} **/
-const authServerURL = process.env.BEAME_AUTH_SRVR_URL || "https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net";
-
-/** @const {String} **/
-const loadBalancerURL = process.env.BEAME_LOAD_BALANCER_URL || "https://ioigl3wzx6lajrx6.tl5h1ipgobrdqsj6.v1.p.beameio.net";
-
-const beameDevCredsFqdn = process.env.BEAME_DEV_CREDS_FQDN || "am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net";
+const loadBalancerURL = "https://" + env.LoadBalancerFqdn;
 
 const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
 
@@ -57,7 +137,11 @@ const defaultTimeFuzz = 10;
 
 const defaultDays2Log = 7;
 
-const ocspCachePeriod = 1000 * 60 * 60 * 24 * 30;
+const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30;
+
+const ocspCheckInterval = process.env.BEAME_OCSP_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
+
+const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
 
 /** @const {String} **/
 const metadataFileName = "metadata.json";
@@ -158,10 +242,27 @@ const CertResponseFields = {
 	"x509": "x509",
 	"p7b":  "p7b",
 	"ca":   "ca"
-	//"pkcs7": "pkcs7",
-	// ,"beame_ca": "beame_ca"
-	// ,"ca_g2": "ca_g2"
 };
+
+/**
+ * Auth events
+ *  @enum {string}
+ */
+const AuthEventType = {
+	"TokenIssued": "TokenIssued",
+	"Created":     "Created"
+};
+
+
+/**
+ * SAN prefix
+ *  @enum {string}
+ */
+const AltPrefix = {
+	"Approver": "appr.",
+	"Parent":   "parent."
+};
+
 
 
 /**
@@ -169,6 +270,7 @@ const CertResponseFields = {
  *  @enum {string}
  */
 const AppModules = {
+	"Credential":       "Credential",
 	"BeameEntity":      "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
 	"BeameCreds":       "BeameCreds",
@@ -204,17 +306,10 @@ const MessageCodes = {
 	"NodeFolderNotExists": "NodeFolderNotExists",
 	"NodeFilesMissing":    "NodeFilesMissing",
 	"CSRCreationFailed":   "CSRCreationFailed",
-	"InvalidPayload":      "InvalidPayload"
+	"InvalidPayload":      "InvalidPayload",
+	"SignerNotFound":      "SignerNotFound"
 };
 
-
-const ResponseKeys = {
-	"NodeFiles":                 [metadataFileName, CertFileNames.PRIVATE_KEY, CertFileNames.X509, CertFileNames.CA, CertFileNames.PKCS7, CertFileNames.P7B, CertFileNames.PKCS12, CertFileNames.PWD],
-	"EntityMetadataKeys":        ["fqdn", "parent_fqdn", "name", "email", "level"],
-	"EntityCreateResponseKeys":  ["fqdn"],
-	"CertificateResponseKeys":   ["x509", "pkcs7", "ca"],
-	"RevokeDevCertResponseKeys": ["recovery_code"]
-};
 
 /**
  * Time units
@@ -232,32 +327,75 @@ const CertValidationError = {
 	"Expired":  "Expired"
 };
 
+/**
+ * Log Event Codes
+ *  @enum {string}
+ */
+const CDREvents = {
+	// Keeper BeameAuth Router
+	"AuthGetCredInfo":     "AuthGetCredInfo",
+	"AuthRenewCert":       "AuthRenewCert",
+	"AuthRegister":        "AuthRegister",
+	"AuthCustomerApprove": "AuthCustomerApprove",
+	"AuthSignup":          "AuthSignup",
+
+	//Keeper Socket API Controller
+	"LoginUser":     "LoginUser",
+	"ChooseApp":     "ChooseApp",
+	"Logout":        "Logout",
+	"UpdateProfile": "UpdateProfile",
+
+	// Keeper unauthenticated Router
+	"ClientRegisterServer": "ClientRegisterServer",
+	"ClientRecoverServer":  "ClientRecoverServer",
+	"DirectSignin":         "DirectSignin",
+	"GwAuthenticated":      "GwAuthenticated",
+	"RedirectToHome":       "RedirectToHome",
+	"RegisterCustomer":     "RegisterCustomer",
+	"DownloadCred":         "DownloadCred",
+	"DownloadIoSProfile":   "DownloadIoSProfile",
+
+	//Keeper pairing utils
+	"MobileVerifyToken":  "MobileVerifyToken",
+	"MobileNotifyMobile": "MobileNotifyMobile"
+};
+
+
+/**
+ * OCSP statuses
+ *  @enum {string}
+ */
+const OcspStatus = {
+	"Good":        "Good",
+	"Bad":         "Bad",
+	"Unavailable": "Unavailable",
+	"Unknown":     "Unknown"
+};
+
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
+	debugPrefix,
 	rootDir,
+	cdrDir,
+	scsDir,
 	npmRootDir,
-	EnvProfile,
 	localCertsDirV2,
 	remotePKsDirV1,
 	issuerCertsPath,
 	loadBalancerURL,
-	beameDevCredsFqdn,
 	metadataFileName,
 	s3MetadataFileName,
 	CertFileNames,
 	CertResponseFields,
 	AppModules,
 	MessageCodes,
-	ResponseKeys,
 	TimeUnits,
 	SNIServerPort,
-	CertEndpoint,
 	InitFirstRemoteEdgeClient,
 	PinAtomPKbyDefault,
 	MetadataProperties,
 	CredAction,
-	authServerURL,
 	beameForceEdgeFqdn,
 	beameForceEdgeIP,
 	RegistrationSource,
@@ -265,12 +403,20 @@ module.exports = {
 	ApprovedZones,
 	defaultValidityPeriod,
 	ocspCachePeriod,
+	ocspCheckInterval,
+	renewalCheckInterval,
 	CertValidationError,
 	defaultAllowedClockDiff,
 	defaultAuthTokenTtl,
 	defaultTimeFuzz,
+	CDREvents,
+	OcspStatus,
+	AuthEventType,
+	AltPrefix,
 	LogFileNames,
 	LogEvents,
 	localLogDir,
-	defaultDays2Log
+	defaultDays2Log,
+	SelectedProfile,
+	ActionsApi
 };

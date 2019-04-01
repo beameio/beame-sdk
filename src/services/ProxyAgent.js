@@ -15,6 +15,7 @@ let urlParse = require('url').parse;
 let pick = require('lodash/pick');
 let assign = require('lodash/assign');
 let clone = require('lodash/clone');
+let utils = require('../utils/CommonUtils');
 
 const HttpsProxyAgent = require('https-proxy-agent');
 
@@ -141,12 +142,12 @@ ProxyAgent.initialize = function(conf) {
 		https.request = ProxyAgent._makeRequest(https, 'https');
 
 		if(conf.excludes){
-			let s = conf.excludes.replace(/\s/g, '');
-			s = s.replace(/\./g, '\\.');
-			s = s.replace(/\*/g, '\\S*');
-			s = s.replace(/\//g, '\\/');
-			let splitChar = s.includes(";")?";":",";
-			conf.excludes = s.split(splitChar);
+			// let s = conf.excludes.replace(/\s/g, '');
+			// s = s.replace(/\./g, '\\.');
+			// s = s.replace(/\*/g, '\\S*');
+			// s = s.replace(/\//g, '\\/');
+			// let splitChar = s.includes(";")?";":",";
+			conf.excludes = utils.splitOptions(conf.excludes);//s.split(splitChar);
 		}
 
 		ProxyAgent.isProxying = true;
@@ -191,6 +192,10 @@ ProxyAgent._makeRequest = function(httpOrHttps, protocol) {
 		if(forceGlobalAgent){
 			//force proxy agent
 			options.agent = httpOrHttps.globalAgent;
+		} else {
+			if(options.agent === httpOrHttps.globalAgent) {
+				options.agent = ORIGINALS[protocol].globalAgent;
+			}
 		}
 
 		// set the default port ourselves to prevent Node doing it based on the proxy agent protocol

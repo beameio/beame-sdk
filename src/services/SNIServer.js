@@ -2,6 +2,9 @@
 
 const https   = require('https');
 const tls     = require('tls');
+
+const debug   = require('debug', 'beame:sni');
+
 const config  = require('../../config/Config');
 const logger  = new (require('../utils/Logger'))(config.AppModules.SNIServer);
 const servers = {};
@@ -59,7 +62,12 @@ class SNIServer {
 	}
 
 	requestHandler(req, res) {
-		let host = req.headers.host.replace(portRegex, '');
+		debug('requestHandler() headers=%j', req.headers);
+		if(!req.headers.host) {
+			logger.warn("SNIServer: Failed to extract host header", req.headers);
+			return null;
+		}
+		const host = req.headers.host.replace(portRegex, '');
 		if (!this.hosts[host]) {
 			return null;
 		}

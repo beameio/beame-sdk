@@ -22,6 +22,7 @@ The Beame SDK allows you to establish a HTTPS session between machines without p
  - [Beame CLI (credentials, running test server, encryption)](#beame-cli)
  - [Beame NodeJS API](#beame-nodejs-api)
  - [Environment Variables](#environment-variables)
+ - [Tests](#tests)
 
 ## Beame SDK Networking basics
 Beame-SDK, by design, provides full set of tools to implement fully functional, secure private network. Beame-SDK employs hierarchical network structure. The most top level is the Layer-0 (L0) - the network root. L1 is created underneath L0 and considered "child" of L0. L0 may have any number of "children" (L1's), each of those, in turn, can have its own "children" L2's and so on. Any lower level "child" can be tracked, by cryptography, up to its L0 "parent". This is the base for building a private network with proprietary chain of trust._
@@ -381,6 +382,16 @@ testCheckSignature({ signedData: 'beameio',
 
 ## Environment variables
 
-* `BEAME_OCSP_RESOLVE_ARBITRATION` - Resolve OCSP check if unavailable or in any other arbitration situation
+* `BEAME_OCSP_IGNORE` - Resolve OCSP check if unavailable or in any other arbitration situation
 * `BEAME_OCSP_CACHE_PERIOD` - Period for caching OCSP results, override default value (30 days)
 * `EXTERNAL_OCSP_FQDN` - External ocsp server 
+* `BEAME_ENV` - Defines the environment profile to run in: prod or dev
+* `BEAME_LOG_LEVEL` - Can be set to DEBUG or other beame log levels
+* `BEAME_LOG_TO_FILE` - Activates log console to file. Can be true or false.
+* `BEAME_DIR`
+* `BEAME_LOG_DIR` - log folder (default is logs inside .beame)
+* `BEAME_SCS_DIR` - scs folder (default is scs inside .beame)
+* `BEAME_CDR_DIR` - cdr folder (default is .beame_cdr)
+
+## Tests
+[Readme](tests/README.md)

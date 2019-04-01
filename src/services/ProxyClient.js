@@ -106,7 +106,7 @@ class ProxyClient {
 	_initSocket() {
 		//noinspection JSUnresolvedVariable
 
-		this._socketio = io.connect(this._edgeServerHostname + '/control', this._ioOptions);
+		this._socketio = io.connect('https://' + this._edgeServerHostname + '/control', this._ioOptions);
 
 		this._socketio.on('connect', () => {
 

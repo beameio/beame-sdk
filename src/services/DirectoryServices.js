@@ -80,6 +80,13 @@ class DataServices {
 		rimraf(dirPath, callback);
 	}
 
+	static deleteFile(_path){
+		try {
+			fs.unlink(_path);
+		} catch (e) {
+		}
+	}
+
 	static readMetadataSync(dir, fqdn) {
 		let p         = BeameUtils.makePath(dir, fqdn, config.metadataFileName),
 		    metadata  = DataServices.readJSON(p);
@@ -217,7 +224,17 @@ class DataServices {
 	}
 
 	scanDir(src) {
-		return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());
+		if(fs.existsSync(src)){
+			return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isDirectory());
+		}
+
+		return {};
+	}
+
+	static readDirFiles(src) {
+		if(fs.existsSync(src))
+			return fs.readdirSync(src).filter(item => fs.lstatSync(path.join(src, item)).isFile());
+		return null;
 	}
 }
 

@@ -81,13 +81,32 @@ F prepare_entity_properties() {
 doc Tests running site
 F test_server(fqdn:Str, cmd:CommandsPipeline, url:Str) {
 	threads = [
-		Thread({ $($cmd) })
+		Thread({
+			try {
+				$($cmd)
+			} catch(e:ProcessFail) {
+				# We are expecting the process to be killed
+				guard e.process.exit_signal
+				null
+			}
+		})
 	]
-	assert_resolvable(fqdn)
+	echo("  Waiting for host ${fqdn} to be resolvable")
+	addr = retry(
+		times = 45
+		sleep = 2
+		body = { `dig "+short" $fqdn`.lines() }
+		fail_cb = { throw TestFail("No resolve for $fqdn").set('host', fqdn) }
+    )[-1]
+
+	echo("  Waiting for the server to come up")
 	$(sleep 10)
-	ret = try `curl --silent --max-time 30 $url`
+	echo("  Fetching ${url} using resolve ${fqdn}:443:${addr}")
+	# curl was unable to resolve the host so had to manually give curl the IP
+	ret = try `curl --silent --max-time 30 --resolve "${fqdn}:443:${addr}" $url`
 	$(pkill -f 'beame.js servers')
 	threads.join()
+	assert_string(ret, "Failed to fetch response from the server")
 	ret
 }
 
@@ -160,7 +179,7 @@ encrypted_data = null
 
 test("Encrypt data / json", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --format json`
-	enc = encrypted_data.parse()
+	enc = encrypted_data.decode()
 	enc.assert_hash_keys(%[rsaCipheredKeys data encryptedFor], "Encrypted data hash keys")
 	enc.encryptedFor != entities[0].fqdn throws TestFail("encryptedFor mismatch")
 	enc
@@ -170,7 +189,7 @@ test_decrypt_json(encrypted_data)
 
 test("Encrypt and sign data / json", {
 	global encrypted_data = `$BEAME_BIN creds encrypt --data $TEST_DATA --targetFqdn ${entities[0].fqdn} --signingFqdn ${entities[0].fqdn} --format json`
-	enc = encrypted_data.parse()
+	enc = encrypted_data.decode()
 	enc.assert_hash_keys(%[signedData signedBy signature], "Encrypted data hash keys")
 	enc.signedData.encryptedFor != entities[0].fqdn throws TestFail("encryptedFor mismatch")
 	enc
@@ -268,6 +287,7 @@ test("[Import credentials] Test credentials exist after import", test_creds_exis
 # TODO: add checks
 test("[Registration token] Generate") do {
 	global reg_token = `$BEAME_BIN creds getRegToken --fqdn ${entities[0].fqdn} --name $child_entity_name --email $child_entity_email`
+	assert(reg_token, "Registration token should be non-empty string")
 }
 
 test("[Registration token] Use") do {
@@ -321,7 +341,7 @@ test("Renew", {
 
 test("OCSP test") with {
 	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``
-	assert_hash_keys_values(s, {'status': true}, "Ocsp status ${entities[1].fqdn} is OK")
+	assert_eq(s, 'Good', "Ocsp status ${entities[1].fqdn} is OK")
 }
 
 test_dns(entities[1].fqdn)
@@ -334,8 +354,8 @@ test("Revoke", {
 })
 
 test("OCSP test after revocation") with {
-	s = retry(body={``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --forceCheck true --format json``},success_predicate={A.status==false},fail_cb={throw TestFail("Check OCSP for ${entities[1].fqdn} failed")})
-    assert_hash_keys_values(s, {'status': false}, "Ocsp status ${entities[1].fqdn} revoked")
+	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``
+    assert_eq(s, 'Bad', "Ocsp status ${entities[1].fqdn} revoked")
 }
 
 test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {
