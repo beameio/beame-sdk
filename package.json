@@ -3,7 +3,7 @@
   "version": "2.1.0",
   "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "index.js",
-  "engine": "node >= 6.9.0",
+  "engine": "node >= 8.0.0",
   "scripts": {
     "test_commonutils": "mocha ./tests/unit_tests/test_commonutils.js",
     "test_credentials": "mocha ./tests/unit_tests/test_credentials.js",
@@ -71,7 +71,7 @@
     "test": "tests"
   },
   "devDependencies": {
-    "eslint": "^5.15.3",
+    "eslint": "^5.16.0",
     "gulp": "^4.0.0",
     "gulp-jsdoc3": "^2.0.0",
     "jsdoc": "^3.5.5",
