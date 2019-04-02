@@ -263,9 +263,13 @@ class BeameStoreV2 {
 						return;
 					}
 				}
-				if ((credsList[nLevels].metadata.level > 0 || nextFqdn) &&
-					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn)))) {
 
+				if(nLevels > 300) throw new Error(`Max depth of 300 reached for chain ${nextFqdn}... Skipping`); // more than 300 depth something has to be wrong
+
+				if ((credsList[nLevels].metadata.level > 0 || nextFqdn) &&
+					(!highestFqdn || (highestFqdn && (highestFqdn !== credsList[nLevels].fqdn))) &&
+					!credsList.some(item => item.fqdn === nextFqdn)) // avoid loops
+				{
 					nLevels++;
 					getNext(nextFqdn);
 				}
