@@ -10,6 +10,22 @@
 
 Integration tests done using [NGS](https://github.com/ngs-lang/ngs)
 
+`IMPORTANT: Copy your .beame folders into a backup folder and clean them from the system before starting`
+
+`mkdir ~/beame_backup`
+
+`mv ~/.beame* ~/beame_backup` 
+
+
+### testGetCredsFqdn.ngs
+Gets n credentials under the given fqdn
+`./testGetCredsFqdn.ngs --start_fqdn xxxxxxxxx.v1.d.beameio.net 3`
+
+### testAll.ngs (requires an unlimited credential)
+`BEAME_AUTH_FQDN` will default to the test credential (n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net) that should be available to copy in ~/ 
+
+`BEAME_ENV_PROFILE=dev BEAME_INTERNAL_AUTH_SERVER_FQDN=p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net ./testAll.ngs`
+
 ## unit_tests
 
 Unit tests for the internal functionality
@@ -28,7 +44,7 @@ Tests on the credentials functionality
 
 Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
 
-### tests_custom_credentials.js (requires special level of credentials)
+### tests_custom_credentials.js (requires an unlimited credential)
 Tests on the creation of custom credentials.
 
 Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
