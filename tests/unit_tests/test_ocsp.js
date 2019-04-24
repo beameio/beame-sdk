@@ -5,6 +5,7 @@ const simple = require('simple-mock');
 
 const store = require("../../src/services/BeameStoreV2").getInstance();
 const config = require("../../config/Config");
+const env = require("../../config/env");
 const debug = require("debug")(config.debugPrefix + "unittests:ocsp");
 
 const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN;
@@ -26,7 +27,7 @@ describe('ocsp', function () {
 
 	const runs = [
 		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", function_name: "check" },
-		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.OcspProxyFqdn, function_name: "verify"}
+		{desc: '[With Proxy] ', external_ocsp_fqdn: env.OcspProxyFqdn, function_name: "verify"}
 	];
 
 	async function runOcspWithForceStatus(run, set_status) {
