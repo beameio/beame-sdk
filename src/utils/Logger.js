@@ -15,12 +15,12 @@ const LogLevel    = {
 };
 
 const LogLevelVerbosity = {
-	"DEBUG": 60,
-	"INFO":  50,
-	"WARN":  40,
-	"ERROR": 30,
-	"FATAL": 20,
-	"ALWAYS": 10
+	"DEBUG": 10000,
+	"INFO":  20000,
+	"WARN":  30000,
+	"ERROR": 40000,
+	"FATAL": 50000,
+	"ALWAYS": 100000
 };
 
 const StandardFlowEvent = {
@@ -115,17 +115,15 @@ class BeameLogger {
 	printLogMessage(level, logMessage) {
 
 		let shouldPrint = () => {
-			return LogLevelVerbosity[level] <= LogLevelVerbosity[this.currentLogLevel];
+			return LogLevelVerbosity[level] >= LogLevelVerbosity[this.currentLogLevel];
 		};
 
 		if (!shouldPrint()) return;
-
 		let message_logger = logMessage.module ? log4js.getLogger(logMessage.module) : this._logger;
 
-		message_logger[level.toLocaleLowerCase()](logMessage.message);
-
+		message_logger.log(level, logMessage.message);
 		if(logMessage.data){
-			message_logger[level.toLocaleLowerCase()](logMessage.data);
+			message_logger.log(level, logMessage.data);
 		}
 
 		if(level == LogLevel.Fatal) {

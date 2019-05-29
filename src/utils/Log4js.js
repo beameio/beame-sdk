@@ -19,6 +19,13 @@ const LogRollingStrategy = {
 	}
 };
 
+/**
+ * Custom levels
+ */
+const CustomLevels = {
+	ALWAYS: { value: 100000, colour: 'green' },
+};
+
 
 /**
  * @typedef {Object} Log4JsOptions
@@ -54,6 +61,7 @@ class Log4Js {
 		}
 
 		this._log4js.configure(config);
+		this._log4js.levels.addLevels(CustomLevels);
 	}
 
 	get logger() {

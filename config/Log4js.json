@@ -29,7 +29,7 @@
             "appenders": [
                 "default"
             ],
-            "level": "trace"
+            "level": "all"
         },
         "cdr": {
             "appenders": [
