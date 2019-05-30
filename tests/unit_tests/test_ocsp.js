@@ -2,10 +2,16 @@
 
 const assert = require('assert').strict;
 const simple = require('simple-mock');
+const path = require('path');
+const util = require('util');
 
 const store = require("../../src/services/BeameStoreV2").getInstance();
+const ocspUtils = require('../../src/utils/ocspUtils');
+
 const config = require("../../config/Config");
 const env = require("../../config/env");
+const DirectoryServices = require('../../src/services/DirectoryServices');
+
 const debug = require("debug")(config.debugPrefix + "unittests:ocsp");
 
 const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN;
@@ -30,7 +36,7 @@ describe('ocsp', function () {
 		{desc: '[With Proxy] ', external_ocsp_fqdn: env.OcspProxyFqdn, function_name: "verify"}
 	];
 
-	async function runOcspWithForceStatus(run, set_status) {
+	async function runOcspWithMockStatus(run, set_status) {
 		process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
 
 		const credential = require("../../src/services/Credential");
@@ -60,7 +66,7 @@ describe('ocsp', function () {
 			const result = await cred.checkOcspStatus(cred, false);
 
 			debug(result);
-			assert(result === config.OcspStatus.Unknown || result === config.OcspStatus.Good);
+			assert.equal(result, config.OcspStatus.Good);
 		});
 
 		it(run.desc + 'with forceCheck', async () => {
@@ -82,18 +88,262 @@ describe('ocsp', function () {
 		});
 
 		it(run.desc + 'with Bad verify = revoked cred', async () => {
-			await runOcspWithForceStatus(run,config.OcspStatus.Bad);
+			await runOcspWithMockStatus(run,config.OcspStatus.Bad);
 			assert(cred.metadata.revoked);
 		});
 
 		it(run.desc + 'with Unknown verify != revoked cred', async () => {
-			await runOcspWithForceStatus(run,config.OcspStatus.Unknown);
+			await runOcspWithMockStatus(run,config.OcspStatus.Unknown);
 			assert(!cred.metadata.revoked);
 		});
 
 		it(run.desc + 'with Unavailable verify != revoked cred', async () => {
-			await runOcspWithForceStatus(run,config.OcspStatus.Unavailable);
+			await runOcspWithMockStatus(run,config.OcspStatus.Unavailable);
 			assert(!cred.metadata.revoked);
 		});
+	});
+});
+
+describe('ocspUtils', function() {
+
+	this.timeout(100000);
+	let cred;
+
+	beforeEach(() => {
+		cred = store.getCredential(local_fqdn);
+		assert(cred);
+	});
+
+	it('_parseOcspResponse - good input', async () => {
+		const res = ocspUtils._parseOcspResponse({type: 'good'});
+		assert.equal(res, config.OcspStatus.Good);
+	});
+
+	it('_parseOcspResponse - wrong input combinations', async () => {
+		let res = ocspUtils._parseOcspResponse({type: 'bad'});
+		assert.equal(res, config.OcspStatus.Unavailable);
+
+		res = ocspUtils._parseOcspResponse({type23: 'good'});
+		assert.equal(res, config.OcspStatus.Unavailable);
+
+		res = ocspUtils._parseOcspResponse({});
+		assert.equal(res, config.OcspStatus.Unavailable);
+
+		res = ocspUtils._parseOcspResponse();
+		assert.equal(res, config.OcspStatus.Unavailable);
+	});
+
+	it('generateOcspRequest - with x509 and pem', async () => {
+		const issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+		assert(issuerCertUrl);
+		const certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1);
+		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
+		assert(DirectoryServices.doesPathExists(pemPath));
+
+		const res = ocspUtils.generateOcspRequest(cred.metadata.fqdn, cred.X509, pemPath);
+		assert(res);
+	});
+
+	it('generateOcspRequest - no x509 & no pem combinations', async () => {
+		const issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+		assert(issuerCertUrl);
+		const certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1);
+		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
+
+		assert(DirectoryServices.doesPathExists(pemPath));
+
+		let res = ocspUtils.generateOcspRequest(cred.metadata.fqdn, cred.X509, null);
+		assert.equal(res, null);
+
+		res = ocspUtils.generateOcspRequest(cred.metadata.fqdn, null, pemPath);
+		assert.equal(res, null);
+
+		res = ocspUtils.generateOcspRequest(cred.metadata.fqdn, null, null);
+		assert.equal(res, null);
+
+		res = ocspUtils.generateOcspRequest();
+		assert.equal(res, null);
+	});
+
+	it('getOcspUri - good input', async () => {
+		const res = await ocspUtils.getOcspUri(cred.X509);
+		assert(res);
+		assert(res.startsWith('http'));
+	});
+
+	it('getOcspUri - wrong input combinations', async () => {
+		try {
+			await ocspUtils.getOcspUri();
+			assert.fail('Should throw exception');
+		}
+		catch(err) {
+			assert(err);
+		}
+
+		try {
+			await ocspUtils.getOcspUri(null);
+			assert.fail('Should throw exception');
+		}
+		catch(err) {
+			assert(err);
+		}
+	});
+
+	it('check - good input', async () => {
+		const issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+		assert(issuerCertUrl);
+		const certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1);
+		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
+		assert(DirectoryServices.doesPathExists(pemPath));
+
+		let res = await ocspUtils.check(cred.metadata.fqdn, cred.X509, pemPath);
+		assert.equal(res, config.OcspStatus.Good);
+
+		res = await ocspUtils.check(null, cred.X509, pemPath); // fqdn is not mandatory
+		assert.equal(res, config.OcspStatus.Good);
+	});
+
+
+	it('check - wrong input combinations', async () => {
+		const issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+		assert(issuerCertUrl);
+		const certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1);
+		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
+		assert(DirectoryServices.doesPathExists(pemPath));
+
+		let res = await ocspUtils.check(cred.metadata.fqdn, null, pemPath);
+		assert.equal(res, config.OcspStatus.Unavailable);
+		res = await ocspUtils.check(null, null, pemPath);
+		assert.equal(res, config.OcspStatus.Unavailable);
+
+		try {
+			await ocspUtils.check(cred.metadata.fqdn, cred.X509, null);
+			assert('Should fail because its unable to read file');
+		}
+		catch (e) {
+			assert(e);
+		}
+		try {
+			await ocspUtils.check(cred.metadata.fqdn, cred.X509);
+			assert('Should fail because its unable to read file');
+		}
+		catch (e) {
+			assert(e);
+		}
+		try {
+			await ocspUtils.check(cred.metadata.fqdn, cred.X509, "path_that_doesnt_exist");
+			assert('Should fail because its unable to read file');
+		}
+		catch (e) {
+			assert(e);
+		}
+		try {
+			await ocspUtils.check();
+			assert('Should fail because its unable to read file');
+		}
+		catch (e) {
+			assert(e);
+		}
+	});
+
+	async function prepareVerify() {
+		const issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+		assert(issuerCertUrl);
+		const certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1);
+		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
+		assert(DirectoryServices.doesPathExists(pemPath));
+
+		const req = ocspUtils.generateOcspRequest(cred.metadata.fqdn, cred.X509, pemPath);
+
+		const CommonUtils = require('../../src/utils/CommonUtils');
+		const AuthToken = require('../../src/services/AuthToken');
+
+		const store = require("../../src/services/BeameStoreV2").getInstance();
+		const fetchCredChainPromise = util.promisify(store.fetchCredChain.bind(store));
+		let signerCred = null;
+		try {
+			let cred_options = {
+				highestFqdn:null,
+				allowRevoked:true,
+				allowExpired:true,
+				allowApprovers: true
+			};
+			const creds = await fetchCredChainPromise(cred.fqdn, cred_options);
+
+			for (let i = 0; i < creds.length; i++) {
+				if (creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked) {
+					signerCred = creds[i];
+					break;
+				}
+			}
+		}
+		catch(err) {
+			throw 'Failed to fetch cred chain: ' + err;
+		}
+
+		const digest    = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
+		const authToken = AuthToken.create(digest, signerCred);
+		const ocspuri = await ocspUtils.getOcspUri(cred.X509);
+
+		const url = `https://${env.OcspProxyFqdn}${config.ActionsApi.OcspApi.Check.endpoint}`;
+		let opt = {
+			url:      url,
+			headers:  {
+				'X-BeameAuthToken': authToken,
+				'X-BeameOcspUri':   ocspuri,
+				'Content-Type':     'application/ocsp-request',
+				'Content-Length':   req.data.length
+			},
+			method:   'POST',
+			body:     req.data,
+			encoding: null
+		};
+		return { opt, req };
+	}
+
+	it('verify - good input', async () => {
+		let { opt, req } = await prepareVerify();
+
+		const request = util.promisify(require('request'));
+		const response = await request(opt);
+		assert(response && response.statusCode >= 200 && response.statusCode < 400);
+
+		let status = await ocspUtils.verify(cred.fqdn, req, response.body);
+		assert.equal(status, config.OcspStatus.Good);
+
+		status = await ocspUtils.verify(null, req, response.body);
+		assert.equal(status, config.OcspStatus.Good);
+	});
+
+	it('verify - unauthorized', async () => {
+		let { opt, req } = await prepareVerify();
+		opt.headers["X-BeameAuthToken"] = null;
+
+		assert(req);
+		const request = util.promisify(require('request'));
+		const response = await request(opt);
+		assert(response && response.statusCode === 401);
+
+		const status = await ocspUtils.verify(cred.fqdn, req, response.body);
+		assert.equal(status, config.OcspStatus.Unavailable);
+	});
+
+
+	it('verify - wrong input combinations', async () => {
+		let { opt, req } = await prepareVerify();
+
+		assert(req);
+		const request = util.promisify(require('request'));
+		const response = await request(opt);
+		assert(response && response.statusCode >= 200 && response.statusCode < 400);
+
+		let status = await ocspUtils.verify(cred.fqdn, null, response.body);
+		assert.equal(status, config.OcspStatus.Unavailable);
+
+		status = await ocspUtils.verify(cred.fqdn, req, null);
+		assert.equal(status, config.OcspStatus.Unavailable);
+
+		status = await ocspUtils.verify();
+		assert.equal(status, config.OcspStatus.Unavailable);
 	});
 });

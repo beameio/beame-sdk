@@ -1583,7 +1583,7 @@ class Credential {
 	saveOcspStatus(isRevoked) {
 		this.metadata.revoked = isRevoked;
 		this.beameStoreServices.writeMetadataSync(this.metadata);
-	};
+	}
 
 	async updateOcspStatus() {
 		if (!this.hasMetadataKey("revoked")) {
