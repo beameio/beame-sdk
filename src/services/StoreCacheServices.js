@@ -20,6 +20,7 @@ const logger            = new BeameLogger("StoreCacheServices");
 
 /**
  * @typedef {Object} CredDoc
+ * @property {String} sha256Fingerprint
  * @property {String} fqdn
  * @property {Number|null} [notBefore]
  * @property {Number|null} [notAfter]
@@ -46,8 +47,11 @@ const Collections = {
 		name:    CredsCollectionName,
 		indices: [
 			{
-				fieldName: 'fqdn',
+				fieldName: 'sha256Fingerprint',
 				unique:    true
+			}, {
+				fieldName: 'fqdn',
+				unique:    false
 			}, {
 				fieldName: 'notAfter',
 				unique:    false
@@ -163,7 +167,6 @@ class StoreCacheServices {
 		return new Promise((resolve, reject) => {
 				let _cred = store.getCredential(fqdn);
 				if (_cred == null) {
-
 					const _reject = () => {
 						reject(`Credential ${fqdn} not found`);
 					};
@@ -199,8 +202,8 @@ class StoreCacheServices {
 			if (status === OcspStatus.Unavailable) {
 				_onOcspUnavailable()
 			} else {
-				logger.info(`Ocsp status of ${cred.fqdn} is ${status}`);
-				this.setOcspStatus(cred.fqdn, status).then(cb);
+				logger.info(`Ocsp status of ${cred.certData.fingerprints.sha256} (${cred.fqdn}) is ${status}`);
+				this.setOcspStatus(cred.certData.fingerprints.sha256, status).then(cb);
 			}
 		})
 
@@ -208,24 +211,25 @@ class StoreCacheServices {
 
 	/**
 	 *
-	 * @param {String} fqdn
+	 * @param {String} sha256Fingerprint
 	 * @param {Function|undefined} [cb]
 	 * @private
 	 */
-	_doRenewal(fqdn, cb = nop) {
+	_doRenewal(sha256Fingerprint, cb = nop) {
+		let doc = this.get(sha256Fingerprint);
 		let cred = new (require('./Credential'))((require('./BeameStoreV2')).getInstance());
-		cred.renewCert(null, fqdn).then(() => {
-			logger.info(`Certificates for ${fqdn} renewed successfully`);
+		cred.renewCert(null, doc.fqdn).then(() => {
+			logger.info(`Certificates for ${sha256Fingerprint} (${doc.fqdn}) renewed successfully`);
 			cb()
 		}).catch(e => {
 
 			const _returnError = () => {
-				logger.error(`Renew cert for ${fqdn} error ${BeameLogger.formatError(e)}`);
+				logger.error(`Renew cert for ${sha256Fingerprint} (${doc.fqdn}) error ${BeameLogger.formatError(e)}`);
 				cb(e)
 			};
 
 			if (typeof e == 'object' && e.hasOwnProperty('code') && e['code'] === Config.MessageCodes.SignerNotFound) {
-				this._updateAutoRenewFlag(fqdn, false).then(_returnError).catch(_returnError)
+				this._updateAutoRenewFlag(sha256Fingerprint, false).then(_returnError).catch(_returnError)
 			}
 			else {
 				_returnError();
@@ -236,15 +240,15 @@ class StoreCacheServices {
 
 	/**
 	 *
-	 * @param fqdn
+	 * @param sha256Fingerprint
 	 * @param autoRenew
 	 * @returns {Promise}
 	 * @private
 	 */
-	_updateAutoRenewFlag(fqdn, autoRenew) {
+	_updateAutoRenewFlag(sha256Fingerprint, autoRenew) {
 		return new Promise((resolve) => {
 				try {
-					let query  = {fqdn: fqdn},
+					let query  = {sha256Fingerprint: sha256Fingerprint},
 					    update = {
 						    $set: {
 							    autoRenew: autoRenew
@@ -254,11 +258,11 @@ class StoreCacheServices {
 					this._updateDoc(CredsCollectionName, query, update)
 						.then(resolve)
 						.catch(e => {
-							logger.error(`Update cache revocation for ${fqdn} error ${BeameLogger.formatError(e)}`);
+							logger.error(`Update cache revocation for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 							resolve();
 						});
 				} catch (e) {
-					logger.error(`Save cache revocation for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					logger.error(`Save cache revocation for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 				}
 			}
 		);
@@ -441,102 +445,83 @@ class StoreCacheServices {
 	 * @param {Credential} cred
 	 * @param {String|undefined} [status]
 	 */
-	insertCredFromStore(cred, status = null) {
+	async insertCredFromStore(cred, status = null) {
+		const credSha256Fingerprint = cred && cred.certData && cred.certData.fingerprints && cred.certData.fingerprints.sha256;
+		if(!credSha256Fingerprint) return;
 
-		return new Promise((resolve) => {
+		const insertCred = async () => {
+			if (!cred.hasKey("X509")) return;
 
-				const insertCred = () => {
-					if (!cred.hasKey("X509")) {
-						resolve();
-						return;
-					}
+			let ocspStatus    = status || Config.OcspStatus.Unknown,
+				lastOcspCheck = null,
+				validity      = cred.certData.validity || {start: null, end: null},
+				revoked       = !!cred.metadata.revoked;
 
-					let ocspStatus    = status || Config.OcspStatus.Unknown,
-					    lastOcspCheck = null,
-					    validity      = cred.certData.validity || {start: null, end: null},
-					    revoked       = !!(cred.metadata.revoked && (cred.metadata.revoked === 'true' || cred.metadata.revoked));
-
-
-					if (cred.metadata.ocspStatus) {
-						ocspStatus    = revoked ? Config.OcspStatus.Bad : Config.OcspStatus.Good;
-						lastOcspCheck = CommonUtils.tryParseDate(cred.metadata.ocspStatus.date);
-					}
-
-					let doc = {
-						fqdn:          cred.fqdn,
-						notBefore:     CommonUtils.tryParseDate(validity.start),
-						notAfter:      CommonUtils.tryParseDate(validity.end),
-						hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
-						revoked:       revoked,
-						expired:       cred.expired,
-						lastOcspCheck: lastOcspCheck,
-						nextOcspCheck: null,
-						lastLoginDate: null,
-						ocspStatus:    ocspStatus,
-						autoRenew:     true
-
-					};
-
-					this._insertDoc(CredsCollectionName, doc).then(resolve).catch(resolve);
-				};
-
-				this._findDoc(CredsCollectionName, {fqdn: cred.fqdn}).then(doc => {
-					if (doc == null) {
-						insertCred()
-					}
-					else {
-						resolve()
-					}
-				}).catch(e => {
-					logger.error(`find credential ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
-					resolve()
-				})
+			if (cred.metadata.ocspStatus) {
+				ocspStatus    = revoked ? Config.OcspStatus.Bad : Config.OcspStatus.Good;
+				lastOcspCheck = CommonUtils.tryParseDate(cred.metadata.ocspStatus.date);
 			}
-		)
+
+			let doc = {
+				sha256Fingerprint: credSha256Fingerprint,
+				fqdn:          cred.fqdn,
+				notBefore:     CommonUtils.tryParseDate(validity.start),
+				notAfter:      CommonUtils.tryParseDate(validity.end),
+				hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
+				revoked:       revoked,
+				expired:       cred.expired,
+				lastOcspCheck: lastOcspCheck,
+				nextOcspCheck: null,
+				lastLoginDate: null,
+				ocspStatus:    ocspStatus,
+				autoRenew:     true
+			};
+
+			await this._insertDoc(CredsCollectionName, doc);
+		};
+
+		try {
+			const doc = await this._findDoc(CredsCollectionName, {sha256Fingerprint: credSha256Fingerprint});
+			if (!doc) await insertCred()
+		}
+		catch (e) {
+			logger.error(`find credential ${credSha256Fingerprint} (${cred.fqdn}) error ${BeameLogger.formatError(e)}`);
+		}
 	}
 
 	/**
 	 *
-	 * @param {String} fqdn
+	 * @param {String} sha256Fingerprint
 	 * @param {Object} certData
 	 * @returns {Promise}
 	 */
-	updateCertData(fqdn, certData) {
-
-		return new Promise((resolve) => {
-				try {
-					let query  = {fqdn: fqdn},
-					    start  = CommonUtils.tryParseDate(certData.validity.start),
-					    end    = CommonUtils.tryParseDate(certData.validity.end),
-					    update = {
-						    $set: {
-							    notBefore: start,
-							    notAfter:  end
-						    }
-					    };
-
-					if (end) {
-						update.$set["expired"] = new Date() > end;
+	async updateCertData(sha256Fingerprint, certData) {
+		try {
+			let query  = {sha256Fingerprint: sha256Fingerprint},
+				start  = CommonUtils.tryParseDate(certData.validity.start),
+				end    = CommonUtils.tryParseDate(certData.validity.end),
+				update = {
+					$set: {
+						notBefore: start,
+						notAfter:  end
 					}
+				};
 
-					this._updateDoc(CredsCollectionName, query, update).then(resolve).catch(e => {
-						logger.error(`Update cert data for ${fqdn} error ${BeameLogger.formatError(e)}`);
-						resolve();
-					});
-				} catch (e) {
-					logger.error(`Save cert data for ${fqdn} error ${BeameLogger.formatError(e)}`);
-					resolve()
-				}
+			if (end) {
+				update.$set["expired"] = new Date() > end;
 			}
-		);
 
+			await this._updateDoc(CredsCollectionName, query, update);
 
+		} catch (e) {
+			logger.error(`Update cert data for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
+		}
 	}
 
-	saveRevocation(fqdn) {
+	saveRevocation(sha256Fingerprint) {
 		return new Promise((resolve) => {
 				try {
-					let query  = {fqdn: fqdn},
+					let query  = {sha256Fingerprint: sha256Fingerprint},
 					    update = {
 						    $set: {
 							    revoked:       true,
@@ -548,11 +533,12 @@ class StoreCacheServices {
 					this._updateDoc(CredsCollectionName, query, update)
 						.then(resolve)
 						.catch(e => {
-							logger.error(`Update cache revocation for ${fqdn} error ${BeameLogger.formatError(e)}`);
+							logger.error(`Update cache revocation for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 							resolve();
 						});
 				} catch (e) {
-					logger.error(`Save cache revocation for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					logger.error(`Save cache revocation for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
+					resolve();
 				}
 			}
 		);
@@ -563,16 +549,16 @@ class StoreCacheServices {
 		return this._findDocs(CredsCollectionName, predicate);
 	}
 
-	get(fqdn) {
-		let query = {fqdn: fqdn};
+	get(sha256Fingerprint) {
+		let query = {sha256Fingerprint: sha256Fingerprint};
 		return this._findDoc(CredsCollectionName, query);
 	}
 
-	setOcspStatus(fqdn, status) {
+	setOcspStatus(sha256Fingerprint, status) {
 
 		return new Promise((resolve) => {
 				try {
-					let query  = {fqdn: fqdn},
+					let query  = {sha256Fingerprint: sha256Fingerprint},
 					    update = {
 						    $set: {
 							    ocspStatus:    status,
@@ -597,34 +583,34 @@ class StoreCacheServices {
 					this._updateDoc(CredsCollectionName, query, update)
 						.then(resolve)
 						.catch(e => {
-							logger.error(`Update ocsp status for ${fqdn} error ${BeameLogger.formatError(e)}`);
+							logger.error(`Update ocsp status for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 							resolve();
 						});
 				} catch (e) {
-					logger.error(`Set ocsp status for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					logger.error(`Set ocsp status for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 					resolve()
 				}
 			}
 		);
 	}
 
-	getOcspStatus(fqdn) {
+	getOcspStatus(sha256Fingerprint) {
 		return new Promise((resolve) => {
-				this.get(fqdn).then(doc => {
+				this.get(sha256Fingerprint).then(doc => {
 					doc ? resolve(doc.ocspStatus) : resolve(OcspStatus.Unknown);
 				}).catch(e => {
-					logger.error(`Get lastLogin for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					logger.error(`Get lastLogin for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 					resolve(OcspStatus.Unavailable);
 				});
 			}
 		);
 	}
 
-	setLastLogin(fqdn, date) {
+	setLastLogin(sha256Fingerprint, date) {
 
 		return new Promise((resolve) => {
 				try {
-					let query  = {fqdn: fqdn},
+					let query  = {sha256Fingerprint: sha256Fingerprint},
 					    update = {
 						    $set: {
 							    lastLoginDate: CommonUtils.tryParseDate(date)
@@ -634,23 +620,23 @@ class StoreCacheServices {
 					this._updateDoc(CredsCollectionName, query, update)
 						.then(resolve)
 						.catch(e => {
-							logger.error(`Update last login for ${fqdn} error ${BeameLogger.formatError(e)}`);
+							logger.error(`Update last login for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 							resolve();
 						});
 				} catch (e) {
-					logger.error(`Set last login for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					logger.error(`Set last login for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 					resolve();
 				}
 			}
 		);
 	}
 
-	getLastLogin(fqdn) {
+	getLastLogin(sha256Fingerprint) {
 		return new Promise((resolve, reject) => {
-				this.get(fqdn).then(doc => {
-					doc ? resolve(doc.lastLoginDate) : reject(`Doc ${fqdn} not found`)
+				this.get(sha256Fingerprint).then(doc => {
+					doc ? resolve(doc.lastLoginDate) : reject(`Doc ${sha256Fingerprint} not found`)
 				}).catch(e => {
-					logger.error(`Get lastLogin for ${fqdn} error ${BeameLogger.formatError(e)}`);
+					logger.error(`Get lastLogin for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
 					reject(e);
 				});
 			}
@@ -688,12 +674,11 @@ class StoreCacheServices {
 					let idx     = 0;
 					// noinspection JSUnresolvedFunction
 					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
-						let fqdn = doc.fqdn;
-						this._findCredential(store, fqdn).then(cred => {
+						this._findCredential(store, doc.fqdn).then(cred => {
 							idx++;
 							this._doOcspCheck(cred, sleep, callback)
 						}).catch(e => {
-							logger.error(`Update OCSP for ${fqdn} error ${e}`);
+							logger.error(`Update OCSP for ${doc.fqdn} error ${e}`);
 							callback()
 						});
 					}, () => {
@@ -732,7 +717,7 @@ class StoreCacheServices {
 					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
 						idx++;
 						setTimeout(() => {
-							this._doRenewal(doc.fqdn, (err) => {
+							this._doRenewal(doc.sha256Fingerprint, (err) => {
 								if (!err) {
 									updated++;
 								}

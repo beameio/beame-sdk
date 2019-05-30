@@ -1343,6 +1343,7 @@ class Credential {
 					}
 
 					let revokedCred = this.store.getCredential(revokeFqdn);
+					const revokedSha256Fingerprint = revokedCred.certData.fingerprints.sha256;
 
 					if (revokedCred && revokedCred.hasKey("X509")) {
 						revokedCred.saveOcspStatus(true);
@@ -1353,8 +1354,8 @@ class Credential {
 						date:   Date.now()
 					});
 
-					storeCacheServices.saveRevocation(revokeFqdn).then(()=>{
-						resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
+					storeCacheServices.saveRevocation(revokedSha256Fingerprint).then(()=>{
+						resolve({message: `${revokedSha256Fingerprint} (${revokeFqdn}) Certificate has been revoked successfully`});
 					});
 				};
 
@@ -1423,7 +1424,7 @@ class Credential {
 										action: Config.CredAction.Renew,
 										date:   Date.now()
 									});
-									storeCacheServices.updateCertData(cred.fqdn, cred.certData)
+									storeCacheServices.updateCertData(cred.certData.fingerprints.sha256, cred.certData)
 										.then(() => {
 												resolve(certs)
 											}
@@ -1600,7 +1601,7 @@ class Credential {
 			return Config.OcspStatus.Good;
 		}
 		if (!forceCheck) {
-			return await storeCacheServices.getOcspStatus(cred.fqdn);
+			return await storeCacheServices.getOcspStatus(cred.certData.fingerprints.sha256);
 		}
 
 
@@ -1694,7 +1695,7 @@ class Credential {
 				}
 
 				const status = await ocspUtils.verify(cred.fqdn, req, response.body);
-				await storeCacheServices.setOcspStatus(cred.fqdn, status);
+				await storeCacheServices.setOcspStatus(cred.certData.fingerprints.sha256, status);
 				return status;
 			};
 
@@ -1722,7 +1723,7 @@ class Credential {
 		try {
 			const issuerPemPath = await this._assertIssuerCert(cred);
 			const status = await ocspUtils.check(cred.fqdn, cred.getKey("X509"), issuerPemPath);
-			await storeCacheServices.setOcspStatus(cred.fqdn, status);
+			await storeCacheServices.setOcspStatus(cred.certData.fingerprints.sha256, status);
 			return status;
 		}
 		catch (e) {
