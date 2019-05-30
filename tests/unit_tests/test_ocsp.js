@@ -140,7 +140,7 @@ describe('ocspUtils', function() {
 		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
 		assert(DirectoryServices.doesPathExists(pemPath));
 
-		const res = ocspUtils.generateOcspRequest(cred.metadata.fqdn, cred.X509, pemPath);
+		const res = ocspUtils.generateOcspRequest(cred.fqdn, cred.X509, pemPath);
 		assert(res);
 	});
 
@@ -152,13 +152,13 @@ describe('ocspUtils', function() {
 
 		assert(DirectoryServices.doesPathExists(pemPath));
 
-		let res = ocspUtils.generateOcspRequest(cred.metadata.fqdn, cred.X509, null);
+		let res = ocspUtils.generateOcspRequest(cred.fqdn, cred.X509, null);
 		assert.equal(res, null);
 
-		res = ocspUtils.generateOcspRequest(cred.metadata.fqdn, null, pemPath);
+		res = ocspUtils.generateOcspRequest(cred.fqdn, null, pemPath);
 		assert.equal(res, null);
 
-		res = ocspUtils.generateOcspRequest(cred.metadata.fqdn, null, null);
+		res = ocspUtils.generateOcspRequest(cred.fqdn, null, null);
 		assert.equal(res, null);
 
 		res = ocspUtils.generateOcspRequest();
@@ -196,7 +196,7 @@ describe('ocspUtils', function() {
 		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
 		assert(DirectoryServices.doesPathExists(pemPath));
 
-		let res = await ocspUtils.check(cred.metadata.fqdn, cred.X509, pemPath);
+		let res = await ocspUtils.check(cred.fqdn, cred.X509, pemPath);
 		assert.equal(res, config.OcspStatus.Good);
 
 		res = await ocspUtils.check(null, cred.X509, pemPath); // fqdn is not mandatory
@@ -211,27 +211,27 @@ describe('ocspUtils', function() {
 		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
 		assert(DirectoryServices.doesPathExists(pemPath));
 
-		let res = await ocspUtils.check(cred.metadata.fqdn, null, pemPath);
+		let res = await ocspUtils.check(cred.fqdn, null, pemPath);
 		assert.equal(res, config.OcspStatus.Unavailable);
 		res = await ocspUtils.check(null, null, pemPath);
 		assert.equal(res, config.OcspStatus.Unavailable);
 
 		try {
-			await ocspUtils.check(cred.metadata.fqdn, cred.X509, null);
+			await ocspUtils.check(cred.fqdn, cred.X509, null);
 			assert('Should fail because its unable to read file');
 		}
 		catch (e) {
 			assert(e);
 		}
 		try {
-			await ocspUtils.check(cred.metadata.fqdn, cred.X509);
+			await ocspUtils.check(cred.fqdn, cred.X509);
 			assert('Should fail because its unable to read file');
 		}
 		catch (e) {
 			assert(e);
 		}
 		try {
-			await ocspUtils.check(cred.metadata.fqdn, cred.X509, "path_that_doesnt_exist");
+			await ocspUtils.check(cred.fqdn, cred.X509, "path_that_doesnt_exist");
 			assert('Should fail because its unable to read file');
 		}
 		catch (e) {
@@ -253,7 +253,7 @@ describe('ocspUtils', function() {
 		const pemPath = path.join(config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
 		assert(DirectoryServices.doesPathExists(pemPath));
 
-		const req = ocspUtils.generateOcspRequest(cred.metadata.fqdn, cred.X509, pemPath);
+		const req = ocspUtils.generateOcspRequest(cred.fqdn, cred.X509, pemPath);
 
 		const CommonUtils = require('../../src/utils/CommonUtils');
 		const AuthToken = require('../../src/services/AuthToken');
