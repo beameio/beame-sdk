@@ -1585,319 +1585,229 @@ class Credential {
 		this.beameStoreServices.writeMetadataSync(this.metadata);
 	};
 
-	updateOcspStatus() {
-
-		return new Promise((resolve) => {
-				if (this.hasMetadataKey("revoked")) {
-					resolve(this);
-					return;
-				}
-
-				this.checkOcspStatus(this).then(status => {
-					this.saveOcspStatus(status === Config.OcspStatus.Bad);
-					resolve(this);
-				})
-			}
-		);
+	async updateOcspStatus() {
+		if (!this.hasMetadataKey("revoked")) {
+			const status = await this.checkOcspStatus(this);
+			this.saveOcspStatus(status === Config.OcspStatus.Bad);
+		}
+		return this;
 	}
 
-	checkOcspStatus(cred, forceCheck = false) {
-		return new Promise((resolve) => {
+	async checkOcspStatus(cred, forceCheck = false) {
 
-				let ignoreOcsp = !!(process.env.BEAME_OCSP_IGNORE);
+		let ignoreOcsp = !!(process.env.BEAME_OCSP_IGNORE);
+		if (ignoreOcsp) {
+			return Config.OcspStatus.Good;
+		}
+		if (!forceCheck) {
+			return await storeCacheServices.getOcspStatus(cred.fqdn);
+		}
 
-				if (ignoreOcsp) {
-					resolve(Config.OcspStatus.Good);
-					return;
-				}
 
+		const _resolve = (status, error) => {
+			if (error) {
+				logger.error(`Error ${BeameLogger.formatError(error)} on OCSP check for ${cred.fqdn}`);
+			}
 
-				if (!forceCheck) {
-					storeCacheServices.getOcspStatus(cred.fqdn).then(resolve)
-				}
-				else {
-					const _resolve = (status, error) => {
-						if (error) {
-							logger.error(`Error ${BeameLogger.formatError(error)} on OCSP check for ${cred.fqdn}`);
+			cred.metadata.ocspStatus = {
+				status: status,
+				date:   Date.now()
+			};
+
+			cred.metadata.revoked = status === Config.OcspStatus.Bad;
+
+			cred.beameStoreServices.writeMetadataSync(cred.metadata);
+
+			Credential.saveCredAction(cred, {
+				action: Config.CredAction.OcspUpdate,
+				date:   Date.now()
+			});
+
+			return status;
+		};
+
+		if (process.env.EXTERNAL_OCSP_FQDN) {
+
+			const AuthToken = require('./AuthToken');
+			const _generateOcspRequest = async () => {
+				const req = await this.generateOcspRequest(cred);
+				const uri = await ocspUtils.getOcspUri(cred.getKey("X509"));
+				return [req, uri];
+			};
+
+			const _getSignerCred = async (fqdn, [req, uri]) => {
+				/** @type {FetchCredChainOptions}**/
+				let cred_options = {
+					highestFqdn:null,
+					allowRevoked:true,
+					allowExpired:true,
+					allowApprovers: true
+				};
+				const store = require("./BeameStoreV2").getInstance();
+				const fetchCredChainPromise = util.promisify(store.fetchCredChain.bind(store));
+				try {
+					const creds = await fetchCredChainPromise(fqdn, cred_options);
+
+					let signerCred = null;
+					for (let i = 0; i < creds.length; i++) {
+						if (creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked) {
+							signerCred = creds[i];
+							break;
 						}
-
-						cred.metadata.ocspStatus = {
-							status: status,
-							date:   Date.now()
-						};
-
-						cred.metadata.revoked = status === Config.OcspStatus.Bad;
-
-						cred.beameStoreServices.writeMetadataSync(cred.metadata);
-
-						Credential.saveCredAction(cred, {
-							action: Config.CredAction.OcspUpdate,
-							date:   Date.now()
-						});
-
-						resolve(status);
-					};
-
-
-					if (process.env.EXTERNAL_OCSP_FQDN) {
-
-						const AuthToken = require('./AuthToken');
-						const request   = require('request');
-
-						const _generateOcspRequest = () => {
-							return new Promise((resolve, reject) => {
-									this.generateOcspRequest(cred).then(req => {
-										ocspUtils.getOcspUri(cred.getKey("X509")).then(uri => {
-											resolve([req, uri])
-										}).catch(reject)
-									}).catch(reject)
-								}
-							);
-						};
-
-						const _getSignerCred = (fqdn, [req, uri]) => {
-							return new Promise((resolve, reject) => {
-
-									/** @type {FetchCredChainOptions}**/
-									let cred_options = {
-										highestFqdn:null,
-										allowRevoked:true,
-										allowExpired:true,
-										allowApprovers: true
-									};
-									const store = require("./BeameStoreV2").getInstance();
-									store.fetchCredChain(fqdn, cred_options, (err, creds) => {
-										if (!err) {
-											let signerCred = null;
-											for (let i = 0; i < creds.length; i++) {
-												if (creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked) {
-													signerCred = creds[i];
-													break;
-												}
-											}
-											if (signerCred) {
-												resolve([signerCred, req, uri]);
-											}
-											else {
-												reject(`Failed to find valid signer cred for ${fqdn}`);
-											}
-										}
-										else {
-											reject('Failed to fetch cred chain: ' + err);
-										}
-									});
-								}
-							);
-						};
-
-						const _doOcspProxyRequest = ([signerCred, req, ocspUri]) => {
-							return new Promise((resolve, reject) => {
-
-									let digest    = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
-									let authToken = AuthToken.create(digest, signerCred);
-
-									if (authToken == null) {
-										reject(`Auth token create for ${signerCred.fqdn}  failed`);
-										return;
-									}
-
-									const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.Check.endpoint}`;
-
-									let opt = {
-										url:      url,
-										headers:  {
-											'X-BeameAuthToken': authToken,
-											'X-BeameOcspUri':   ocspUri,
-											'Content-Type':     'application/ocsp-request',
-											'Content-Length':   req.data.length
-
-										},
-										method:   'POST',
-										body:     req.data,
-										encoding: null
-									};
-
-									request(opt, (error, response, body) => {
-										if (!response || response.statusCode < 200 || response.statusCode >= 400) {
-											resolve(Config.OcspStatus.Unavailable);
-										}
-										else {
-
-											ocspUtils.verify(cred.fqdn, req, body).then(status => {
-												storeCacheServices.setOcspStatus(cred.fqdn, status).then(()=>{
-													resolve(status)
-												});
-
-											})
-										}
-									});
-								}
-							);
-						};
-
-						_generateOcspRequest()
-							.then(_getSignerCred.bind(null, cred.fqdn))
-							.then(_doOcspProxyRequest)
-							.then(_resolve)
-							.catch(e => {
-								logger.error(`Get ocsp status for on ${process.env.EXTERNAL_OCSP_FQDN} for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
-								_resolve(Config.OcspStatus.Unavailable, e);
-							});
 					}
-					else {
-						if (cred.hasKey("X509")) {
-							this.doOcspRequest(cred).then(_resolve);
-						}
-						else {
-							_resolve(Config.OcspStatus.Unknown, `Cred ${cred.fqdn} has not certificate`);
-						}
 
+					if (signerCred) {
+						return [signerCred, req, uri];
 					}
+					throw `Failed to find valid signer cred for ${fqdn}`;
 				}
+				catch(err) {
+					throw 'Failed to fetch cred chain: ' + err;
+				}
+			};
+
+			const _doOcspProxyRequest = async ([signerCred, req, ocspUri]) => {
+				let digest    = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
+				let authToken = AuthToken.create(digest, signerCred);
+
+				if (authToken == null) throw `Auth token create for ${signerCred.fqdn} failed`;
+
+				const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.Check.endpoint}`;
+
+				let opt = {
+					url:      url,
+					headers:  {
+						'X-BeameAuthToken': authToken,
+						'X-BeameOcspUri':   ocspUri,
+						'Content-Type':     'application/ocsp-request',
+						'Content-Length':   req.data.length
+					},
+					method:   'POST',
+					body:     req.data,
+					encoding: null
+				};
+
+				const request = util.promisify(require('request'));
+				const response = await request(opt);
+				if (!response || response.statusCode < 200 || response.statusCode >= 400) {
+					throw `Unable to get ocsp status '${response.statusMessage}'`;
+				}
+
+				const status = await ocspUtils.verify(cred.fqdn, req, response.body);
+				await storeCacheServices.setOcspStatus(cred.fqdn, status);
+				return status;
+			};
+
+
+			return await _generateOcspRequest()
+				.then(_getSignerCred.bind(null, cred.fqdn))
+				.then(_doOcspProxyRequest)
+				.then(_resolve)
+				.catch(e => {
+					logger.error(`Get ocsp status for on ${process.env.EXTERNAL_OCSP_FQDN} for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
+					return _resolve(Config.OcspStatus.Unavailable, e);
+				});
+		}
+		else {
+			if (cred.hasKey("X509")) {
+				return await this.doOcspRequest(cred).then(_resolve);
 			}
-		);
+			else {
+				return _resolve(Config.OcspStatus.Unknown, `Cred ${cred.fqdn} has not certificate`);
+			}
+		}
 	}
 
-	doOcspRequest(cred) {
-		return new Promise((resolve) => {
-
-				this._assertIssuerCert(cred)
-					.then(issuerPemPath => {
-						return new Promise((resolve) => {
-								ocspUtils.check(cred.fqdn, cred.getKey("X509"), issuerPemPath).then(status => {
-									storeCacheServices.setOcspStatus(cred.fqdn, status).then(()=>{
-										resolve(status);
-									});
-								});
-							}
-						);
-					})
-					.then(resolve)
-					.catch(e => {
-						logger.error(`Check ocsp status local for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
-						resolve(Config.OcspStatus.Unavailable);
-					});
-			}
-		);
+	async doOcspRequest(cred) {
+		try {
+			const issuerPemPath = await this._assertIssuerCert(cred);
+			const status = await ocspUtils.check(cred.fqdn, cred.getKey("X509"), issuerPemPath);
+			await storeCacheServices.setOcspStatus(cred.fqdn, status);
+			return status;
+		}
+		catch (e) {
+			logger.error(`Check ocsp status local for ${cred.fqdn} error ${BeameLogger.formatError(e)}`);
+			return Config.OcspStatus.Unavailable;
+		}
 	}
 
-	_assertIssuerCert(cred) {
 
-		const request = require('request');
+	async _assertIssuerCert(cred) {
+		const request = util.promisify(require('request'));
 		const fs      = require('fs');
 		const path    = require('path');
 
 		if (!cred.hasKey("X509")) {
-			return Promise.reject(`Credential ${cred.fqdn} hasn't X509 certificate`);
+			throw `Credential ${cred.fqdn} hasn't X509 certificate`;
 		}
 
-		return new Promise((resolve, reject) => {
+		let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
+		if (!issuerCertUrl) {
+			throw new Error(`No Issuer CA Cert url found`);
+		}
 
-				let issuerCertUrl = cred.certData.issuer.issuerCertUrl;
-
-				if (!issuerCertUrl) {
-
-					reject(new Error(`No Issuer CA Cert url found`));
-					return;
-				}
-
-				let certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1),
-				    certPath = path.join(Config.issuerCertsPath, certName),
-				    pemPath  = path.join(Config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
+		let certName = issuerCertUrl.substring(issuerCertUrl.lastIndexOf('/') + 1),
+			certPath = path.join(Config.issuerCertsPath, certName),
+			pemPath  = path.join(Config.issuerCertsPath, `${certName.substring(0, certName.lastIndexOf('.'))}.pem`);
 
 
-				if (DirectoryServices.doesPathExists(pemPath)) {
-					resolve(pemPath);
-				}
-				else {
+		if (DirectoryServices.doesPathExists(pemPath)) {
+			return pemPath;
+		}
 
-					if (!DirectoryServices.doesPathExists(Config.issuerCertsPath)) {
-						DirectoryServices.createDir(Config.issuerCertsPath);
-					}
+		if (!DirectoryServices.doesPathExists(Config.issuerCertsPath)) {
+			DirectoryServices.createDir(Config.issuerCertsPath);
+		}
 
-					const _onCertReceived = (body) => {
-						fs.writeFileSync(certPath, body);
+		const _onCertReceived = async (body) => {
+			fs.writeFileSync(certPath, body);
 
-						OpenSSLWrapper.convertCertToPem(certPath, pemPath).then(() => {
-							fs.unlinkSync(certPath);
-							resolve(pemPath);
-						}).catch(e => {
-							reject(e);
-						})
-					};
+			await OpenSSLWrapper.convertCertToPem(certPath, pemPath);
+			fs.unlinkSync(certPath);
+			return pemPath;
+		};
 
 
-					if (process.env.EXTERNAL_OCSP_FQDN) {
-						const AuthToken = require('./AuthToken');
+		if (process.env.EXTERNAL_OCSP_FQDN) {
+			const AuthToken = require('./AuthToken');
+			const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.HttpGetProxy.endpoint}`;
 
-						const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.HttpGetProxy.endpoint}`;
-
-						let authToken = AuthToken.create(cred.fqdn, cred);
-
-						if (authToken == null) {
-							reject(`Auth token create for ${cred.fqdn}  failed`);
-							return;
-						}
-
-						let opt = {
-							url:     url,
-							headers: {
-								'X-BeameAuthToken': authToken,
-								'Content-Type':     'application/json'
-
-							},
-							method:  'GET',
-							body:    CommonUtils.stringify({url: issuerCertUrl})
-						};
-
-						request(opt, (error, response, body) => {
-							if (response.statusCode < 200 || response.statusCode >= 400) {
-								logger.error(`Get issuer CA error ${error} status ${response.statusCode} on ${issuerCertUrl}`);
-								reject(`Get issuer CA error ${error} status ${response.statusCode}`);
-							}
-							else {
-								_onCertReceived(body);
-							}
-
-						});
-					}
-					else {
-						request.get(
-							issuerCertUrl,
-							{encoding: null},
-							(error, response, body) => {
-								if (!error && response.statusCode === 200) {
-
-									_onCertReceived(body);
-								}
-								else {
-									logger.error(`Get issuer CA error ${error} status ${response.statusCode} on ${issuerCertUrl}`);
-									reject(`Get issuer CA error ${error} status ${response.statusCode}`);
-								}
-							}
-						);
-					}
-
-				}
+			let authToken = AuthToken.create(cred.fqdn, cred);
+			if (authToken == null) {
+				throw `Auth token create for ${cred.fqdn}  failed`;
 			}
-		);
+
+			let opt = {
+				url: url,
+				headers: {
+					'X-BeameAuthToken': authToken,
+					'Content-Type': 'application/json'
+				},
+				method: 'GET',
+				body: CommonUtils.stringify({url: issuerCertUrl})
+			};
+
+			const response = await request(opt);
+			if (!response || response.statusCode < 200 || response.statusCode >= 400) {
+				throw `Get issuer CA error ${response.statusMessage} status ${response.statusCode} on ${issuerCertUrl}`;
+			}
+			return await _onCertReceived(response.body);
+		} else {
+			const requestGet = util.promisify(request.get);
+			const response = await requestGet(issuerCertUrl, {encoding: null});
+			if (response.statusCode !== 200) {
+				throw `Get issuer CA error ${response.statusMessage} status ${response.statusCode} on ${issuerCertUrl}`;
+			}
+			return await _onCertReceived(response.body);
+		}
 	}
 
-	generateOcspRequest(cred) {
+	async generateOcspRequest(cred) {
+		const pemPath = await this._assertIssuerCert(cred);
+		let req = ocspUtils.generateOcspRequest(cred.fqdn, cred.getKey("X509"), pemPath);
 
-		return new Promise((resolve, reject) => {
-
-				this._assertIssuerCert(cred).then(pemPath => {
-
-					let req = ocspUtils.generateOcspRequest(cred.fqdn, cred.getKey("X509"), pemPath);
-
-					req ? resolve(req) : reject(`Ocsp request generation failed`);
-
-				}).catch(reject);
-			}
-		);
-
-
+		if(!req) throw `Ocsp request generation failed`;
+		return req;
 	}
 
 //endregion
