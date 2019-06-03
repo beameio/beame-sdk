@@ -10,7 +10,14 @@ const OcspStatus        = (require('../../config/Config')).OcspStatus;
 
 class ocspUtils {
 	static _parseOcspResponse (res){
-		return res && res.type && res.type == 'good' ? OcspStatus.Good : OcspStatus.Unavailable;
+		if(!res || !res.type) return OcspStatus.Unavailable;
+
+		// ocsp library types are 'good' and 'revoked'
+		if(res.type === 'good') return OcspStatus.Good;
+		if(res.type === 'revoked') return OcspStatus.Bad;
+
+		logger.error(`Unknown response type from ocsp library: ${res.type}`);
+		return OcspStatus.Unknown;
 	}
 
 	static generateOcspRequest(fqdn, x509, pemPath) {

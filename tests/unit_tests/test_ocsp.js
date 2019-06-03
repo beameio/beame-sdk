@@ -118,14 +118,19 @@ describe('ocspUtils', function() {
 		assert(cred);
 	});
 
-	it('_parseOcspResponse - good input', async () => {
+	it('_parseOcspResponse - good', async () => {
 		const res = ocspUtils._parseOcspResponse({type: 'good'});
 		assert.equal(res, config.OcspStatus.Good);
 	});
 
+	it('_parseOcspResponse - revoked', async () => {
+		const res = ocspUtils._parseOcspResponse({type: 'revoked'});
+		assert.equal(res, config.OcspStatus.Bad);
+	});
+
 	it('_parseOcspResponse - wrong input combinations', async () => {
-		let res = ocspUtils._parseOcspResponse({type: 'bad'});
-		assert.equal(res, config.OcspStatus.Unavailable);
+		let res = ocspUtils._parseOcspResponse({type: 'bad'}); // not an official response type
+		assert.equal(res, config.OcspStatus.Unknown);
 
 		res = ocspUtils._parseOcspResponse({type23: 'good'});
 		assert.equal(res, config.OcspStatus.Unavailable);

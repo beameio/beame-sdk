@@ -40,7 +40,7 @@ const OCSP_SLEEP             = 1000;
 const ASYNC_EACH_LIMIT       = 100;
 const DB_COMPACTION_INTERVAL = 1000 * 60 * 60;
 
-const CredsCollectionName = 'creds';
+const CredsCollectionName = 'ocsp';
 
 const Collections = {
 	creds: {
