@@ -25,7 +25,7 @@ function makeEnv(environments, options) {
 		process.exit(1);
 	}
 
-	const environment = Object.assign({}, environments[getEnv()], environments[commonEnvName]);
+	const environment = Object.assign({}, environments[commonEnvName], environments[getEnv()]);
 
 	for(const k of Object.keys(environment)) {
 		const envVarName = 'BEAME_' + changeCase.constantCase(k);
