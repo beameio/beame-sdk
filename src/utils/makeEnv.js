@@ -2,6 +2,7 @@
 
 const changeCase = require('change-case');
 const debug = require('debug')('beame:sdk:env');
+const commonEnvName = "_COMMON";
 
 function makeEnv(environments, options) {
 
@@ -24,7 +25,7 @@ function makeEnv(environments, options) {
 		process.exit(1);
 	}
 
-	const environment = environments[getEnv()];
+	const environment = Object.assign({}, environments[getEnv()], environments[commonEnvName]);
 
 	for(const k of Object.keys(environment)) {
 		const envVarName = 'BEAME_' + changeCase.constantCase(k);
