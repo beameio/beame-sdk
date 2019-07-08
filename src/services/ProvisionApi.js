@@ -60,13 +60,13 @@ function clearJSON(json) {
 const parseProvisionResponse = (error, response, body, type, callback) => {
 
 	if (!response) {
-		callback && callback(logger.formatErrorMessage("Provision Api => empty response", module_name, error, config.MessageCodes.ApiRestError), null);
+		callback && callback(logger.formatErrorMessage("API => empty response", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
 
 	if (error) {
 		logger.error(`parse response error ${BeameLogger.formatError(error)} for type ${type}`, error);
-		callback(logger.formatErrorMessage("Provision Api response error", module_name, error, config.MessageCodes.ApiRestError), null);
+		callback(logger.formatErrorMessage("API response error", module_name, error, config.MessageCodes.ApiRestError), null);
 		return;
 	}
 
@@ -100,13 +100,11 @@ const parseProvisionResponse = (error, response, body, type, callback) => {
 	else {
 		//noinspection JSUnresolvedVariable
 		let msg    = payload.Message || payload.message || (payload.body && payload.body.message) || payload;
-		let errMsg = logger.formatErrorMessage(msg || "Provision Api response error", module_name, {
+		let errMsg = logger.formatErrorMessage(msg || "API response error", module_name, {
 			"status":  response.statusCode,
 			"message": msg || payload
 		}, config.MessageCodes.ApiRestError);
 
-		//logger.debug(`Provision error payload ${payload.toString()}`, payload);
-		//logger.debug(`Provision error response ${response.toString()}`, response);
 		logger.debug(errMsg.message, payload);
 		callback && callback(errMsg, null);
 	}
@@ -127,7 +125,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 	retries--;
 
 	let onApiError =  (error,response) => {
-		logger.error("Provision Api post error", {
+		logger.error("API post error", {
 			"error": error,
 			"url":   url
 		});
@@ -152,7 +150,7 @@ const postToProvisionApi = (url, options, type, retries, sleep, callback) => {
 
 	try {
 		if (retries == 0) {
-			callback && callback(logger.formatErrorMessage("Post to provision failed", module_name, {
+			callback && callback(logger.formatErrorMessage("Post failed", module_name, {
 				url,
 				options
 			}, config.MessageCodes.ApiRestError), null);
@@ -348,7 +346,7 @@ class ProvApiService {
 		}
 
 		const apiEndpoint = this.provApiEndpoint + apiData.api;
-		logger.debug(`Api call to : ${apiEndpoint}`);
+		logger.debug(`API call to : ${apiEndpoint}`);
 		let _method = method || 'POST';
 
 		options = ProvApiService.setUserAgent(options);

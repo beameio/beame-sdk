@@ -278,7 +278,7 @@ const AppModules = {
 	"BeameStore":       "BeameStore",
 	"BeameSystem":      "BeameSystem",
 	"BeameDirServices": "BeameDirServices",
-	"ProvisionApi":     "ProvisionApi",
+	"ProvisionApi":     "BeameRequest",
 	"DataServices":     "DataServices",
 	"UnitTest":         "UnitTest",
 	"BaseHttpsServer":  "BaseHttpsServer",
