@@ -1756,51 +1756,41 @@ class Credential {
 			return pemPath;
 		}
 
+		// beameioca1.pem still doesn't exist, get the cert and convert it to pem
 		if (!DirectoryServices.doesPathExists(Config.issuerCertsPath)) {
 			DirectoryServices.createDir(Config.issuerCertsPath);
 		}
 
-		const _onCertReceived = async (body) => {
-			fs.writeFileSync(certPath, body);
-
-			await OpenSSLWrapper.convertCertToPem(certPath, pemPath);
-			fs.unlinkSync(certPath);
-			return pemPath;
+		const opt = {
+			url: issuerCertUrl,
+			encoding: null,  // important: required by windows in order to download the cert correctly
+			method: 'GET'
 		};
-
-
 		if (process.env.EXTERNAL_OCSP_FQDN) {
 			const AuthToken = require('./AuthToken');
-			const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.HttpGetProxy.endpoint}`;
-
+			// FIXME: should be signed by a private cert key
 			let authToken = AuthToken.create(cred.fqdn, cred);
 			if (authToken == null) {
 				throw `Auth token create for ${cred.fqdn}  failed`;
 			}
 
-			let opt = {
-				url: url,
-				headers: {
-					'X-BeameAuthToken': authToken,
-					'Content-Type': 'application/json'
-				},
-				method: 'GET',
-				body: CommonUtils.stringify({url: issuerCertUrl})
+			opt.url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.HttpGetProxy.endpoint}`;
+			opt.headers = {
+				'X-BeameAuthToken': authToken,
+				'Content-Type': 'application/json'
 			};
-
-			const response = await request(opt);
-			if (!response || response.statusCode < 200 || response.statusCode >= 400) {
-				throw `Get issuer CA error ${response.statusMessage} status ${response.statusCode} on ${issuerCertUrl}`;
-			}
-			return await _onCertReceived(response.body);
-		} else {
-			const requestGet = util.promisify(request.get);
-			const response = await requestGet(issuerCertUrl, {encoding: null});
-			if (response.statusCode !== 200) {
-				throw `Get issuer CA error ${response.statusMessage} status ${response.statusCode} on ${issuerCertUrl}`;
-			}
-			return await _onCertReceived(response.body);
+			opt.body = CommonUtils.stringify({url: issuerCertUrl});
 		}
+
+		const response = await request(opt);
+		if (!response || response.statusCode !== 200) {
+			throw `Get issuer CA error ${response.statusMessage} status ${response.statusCode} on ${issuerCertUrl}`;
+		}
+
+		fs.writeFileSync(certPath, response.body);
+		await OpenSSLWrapper.convertCertToPem(certPath, pemPath);
+		fs.unlinkSync(certPath);
+		return pemPath;
 	}
 
 	async generateOcspRequest(cred) {
