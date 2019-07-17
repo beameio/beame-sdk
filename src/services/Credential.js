@@ -85,6 +85,7 @@ const util                   = require('util');
 const dns                    = require('dns');
 const assert                 = require("assert");
 const debug_dns              = require('debug')(Config.debugPrefix + 'dns');
+const debug_ocsp              = require('debug')(Config.debugPrefix + 'ocsp');
 
 const nop = function () {
 };
@@ -1618,15 +1619,13 @@ class Credential {
 	}
 
 	async _checkOcspStatus(cred, forceCheck = false) {
-		console.log('_checkOcspStatus() begin');
+		debug_ocsp('_checkOcspStatus() begin');
 
 		if (process.env.BEAME_OCSP_IGNORE) {
 			return Config.OcspStatus.Good;
 		}
 
-		if (!cred.hasKey("X509")) {
-			throw new Error('No certificate');
-		}
+		assert(cred.hasKey("X509"), 'No certificate');
 
 		if (!forceCheck) {
 			const result = await storeCacheServices.getOcspStatus(cred.certData.fingerprints.sha256);
@@ -1638,7 +1637,7 @@ class Credential {
 		let status = null;
 
 		if (process.env.EXTERNAL_OCSP_FQDN) {
-			console.log('_checkOcspStatus() uses EXTERNAL_OCSP_FQDN');
+			debug_ocsp('_checkOcspStatus() uses EXTERNAL_OCSP_FQDN');
 
 			const AuthToken = require('./AuthToken');
 
