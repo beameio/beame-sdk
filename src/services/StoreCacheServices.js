@@ -34,9 +34,6 @@ const logger            = new BeameLogger("StoreCacheServices");
  */
 
 let _storeCacheServices      = null;
-const nop                    = () => {
-};
-const OCSP_SLEEP             = 1000;
 const ASYNC_EACH_LIMIT       = 100;
 const DB_COMPACTION_INTERVAL = 1000 * 60 * 60;
 
@@ -66,6 +63,9 @@ const Collections = {
 	}
 };
 
+function nop() {
+}
+
 class StoreCacheServices {
 
 	/**
@@ -76,6 +76,7 @@ class StoreCacheServices {
 		this._options = options;
 		this._db = {};
 		this._initDb();
+		this._renewal_timeout = null;
 
 	}
 
@@ -83,11 +84,9 @@ class StoreCacheServices {
 		return new Promise((resolve) => {
 				const store = (require('./BeameStoreV2')).getInstance();
 
-				let cred_to_insert = store.Credentials;
+			logger.info(`loading ${store.Credentials.length} creds to cache from store`);
 
-				logger.info(`loading ${cred_to_insert.length} creds to cache from store`);
-
-				Promise.all(cred_to_insert.map(cred => {
+				Promise.all(store.Credentials.map(cred => {
 						return this.insertCredFromStore(cred)
 					}
 				)).then(() => {
@@ -102,15 +101,11 @@ class StoreCacheServices {
 
 		logger.info(`Starting service`);
 		this._db[CredsCollectionName].persistence.setAutocompactionInterval(DB_COMPACTION_INTERVAL);
-		this._startOcspHandlerRoutine();
 		this._startRenewalRoutine();
 
 	}
 
 	stop() {
-		if (this._ocsp_timeout) {
-			clearTimeout(this._ocsp_timeout);
-		}
 		if (this._renewal_timeout) {
 			clearTimeout(this._renewal_timeout);
 		}
@@ -118,24 +113,6 @@ class StoreCacheServices {
 
 	//region ocsp and renewal routines
 
-	/**
-	 *
-	 * @private
-	 */
-	_startOcspHandlerRoutine() {
-
-		let _setInterval = f => {
-			this._ocsp_timeout = setTimeout(f, this._options.ocsp_interval);
-		}, _runRoutine   = () => {
-			this.updateOcspState().then(() => {
-				logger.info(`Ocsp state updated. Schedule next`);
-				_setInterval(_runRoutine);
-			}).catch(_setInterval.bind(this, _runRoutine));
-
-		};
-		_runRoutine();
-
-	}
 
 	/**
 	 *
@@ -181,33 +158,7 @@ class StoreCacheServices {
 
 	}
 
-	/**
-	 * @param {Number} sleep
-	 * @param {Credential} cred
-	 * @param {Function|undefined} [cb]
-	 * @private
-	 */
-	_doOcspCheck(cred, sleep, cb = nop) {
 
-		const _onOcspUnavailable = () => {
-			sleep = parseInt(sleep * (Math.random() + 1.5));
-
-			setTimeout(() => {
-				this._doOcspCheck.bind(this, cred, sleep);
-			}, sleep);
-
-		};
-
-		cred.doOcspRequest(cred).then(status => {
-			if (status === OcspStatus.Unavailable) {
-				_onOcspUnavailable()
-			} else {
-				logger.info(`Ocsp status of ${cred.certData.fingerprints.sha256} (${cred.fqdn}) is ${status}`);
-				this.setOcspStatus(cred.certData.fingerprints.sha256, status).then(cb);
-			}
-		})
-
-	}
 
 	/**
 	 *
@@ -550,15 +501,14 @@ class StoreCacheServices {
 	}
 
 	get(sha256Fingerprint) {
-		let query = {sha256Fingerprint: sha256Fingerprint};
-		return this._findDoc(CredsCollectionName, query);
+		return this._findDoc(CredsCollectionName, {sha256Fingerprint});
 	}
 
 	setOcspStatus(sha256Fingerprint, status) {
 
 		return new Promise((resolve) => {
 				try {
-					let query  = {sha256Fingerprint: sha256Fingerprint},
+					let query  = {sha256Fingerprint},
 					    update = {
 						    $set: {
 							    ocspStatus:    status,
@@ -594,16 +544,12 @@ class StoreCacheServices {
 		);
 	}
 
-	getOcspStatus(sha256Fingerprint) {
-		return new Promise((resolve) => {
-				this.get(sha256Fingerprint).then(doc => {
-					doc ? resolve(doc.ocspStatus) : resolve(OcspStatus.Unknown);
-				}).catch(e => {
-					logger.error(`Get lastLogin for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
-					resolve(OcspStatus.Unavailable);
-				});
-			}
-		);
+	async getOcspStatus(sha256Fingerprint) {
+		const doc = await this.get(sha256Fingerprint);
+		if(!doc) {
+			return OcspStatus.Unknown;
+		}
+		return doc.ocspStatus;
 	}
 
 	setLastLogin(sha256Fingerprint, date) {
@@ -644,55 +590,7 @@ class StoreCacheServices {
 
 	}
 
-	/**
-	 *
-	 * @param {Boolean|undefined} [force] => force update all
-	 * @returns {Promise}
-	 */
-	updateOcspState(force = false) {
-		return new Promise((resolve) => {
 
-				let sleep     = OCSP_SLEEP,
-				    nextCheck = new Date(Date.now() + this._options.ocsp_interval),
-				    query     = {
-					    ocspStatus: {$ne: OcspStatus.Bad}
-				    };
-
-				if (!force) {
-					query["$and"] = [
-						{
-							$or: [
-								{nextOcspCheck: null},
-								{nextOcspCheck: {$lte: nextCheck}}
-							]
-						}
-					]
-				}
-
-				this._findDocs(CredsCollectionName, query).then(docs => {
-					const store = (require('./BeameStoreV2')).getInstance();
-					let idx     = 0;
-					// noinspection JSUnresolvedFunction
-					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
-						this._findCredential(store, doc.fqdn).then(cred => {
-							idx++;
-							this._doOcspCheck(cred, sleep, callback)
-						}).catch(e => {
-							logger.error(`Update OCSP for ${doc.fqdn} error ${e}`);
-							callback()
-						});
-					}, () => {
-						resolve(`${idx} credentials updated`);
-					});
-
-				}).catch(e => {
-					logger.error(`Find creds for OCSP periodically check error::${BeameLogger.formatError(e)}. Routine not started!!!`);
-
-					resolve(`Unexpected error ${BeameLogger.formatError(e)}`)
-				})
-			}
-		);
-	}
 
 	/**
 	 *
@@ -701,14 +599,13 @@ class StoreCacheServices {
 	 */
 	renewState(force = false) {
 		return new Promise((resolve) => {
-				let nextCheck = new Date(Date.now() + this._options.renewal_interval),
-				    query     = {
+				let query     = {
 					    ocspStatus: {$ne: OcspStatus.Bad},
 					    $and:       [{hasPrivateKey: true, autoRenew: true}]
 				    };
 
 				if (!force) {
-					query["$and"].push({notAfter: {$lte: nextCheck}});
+					query["$and"].push({notAfter: {$lte: new Date(Date.now() + this._options.renewal_interval)}});
 				}
 
 				this._findDocs(CredsCollectionName, query).then(docs => {
