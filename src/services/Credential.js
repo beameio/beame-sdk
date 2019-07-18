@@ -1421,6 +1421,7 @@ class Credential {
 
 							api.runRestfulAPI(apiData, (error, payload) => {
 								cred._saveCerts(error, payload).then(certs => {
+									cred.setRevokedAndSave(false);
 									Credential.saveCredAction(cred, {
 										action: Config.CredAction.Renew,
 										date:   Date.now()
