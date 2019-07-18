@@ -42,23 +42,35 @@ class BeameStoreDataServices {
 
 	constructor(fqdn) {
 		this._certsDir         = config.localCertsDirV2;
-		this.directoryServices = new DirectoryServices();
 		this._fqdn             = fqdn;
 	}
 
+	getAbsoluteDirName() {
+		return path.join(this._certsDir, this._fqdn);
+	}
+
+	getAbsoluteFileName(name) {
+		return path.join(this._certsDir, this._fqdn, name);
+	}
+
 	readObject(name) {
-		let p = path.join(this._certsDir, this._fqdn, name);
-		return DirectoryServices.readObject(p);
+		return DirectoryServices.readObject(this.getAbsoluteFileName(name));
 	}
 
 	writeObject(name, data) {
-		let folderPath = path.join(this._certsDir, this._fqdn);
 		this._createDir();
-		DirectoryServices.saveFile(folderPath, name, data);
+		DirectoryServices.saveFile(this.getAbsoluteFileName(name), data);
 	}
 
 	readMetadataSync() {
-		return DirectoryServices.readMetadataSync(this._certsDir, this._fqdn);
+		const ret = DirectoryServices.readMetadataSync(this._certsDir, this._fqdn);
+
+		// Upgrade from previous file format - start
+		delete ret.revoked;
+		delete ret.path;
+		// Upgrade from previous file format - end
+
+		return ret;
 	}
 
 	writeMetadataSync(metadata) {
@@ -81,15 +93,6 @@ class BeameStoreDataServices {
 		DirectoryServices.deleteFolder(path.join(this._certsDir, this._fqdn), callback);
 	}
 
-	/**
-	 *
-	 * @param {Credential} cred
-	 */
-	setFolder(cred) {
-		if (!_.isEmpty(cred) && cred.hasOwnProperty("metadata")) {
-			cred.metadata.path = path.join(this._certsDir, this._fqdn);
-		}
-	}
 }
 
 

@@ -207,7 +207,7 @@ class Credential {
 	_updateCertData() {
 		//get x509 cert data
 		try {
-			const x509Path = beameUtils.makePath(this.getMetadataKey("path"), Config.CertFileNames.X509);
+			const x509Path = this.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.X509);
 
 			const rs   = require('jsrsasign');
 			const X509 = rs.X509;
@@ -416,7 +416,7 @@ class Credential {
 	 * @ignore
 	 */
 	saveCredentialsObject() {
-		if (!this || !this.metadata || !this.metadata.path) {
+		if (!this || !this.metadata) {
 			return;
 		}
 
@@ -435,22 +435,19 @@ class Credential {
 	 * @ignore
 	 */
 	loadCredentialsObject() {
-		Object.keys(Config.CertFileNames).forEach(keyName => {
+		for(let [keyName, fileName] of Object.entries(Config.CertFileNames)) {
 			try {
-				this[keyName] = this.beameStoreServices.readObject(Config.CertFileNames[keyName]);
-			} catch (e) {
-				//console.log(`exception ${e}`);
+				this[keyName] = this.beameStoreServices.readObject(fileName);
+			} catch(e) {
+				// OK for the file not to be present
 			}
-		});
+		}
 
 		try {
-			let metadata = this.beameStoreServices.readMetadataSync();
-			//noinspection es6modulesdependencies,nodemodulesdependencies
-			_.map(metadata, (value, key) => {
-				this.metadata[key] = value;
-			});
+			Object.assign(this.metadata, this.beameStoreServices.readMetadataSync());
 		} catch (e) {
-			logger.debug("read cert data error " + e.toString());
+			logger.error("Failed to read metadata");
+			logger.error(e);
 		}
 	}
 
@@ -1246,25 +1243,6 @@ class Credential {
 
 	//region certs
 
-	// /**
-	//  *  @ignore
-	//  * @returns {Promise.<String>}
-	//  */
-// createCSR(cred, dirPath) {
-//
-// 	const fqdn       = this.fqdn,
-// 	      pkFileName = Config.CertFileNames.PRIVATE_KEY;
-//
-// 	return new Promise(function (resolve, reject) {
-//
-// 		cred._createInitialKeyPairs(dirPath).then(() => {
-// 			let pkFile = beameUtils.makePath(dirPath, pkFileName);
-// 			openSSlWrapper.createCSR(fqdn, pkFile).then(resolve).catch(reject);
-// 		}).catch(reject);
-//
-// 	});
-// }
-
 	/**
 	 * @ignore
 	 * @param {SignatureToken} authToken
@@ -1387,15 +1365,13 @@ class Credential {
 				}
 
 				function make() {
-					let dirPath = cred.getMetadataKey("path");
-
 					const _renew = () => {
 
-						OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY))).then(signature => {
+						OpenSSLWrapper.getPublicKeySignature(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PRIVATE_KEY)).then(signature => {
 
 							let pubKeys = {
-								pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY)),
-								pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY)),
+								pub:    DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PUBLIC_KEY)),
+								pub_bk: DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PUBLIC_KEY)),
 								signature
 							};
 
@@ -1438,9 +1414,7 @@ class Credential {
 					};
 
 					//check if public key exists (old API)
-					const path = require('path');
-
-					let publicExists = DirectoryServices.doesPathExists(path.join(dirPath, Config.CertFileNames.PUBLIC_KEY));
+					let publicExists = DirectoryServices.doesPathExists(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PUBLIC_KEY));
 
 					if (publicExists) {
 						_renew();
@@ -1451,8 +1425,8 @@ class Credential {
 						async.parallel([
 								cb => {
 									//create public key for existing private
-									let pkFile  = beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY),
-									    pubFile = beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY);
+									let pkFile  = cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PRIVATE_KEY),
+									    pubFile = cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PUBLIC_KEY);
 
 									openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
 										cb();
@@ -1463,10 +1437,10 @@ class Credential {
 								cb => {
 									//create backup key pair
 									openSSlWrapper.createPrivateKey().then(pk =>
-										DirectoryServices.saveFile(dirPath, Config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
+										DirectoryServices.saveFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PRIVATE_KEY), pk, error => {
 											if (!error) {
-												let pkFile  = beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PRIVATE_KEY),
-												    pubFile = beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY);
+												let pkFile  = cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PRIVATE_KEY),
+												    pubFile = cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PUBLIC_KEY);
 												openSSlWrapper.savePublicKey(pkFile, pubFile).then(() => {
 													cb(null);
 												}).catch(error => {
@@ -2062,10 +2036,8 @@ class Credential {
 	}
 
 	static _updateDnsRecords(cred, dnsFqdn, dnsRecord) {
-
-		const path = require('path');
-
-		let meta = DirectoryServices.readJSON(path.join(cred.getMetadataKey("path"), Config.metadataFileName));
+		require('path');
+		let meta = DirectoryServices.readJSON(this.beameStoreServices.getAbsoluteFileName(Config.metadataFileName));
 
 		if (!meta.dnsRecords) {
 			meta.dnsRecords = [];
@@ -2327,11 +2299,11 @@ class Credential {
 						cred._createInitialKeyPairs(dirPath).then(() => {
 							logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.KeysCreated, payload.fqdn);
 
-							OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PRIVATE_KEY))).then(signature => {
+							OpenSSLWrapper.getPublicKeySignature(DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PRIVATE_KEY))).then(signature => {
 
 								let pubKeys = {
-									pub:    DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.PUBLIC_KEY)),
-									pub_bk: DirectoryServices.readFile(beameUtils.makePath(dirPath, Config.CertFileNames.BACKUP_PUBLIC_KEY)),
+									pub:    DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PUBLIC_KEY)),
+									pub_bk: DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PUBLIC_KEY)),
 									signature
 								};
 
@@ -2392,7 +2364,6 @@ class Credential {
 				this.store.getNewCredentials(payload.fqdn, payload.parent_fqdn, sign).then(
 					cred => {
 
-						path = cred.getMetadataKey("path");
 						deleteCredFolder();
 
 						logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
@@ -2433,22 +2404,22 @@ class Credential {
 	/**
 	 *
 	 * @param error
-	 * @param payload
+	 * @param certificates
 	 * @param {String|null} [password]
 	 * @returns {Promise}
 	 * @private
 	 */
-	_saveCerts(error, payload, password) {
+	_saveCerts(error, certificates, password) {
 		let fqdn = this.fqdn;
 
 		return new Promise((resolve, reject) => {
 				if (!error) {
-					let dirPath           = this.getMetadataKey("path"),
-					    directoryServices = this.store.directoryServices;
+					const dirPath = this.beameStoreServices.getAbsoluteDirName();
+					const directoryServices = this.store.directoryServices;
 
 					logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.ReceivedCerts, fqdn);
 
-					directoryServices.saveCerts(dirPath, payload).then(() => {
+					directoryServices.saveCerts(dirPath, certificates).then(() => {
 
 						//noinspection JSUnresolvedFunction
 						async.parallel(
@@ -2685,8 +2656,7 @@ class Credential {
 		const status = await this.checkOcspStatus(this, forceCheck);
 		return status === Config.OcspStatus.Bad;
 	}
-
-//endregion
+	//endregion
 }
 
 Credential.CertificateValidityError = CertificateValidityError;

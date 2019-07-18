@@ -417,7 +417,7 @@ class BeameStoreV2 {
 
 				if (cred) {
 					//refresh metadata info
-					cred.metadata = cred.beameStoreServices.readMetadataSync(cred.metadata.path);
+					cred.metadata = cred.beameStoreServices.readMetadataSync();
 					_onCredFound(cred);
 				} else {
 					if (!allowRemote) {

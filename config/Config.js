@@ -227,7 +227,6 @@ const MetadataProperties = {
 	NAME:          "name",
 	PARENT_FQDN:   "parent_fqdn",
 	APPROVER_FQDN: "approved_by_fqdn",
-	PATH:          "path",
 	DNS:           "dnsRecords",
 	REVOKED:       "revoked",
 	ACTIONS:       "actions",
