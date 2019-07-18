@@ -2689,6 +2689,7 @@ class Credential {
 		return false;
 	}
 
+	// TODO: Ric - Fix logic, it seems broken
 	get expired() {
 		try {
 			return CommonUtils.isObjectEmpty(this.certData) ? true : new Date(this.certData.validity.end) < new Date();
