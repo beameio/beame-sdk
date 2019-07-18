@@ -49,7 +49,7 @@ list.toText = (creds) => {
 	const _setStyle = (value, cred) => {
 		let val = value || '';
 		// noinspection JSUnresolvedFunction
-		return cred.expired === true || cred.ocspStatus == Config.OcspStatus.Bad ? colors.red(val) : val;
+		return cred.expired === true || cred.ocspStatus == Config.OcspStatus.Revoked ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {

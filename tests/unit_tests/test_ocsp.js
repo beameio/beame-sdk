@@ -93,18 +93,13 @@ describe('ocsp', function () {
 		});
 
 		it(run.desc + 'with Bad verify = revoked cred', async () => {
-			await runOcspWithMockStatus(run,config.OcspStatus.Bad);
-			assert(cred.metadata.revoked);
-		});
-
-		it(run.desc + 'with Unknown verify != revoked cred', async () => {
-			await runOcspWithMockStatus(run,config.OcspStatus.Unknown);
-			assert(!cred.metadata.revoked);
+			await runOcspWithMockStatus(run,config.OcspStatus.Revoked);
+			assert(cred.revoked);
 		});
 
 		it(run.desc + 'with Unavailable verify != revoked cred', async () => {
 			await runOcspWithMockStatus(run,config.OcspStatus.Unavailable);
-			assert(!cred.metadata.revoked);
+			assert(!cred.revoked);
 		});
 	});
 });
@@ -125,14 +120,14 @@ describe('ocspUtils', function() {
 
 	it('_parseOcspResponse - revoked', async () => {
 		const res = ocspUtils._parseOcspResponse({type: 'revoked'});
-		assert.equal(res, config.OcspStatus.Bad);
+		assert.equal(res, config.OcspStatus.Revoked);
 	});
 
 	it('_parseOcspResponse - wrong input combinations', async () => {
 		let res = ocspUtils._parseOcspResponse({type: 'bad'}); // not an official response type
-		assert.equal(res, config.OcspStatus.Unknown);
+		assert.equal(res, config.OcspStatus.Unavailable);
 
-		res = ocspUtils._parseOcspResponse({type23: 'good'});
+		res = ocspUtils._parseOcspResponse({type23: 'good'}); // not an official response type
 		assert.equal(res, config.OcspStatus.Unavailable);
 
 		res = ocspUtils._parseOcspResponse({});
@@ -280,7 +275,7 @@ describe('ocspUtils', function() {
 			const creds = await fetchCredChainPromise(cred.fqdn, cred_options);
 
 			for (let i = 0; i < creds.length; i++) {
-				if (creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked) {
+				if (creds[i].hasPrivateKey && !creds[i].expired && !creds[i].revoked) {
 					signerCred = creds[i];
 					break;
 				}

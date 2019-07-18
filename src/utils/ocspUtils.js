@@ -14,10 +14,10 @@ class ocspUtils {
 
 		// ocsp library types are 'good' and 'revoked'
 		if(res.type === 'good') return OcspStatus.Good;
-		if(res.type === 'revoked') return OcspStatus.Bad;
+		if(res.type === 'revoked') return OcspStatus.Revoked;
 
 		logger.error(`Unknown response type from ocsp library: ${res.type}`);
-		return OcspStatus.Unknown;
+		return OcspStatus.Unavailable;
 	}
 
 	static generateOcspRequest(fqdn, x509, pemPath) {
