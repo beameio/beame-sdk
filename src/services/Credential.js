@@ -127,7 +127,13 @@ class Credential {
 		this.fqdn = null;
 
 		/** @member {MetadataObject} */
-		this.metadata = {};
+		this.metadata = {
+			ocspStatus: {
+				fingerprint: 'UNKNOWN',
+				status: Config.OcspStatus.Unavailable
+			},
+			actions: []
+		};
 
 		/** @member {Array.<Credential>} */
 		this.children = [];
@@ -181,10 +187,9 @@ class Credential {
 		//noinspection JSUnresolvedVariable
 		this.fqdn = fqdn;
 
+		this.mergeMetadata(metadata);
 		/** @member {BeameStoreDataServices} */
-		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store, this.parseMetadata(metadata));
-		this.parseMetadata(metadata);
-		this.beameStoreServices.setFolder(this);
+		this.beameStoreServices = new BeameStoreDataServices(this.fqdn);
 		this.initCryptoKeys();
 
 	}
@@ -196,7 +201,7 @@ class Credential {
 	initFromData(fqdn) {
 		//noinspection JSUnresolvedVariable
 		this.fqdn               = fqdn;
-		this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
+		this.beameStoreServices = new BeameStoreDataServices(this.fqdn);
 		this.loadCredentialsObject();
 		this.initCryptoKeys();
 
@@ -295,7 +300,7 @@ class Credential {
 				this.certData = err ? null : certData;
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = this.extractCommonName();
-				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
+				this.beameStoreServices = new BeameStoreDataServices(this.fqdn);
 				this._updateCertData();
 			});
 
@@ -324,37 +329,27 @@ class Credential {
 	initFromX509(x509, metadata) {
 		pem.config({sync: true});
 		pem.readCertificateInfo(x509, (err, certData) => {
-			if (!err) {
-				this.certData = certData;
-				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this.store);
-				this.metadata.fqdn      = certData.commonName;
-				//noinspection JSUnresolvedVariable
-				this.fqdn               = certData.commonName;
-				this.beameStoreServices.writeObject(Config.CertFileNames.X509, x509);
-				this._updateCertData();
-			}
-			else {
-				throw Error(err);
-			}
+			assert(!err, err);
+			this.certData = certData;
+			this.beameStoreServices = new BeameStoreDataServices(certData.commonName);
+			this.metadata.fqdn = certData.commonName;
+			this.fqdn = certData.commonName;
+			this.beameStoreServices.writeObject(Config.CertFileNames.X509, x509);
+			this._updateCertData();
 
 		});
 		pem.getPublicKey(x509, (err, publicKey) => {
-			if (!err) {
-				this.publicKeyStr     = publicKey.publicKey;
-				this.publicKeyNodeRsa = new NodeRsa();
-				try {
-					this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
-				} catch (e) {
-					console.log(`Error could not import ${this.publicKeyStr}`);
-				}
-			}
-			else {
-				throw Error(err);
+			assert(!err, err);
+			this.publicKeyStr = publicKey.publicKey;
+			this.publicKeyNodeRsa = new NodeRsa();
+			try {
+				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
+			} catch(e) {
+				console.log(`Error could not import ${this.publicKeyStr}`);
 			}
 
 		});
-		this.parseMetadata(metadata);
-		this.beameStoreServices.setFolder(this);
+		this.mergeMetadata(metadata);
 		this.save();
 		pem.config({sync: false});
 	}
@@ -385,17 +380,15 @@ class Credential {
 		}
 
 		for (let key in Config.MetadataProperties) {
-			//noinspection JSUnfilteredForInLoop
 			let value = Config.MetadataProperties[key];
 			if (importCred.metadata.hasOwnProperty(value)) {
 				this.metadata[value] = importCred.metadata[value];
 			}
 		}
 		this.initCryptoKeys();
-		this.beameStoreServices.setFolder(this);
 	}
 
-//endregion
+	//endregion
 
 	//region Save/load services
 	/**
@@ -450,12 +443,8 @@ class Credential {
 	//endregion
 
 	//region GET and common helpers
-	parseMetadata(metadata) {
-		if (!_.isEmpty(metadata)) {
-			_.map(metadata, (value, key) => {
-				this.metadata[key] = value;
-			});
-		}
+	mergeMetadata(metadata) {
+		Object.assign(this.metadata, metadata);
 	}
 
 //noinspection JSUnusedGlobalSymbols
@@ -2479,14 +2468,13 @@ class Credential {
 		this.beameStoreServices.writeMetadataSync(this.metadata);
 	}
 
-//endregion
+	//endregion
 
 	//region Auth events
 	saveAuthEvent(signerFqdn, payload){
 		return new Promise((resolve, reject) => {
 				this.store.find(signerFqdn).then(cred=>{
-					const AuthToken = require('./AuthToken');
-					let authToken = AuthToken.create(payload, cred);
+					let authToken = require('./AuthToken').create(payload, cred);
 					let api          = new ProvisionApi();
 
 					let apiData  = ProvisionApi.getApiData(apiEntityActions.SaveAuthEvent.endpoint, {});
