@@ -46,11 +46,9 @@ describe('ocsp', function () {
 
 		const credential = require("../../src/services/Credential");
 		const ocspUtils = require("../../src/utils/ocspUtils");
-		const storeCacheServices = (require('../../src/services/StoreCacheServices')).getInstance();
 
 		const mockSaveCredsAction = simple.mock(credential, "saveCredAction").returnWith();
 		const mockWriteMetadata = simple.mock(cred.beameStoreServices, "writeMetadataSync").returnWith();
-		const mockSetOcspStatus = simple.mock(storeCacheServices, "setOcspStatus").resolveWith(set_status);
 		const mockOcspUtils = simple.mock(ocspUtils, run.function_name).resolveWith(set_status);
 
 		const result = await cred.checkOcspStatus(cred, true);
@@ -59,7 +57,6 @@ describe('ocsp', function () {
 		assert(result);
 		assert.equal(result, set_status);
 		assert.equal(mockSaveCredsAction.callCount, 1);
-		assert.equal(mockSetOcspStatus.callCount, 1);
 		assert.equal(mockWriteMetadata.callCount, 1);
 		assert.equal(mockOcspUtils.callCount, 1);
 	}

@@ -14,7 +14,6 @@ const logger            = new BeameLogger("StoreCacheServices");
  * @typedef {Object} SCSOptions
  * @property {String|undefined} [scs_path]
  * @property {Number|undefined} [cache_period]
- * @property {Number|undefined} [ocsp_interval]
  * @property {Number|undefined} [renewal_interval]
  **/
 
@@ -502,54 +501,6 @@ class StoreCacheServices {
 		return this._findDoc(CredsCollectionName, {sha256Fingerprint});
 	}
 
-	setOcspStatus(sha256Fingerprint, status) {
-
-		return new Promise((resolve) => {
-				try {
-					let query  = {sha256Fingerprint},
-					    update = {
-						    $set: {
-							    ocspStatus:    status,
-							    lastOcspCheck: new Date()
-						    }
-					    };
-
-					switch (status) {
-						case OcspStatus.Revoked:
-							update.$set["revoked"]       = true;
-							update.$set["nextOcspCheck"] = null;
-							break;
-						case OcspStatus.Good:
-							update.$set["revoked"]       = false;
-							update.$set["nextOcspCheck"] = new Date(Date.now() + (this._options.cache_period - this._options.ocsp_interval));
-							break;
-						default:
-							break;
-					}
-
-
-					this._updateDoc(CredsCollectionName, query, update)
-						.then(resolve)
-						.catch(e => {
-							logger.error(`Update ocsp status for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
-							resolve();
-						});
-				} catch (e) {
-					logger.error(`Set ocsp status for ${sha256Fingerprint} error ${BeameLogger.formatError(e)}`);
-					resolve()
-				}
-			}
-		);
-	}
-
-	async getOcspStatus(sha256Fingerprint) {
-		const doc = await this.get(sha256Fingerprint);
-		if(!doc) {
-			return OcspStatus.Unavailable;
-		}
-		return doc.ocspStatus;
-	}
-
 	setLastLogin(sha256Fingerprint, date) {
 
 		return new Promise((resolve) => {
@@ -645,7 +596,6 @@ module.exports = {
 		let _default_options = {
 			scs_path:         Config.scsDir,
 			cache_period:     Config.ocspCachePeriod,
-			ocsp_interval:    Config.ocspCheckInterval,
 			renewal_interval: Config.renewalCheckInterval
 		};
 

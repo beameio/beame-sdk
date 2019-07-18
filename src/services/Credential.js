@@ -85,7 +85,7 @@ const util                   = require('util');
 const dns                    = require('dns');
 const assert                 = require("assert");
 const debug_dns              = require('debug')(Config.debugPrefix + 'dns');
-const debug_ocsp              = require('debug')(Config.debugPrefix + 'ocsp');
+const debug_ocsp             = require('debug')(Config.debugPrefix + 'ocsp');
 
 const nop = function () {
 };
@@ -130,7 +130,8 @@ class Credential {
 		this.metadata = {
 			ocspStatus: {
 				fingerprint: 'UNKNOWN',
-				status: Config.OcspStatus.Unavailable
+				status: Config.OcspStatus.Unavailable,
+				date: 0
 			},
 			actions: []
 		};
@@ -1298,20 +1299,9 @@ class Credential {
 					}
 
 					let revokedCred = this.store.getCredential(revokeFqdn);
-					const revokedSha256Fingerprint = revokedCred.certData.fingerprints.sha256;
-
 					if (revokedCred && revokedCred.hasKey("X509")) {
 						revokedCred.setRevokedAndSave(true);
 					}
-
-					Credential.saveCredAction(revokedCred, {
-						action: Config.CredAction.Revoke,
-						date:   Date.now()
-					});
-
-					storeCacheServices.saveRevocation(revokedSha256Fingerprint).then(()=>{
-						resolve({message: `${revokedSha256Fingerprint} (${revokeFqdn}) Certificate has been revoked successfully`});
-					});
 				};
 
 				api.runRestfulAPI(apiData, _onApiResponse, 'POST', authToken);
@@ -1577,12 +1567,11 @@ class Credential {
 		});
 	}
 
-	// TODO: RIC - check logic here
+	/**
+	 * @deprecated
+	 */
 	async updateOcspStatus() {
-		if (!this.revoked) {
-			const status = await this.checkOcspStatus(this);
-			this.setOcspStatusAndSave(status);
-		}
+		await this.checkOcspStatus(this);
 		return this;
 	}
 
@@ -1606,7 +1595,7 @@ class Credential {
 		assert(cred.hasKey("X509"), 'No certificate');
 
 		if (!forceCheck) {
-			const result = await storeCacheServices.getOcspStatus(cred.certData.fingerprints.sha256);
+			const result = cred.cachedOcspStatus;
 			if(result !== Config.OcspStatus.Unavailable) {
 				return result;
 			}
@@ -1648,7 +1637,6 @@ class Credential {
 			}
 
 			status = await ocspUtils.verify(cred.fqdn, req, response.body);
-			await storeCacheServices.setOcspStatus(cred.certData.fingerprints.sha256, status);
 		}
 		else {
 			status = await this.doOcspRequest(cred);
@@ -1675,7 +1663,6 @@ class Credential {
 		try {
 			const issuerPemPath = await this._assertIssuerCert(cred);
 			const status = await ocspUtils.check(cred.fqdn, cred.getKey("X509"), issuerPemPath);
-			await storeCacheServices.setOcspStatus(cred.certData.fingerprints.sha256, status);
 			return status;
 		}
 		catch (e) {
@@ -2660,6 +2647,25 @@ class Credential {
 
 	get hasPrivateKey() {
 		return this.hasKey("PRIVATE_KEY");
+	}
+
+	/**
+	 * Gets the cachedOcspStatus.
+	 * If is revoked, returns {OcspStatus.Revoked}
+	 * If it doesn't exist, is not for the cert fingerprint or it requires rechecking, returns {OcspStatus.Unavailable}
+	 * @returns {OcspStatus}
+	 */
+	get cachedOcspStatus() {
+		if(this.revoked) {
+			return Config.OcspStatus.Revoked;
+		}
+
+		if( this.metadata.ocspStatus.fingerprint !== this.certData.fingerprints.sha256
+			|| new Date(this.metadata.ocspStatus.date + Config.ocspCachePeriod) < Date.now()) {
+			return Config.OcspStatus.Unavailable;
+		}
+
+		return this.metadata.ocspStatus.status;
 	}
 
 	// TODO: RIC - rename or remove

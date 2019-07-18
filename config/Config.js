@@ -137,8 +137,6 @@ const defaultDays2Log = 7;
 
 const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30;
 
-const ocspCheckInterval = process.env.BEAME_OCSP_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
-
 const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
 
 const credentialMetadataActionsLimit = 20;
@@ -405,7 +403,6 @@ module.exports = {
 	MetadataProperties,
 	npmRootDir,
 	ocspCachePeriod,
-	ocspCheckInterval,
 	OcspStatus,
 	PinAtomPKbyDefault,
 	RegistrationSource,
