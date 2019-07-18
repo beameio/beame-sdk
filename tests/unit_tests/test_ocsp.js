@@ -24,11 +24,6 @@ describe('ocsp', function () {
 	this.timeout(100000);
 	let cred;
 
-	before(async () => {
-		const instance = require('../../src/services/StoreCacheServices').getInstance();
-		await instance.load();
-	});
-
 	beforeEach(() => {
 		process.env.BEAME_OCSP_IGNORE = "";
 		cred = store.getCredential(local_fqdn);
