@@ -123,7 +123,7 @@ class StoreCacheServices {
 		let _setInterval = f => {
 			this._renewal_timeout = setTimeout(f, this._options.renewal_interval);
 		}, _runRoutine   = () => {
-			this.renewState().then(() => {
+			this.renewCredentials().then(() => {
 				logger.info(`Renewal completed. Schedule next`);
 				_setInterval(_runRoutine);
 			}).catch(_setInterval.bind(this, _runRoutine));
@@ -597,7 +597,7 @@ class StoreCacheServices {
 	 * @param {Boolean|undefined} [force] => force update all
 	 * @returns {Promise}
 	 */
-	renewState(force = false) {
+	renewCredentials(force = false) {
 		return new Promise((resolve) => {
 				let query     = {
 					    ocspStatus: {$ne: OcspStatus.Bad},
@@ -610,7 +610,6 @@ class StoreCacheServices {
 
 				this._findDocs(CredsCollectionName, query).then(docs => {
 					let idx = 0, updated = 0;
-					// noinspection JSUnresolvedFunction
 					async.eachLimit(docs, ASYNC_EACH_LIMIT, (doc, callback) => {
 						idx++;
 						setTimeout(() => {

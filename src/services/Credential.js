@@ -2497,6 +2497,7 @@ class Credential {
 		}
 
 		cred.metadata.actions.push(action);
+		cred.metadata.actions = cred.metadata.actions.slice(-Config.credentialMetadataActionsLimit);
 
 		cred.save();
 	}

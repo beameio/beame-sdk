@@ -70,7 +70,7 @@ updateOcsp.toText = x => x;
 
 function renewAll(force, callback) {
 	_initScs().then(scs => {
-		CommonUtils.promise2callback(scs.renewState(!!(force && force === "true")), callback);
+		CommonUtils.promise2callback(scs.renewCredentials(!!(force && force === "true")), callback);
 	});
 }
 renewAll.toText = x => x;
