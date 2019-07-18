@@ -72,12 +72,12 @@ class AuthToken {
 				return null;
 			}
 
-			if (signingCreds.metadata.revoked) {
+			if (signingCreds.revoked) {
 				logger.error(`signingCreds ${signingCreds.fqdn} revoked`);
 				return null;
 			}
 
-			if(!signingCreds.hasKey("PRIVATE_KEY")){
+			if(!signingCreds.hasPrivateKey){
 				logger.warn(`signingCreds ${signingCreds.fqdn} must have private key`);
 				return null;
 			}
@@ -109,7 +109,7 @@ class AuthToken {
 				CommonUtils.validateMachineClock()
 					.then(signingCreds.checkOcspStatus.bind(signingCreds, signingCreds))
 					.then(status => {
-						status != OcspStatus.Bad ? resolve(AuthToken.create(data, signingCreds, ttl)) : reject(`OCSP status of ${signingCreds.fqdn} is Bad`)
+						status != OcspStatus.Revoked ? resolve(AuthToken.create(data, signingCreds, ttl)) : reject(`OCSP status of ${signingCreds.fqdn} is Revoked`)
 					}).catch(reject);
 			}
 		);
@@ -167,8 +167,8 @@ class AuthToken {
 				signerCreds.checkOcspStatus(signerCreds)
 					.then(status => {
 
-						if (status === OcspStatus.Bad) {
-							return _reject(`OCSP status is Bad`);
+						if (status === OcspStatus.Revoked) {
+							return _reject(`OCSP status is Revoked`);
 						}
 
 						const signatureStatus = signerCreds.checkSignature(authToken);

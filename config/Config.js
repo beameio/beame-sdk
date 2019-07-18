@@ -367,9 +367,8 @@ const CDREvents = {
  */
 const OcspStatus = {
 	"Good":        "Good",
-	"Bad":         "Bad",
-	"Unavailable": "Unavailable",
-	"Unknown":     "Unknown"
+	"Revoked":     "Revoked", // revoked state from admin (sns revoked message) or from the ocsp call
+	"Unavailable": "Unavailable"
 };
 
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;

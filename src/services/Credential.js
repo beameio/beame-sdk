@@ -132,8 +132,6 @@ class Credential {
 		/** @member {Array.<Credential>} */
 		this.children = [];
 
-		this.expired = false;
-
 		// cert files
 		/** @member {Buffer}*/
 		this.PRIVATE_KEY = null;
@@ -295,7 +293,6 @@ class Credential {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
 				}
 				this.certData = err ? null : certData;
-				this.setExpirationStatus();
 				//noinspection JSUnresolvedVariable
 				this.fqdn               = this.extractCommonName();
 				this.beameStoreServices = new BeameStoreDataServices(this.fqdn, this.store);
@@ -313,7 +310,7 @@ class Credential {
 			});
 			pem.config({sync: false});
 		}
-		if (this.hasKey("PRIVATE_KEY")) {
+		if (this.hasPrivateKey) {
 			this.privateKeyNodeRsa = new NodeRsa();
 			this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
 		}
@@ -329,7 +326,6 @@ class Credential {
 		pem.readCertificateInfo(x509, (err, certData) => {
 			if (!err) {
 				this.certData = certData;
-				this.setExpirationStatus();
 				this.beameStoreServices = new BeameStoreDataServices(certData.commonName, this.store);
 				this.metadata.fqdn      = certData.commonName;
 				//noinspection JSUnresolvedVariable
@@ -512,15 +508,6 @@ class Credential {
 		return CommonUtils.isObjectEmpty(this.certData) ? null : this.certData.commonName;
 	}
 
-	setExpirationStatus() {
-		try {
-			//noinspection JSUnresolvedVariable
-			this.expired = CommonUtils.isObjectEmpty(this.certData) ? true : new Date(this.certData.validity.end) < new Date();
-		} catch (e) {
-			logger.error(`set expiration status error ${e}`, this.certData)
-		}
-	}
-
 	getPublicKeyNodeRsa() {
 		return this.publicKeyNodeRsa;
 	}
@@ -563,7 +550,7 @@ class Credential {
 				signature:  ""
 			};
 
-			if (this.hasKey("PRIVATE_KEY")) {
+			if (this.hasPrivateKey) {
 				message.signedBy = this.fqdn;
 			}
 			//noinspection ES6ModulesDependencies,NodeModulesDependencies,JSCheckFunctionSignatures
@@ -616,7 +603,7 @@ class Credential {
 					return;
 				}
 
-				if (!signCred.hasKey("PRIVATE_KEY")) {
+				if (!signCred.hasPrivateKey) {
 					reject(`Credential ${signWithFqdn} hasn't private key for signing`);
 					return;
 				}
@@ -687,7 +674,7 @@ class Credential {
 	 * @returns {EncryptedMessage}
 	 */
 	decryptWithRSA(data) {
-		if (!this.hasKey("PRIVATE_KEY")) {
+		if (!this.hasPrivateKey) {
 			throw new Error(`private key for ${this.fqdn} not found`);
 		}
 		let rsaKey = this.getPrivateKeyNodeRsa();
@@ -1212,7 +1199,7 @@ class Credential {
 					return;
 				}
 
-				if (!cred.expired && cred.hasKey("PRIVATE_KEY")) {
+				if (!cred.expired && cred.hasPrivateKey) {
 					AuthToken.createAsync(data2Sign || {fqdn}, cred, ttl).then(resolve).catch(reject);
 				}
 				else {
@@ -1381,7 +1368,7 @@ class Credential {
 					return;
 				}
 
-				if (!cred.hasKey("PRIVATE_KEY")) {
+				if (!cred.hasPrivateKey) {
 					reject(`Private key not found for ${fqdn}`);
 					return;
 				}
@@ -1510,7 +1497,7 @@ class Credential {
 						if (!err) {
 							let signerCred = null;
 							for (let i = 0; i < creds.length; i++) {
-								if (creds[i].hasKey('PRIVATE_KEY') && !creds[i].expired && !creds[i].metadata.revoked) {
+								if (creds[i].hasPrivateKey && !creds[i].expired && !creds[i].revoked) {
 									if (creds[i].certData.notAfter) {
 										signerCred = creds[i];
 										break;
@@ -1597,14 +1584,41 @@ class Credential {
 	 * @param {boolean} isRevoked
 	 */
 	setRevokedAndSave(isRevoked) {
-		this.metadata.revoked = isRevoked;
-		this.save();
+		if(isRevoked) {
+			this.metadata.ocspStatus = {
+				fingerprint: this.certData.fingerprints.sha256,
+				status: Config.OcspStatus.Revoked,
+				date:   Date.now()
+			};
+			this.save();
+			Credential.saveCredAction(this, {
+				action: Config.CredAction.Revoke,
+				date:   Date.now()
+			});
+		}
 	}
 
+	/**
+	 * @param {OcspStatus} status
+	 */
+	setOcspStatusAndSave(status) {
+		this.metadata.ocspStatus = {
+			fingerprint: this.certData.fingerprints.sha256,
+			status: status,
+			date:   Date.now()
+		};
+		this.save();
+		Credential.saveCredAction(this, {
+			action: Config.CredAction.OcspUpdate,
+			date:   Date.now()
+		});
+	}
+
+	// TODO: RIC - check logic here
 	async updateOcspStatus() {
-		if (!this.hasMetadataKey("revoked")) {
+		if (!this.revoked) {
 			const status = await this.checkOcspStatus(this);
-			this.setRevokedAndSave(status === Config.OcspStatus.Bad);
+			this.setOcspStatusAndSave(status);
 		}
 		return this;
 	}
@@ -1630,7 +1644,7 @@ class Credential {
 
 		if (!forceCheck) {
 			const result = await storeCacheServices.getOcspStatus(cred.certData.fingerprints.sha256);
-			if(result !== Config.OcspStatus.Unknown) {
+			if(result !== Config.OcspStatus.Unavailable) {
 				return result;
 			}
 		}
@@ -1677,20 +1691,7 @@ class Credential {
 			status = await this.doOcspRequest(cred);
 		}
 
-		cred.metadata.ocspStatus = {
-			status: status,
-			date:   Date.now()
-		};
-
-		cred.metadata.revoked = status === Config.OcspStatus.Bad;
-
-		cred.save();
-
-		Credential.saveCredAction(cred, {
-			action: Config.CredAction.OcspUpdate,
-			date:   Date.now()
-		});
-
+		cred.setOcspStatusAndSave(status);
 		return status;
 	}
 
@@ -1702,7 +1703,7 @@ class Credential {
 			allowApprovers: true
 		});
 
-		const ret = credsChain.find(c => c.hasKey('PRIVATE_KEY') && !c.expired && !c.metadata.revoked);
+		const ret = credsChain.find(c => c.hasPrivateKey && !c.expired && !c.revoked);
 		assert(ret, `Failed to find valid signer cred for ${this.fqdn}`);
 		return ret;
 	}
@@ -2624,7 +2625,7 @@ class Credential {
 		parents.push({
 			fqdn:          parent_fqdn,
 			name:          parent.getMetadataKey(Config.MetadataProperties.NAME),
-			hasPrivateKey: parent.hasKey("PRIVATE_KEY"),
+			hasPrivateKey: parent.hasPrivateKey,
 			level:         hasLevel ? parseInt(lvl) : null,
 			expired:       parent.expired
 		});
@@ -2681,9 +2682,30 @@ class Credential {
 
 	}
 
+	get revoked() {
+		if(this.metadata.ocspStatus.fingerprint === this.certData.fingerprints.sha256) {
+			return this.metadata.ocspStatus.status === Config.OcspStatus.Revoked;
+		}
+		return false;
+	}
+
+	get expired() {
+		try {
+			return CommonUtils.isObjectEmpty(this.certData) ? true : new Date(this.certData.validity.end) < new Date();
+		} catch (e) {
+			logger.error(`set expiration status error ${e}`, this.certData)
+			return false;
+		}
+	}
+
+	get hasPrivateKey() {
+		return this.hasKey("PRIVATE_KEY");
+	}
+
+	// TODO: RIC - rename or remove
 	async isRevoked(forceCheck=false) {
 		const status = await this.checkOcspStatus(this, forceCheck);
-		return status === Config.OcspStatus.Bad;
+		return status === Config.OcspStatus.Revoked;
 	}
 
 //endregion

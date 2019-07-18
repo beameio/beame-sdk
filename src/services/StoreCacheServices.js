@@ -403,13 +403,12 @@ class StoreCacheServices {
 		const insertCred = async () => {
 			if (!cred.hasKey("X509")) return;
 
-			let ocspStatus    = status || Config.OcspStatus.Unknown,
+			let ocspStatus    = status || Config.OcspStatus.Unavailable,
 				lastOcspCheck = null,
-				validity      = cred.certData.validity || {start: null, end: null},
-				revoked       = !!cred.metadata.revoked;
+				validity      = cred.certData.validity || {start: null, end: null};
 
 			if (cred.metadata.ocspStatus) {
-				ocspStatus    = revoked ? Config.OcspStatus.Bad : Config.OcspStatus.Good;
+				ocspStatus    = cred.revoked ? Config.OcspStatus.Revoked : Config.OcspStatus.Good;
 				lastOcspCheck = CommonUtils.tryParseDate(cred.metadata.ocspStatus.date);
 			}
 
@@ -418,8 +417,7 @@ class StoreCacheServices {
 				fqdn:          cred.fqdn,
 				notBefore:     CommonUtils.tryParseDate(validity.start),
 				notAfter:      CommonUtils.tryParseDate(validity.end),
-				hasPrivateKey: cred.hasKey("PRIVATE_KEY"),
-				revoked:       revoked,
+				hasPrivateKey: cred.hasPrivateKey,
 				expired:       cred.expired,
 				lastOcspCheck: lastOcspCheck,
 				nextOcspCheck: null,
@@ -476,7 +474,7 @@ class StoreCacheServices {
 					    update = {
 						    $set: {
 							    revoked:       true,
-							    ocspStatus:    Config.OcspStatus.Bad,
+							    ocspStatus:    Config.OcspStatus.Revoked,
 							    nextOcspCheck: null
 						    }
 					    };
@@ -517,7 +515,7 @@ class StoreCacheServices {
 					    };
 
 					switch (status) {
-						case OcspStatus.Bad:
+						case OcspStatus.Revoked:
 							update.$set["revoked"]       = true;
 							update.$set["nextOcspCheck"] = null;
 							break;
@@ -547,7 +545,7 @@ class StoreCacheServices {
 	async getOcspStatus(sha256Fingerprint) {
 		const doc = await this.get(sha256Fingerprint);
 		if(!doc) {
-			return OcspStatus.Unknown;
+			return OcspStatus.Unavailable;
 		}
 		return doc.ocspStatus;
 	}
@@ -600,7 +598,7 @@ class StoreCacheServices {
 	renewCredentials(force = false) {
 		return new Promise((resolve) => {
 				let query     = {
-					    ocspStatus: {$ne: OcspStatus.Bad},
+					    ocspStatus: {$ne: OcspStatus.Revoked},
 					    $and:       [{hasPrivateKey: true, autoRenew: true}]
 				    };
 

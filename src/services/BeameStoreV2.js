@@ -385,7 +385,7 @@ class BeameStoreV2 {
 				};
 
 				const _onValidationError = (credential, certError) => {
-					if (certError.errorCode === CertValidationError.Expired && !credential.hasKey("PRIVATE_KEY")) {
+					if (certError.errorCode === CertValidationError.Expired && !credential.hasPrivateKey) {
 						_renewCred();
 					}
 					else {
@@ -549,11 +549,11 @@ class BeameStoreV2 {
 
 				// noinspection JSUnresolvedVariable
 				if (options.excludeValid) {
-					return (cred.metadata.revoked == true);
+					return cred.revoked;
 				}
 
 				// noinspection JSUnresolvedVariable
-				if (options.excludeRevoked && cred.metadata.revoked) {
+				if (options.excludeRevoked && cred.revoked) {
 					return false;
 				}
 
@@ -573,11 +573,11 @@ class BeameStoreV2 {
 				}
 
 				//noinspection RedundantIfStatementJS,JSUnresolvedVariable
-				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
+				if (options.hasPrivateKey == true && !cred.hasPrivateKey) {
 					return false;
 				}
 				else { //noinspection JSUnresolvedVariable
-					if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
+					if (options.hasPrivateKey == false && cred.hasPrivateKey) {
 						return false;
 					}
 				}

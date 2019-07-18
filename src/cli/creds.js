@@ -354,7 +354,7 @@ function checkOcsp(fqdn, forceCheck, callback) {
 }
 
 checkOcsp.toText = x => {
-	return x !== config.OcspStatus.Bad ? `Certificate is valid` : 'Certificate is revoked';
+	return x !== config.OcspStatus.Revoked ? `Certificate is valid` : 'Certificate is revoked';
 };
 
 /**
@@ -445,12 +445,12 @@ list.toText = function (creds) {
 	const _setStyle = (value, cred) => {
 		let val = value || '';
 		// noinspection JSUnresolvedFunction
-		return cred.expired === true || cred.metadata.revoked ? colors.red(val) : val;
+		return cred.expired === true || cred.revoked ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
 
-		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item), _setStyle(!!(item.metadata.revoked) ? 'Bad' : 'Good', item)]);
+		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item), _setStyle(item.revoked ? 'Revoked' : 'Good', item)]);
 	});
 	return table;
 };
@@ -581,9 +581,7 @@ function getFqdnListByFilter(filter, regex, hasPrivateKey) {
 	let tmpList  = _listCreds(regex || '.', options);
 	let credList = [];
 	for (let j = 0; j < tmpList.length; j++) {
-		// if(tmpList[j].hasKey('PRIVATE_KEY'))
-		// 	console.log(j,': ',tmpList[j].fqdn,' revoked => ',tmpList[j].metadata.revoked, ',expired => ', tmpList[j].expired);
-		if (hasPrivateKey && tmpList[j].hasKey('PRIVATE_KEY') || !hasPrivateKey)
+		if (hasPrivateKey && tmpList[j].hasPrivateKey || !hasPrivateKey)
 			tmpList[j].fqdn && credList.push(tmpList[j].fqdn);
 	}
 	return credList;
