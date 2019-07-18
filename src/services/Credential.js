@@ -316,7 +316,7 @@ class Credential {
 		}
 		if (this.hasPrivateKey) {
 			this.privateKeyNodeRsa = new NodeRsa();
-			this.privateKeyNodeRsa.importKey(this.getKey("PRIVATE_KEY") + " ", "private");
+			this.privateKeyNodeRsa.importKey(this.getPrivateKey + " ", "private");
 		}
 	}
 
@@ -488,6 +488,17 @@ class Credential {
 		return this.hasKey(key) ? (this[key] || this[key.toLowerCase()]) : null;
 	}
 
+	get hasPrivateKey() {
+		return this.hasKey("PRIVATE_KEY");
+	}
+
+	get getPrivateKey() {
+		return this.getKey("PRIVATE_KEY");
+	}
+
+	get getP7B() {
+		return this.getKey("P7B");
+	}
 //noinspection JSUnusedGlobalSymbols
 	extractCommonName() {
 		return CommonUtils.isObjectEmpty(this.certData) ? null : this.certData.commonName;
@@ -746,7 +757,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+				api.setClientCerts(parentCred.getPrivateKey, parentCred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -794,7 +805,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+				api.setClientCerts(parentCred.getPrivateKey, parentCred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -847,7 +858,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+				api.setClientCerts(parentCred.getPrivateKey, parentCred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -908,7 +919,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.getKey("PRIVATE_KEY"), parentCred.getKey("P7B"));
+				api.setClientCerts(parentCred.getPrivateKey, parentCred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -1284,7 +1295,7 @@ class Credential {
 						reject(`Signer cred for ${signerFqdn} not found`);
 						return;
 					}
-					api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+					api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 				}
 				else {
 					authToken = CommonUtils.stringify(signerAuthToken, false);
@@ -1352,7 +1363,7 @@ class Credential {
 							let authToken = null;
 
 							if (!signerAuthToken) {
-								api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+								api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 							}
 							else {
 								authToken = (typeof signerAuthToken === 'object') ? CommonUtils.stringify(signerAuthToken, false) : signerAuthToken;
@@ -1784,7 +1795,7 @@ class Credential {
 				const api     = new ProvisionApi(),
 				      apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {});
 
-				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+				api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.UpdatingMetadata, fqdn);
 
@@ -1829,7 +1840,7 @@ class Credential {
 				    },
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntity.endpoint, postData);
 
-				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+				api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error) => {
@@ -2073,7 +2084,7 @@ class Credential {
 				let apiData = ProvisionApi.getApiData(apiEntityActions.SubscribeRegistration.endpoint, {}),
 				    api     = new ProvisionApi();
 
-				api.setClientCerts(cred.getKey("PRIVATE_KEY"), cred.getKey("P7B"));
+				api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error) => {
@@ -2093,8 +2104,8 @@ class Credential {
 	 * @returns {{key: *, cert: *, ca: *}}
 	 */
 	getHttpsServerOptions() {
-		let pk  = this.getKey("PRIVATE_KEY"),
-		    p7b = this.getKey("P7B");
+		let pk  = this.getPrivateKey,
+		    p7b = this.getP7B;
 		//ca  = this.getKey("CA");
 
 		if (!pk || !p7b) {
@@ -2626,11 +2637,18 @@ class Credential {
 
 	}
 
+	// TODO: RIC - rename or remove
+	async isRevoked(forceCheck=false) {
+		const status = await this.checkOcspStatus(this, forceCheck);
+		return status === Config.OcspStatus.Revoked;
+	}
+
 	get revoked() {
-		if(this.metadata.ocspStatus.fingerprint === this.certData.fingerprints.sha256) {
-			return this.metadata.ocspStatus.status === Config.OcspStatus.Revoked;
+		if( !this.metadata.ocspStatus || !this.certData || !this.certData.fingerprints
+			|| this.metadata.ocspStatus.fingerprint !== this.certData.fingerprints.sha256) {
+			return false;
 		}
-		return false;
+		return this.metadata.ocspStatus.status === Config.OcspStatus.Revoked;
 	}
 
 	// TODO: Ric - Fix logic, it seems broken
@@ -2643,10 +2661,6 @@ class Credential {
 		}
 	}
 
-	get hasPrivateKey() {
-		return this.hasKey("PRIVATE_KEY");
-	}
-
 	/**
 	 * Gets the cachedOcspStatus.
 	 * If is revoked, returns {OcspStatus.Revoked}
@@ -2657,20 +2671,14 @@ class Credential {
 		if(this.revoked) {
 			return Config.OcspStatus.Revoked;
 		}
-
-		if( this.metadata.ocspStatus.fingerprint !== this.certData.fingerprints.sha256
+		if( !this.metadata.ocspStatus || !this.certData || !this.certData.fingerprints
+			|| this.metadata.ocspStatus.fingerprint !== this.certData.fingerprints.sha256
 			|| new Date(this.metadata.ocspStatus.date + Config.ocspCachePeriod) < Date.now()) {
 			return Config.OcspStatus.Unavailable;
 		}
-
 		return this.metadata.ocspStatus.status;
 	}
 
-	// TODO: RIC - rename or remove
-	async isRevoked(forceCheck=false) {
-		const status = await this.checkOcspStatus(this, forceCheck);
-		return status === Config.OcspStatus.Revoked;
-	}
 	//endregion
 }
 

@@ -450,7 +450,7 @@ list.toText = function (creds) {
 
 	creds.forEach(item => {
 
-		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item), _setStyle(item.revoked ? 'Revoked' : 'Good', item)]);
+		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getPrivateKey ? 'Y' : 'N', item), _setStyle(item.cachedOcspStatus, item)]);
 	});
 	return table;
 };
