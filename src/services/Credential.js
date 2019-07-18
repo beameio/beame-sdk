@@ -84,8 +84,6 @@ const timeFuzz               = Config.defaultTimeFuzz * 1000;
 const util                   = require('util');
 const dns                    = require('dns');
 const assert                 = require("assert");
-const debug_dns              = require('debug')(Config.debugPrefix + 'dns');
-const debug_ocsp             = require('debug')(Config.debugPrefix + 'ocsp');
 
 const nop = function () {
 };
@@ -1586,7 +1584,7 @@ class Credential {
 	}
 
 	async _checkOcspStatus(cred, forceCheck = false) {
-		debug_ocsp('_checkOcspStatus() begin');
+		logger.debug('_checkOcspStatus() begin');
 
 		if (process.env.BEAME_OCSP_IGNORE) {
 			return Config.OcspStatus.Good;
@@ -1604,7 +1602,7 @@ class Credential {
 		let status = null;
 
 		if (process.env.EXTERNAL_OCSP_FQDN) {
-			debug_ocsp('_checkOcspStatus() uses EXTERNAL_OCSP_FQDN');
+			logger.debug('_checkOcspStatus() uses EXTERNAL_OCSP_FQDN');
 
 			const AuthToken = require('./AuthToken');
 
@@ -1860,7 +1858,7 @@ class Credential {
 	 */
 	setDns(fqdn, value, useBestProxy, dnsFqdn) {
 
-		debug_dns(`Credential#setDns() fqdn=${fqdn} value=${value} useBestProxy=${useBestProxy} dnsFqdn=${dnsFqdn}`);
+		logger.debug(`Credential#setDns() fqdn=${fqdn} value=${value} useBestProxy=${useBestProxy} dnsFqdn=${dnsFqdn}`);
 
 		return new Promise((resolve, reject) => {
 
@@ -1981,7 +1979,7 @@ class Credential {
 
 		const resolveDns = (fqdn) => {
 			const promise = util.promisify(dns.lookup)(fqdn).catch(reason => {
-				debug_dns(`Failed to resolve ${fqdn} (${reason})`);
+				logger.warn(`Failed to resolve ${fqdn} (${reason})`);
 				throw reason;
 			});
 			return CommonUtils.withTimeout(promise, 3000, new Error('DNS resolution timed out'));
@@ -1992,21 +1990,21 @@ class Credential {
 			let expected_ip = {address: 'n/a-1'};
 			let real_ip = {address: 'n/a-2'};
 			try {
-				debug_dns(`resolving expected=${this.metadata.dnsRecords[0].value} fqdn=${this.fqdn}`);
+				logger.debug(`resolving expected=${this.metadata.dnsRecords[0].value} fqdn=${this.fqdn}`);
 				[expected_ip, real_ip] = await Promise.all([
 					resolveDns(this.metadata.dnsRecords[0].value),
 					resolveDns(this.fqdn)
 				]);
 			} catch(e) {
-				debug_dns('Failed to resolve');
+				logger.warn('Failed to resolve');
 			}
 			if (expected_ip.address === real_ip.address) {
-				debug_dns('DNS record is OK, not calling setDns');
+				logger.debug('DNS record is OK, not calling setDns');
 				return this.metadata.dnsRecords[0].value;
 			}
-			debug_dns(`DNS records were expected_ip=${JSON.stringify(expected_ip)} real_ip=${JSON.stringify(real_ip)}`);
+			logger.debug(`DNS records were expected_ip=${JSON.stringify(expected_ip)} real_ip=${JSON.stringify(real_ip)}`);
 		} else {
-			debug_dns(`There were no DNS records for ${this.fqdn} in metadata, will call setDns`);
+			logger.warn(`There were no DNS records for ${this.fqdn} in metadata, will call setDns`);
 		}
 
 		return await this.setDns(this.fqdn, null, true);
