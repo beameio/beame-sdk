@@ -16,6 +16,7 @@ const Credential  = require('../services/Credential');
 const path        = require('path');
 const fs          = require('fs');
 const colors      = require('colors');
+const assert      = require('assert');
 
 module.exports = {
 	show,
@@ -310,9 +311,7 @@ function revoke(signerAuthToken, signerFqdn, fqdn, callback) {
 		throw new Error(`signerAuthToken or signerFqdn required`);
 	}
 
-	if (!fqdn) {
-		throw new Error(`Fqdn required`);
-	}
+	assert(fqdn, 'Fqdn required');
 
 	let authToken;
 
@@ -342,9 +341,8 @@ revoke.toText = _lineToText;
  * @param {Function} callback
  */
 function checkOcsp(fqdn, forceCheck, callback) {
-	if (!fqdn) {
-		throw new Error(`Fqdn required`);
-	}
+	assert(fqdn, 'Fqdn required');
+
 	let check = !!(forceCheck && forceCheck === "true"),
 		store = new BeameStore();
 
@@ -409,9 +407,8 @@ checkAllOcsp.toText = x => {
  * @param {Function} callback
  */
 function cleanOcspStatus(fqdn, callback) {
-	if (!fqdn) {
-		throw new Error(`Fqdn required`);
-	}
+	assert(fqdn, 'Fqdn required');
+
 	let store = new BeameStore();
 
 	store.find(fqdn, true).then(cred => {
@@ -431,9 +428,8 @@ cleanOcspStatus.toText = x => x;
  * @param {Function} callback
  */
 function cleanActions(fqdn, callback) {
-	if (!fqdn) {
-		throw new Error(`Fqdn required`);
-	}
+	assert(fqdn, 'Fqdn required');
+
 	let store = new BeameStore();
 
 	store.find(fqdn, true).then(cred => {
