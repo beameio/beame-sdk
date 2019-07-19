@@ -125,14 +125,9 @@ class Credential {
 		this.fqdn = null;
 
 		/** @member {MetadataObject} */
-		this.metadata = {
-			ocspStatus: {
-				fingerprint: 'UNKNOWN',
-				status: Config.OcspStatus.Unavailable,
-				date: 0
-			},
-			actions: []
-		};
+		this.metadata = {};
+		this.cleanOcspStatus();
+		this.cleanActions();
 
 		/** @member {Array.<Credential>} */
 		this.children = [];
@@ -1574,6 +1569,20 @@ class Credential {
 			action: Config.CredAction.OcspUpdate,
 			date:   Date.now()
 		});
+	}
+
+	cleanOcspStatus()
+	{
+		this.metadata.ocspStatus = {
+			fingerprint: 'UNKNOWN',
+			status: Config.OcspStatus.Unavailable,
+			date: 0
+		};
+	}
+
+	cleanActions()
+	{
+		this.metadata.actions = [];
 	}
 
 	/**

@@ -38,6 +38,8 @@ module.exports = {
 	renew,
 	checkOcsp,
 	checkAllOcsp,
+	cleanOcspStatus,
+	cleanActions,
 	setDns,
 	deleteDns,
 	listCredChain,
@@ -398,6 +400,51 @@ checkAllOcsp.toText = x => {
 	table.push(['(total)', Object.values(x).reduce((prev, x) => prev + x, 0)]);
 	return table;
 };
+
+
+/**
+ * @public
+ * @method Creds.cleanOcspStatus
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
+function cleanOcspStatus(fqdn, callback) {
+	if (!fqdn) {
+		throw new Error(`Fqdn required`);
+	}
+	let store = new BeameStore();
+
+	store.find(fqdn, true).then(cred => {
+		cred.cleanOcspStatus();
+		cred.save();
+		callback(`Cleaned Ocsp Status of credential ${fqdn} successfully`);
+	}).catch(e => {
+		callback(BeameLogger.formatError(e));
+	});
+}
+cleanOcspStatus.toText = x => x;
+
+/**
+ * @public
+ * @method Creds.cleanActions
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
+function cleanActions(fqdn, callback) {
+	if (!fqdn) {
+		throw new Error(`Fqdn required`);
+	}
+	let store = new BeameStore();
+
+	store.find(fqdn, true).then(cred => {
+		cred.cleanActions();
+		cred.save();
+		callback(`Cleaned Actions of credential ${fqdn} successfully`);
+	}).catch(e => {
+		callback(BeameLogger.formatError(e));
+	});
+}
+cleanActions.toText = x => x;
 
 /**
  * @public
