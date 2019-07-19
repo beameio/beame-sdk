@@ -328,7 +328,7 @@ class Credential {
 	initFromX509(x509, metadata) {
 		pem.config({sync: true});
 		pem.readCertificateInfo(x509, (err, certData) => {
-			assert(!err, err);
+			assert(!err, new Error(err));
 			this.certData = certData;
 			this.beameStoreServices = new BeameStoreDataServices(certData.commonName);
 			this.metadata.fqdn = certData.commonName;
@@ -338,7 +338,7 @@ class Credential {
 
 		});
 		pem.getPublicKey(x509, (err, publicKey) => {
-			assert(!err, err);
+			assert(!err, new Error(err));
 			this.publicKeyStr = publicKey.publicKey;
 			this.publicKeyNodeRsa = new NodeRsa();
 			try {
@@ -1601,11 +1601,11 @@ class Credential {
 			return Config.OcspStatus.Good;
 		}
 
-		assert(cred.hasKey("X509"), 'No certificate');
+		assert(cred.hasKey("X509"), new Error(`No certificate found for ${cred.fqdn}`));
 
 		if (!forceCheck) {
 			const result = cred.cachedOcspStatus;
-			if(result !== Config.OcspStatus.Unavailable) {
+			if(result && result !== Config.OcspStatus.Unavailable) {
 				return result;
 			}
 		}
@@ -1664,7 +1664,7 @@ class Credential {
 		});
 
 		const ret = credsChain.find(c => c.hasPrivateKey && !c.expired && !c.revoked);
-		assert(ret, `Failed to find valid signer cred for ${this.fqdn}`);
+		assert(ret, new Error(`Failed to find valid signer cred for ${this.fqdn}`));
 		return ret;
 	}
 
@@ -2506,8 +2506,10 @@ class Credential {
 	 * @returns {Promise<Credential>}
 	 */
 	async checkValidity() {
+		assert(!CommonUtils.isObjectEmpty(this.certData), new Error(`Certificate data is not present for ${this.fqdn}`));
+
 		const validity = this.certData.validity;
-		assert(validity, `Certificate not present for ${this.fqdn}`);
+		assert(validity, new Error(`Certificate validity is not present for ${this.fqdn}`));
 		logger.debug(`checkValidity: fqdn, start, end', ${this.fqdn}, ${validity.start}, ${validity.end}`);
 
 		const now = Date.now();

@@ -37,6 +37,7 @@ module.exports = {
 	renewCert,
 	renew,
 	checkOcsp,
+	checkAllOcsp,
 	setDns,
 	deleteDns,
 	listCredChain,
@@ -343,7 +344,7 @@ function checkOcsp(fqdn, forceCheck, callback) {
 		throw new Error(`Fqdn required`);
 	}
 	let check = !!(forceCheck && forceCheck === "true"),
-	    store = new BeameStore();
+		store = new BeameStore();
 
 	store.find(fqdn, true).then(cred => {
 		CommonUtils.promise2callback(cred.checkOcspStatus(cred, check), callback);
@@ -355,6 +356,51 @@ function checkOcsp(fqdn, forceCheck, callback) {
 
 checkOcsp.toText = x => {
 	return x !== config.OcspStatus.Revoked ? `Certificate is valid` : 'Certificate is revoked';
+};
+
+
+/**
+ * @public
+ * @method Creds.checkAllOcsp
+ * @param {Boolean|null} [forceCheck] => ignoring cache, when set to true
+ * @param {Function} callback
+ */
+function checkAllOcsp(forceCheck, callback) {
+	const check = !!(forceCheck && forceCheck === "true");
+	const result = {
+		[config.OcspStatus.Good]: 0,
+		[config.OcspStatus.Revoked]: 0,
+		[config.OcspStatus.Unavailable]: 0
+	};
+
+	async function _checkAllOcspStatus() {
+		let creds = _listCreds('.');
+		for (let key in creds) {
+			try {
+				const cred = creds[key];
+				const status = await cred.checkOcspStatus(cred, check);
+				result[status] += 1
+			}
+			catch(e) {
+				console.log(BeameLogger.formatError(e));
+			}
+		}
+		return result;
+	}
+	CommonUtils.promise2callback(_checkAllOcspStatus(), callback);
+}
+
+checkAllOcsp.toText = x => {
+	let table = new Table({
+		head:      ['status', 'count'],
+		colWidths: [20, 20]
+	});
+
+	for(let key in x){
+		table.push([key, x[key]]);
+	}
+
+	return table;
 };
 
 /**
@@ -439,7 +485,7 @@ list.toText = function (creds) {
 	/** @type {Object} **/
 	let table = new Table({
 		head:      ['name', 'fqdn', 'parent', 'Expires', 'priv/k', 'ocsp'],
-		colWidths: [40, 65, 55, 25, 10, 10]
+		colWidths: [40, 65, 55, 24, 8, 13]
 	});
 
 	const _setStyle = (value, cred) => {

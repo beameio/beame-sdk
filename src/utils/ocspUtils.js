@@ -44,6 +44,10 @@ class ocspUtils {
 			const res = await util.promisify(ocsp.check)(opt);
 			return ocspUtils._parseOcspResponse(res);
 		} catch (e) {
+			// FIXME: Find a proper way to check for revoked
+			if(e.message === "OCSP Status: revoked") {
+				return OcspStatus.Revoked;
+			}
 			logger.error(`Ocsp check for ${fqdn} error ${BeameLogger.formatError(e)}`);
 			return OcspStatus.Unavailable;
 		}

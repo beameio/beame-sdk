@@ -5,8 +5,6 @@ const colors = require('colors');
 require('../../initWin');
 
 const Config             = require('../../config/Config');
-const BeameLogger        = require('../utils/Logger');
-const logger             = new BeameLogger("CLI Cache");
 const CommonUtils        = require('../utils/CommonUtils');
 const BeameStore         = require("../services/BeameStoreV2");
 const StoreCacheServices = require("../services/StoreCacheServices");
@@ -59,15 +57,6 @@ list.toText = (creds) => {
 	return table;
 };
 
-function updateOcsp(force, callback) {
-	_initScs().then(scs => {
-
-		CommonUtils.promise2callback(scs.updateOcspState(!!(force && force === "true")), callback);
-	});
-}
-
-updateOcsp.toText = x => x;
-
 function renewAll(force, callback) {
 	_initScs().then(scs => {
 		CommonUtils.promise2callback(scs.renewCredentials(!!(force && force === "true")), callback);
@@ -77,6 +66,5 @@ renewAll.toText = x => x;
 
 module.exports = {
 	list,
-	updateOcsp,
 	renewAll
 };
