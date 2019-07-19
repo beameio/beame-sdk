@@ -391,11 +391,11 @@ function checkAllOcsp(forceCheck, callback) {
 }
 
 checkAllOcsp.toText = x => {
-	const total = Object.values(x).reduce((prev,x) => prev + x, 0);
 	const table = new Table({
-		head:      ['status', `count (${total})`],
+		head:      ['status', `count`],
 	});
 	table.push(...Object.entries(x));
+	table.push(['(total)', Object.values(x).reduce((prev, x) => prev + x, 0)]);
 	return table;
 };
 
