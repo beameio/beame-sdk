@@ -2501,22 +2501,19 @@ class Credential {
 		};
 	}
 
-	checkValidity() {
-		return new Promise((resolve, reject) => {
-			const validity = this.certData.validity;
-			logger.debug(`checkValidity: fqdn, start, end', ${this.fqdn}, ${validity.start}, ${validity.end}`);
-			// validity.end = 0;
-			const now = Date.now();
-			if (validity.start - Config.defaultAllowedClockDiff > now + timeFuzz) {
-				reject(new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`, CertValidationError.InFuture));
-				return;
-			}
-			if (validity.end + Config.defaultAllowedClockDiff < now - timeFuzz) {
-				reject(new CertificateValidityError(`Certificate ${this.fqdn} has expired`, CertValidationError.Expired));
-				return;
-			}
-			resolve(this);
-		});
+	/**
+	 * Checks the validity of the certificate
+	 * @returns {Promise<Credential>}
+	 */
+	async checkValidity() {
+		const validity = this.certData.validity;
+		assert(validity, `Certificate not present for ${this.fqdn}`);
+		logger.debug(`checkValidity: fqdn, start, end', ${this.fqdn}, ${validity.start}, ${validity.end}`);
+
+		const now = Date.now();
+		assert(validity.start - Config.defaultAllowedClockDiff < now + timeFuzz, new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`, CertValidationError.InFuture));
+		assert(validity.end + Config.defaultAllowedClockDiff > now - timeFuzz, new CertificateValidityError(`Certificate ${this.fqdn} has expired`, CertValidationError.Expired));
+		return this;
 	}
 
 	hasLocalParentAtAnyLevel(fqdn) {
