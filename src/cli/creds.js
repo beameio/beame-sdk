@@ -84,8 +84,7 @@ function _obj2base64(o) {
  * @returns {Array<Credential>}
  */
 function _listCreds(regex, options) {
-	const store = new BeameStore();
-	return store.list(regex, options);
+	return new BeameStore().list(regex, options);
 }
 
 //endregion
@@ -366,20 +365,13 @@ checkOcsp.toText = x => {
  * @param {Function} callback
  */
 function checkAllOcsp(forceCheck, callback) {
-	const check = !!(forceCheck && forceCheck === "true");
-	const result = {
-		[config.OcspStatus.Good]: 0,
-		[config.OcspStatus.Revoked]: 0,
-		[config.OcspStatus.Unavailable]: 0
-	};
-
+	forceCheck = !!(forceCheck && forceCheck === "true");
 	async function _checkAllOcspStatus() {
-		let creds = _listCreds('.');
-		for (let key in creds) {
+		const result = {};
+		for (const cred of _listCreds('.')) {
 			try {
-				const cred = creds[key];
-				const status = await cred.checkOcspStatus(cred, check);
-				result[status] += 1
+				const status = await cred.checkOcspStatus(cred, forceCheck);
+				result[status] = (result[status] || 0) + 1;
 			}
 			catch(e) {
 				console.log(BeameLogger.formatError(e));
