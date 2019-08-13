@@ -13,6 +13,7 @@ const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require("../services/BeameStoreV2");
 const Credential  = require('../services/Credential');
 //const AuthToken   = require('../services/AuthToken');
+const AutoRenew   = require('../services/AutoRenewer');
 const path        = require('path');
 const fs          = require('fs');
 const colors      = require('colors');
@@ -33,10 +34,11 @@ module.exports = {
 	decrypt,
 	sign,
 	checkSignature,
-	revokeCert,
 	revoke,
-	renewCert,
+	revokeCert,
 	renew,
+	renewCert,
+	renewAll,
 	checkOcsp,
 	checkAllOcsp,
 	cleanOcspStatus,
@@ -283,6 +285,32 @@ function renew(signerAuthToken, fqdn, validityPeriod, filter, regex, callback) {
 }
 
 renew.toText = _lineToText;
+
+/**
+ * @public
+ * @method Creds.renew
+ * @param {Boolean|null} [force] -> force the certificate renewal for all certs
+ **/
+function renewAll(force, callback) {
+	CommonUtils.promise2callback(AutoRenew.renewAll(force),callback);
+}
+renewAll.toText = function (renewResult) {
+	/** @type {Object} **/
+	let table = new Table({
+		head:      ['fqdn', 'renew status'],
+		colWidths: [80, 30]
+	});
+	renewResult.failed.forEach(item => {
+		table.push([item, 'failed']);
+	});
+	renewResult.success.forEach(item => {
+		table.push([item, 'success']);
+	});
+	renewResult.skipped.forEach(item => {
+		table.push([item, 'skipped']);
+	});
+	return table;
+};
 
 /**
  * @public

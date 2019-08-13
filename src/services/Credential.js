@@ -78,7 +78,6 @@ const apiEntityActions       = actionsApi.EntityApi;
 const apiAuthServerActions   = actionsApi.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
-const storeCacheServices     = (require('./StoreCacheServices')).getInstance();
 const ocspUtils              = require('../utils/ocspUtils');
 const timeFuzz               = Config.defaultTimeFuzz * 1000;
 const util                   = require('util');
@@ -1335,53 +1334,51 @@ class Credential {
 				}
 
 				function make() {
-					const _renew = () => {
-
-						OpenSSLWrapper.getPublicKeySignature(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PRIVATE_KEY)).then(signature => {
+					async function _renew() {
+						try {
+							const privateKeyContent = DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PRIVATE_KEY));
+							const signature = await OpenSSLWrapper.getPublicKeySignature(privateKeyContent);
 
 							let pubKeys = {
-								pub:    DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PUBLIC_KEY)),
+								pub: DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PUBLIC_KEY)),
 								pub_bk: DirectoryServices.readFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PUBLIC_KEY)),
 								signature
 							};
-
 							let postData = {
-								    fqdn:     fqdn,
-								    validity: validityPeriod || Config.defaultValidityPeriod,
-								    pub:      pubKeys
-							    },
-							    api      = new ProvisionApi(),
-							    apiData  = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
+									fqdn: fqdn,
+									validity: validityPeriod || Config.defaultValidityPeriod,
+									pub: pubKeys
+								},
+								api = new ProvisionApi(),
+								apiData = ProvisionApi.getApiData(apiEntityActions.CertRenew.endpoint, postData);
 
 							logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
-
 							let authToken = null;
-
 							if (!signerAuthToken) {
 								api.setClientCerts(cred.getPrivateKey, cred.getP7B);
-							}
-							else {
+							} else {
 								authToken = (typeof signerAuthToken === 'object') ? CommonUtils.stringify(signerAuthToken, false) : signerAuthToken;
 							}
 
-
-							api.runRestfulAPI(apiData, (error, payload) => {
-								cred._saveCerts(error, payload).then(certs => {
+							api.runRestfulAPI(apiData, async (error, payload) => {
+								try {
+									const certs = await cred._saveCerts(error, payload);
 									cred.setRevokedAndSave(false);
 									Credential.saveCredAction(cred, {
 										action: Config.CredAction.Renew,
-										date:   Date.now()
+										date: Date.now()
 									});
-									storeCacheServices.updateCertData(cred.certData.fingerprints.sha256, cred.certData)
-										.then(() => {
-												resolve(certs)
-											}
-										);
-								}).catch(reject);
+									resolve(certs);
+								}
+								catch(e) {
+									reject(e);
+								}
 							}, 'POST', authToken);
-						}).catch(reject);
-
-					};
+						}
+						catch(e) {
+							reject(e);
+						}
+					}
 
 					//check if public key exists (old API)
 					let publicExists = DirectoryServices.doesPathExists(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.PUBLIC_KEY));
@@ -1432,10 +1429,8 @@ class Credential {
 									logger.error(`generating keys error ${BeameLogger.formatError(error)}`);
 									reject(error);
 								}
-
 								_renew();
 							});
-
 					}
 				}
 
@@ -2165,9 +2160,7 @@ class Credential {
 						}
 
 						cred.syncMetadata(fqdn).then(payload => {
-							storeCacheServices.insertCredFromStore(cred, Config.OcspStatus.Good).then(() => {
-								resolve(payload);
-							});
+							resolve(payload);
 						}).catch(() => {
 							logger.debug(`retry on sync meta for ${fqdn}`);
 

@@ -135,9 +135,10 @@ const defaultTimeFuzz = 10;
 
 const defaultDays2Log = 7;
 
-const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30;
+const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30; // 30 days
 
-const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
+const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24; // 1 day
+const renewalBeforeExpiration = process.env.BEAME_RENEWAL_BEFORE_EXPIRATION || 1000 * 60 * 60 * 24 * 30; // 30 days
 
 const credentialMetadataActionsLimit = 20;
 
@@ -267,6 +268,7 @@ const AltPrefix = {
  *  @enum {string}
  */
 const AppModules = {
+	"AutoRenewer":      "AutoRenewer",
 	"Credential":       "Credential",
 	"BeameEntity":      "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
@@ -408,6 +410,7 @@ module.exports = {
 	RegistrationSource,
 	remotePKsDirV1,
 	renewalCheckInterval,
+	renewalBeforeExpiration,
 	RequestType,
 	rootDir,
 	s3MetadataFileName,

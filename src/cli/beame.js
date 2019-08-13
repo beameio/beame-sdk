@@ -12,7 +12,7 @@ const BeameLogger = require('../utils/Logger');
 const logger      = new BeameLogger(module_name);
 
 let commands = {};
-['creds', 'token', 'crypto', 'servers', 'system', 'cache'].forEach(cmdName => {
+['creds', 'token', 'crypto', 'servers', 'system'].forEach(cmdName => {
 	commands[cmdName] = require('./' + cmdName + '.js');
 });
 
