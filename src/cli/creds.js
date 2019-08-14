@@ -300,6 +300,8 @@ renewAll.toText = function (renewResult) {
 		head:      ['fqdn', 'valid until', 'renew status'],
 		colWidths: [60, 24, 16]
 	});
+
+	console.log(`\n  Total:  ${renewResult.failed.length + renewResult.succeeded.length + renewResult.skipped.length}    [ failed: ${renewResult.failed.length} | succeeded: ${renewResult.succeeded.length} | skipped: ${renewResult.skipped.length} ]`);
 	renewResult.failed.forEach(item => {
 		table.push([item.fqdn, item.validUntil, 'failed']);
 	});

@@ -13,15 +13,14 @@ const store               = (BeameStore).getInstance();
 async function renewAll(force) {
 	logger.debug(`RenewAll called with force = ${!!force}`);
 	const result = { skipped: [], succeeded: [], failed: [] };
-	for(const cred of store.list('.',  { hasPrivateKey: true, excludeRevoked: true }))
-	{
+	await Promise.all(store.list('.',  { hasPrivateKey: true, excludeRevoked: true }).map(async cred => {
 		try {
 			if(!force && cred.certData && cred.certData.validity &&
 				new Date(cred.certData.validity.end) > new Date(Date.now() + config.renewalBeforeExpiration))
 			{
 				result['skipped'].push({fqdn: cred.fqdn, validUntil: cred.getCertEnd()});
 				logger.debug(`Skipping cred ${cred.fqdn}`);
-				continue;
+				return;
 			}
 
 			await cred.renewCert(null, cred.fqdn);
@@ -32,7 +31,7 @@ async function renewAll(force) {
 			logger.error(`Unable to renew certificate ${cred.fqdn}`,e);
 			result['failed'].push({fqdn: cred.fqdn, validUntil: cred.getCertEnd()});
 		}
-	}
+	}));
 	return result;
 }
 
