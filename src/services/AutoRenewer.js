@@ -16,7 +16,7 @@ async function renewAll(force) {
 	await Promise.all(store.list('.',  { hasPrivateKey: true, excludeRevoked: true }).map(async cred => {
 		try {
 			if(!force && cred.certData && cred.certData.validity &&
-				new Date(cred.certData.validity.end) > new Date(Date.now() + config.renewalBeforeExpiration))
+				new Date(cred.certData.validity.end) > new Date(Date.now() + ((cred.certData.validity.end - cred.certData.validity.start) * (config.renewalPercentageBeforeExpiration / 100))))
 			{
 				result['skipped'].push({fqdn: cred.fqdn, validUntil: cred.getCertEnd()});
 				logger.debug(`Skipping cred ${cred.fqdn}`);
