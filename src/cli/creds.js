@@ -297,17 +297,17 @@ function renewAll(force, callback) {
 renewAll.toText = function (renewResult) {
 	/** @type {Object} **/
 	let table = new Table({
-		head:      ['fqdn', 'renew status'],
-		colWidths: [80, 30]
+		head:      ['fqdn', 'valid until', 'renew status'],
+		colWidths: [60, 24, 24]
 	});
 	renewResult.failed.forEach(item => {
-		table.push([item, 'failed']);
+		table.push([item.fqdn, item.validUntil, 'failed']);
 	});
-	renewResult.success.forEach(item => {
-		table.push([item, 'success']);
+	renewResult.succeeded.forEach(item => {
+		table.push([item.fqdn, item.validUntil, 'succeeded']);
 	});
 	renewResult.skipped.forEach(item => {
-		table.push([item, 'skipped']);
+		table.push([item.fqdn, item.validUntil, 'skipped']);
 	});
 	return table;
 };

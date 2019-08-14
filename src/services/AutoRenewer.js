@@ -8,29 +8,29 @@ const store               = (BeameStore).getInstance();
 /**
  * Renews all needed certificates (if force, it will renew even if not needed)
  * @param {Boolean|null} force
- * @returns {Promise<{success: [], failed: [], skipped: []}>}
+ * @returns {Promise<{succeeded: [], failed: [], skipped: []}>}
  */
 async function renewAll(force) {
 	logger.debug(`RenewAll called with force = ${!!force}`);
-	const result = { skipped: [], success: [], failed: [] };
+	const result = { skipped: [], succeeded: [], failed: [] };
 	for(const cred of store.list('.',  { hasPrivateKey: true, excludeRevoked: true }))
 	{
 		try {
 			if(!force && cred.certData && cred.certData.validity &&
 				new Date(cred.certData.validity.end) > new Date(Date.now() + config.renewalBeforeExpiration))
 			{
-				result['skipped'].push(cred.fqdn);
+				result['skipped'].push({fqdn: cred.fqdn, validUntil: cred.getCertEnd()});
 				logger.debug(`Skipping cred ${cred.fqdn}`);
 				continue;
 			}
 
 			await cred.renewCert(null, cred.fqdn);
 			logger.debug(`Certificate for ${cred.fqdn} renewed successfully`);
-			result['success'].push(cred.fqdn);
+			result['succeeded'].push({fqdn: cred.fqdn, validUntil: cred.getCertEnd()});
 		}
 		catch (e) {
 			logger.error(`Unable to renew certificate ${cred.fqdn}`,e);
-			result['failed'].push(cred.fqdn);
+			result['failed'].push({fqdn: cred.fqdn, validUntil: cred.getCertEnd()});
 		}
 	}
 	return result;
@@ -49,7 +49,7 @@ function start() {
 		}
 		renewAll(false)
 			.then(result => {
-				logger.info(`AutoRenew completed. ${result.failed} failed, ${result.success} succeeded, ${result.skipped} were skipped`);
+				logger.info(`AutoRenew completed. ${result.failed} failed, ${result.succeeded} succeeded, ${result.skipped} were skipped`);
 				_interval(_runAutoRenew);
 			})
 			.catch(e => {
