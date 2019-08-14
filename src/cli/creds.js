@@ -298,7 +298,7 @@ renewAll.toText = function (renewResult) {
 	/** @type {Object} **/
 	let table = new Table({
 		head:      ['fqdn', 'valid until', 'renew status'],
-		colWidths: [60, 24, 24]
+		colWidths: [60, 24, 16]
 	});
 	renewResult.failed.forEach(item => {
 		table.push([item.fqdn, item.validUntil, 'failed']);
