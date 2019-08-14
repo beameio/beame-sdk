@@ -33,22 +33,14 @@ describe('local_creds_custom_create', function () {
 		assert(parent_cred, 'Parent credential not found');
 	});
 
-	it('Should create entity', function (done) {
-		parent_cred.createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, data.name, data.email).then(metadata => {
-			debug('metadata received %j', metadata);
-			assert(metadata, `expected metadata`);
-			assert(metadata.fqdn, `expected fqdn`);
+	it('Should create entity', async () => {
+		let metadata = await parent_cred.createCustomEntityWithLocalCreds(parent_fqdn, custom_fqdn, data.name, data.email);
+		debug('metadata received %j', metadata);
+		assert(metadata, `expected metadata`);
+		assert(metadata.fqdn, `expected fqdn`);
 
-			let cred = store.getCredential(metadata.fqdn);
-			assert(cred, 'New credential not found inn store');
-
-			done();
-		}).catch(error=> {
-			debug(error);
-			debug(error.EntityValidationErrors);
-			assert.fail(error);
-			done();
-		});
+		let cred = store.getCredential(metadata.fqdn);
+		assert(cred, 'New credential not found inn store');
 	});
 
 });

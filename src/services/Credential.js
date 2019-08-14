@@ -1300,11 +1300,14 @@ class Credential {
 						reject(error);
 						return;
 					}
-
 					let revokedCred = this.store.getCredential(revokeFqdn);
-					if (revokedCred && revokedCred.hasKey("X509")) {
-						revokedCred.setRevokedAndSave(true);
+					if (!revokedCred || !revokedCred.hasKey("X509")) {
+						reject(`Certificate x509 not found`);
+						return;
 					}
+
+					revokedCred.setRevokedAndSave(true);
+					resolve();
 				};
 
 				api.runRestfulAPI(apiData, _onApiResponse, 'POST', authToken);
@@ -2282,8 +2285,7 @@ class Credential {
 						logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.AuthCredsReceived, payload.parent_fqdn);
 						logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.GeneratingKeys, payload.fqdn);
 
-						let dirPath = cred.getMetadataKey("path");
-
+						let dirPath = cred.beameStoreServices.getAbsoluteDirName();
 						cred._createInitialKeyPairs(dirPath).then(() => {
 							logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.KeysCreated, payload.fqdn);
 
