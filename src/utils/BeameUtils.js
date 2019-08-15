@@ -92,7 +92,10 @@ function findInTree(node, predicate, limit) {
  * @typedef {Object} BackgroundJob
  * @property {Object} handle => set interval handle
  * @property {Number} interval => interval to run the job
- * @property {Number} executed => times the job was already executed
+ * @property {Number} called => times the job was called
+ * @property {Number} failed => times the job failed
+ * @property {Boolean} running => will be true while the process is running
+ * @property {* | undefined} lastResult => result from the last run
  */
 /**
  * @type {{name: BackgroundJob}}
@@ -111,8 +114,21 @@ function startBackgroundJob(name, func, interval) {
 		return false;
 	}
 
-	const handle = setInterval(() => { backgroundJobs[name].executed++; func(); }, interval);
-	backgroundJobs[name] = {handle: handle, interval: interval, executed: 0};
+	async function toCall() {
+		backgroundJobs[name].called++;
+		backgroundJobs[name].running = true;
+		try {
+			backgroundJobs[name].lastResult = await func();
+		}
+		catch(e) {
+			backgroundJobs[name].lastResult = e.message;
+			backgroundJobs[name].failed++;
+		}
+		backgroundJobs[name].running = false;
+		clearTimeout(backgroundJobs[name].handle);
+		backgroundJobs[name].handle = setTimeout(toCall, interval).unref(); // schedule next
+	}
+	backgroundJobs[name] = {handle: setTimeout(toCall, interval).unref(), interval: interval, called: 0, failed: 0, running: false};
 	logger.info(`Running background job '${name}' running every ${interval}`);
 	return true;
 }
@@ -127,8 +143,8 @@ function stopBackgroundJob(name) {
 		logger.warn(`Background job '${name}' is not running, skipping....`);
 		return false;
 	}
-	clearInterval(backgroundJobs[name].handle);
-	logger.info(`Stopped background job '${name}', job was executed ${backgroundJobs[name].executed} times`);
+	clearTimeout(backgroundJobs[name].handle);
+	logger.info(`Stopped background job '${name}', job was called ${backgroundJobs[name].called} time(s) and failed ${backgroundJobs[name].failed} time(s)`);
 	backgroundJobs[name] = undefined;
 	return true;
 }
@@ -138,7 +154,7 @@ function stopBackgroundJob(name) {
  * @param name
  * @returns {BackgroundJob} | undefined
  */
-function infoBackgroundJob(name) {
+function getBackgroundJob(name) {
 	return backgroundJobs[name];
 }
 //endregion
@@ -292,6 +308,6 @@ module.exports = {
 	findInTree,
 
 	startBackgroundJob,
-	infoBackgroundJob,
+	getBackgroundJob,
 	stopBackgroundJob
 };

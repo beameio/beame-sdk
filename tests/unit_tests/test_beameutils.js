@@ -1,60 +1,111 @@
+"use strict";
 
 const assert = require('assert').strict;
 const beameUtils = require('../../src/utils/BeameUtils');
 const sleep = require('util').promisify(setTimeout);
 
 describe('background jobs', () => {
-	const runningInterval = 20;
+	const runningInterval = 15;
+	const name = 'test123', name2 = 'test321';
 
 	it('start/stopping job', () => {
-		assert(beameUtils.startBackgroundJob('test123', () => {}, 2000));
-		assert(beameUtils.infoBackgroundJob('test123') !== undefined);
-		assert(beameUtils.infoBackgroundJob('test123').executed === 0);
-		assert(beameUtils.infoBackgroundJob('test123').handle);
-		assert(beameUtils.infoBackgroundJob('test123').interval === 2000);
-		assert(beameUtils.stopBackgroundJob('test123'));
-		assert(beameUtils.infoBackgroundJob('test123') === undefined);
+		assert(beameUtils.startBackgroundJob(name, () => {}, 2000));
+		assert(beameUtils.getBackgroundJob(name) !== undefined);
+		assert(beameUtils.getBackgroundJob(name).called === 0);
+		assert(beameUtils.getBackgroundJob(name).interval === 2000);
+		assert(beameUtils.getBackgroundJob(name).handle);
+		assert(beameUtils.stopBackgroundJob(name));
+		assert(beameUtils.getBackgroundJob(name) === undefined);
 	});
 
 	it('job runs multiple times', async () => {
-		assert(beameUtils.startBackgroundJob('test321',() => {}, runningInterval));
+		assert(beameUtils.startBackgroundJob(name,() => {}, runningInterval));
 		await sleep(runningInterval * 2.5);
-		assert(beameUtils.infoBackgroundJob('test321').executed === 2);
-		assert(beameUtils.stopBackgroundJob('test321'));
+		assert(beameUtils.getBackgroundJob(name).called === 2);
+		assert(beameUtils.stopBackgroundJob(name));
+	});
+
+	it('correct running status', async () => {
+		assert(beameUtils.startBackgroundJob(name,async () => { await sleep(runningInterval)}, runningInterval));
+		assert(beameUtils.getBackgroundJob(name).called === 0);
+		await sleep(runningInterval*1.2);
+		assert(beameUtils.getBackgroundJob(name).called === 1);
+		assert(beameUtils.getBackgroundJob(name).running);
+		await sleep(runningInterval*1.2);
+		assert(!beameUtils.getBackgroundJob(name).running);
+		assert(beameUtils.stopBackgroundJob(name));
+		assert(beameUtils.getBackgroundJob(name) === undefined);
+	});
+
+	it('correct storing of return value', async () => {
+		assert(beameUtils.startBackgroundJob(name,async () => { return 'test_completed'}, runningInterval));
+		await sleep(runningInterval*1.5);
+		assert(beameUtils.getBackgroundJob(name).called === 1);
+		assert(beameUtils.getBackgroundJob(name).lastResult === 'test_completed');
+		assert(beameUtils.stopBackgroundJob(name));
+		assert(beameUtils.getBackgroundJob(name) === undefined);
+	});
+
+	it('failing runs', async () => {
+		assert(beameUtils.startBackgroundJob(name,async () => { throw new Error('test_error')}, runningInterval));
+		await sleep(runningInterval*2.5);
+		assert(beameUtils.getBackgroundJob(name).called === 2);
+		assert(beameUtils.getBackgroundJob(name).lastResult === 'test_error');
+		assert(beameUtils.getBackgroundJob(name).failed === 2);
+		assert(beameUtils.stopBackgroundJob(name));
+		assert(beameUtils.getBackgroundJob(name) === undefined);
+	});
+
+	it('conditional fail run', async () => {
+		assert(beameUtils.startBackgroundJob(name,async () => {
+			if(beameUtils.getBackgroundJob(name).called === 1) {return 'test_completed'}
+			else { throw new Error('test_error')}}, runningInterval));
+		await sleep(runningInterval*1.5);
+		assert(beameUtils.getBackgroundJob(name).called === 1);
+		assert(beameUtils.getBackgroundJob(name).lastResult === 'test_completed');
+		assert(beameUtils.getBackgroundJob(name).failed === 0);
+		await sleep(runningInterval);
+		assert(beameUtils.getBackgroundJob(name).called === 2);
+		assert(beameUtils.getBackgroundJob(name).lastResult === 'test_error');
+		assert(beameUtils.getBackgroundJob(name).failed === 1);
+		assert(beameUtils.stopBackgroundJob(name));
+		assert(beameUtils.getBackgroundJob(name) === undefined);
 	});
 
 	it('can run multiple jobs simultaneously', () => {
-		assert(beameUtils.startBackgroundJob('test1',() => {}, 2000));
-		assert(beameUtils.startBackgroundJob('test2',() => {}, 2000));
-		assert(beameUtils.infoBackgroundJob('test1') !== undefined);
-		assert(beameUtils.infoBackgroundJob('test2') !== undefined);
-		assert(beameUtils.stopBackgroundJob('test1'));
-		assert(beameUtils.stopBackgroundJob('test2'));
-		assert(beameUtils.infoBackgroundJob('test1') === undefined);
-		assert(beameUtils.infoBackgroundJob('test2') === undefined);
+		assert(beameUtils.startBackgroundJob(name,() => {}, 2000));
+		assert(beameUtils.startBackgroundJob(name2,() => {}, 2000));
+		assert(beameUtils.getBackgroundJob(name) !== undefined);
+		assert(beameUtils.getBackgroundJob(name2) !== undefined);
+		assert(beameUtils.stopBackgroundJob(name));
+		assert(beameUtils.stopBackgroundJob(name2));
+		assert(beameUtils.getBackgroundJob(name) === undefined);
+		assert(beameUtils.getBackgroundJob(name2) === undefined);
 	});
 
 	it('can run multiple jobs simultaneously multiple times', async () => {
-		assert(beameUtils.startBackgroundJob('test3',() => {}, runningInterval));
-		assert(beameUtils.startBackgroundJob('test4',() => {}, runningInterval));
+		assert(beameUtils.startBackgroundJob(name,() => {}, runningInterval));
+		assert(beameUtils.startBackgroundJob(name2,() => {}, runningInterval));
+		assert(beameUtils.getBackgroundJob(name).called === 0);
+		assert(beameUtils.getBackgroundJob(name2).called === 0);
 		await sleep(runningInterval*1.5);
-		assert(beameUtils.infoBackgroundJob('test3').executed === 1);
-		assert(beameUtils.infoBackgroundJob('test4').executed === 1);
+		assert(beameUtils.getBackgroundJob(name).called === 1);
+		assert(beameUtils.getBackgroundJob(name2).called === 1);
 		await sleep(runningInterval);
-		assert(beameUtils.infoBackgroundJob('test3').executed === 2);
-		assert(beameUtils.infoBackgroundJob('test4').executed === 2);
-		assert(beameUtils.stopBackgroundJob('test3'));
+		assert(beameUtils.getBackgroundJob(name).called === 2);
+		assert(beameUtils.getBackgroundJob(name2).called === 2);
+		assert(beameUtils.stopBackgroundJob(name));
 		await sleep(runningInterval);
-		assert(beameUtils.infoBackgroundJob('test4').executed === 3);
-		assert(beameUtils.infoBackgroundJob('test3') === undefined);
-		assert(beameUtils.stopBackgroundJob('test4'));
-		assert(beameUtils.infoBackgroundJob('test4') === undefined);
+		assert(beameUtils.getBackgroundJob(name2).called === 3);
+		assert(beameUtils.getBackgroundJob(name) === undefined);
+		assert(beameUtils.stopBackgroundJob(name2));
+		assert(beameUtils.getBackgroundJob(name2) === undefined);
 	});
 
 	it('add already existing job return false', () => {
-		assert(beameUtils.startBackgroundJob('test6',() => {}, 2000));
-		assert(!beameUtils.startBackgroundJob('test6',() => {}, 2000));
-		assert(beameUtils.stopBackgroundJob('test6'));
+		assert(beameUtils.startBackgroundJob(name,() => {}, 2000));
+		assert(!beameUtils.startBackgroundJob(name,() => {}, 2000));
+		assert(beameUtils.stopBackgroundJob(name));
 	});
 
 	it('stop non existing job return false', () => {
@@ -62,12 +113,12 @@ describe('background jobs', () => {
 	});
 
 	it('double stopping returns false on second', () => {
-		assert(beameUtils.startBackgroundJob('test7',() => {}, 2000));
-		assert(beameUtils.stopBackgroundJob('test7'));
-		assert(!beameUtils.stopBackgroundJob('test7'));
+		assert(beameUtils.startBackgroundJob(name,() => {}, 2000));
+		assert(beameUtils.stopBackgroundJob(name));
+		assert(!beameUtils.stopBackgroundJob(name));
 	});
 
 	it('info non existing job returns undefined', () => {
-		assert(beameUtils.infoBackgroundJob('nonexistingjob') === undefined);
+		assert(beameUtils.getBackgroundJob('nonexistingjob') === undefined);
 	});
 });
