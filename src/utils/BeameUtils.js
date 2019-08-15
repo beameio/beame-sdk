@@ -100,9 +100,9 @@ function findInTree(node, predicate, limit) {
 const backgroundJobs = {};
 /**
  * Starts a background job that will run every interval
- * @param name
- * @param func
- * @param interval
+ * @param {String} name
+ * @param {Function} func
+ * @param {Number} interval (in ms)
  * @returns {boolean}
  */
 function startBackgroundJob(name, func, interval) {
