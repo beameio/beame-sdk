@@ -10,7 +10,6 @@ const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
 const BeameLogger = require('../utils/Logger');
 const logger      = new BeameLogger(module_name);
-const CommonUtils = require('../utils/CommonUtils');
 
 function nop() {}
 
@@ -85,6 +84,62 @@ function findInTree(node, predicate, limit) {
 	}
 
 	return result;
+}
+//endregion
+
+//region Background Jobs
+/**
+ * @typedef {Object} BackgroundJob
+ * @property {Object} handle => set interval handle
+ * @property {Number} interval => interval to run the job
+ * @property {Number} executed => times the job was already executed
+ */
+/**
+ * @type {{name: BackgroundJob}}
+ */
+const backgroundJobs = {};
+/**
+ * Starts a background job that will run every interval
+ * @param name
+ * @param func
+ * @param interval
+ * @returns {boolean}
+ */
+function startBackgroundJob(name, func, interval) {
+	if(backgroundJobs[name]) {
+		logger.warn(`Background job '${name}' is already running, skipping....`);
+		return false;
+	}
+
+	const handle = setInterval(() => { backgroundJobs[name].executed++; func(); }, interval);
+	backgroundJobs[name] = {handle: handle, interval: interval, executed: 0};
+	logger.info(`Running background job '${name}' running every ${interval}`);
+	return true;
+}
+
+/**
+ * Stops a background running job
+ * @param name
+ * @returns {boolean}
+ */
+function stopBackgroundJob(name) {
+	if(!backgroundJobs[name]) {
+		logger.warn(`Background job '${name}' is not running, skipping....`);
+		return false;
+	}
+	clearInterval(backgroundJobs[name].handle);
+	logger.info(`Stopped background job '${name}', job was executed ${backgroundJobs[name].executed} times`);
+	backgroundJobs[name] = undefined;
+	return true;
+}
+
+/**
+ * Returns information about a background running job or undefined if it doesn't exist
+ * @param name
+ * @returns {BackgroundJob} | undefined
+ */
+function infoBackgroundJob(name) {
+	return backgroundJobs[name];
 }
 //endregion
 
@@ -234,5 +289,9 @@ module.exports = {
 	},
 
 	iterateTree,
-	findInTree
+	findInTree,
+
+	startBackgroundJob,
+	infoBackgroundJob,
+	stopBackgroundJob
 };

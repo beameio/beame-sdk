@@ -139,6 +139,7 @@ const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 *
 
 const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24; // 1 day
 const renewalPercentageBeforeExpiration = process.env.BEAME_RENEWAL_PERCENTAGE_BEFORE_EXPIRATION || 8; // 8% before cred expiration
+const renewalBeforeExpirationMaxPeriod = process.env.BEAME_RENEWAL_BEFORE_EXPIRATION_MAX_PERIOD || 1000 * 60 * 60 * 24 * 45; // 45 days
 
 const credentialMetadataActionsLimit = 20;
 
@@ -411,6 +412,7 @@ module.exports = {
 	remotePKsDirV1,
 	renewalCheckInterval,
 	renewalPercentageBeforeExpiration,
+	renewalBeforeExpirationMaxPeriod,
 	RequestType,
 	rootDir,
 	s3MetadataFileName,
