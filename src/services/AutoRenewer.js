@@ -34,22 +34,22 @@ async function renewAll(force) {
 	const result = { skipped: [], succeeded: [], failed: [] };
 	for(const cred of store.list('.',  { hasPrivateKey: true, excludeRevoked: true }))
 	{
-		const credId = { fqdn: cred.fqdn, validUntil: cred.getCertEnd() };
+		const credInfo = { fqdn: cred.fqdn, validUntil: cred.getCertEnd() };
 		try {
 			if(!force && !needsRenewal(cred))
 			{
-				result.skipped.push(credId);
-				logger.debug(`Renewal for ${credId.fqdn} was skipped (validUntil: ${credId.validUntil})`);
+				result.skipped.push(credInfo);
+				logger.debug(`Renewal for ${credInfo.fqdn} was skipped (validUntil: ${credInfo.validUntil})`);
 				continue;
 			}
 
-			await cred.renewCert(null, credId.fqdn);
-			result.succeeded.push(credId);
-			logger.debug(`Renewal for ${credId.fqdn} was successfully`);
+			await cred.renewCert(null, credInfo.fqdn);
+			result.succeeded.push(credInfo);
+			logger.debug(`Renewal for ${credInfo.fqdn} was successfully`);
 		}
 		catch (e) {
-			result.failed.push(credId);
-			logger.error(`Renewal for ${credId.fqdn} failed!`,e);
+			result.failed.push(credInfo);
+			logger.error(`Renewal for ${credInfo.fqdn} failed!`,e);
 		}
 	}
 	return result;
