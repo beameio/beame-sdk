@@ -62,6 +62,7 @@ const NodeRsa                = require("node-rsa");
 const async                  = require('async');
 const _                      = require('underscore');
 const Config                 = require('../../config/Config');
+const Env                    = require('../../config/env');
 const actionsApi             = Config.ActionsApi;
 const envProfile             = Config.SelectedProfile;
 const module_name            = Config.AppModules.Credential;
@@ -2139,33 +2140,64 @@ class Credential {
 	}
 
 	async ensureDnsValue() {
+		/**
+		 * Define LookupAddress because node doesn't do it
+		 * @typedef dns.LookupAddress
+		 * @property address {String}
+		 * @property family {Number}
+		 */
 
-		const resolveDns = (fqdn) => {
-			const promise = util.promisify(dns.lookup)(fqdn).catch(reason => {
+		/**
+		 * Resolves an fqdn with timeout
+		 * @param fqdn
+		 * @param options
+		 * @returns {Promise<any>}
+		 */
+		function resolveDns(fqdn, options) {
+			const promise = util.promisify(dns.lookup)(fqdn, options).catch(reason => {
 				debug_dns(`Failed to resolve ${fqdn} (${reason})`);
 				throw reason;
 			});
 			return CommonUtils.withTimeout(promise, 3000, new Error('DNS resolution timed out'));
-		};
+		}
+
+		/**
+		 * Validates if the edge can be used
+		 * @param expected_ip {dns.LookupAddress}
+		 * @param real_ip {dns.LookupAddress}
+		 * @param edge_ips { Array.<dns.LookupAddress> | dns.LookupAddress }
+		 */
+		function canUseEdge(expected_ip, real_ip, edge_ips){
+			if(expected_ip.address !== real_ip.address) {
+				return false;
+			}
+			if(Array.isArray(edge_ips)) {
+				return edge_ips.map(x => x.address).includes(expected_ip.address);
+			}
+			return expected_ip.address === edge_ips.address;
+		}
 
 		if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
 			// Make these different so if they are not resolved
 			let expected_ip = {address: 'n/a-1'};
 			let real_ip = {address: 'n/a-2'};
+			let edge_ips = [{address: 'n/a-3'}];
 			try {
 				debug_dns(`resolving expected=${this.metadata.dnsRecords[0].value} fqdn=${this.fqdn}`);
-				[expected_ip, real_ip] = await Promise.all([
+				[expected_ip, real_ip, edge_ips] = await Promise.all([
 					resolveDns(this.metadata.dnsRecords[0].value),
-					resolveDns(this.fqdn)
+					resolveDns(this.fqdn),
+					resolveDns(Env.LoadBalancerFqdn, {all: true})
 				]);
 			} catch(e) {
 				debug_dns('Failed to resolve');
 			}
-			if (expected_ip.address === real_ip.address) {
+
+			if (canUseEdge(expected_ip, real_ip, edge_ips)) {
 				debug_dns('DNS record is OK, not calling setDns');
 				return this.metadata.dnsRecords[0].value;
 			}
-			debug_dns(`DNS records were expected_ip=${JSON.stringify(expected_ip)} real_ip=${JSON.stringify(real_ip)}`);
+			debug_dns(`DNS records were expected_ip=${JSON.stringify(expected_ip)} real_ip=${JSON.stringify(real_ip)} edge_ips=${JSON.stringify(edge_ips)}`);
 		} else {
 			debug_dns(`There were no DNS records for ${this.fqdn} in metadata, will call setDns`);
 		}
