@@ -196,8 +196,8 @@ class AuthToken {
 						}
 						resolve(authToken);
 					})
-					.catch(reject)
-			}).catch(reject);
+					.catch(_reject)
+			}).catch(_reject);
 		});
 	}
 }
