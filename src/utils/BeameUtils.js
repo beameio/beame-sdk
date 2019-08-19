@@ -128,7 +128,7 @@ function startBackgroundJob(name, func, interval) {
 		backgroundJobs[name].handle = setTimeout(jobCall, interval).unref(); // schedule next
 	}
 	backgroundJobs[name] = {handle: setTimeout(jobCall, interval).unref(), interval: interval, called: 0, failed: 0, running: false};
-	logger.info(`Running background job '${name}' running every ${interval} ms`);
+	logger.info(`Running background job '${name}' every ${interval} ms`);
 	return true;
 }
 
