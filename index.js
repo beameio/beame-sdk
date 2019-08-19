@@ -2,6 +2,7 @@ module.exports = {
 	creds:             require('./src/cli/creds'),
 	crypto:            require('./src/cli/crypto'),
 	AuthToken:         require('./src/services/AuthToken'),
+	AutoRenewer:       require('./src/services/AutoRenewer'),
 	BeameServer:       require('./src/services/BeameServer'),
 	BaseHttpsServer:   require('./src/services/BaseHttpsServer'),
 	BeameStore:        require('./src/services/BeameStoreV2'),
