@@ -98,7 +98,7 @@ class BeameStoreV2 {
 			);
 		};
 
-		console.log('******************', fqdn);
+		logger.info(`Fetching ${fqdn}`);
 
 		if (config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name))) {
 			return this.getRemoteCreds(fqdn).then(_saveCreds);

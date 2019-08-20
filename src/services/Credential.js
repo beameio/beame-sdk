@@ -1408,7 +1408,7 @@ class Credential {
 								cb => {
 									//create backup key pair
 									openSSlWrapper.createPrivateKey().then(pk =>
-										DirectoryServices.saveFile(cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PRIVATE_KEY), pk, error => {
+										DirectoryServices.saveFile(cred.beameStoreServices.getAbsoluteDirName(), Config.CertFileNames.BACKUP_PRIVATE_KEY, pk, error => {
 											if (!error) {
 												let pkFile  = cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PRIVATE_KEY),
 												    pubFile = cred.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.BACKUP_PUBLIC_KEY);

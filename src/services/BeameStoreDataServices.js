@@ -59,7 +59,7 @@ class BeameStoreDataServices {
 
 	writeObject(name, data) {
 		this._createDir();
-		DirectoryServices.saveFile(this.getAbsoluteFileName(name), data);
+		DirectoryServices.saveFile(this.getAbsoluteDirName(), name, data);
 	}
 
 	readMetadataSync() {
