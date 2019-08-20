@@ -8,47 +8,35 @@ const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require('./BeameStoreV2');
 const Credential  = require('./Credential');
 const OcspStatus  = (require('../../config/Config')).OcspStatus;
+const assert      = require('assert').strict;
 
 const timeFuzz = config.defaultTimeFuzz;
 
 class AuthToken {
 
 	//noinspection JSUnusedGlobalSymbols
-	static getRequestAuthToken(req, allowExpired = false, event = null) {
-		return new Promise((resolve, reject) => {
-				let authHead  = req.get('X-BeameAuthToken'),
-				    /** @type {SignatureToken|null} */
-				    authToken = null;
+	static async getRequestAuthToken(req, allowExpired = false, event = null) {
+		let authHead  = req.get('X-BeameAuthToken');
+		assert(authHead, 'Auth Header not received!');
+		logger.debug(`auth head received ${authHead}`);
 
-				logger.debug(`auth head received ${authHead}`);
+		/** @type {SignatureToken|null} */
+		let authToken = undefined;
+		try {
+			authToken = CommonUtils.parse(authHead);
+		}
+		catch (error) {
+			logger.error(`Parse auth header error ${BeameLogger.formatError(error)}`);
+			throw new Error('Auth token invalid json format');
+		}
 
-				if (authHead) {
-					try {
-						authToken = CommonUtils.parse(authHead);
+		if (!CommonUtils.isObject(authToken)) {
+			logger.error(`invalid auth ${authToken} token format`);
+			throw new Error('Auth token invalid json format');
+		}
 
-						if (!CommonUtils.isObject(authToken)) {
-							logger.error(`invalid auth ${authToken} token format`);
-							reject({message: 'Auth token invalid json format'});
-							return;
-						}
-					}
-					catch (error) {
-						logger.error(`Parse auth header error ${BeameLogger.formatError(error)}`);
-						reject({message: 'Auth token invalid json format'});
-						return;
-					}
-				}
-
-				if (!authToken) {
-					reject({message: 'Auth token required'});
-					return;
-				}
-
-				AuthToken.validate(authToken, allowExpired, event)
-					.then(resolve)
-					.catch(reject);
-			}
-		);
+		assert(authToken, 'Auth token required');
+		return await AuthToken.validate(authToken, allowExpired, event);
 	}
 
 
@@ -122,83 +110,49 @@ class AuthToken {
 	 * @param {Object|undefined} [event]
 	 * @returns {Promise.<SignatureToken|null>}
 	 */
-	static validate(token, allowExpired = false, event = null) {
-
+	static async validate(token, allowExpired = false, event = null) {
 		const cdr_logger = require('../../src/utils/CDR').getInstance();
 
-		/** @type {String} **/
-		let cdr_event = event;
-
-		return new Promise((resolve, reject) => {
-
-			const _reject = (msg) => {
-				logger.error(msg);
-				if (cdr_event) {
-					cdr_event["error"] = msg;
-					cdr_event["token"] = token;
-					cdr_logger.error(cdr_event);
-				}
-
-				reject({message: msg});
-			};
-
+		try {
 			let authToken = CommonUtils.parse(token);
+			assert(authToken, 'Could not decode authToken JSON. authToken must be a valid JSON');
+			assert(authToken.signedData, 'authToken has no .signedData');
+			assert(authToken.signedBy, 'authToken has no .signedBy');
+			assert(authToken.signature, 'authToken has no .signature');
 
-			if (!authToken) {
-				return _reject('Could not decode authToken JSON. authToken must be a valid JSON');
+			const store = new BeameStore();
+			if(event) {
+				event["fqdn"] = authToken.signedBy;
 			}
 
-			if (!authToken.signedData) {
-				return _reject('authToken has no .signedData');
+			const signerCreds = await store.find(authToken.signedBy, undefined, allowExpired);
+			const status = await signerCreds.checkOcspStatus(signerCreds);
+			assert(status !== OcspStatus.Revoked, `OCSP status is Revoked`);
+
+			const signatureStatus = signerCreds.checkSignature(authToken);
+			assert(signatureStatus, `Bad signature`);
+
+			let signedData = CommonUtils.parse(authToken.signedData);
+			assert(signedData, 'Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
+
+			const now = Math.round(Date.now() / 1000);
+			assert(signedData.created_at - config.defaultAllowedClockDiff < now + timeFuzz, `authToken.signedData.created_at ${signedData.created_at} is in future - invalid token or incorrect clock`);
+			assert(signedData.valid_till + config.defaultAllowedClockDiff > now - timeFuzz, `authToken.signedData.valid_till ${signedData.valid_till} is in the past - token expired`);
+
+			if(event) {
+				cdr_logger.info(event);
 			}
-			if (!authToken.signedBy) {
-				return _reject('authToken has no .signedBy');
+			return authToken;
+		}
+		catch (e) {
+			logger.error("AuthToken validation error: ", e);
+			if(event) {
+				event["error"] = e.message;
+				event["token"] = token;
+				cdr_logger.error(event);
 			}
-			if (!authToken.signature) {
-				return _reject('authToken has no .signature');
-			}
-
-			const store       = new BeameStore();
-		    if(cdr_event){
-		    	cdr_event["fqdn"] = authToken.signedBy;
-		    }
-
-			store.find(authToken.signedBy, undefined, allowExpired).then(signerCreds => {
-				signerCreds.checkOcspStatus(signerCreds)
-					.then(status => {
-
-						if (status === OcspStatus.Revoked) {
-							return _reject(`OCSP status is Revoked`);
-						}
-
-						const signatureStatus = signerCreds.checkSignature(authToken);
-						if (!signatureStatus) {
-							return _reject(`Bad signature`);
-						}
-
-						let signedData = CommonUtils.parse(authToken.signedData);
-						if (!signedData) {
-							return _reject('Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
-						}
-
-						const now = Math.round(Date.now() / 1000);
-
-						if (signedData.created_at - config.defaultAllowedClockDiff > now + timeFuzz) {
-							return _reject(`authToken.signedData.created_at ${signedData.created_at} is in future - invalid token or incorrect clock`);
-						}
-
-						if (signedData.valid_till + config.defaultAllowedClockDiff < now - timeFuzz) {
-							return _reject(`authToken.signedData.valid_till ${signedData.valid_till} is in the past - token expired`);
-						}
-
-						if(cdr_event){
-							cdr_logger.info(cdr_event);
-						}
-						resolve(authToken);
-					})
-					.catch(_reject)
-			}).catch(_reject);
-		});
+			throw e;
+		}
 	}
 }
 
