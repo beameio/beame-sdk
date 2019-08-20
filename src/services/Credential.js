@@ -2046,7 +2046,7 @@ class Credential {
 
 	static _updateDnsRecords(cred, dnsFqdn, dnsRecord) {
 		require('path');
-		let meta = DirectoryServices.readJSON(this.beameStoreServices.getAbsoluteFileName(Config.metadataFileName));
+		let meta = DirectoryServices.readJSON(cred.beameStoreServices.getAbsoluteFileName(Config.metadataFileName));
 
 		if (!meta.dnsRecords) {
 			meta.dnsRecords = [];
