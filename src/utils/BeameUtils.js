@@ -95,7 +95,7 @@ function findInTree(node, predicate, limit) {
  * @property {Number} called => times the job was called
  * @property {Number} failed => times the job failed
  * @property {Boolean} running => will be true while the process is running
- * @property {* | undefined} lastResult => result from the last run
+ * @property { {result: * | undefined, error: * | undefined, timestamp: Number} | undefined} lastRun => result from the last run
  */
 /**
  * @type {{name: BackgroundJob}}
@@ -118,10 +118,10 @@ function startBackgroundJob(name, func, interval) {
 		backgroundJobs[name].called++;
 		backgroundJobs[name].running = true;
 		try {
-			backgroundJobs[name].lastResult = await func();
+			backgroundJobs[name].lastRun = { result: await func(), timestamp: Date.now() };
 		}
 		catch(e) {
-			backgroundJobs[name].lastResult = e.message;
+			backgroundJobs[name].lastRun = { error: e, timestamp: Date.now() };
 			backgroundJobs[name].failed++;
 		}
 		backgroundJobs[name].running = false;

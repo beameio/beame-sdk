@@ -41,16 +41,29 @@ describe('background jobs', () => {
 		assert(beameUtils.startBackgroundJob(name,async () => { return 'test_completed'}, runningInterval));
 		await sleep(runningInterval*1.5);
 		assert(beameUtils.getBackgroundJob(name).called === 1);
-		assert(beameUtils.getBackgroundJob(name).lastResult === 'test_completed');
+		assert(beameUtils.getBackgroundJob(name).lastRun.result === 'test_completed');
+		assert(!beameUtils.getBackgroundJob(name).lastRun.error);
+		assert(beameUtils.getBackgroundJob(name).lastRun.timestamp);
 		assert(beameUtils.stopBackgroundJob(name));
 		assert(beameUtils.getBackgroundJob(name) === undefined);
 	});
 
-	it('failing runs', async () => {
+	it('failing runs simple throw', async () => {
+		assert(beameUtils.startBackgroundJob(name,async () => { throw 'test_error'}, runningInterval));
+		await sleep(runningInterval*2.5);
+		assert(beameUtils.getBackgroundJob(name).called === 2);
+		assert(beameUtils.getBackgroundJob(name).lastRun.error === 'test_error');
+		assert(beameUtils.getBackgroundJob(name).failed === 2);
+		assert(beameUtils.stopBackgroundJob(name));
+		assert(beameUtils.getBackgroundJob(name) === undefined);
+	});
+
+	it('failing runs error throw', async () => {
 		assert(beameUtils.startBackgroundJob(name,async () => { throw new Error('test_error')}, runningInterval));
 		await sleep(runningInterval*2.5);
 		assert(beameUtils.getBackgroundJob(name).called === 2);
-		assert(beameUtils.getBackgroundJob(name).lastResult === 'test_error');
+		assert(beameUtils.getBackgroundJob(name).lastRun.error.message === 'test_error');
+		assert(beameUtils.getBackgroundJob(name).lastRun.error.stack);
 		assert(beameUtils.getBackgroundJob(name).failed === 2);
 		assert(beameUtils.stopBackgroundJob(name));
 		assert(beameUtils.getBackgroundJob(name) === undefined);
@@ -62,11 +75,13 @@ describe('background jobs', () => {
 			else { throw new Error('test_error')}}, runningInterval));
 		await sleep(runningInterval*1.5);
 		assert(beameUtils.getBackgroundJob(name).called === 1);
-		assert(beameUtils.getBackgroundJob(name).lastResult === 'test_completed');
+		assert(beameUtils.getBackgroundJob(name).lastRun.result === 'test_completed');
+		assert(!beameUtils.getBackgroundJob(name).lastRun.error);
 		assert(beameUtils.getBackgroundJob(name).failed === 0);
 		await sleep(runningInterval);
 		assert(beameUtils.getBackgroundJob(name).called === 2);
-		assert(beameUtils.getBackgroundJob(name).lastResult === 'test_error');
+		assert(!beameUtils.getBackgroundJob(name).lastRun.result);
+		assert(beameUtils.getBackgroundJob(name).lastRun.error.message === 'test_error');
 		assert(beameUtils.getBackgroundJob(name).failed === 1);
 		assert(beameUtils.stopBackgroundJob(name));
 		assert(beameUtils.getBackgroundJob(name) === undefined);
