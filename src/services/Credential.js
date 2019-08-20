@@ -62,6 +62,7 @@ const NodeRsa                = require("node-rsa");
 const async                  = require('async');
 const _                      = require('underscore');
 const Config                 = require('../../config/Config');
+const Env                    = require('../../config/env');
 const actionsApi             = Config.ActionsApi;
 const envProfile             = Config.SelectedProfile;
 const module_name            = Config.AppModules.Credential;
@@ -1994,35 +1995,50 @@ class Credential {
 	}
 
 	async ensureDnsValue() {
+		/**
+		 * Define LookupAddress because node doesn't do it
+		 * @typedef dns.LookupAddress
+		 * @property address {String}
+		 * @property family {Number}
+		 */
 
-		const resolveDns = (fqdn) => {
-			const promise = util.promisify(dns.lookup)(fqdn).catch(reason => {
+		/**
+		 * Resolves an fqdn with timeout
+		 * @param fqdn
+		 * @param options
+		 * @returns {Promise<any>}
+		 */
+		function resolveDns(fqdn, options) {
+			const promise = util.promisify(dns.lookup)(fqdn, options).catch(reason => {
 				logger.warn(`Failed to resolve ${fqdn} (${reason})`);
 				throw reason;
 			});
 			return CommonUtils.withTimeout(promise, 3000, new Error('DNS resolution timed out'));
-		};
+		}
 
 		if (this.metadata.dnsRecords && this.metadata.dnsRecords.length) {
 			// Make these different so if they are not resolved
 			let expected_ip = {address: 'n/a-1'};
 			let real_ip = {address: 'n/a-2'};
+			let edge_ips = [{address: 'n/a-3'}];
 			try {
 				logger.debug(`resolving expected=${this.metadata.dnsRecords[0].value} fqdn=${this.fqdn}`);
-				[expected_ip, real_ip] = await Promise.all([
+				[expected_ip, real_ip, edge_ips] = await Promise.all([
 					resolveDns(this.metadata.dnsRecords[0].value),
-					resolveDns(this.fqdn)
+					resolveDns(this.fqdn),
+					resolveDns(Env.LoadBalancerFqdn, {all: true})
 				]);
 			} catch(e) {
-				logger.warn('Failed to resolve');
+				logger.warn('Failed to resolve DNS');
 			}
-			if (expected_ip.address === real_ip.address) {
+
+			if (expected_ip.address === real_ip.address && edge_ips.map(x => x.address).includes(expected_ip.address)) {
 				logger.debug('DNS record is OK, not calling setDns');
 				return this.metadata.dnsRecords[0].value;
 			}
-			logger.debug(`DNS records were expected_ip=${JSON.stringify(expected_ip)} real_ip=${JSON.stringify(real_ip)}`);
+			logger.debug(`DNS records were expected_ip=${JSON.stringify(expected_ip)} real_ip=${JSON.stringify(real_ip)} edge_ips=${JSON.stringify(edge_ips)}`);
 		} else {
-			logger.warn(`There were no DNS records for ${this.fqdn} in metadata, will call setDns`);
+			logger.debug(`There were no DNS records for ${this.fqdn} in metadata, will call setDns`);
 		}
 
 		return await this.setDns(this.fqdn, null, true);

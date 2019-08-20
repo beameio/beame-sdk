@@ -370,7 +370,7 @@ class CommonUtils {
 	 * @param func {function}
 	 * @param retries {number|null}
 	 * @param sleepTimeFunc {function} time
-	 * @returns {*} funtion result
+	 * @returns {*} function result
 	 * @throws {string} final fail if all retries expired
 	 */
 	static async retry(func, retries = 5, sleepTimeFunc = CommonUtils.exponentialTimeWithJitter) {
