@@ -18,24 +18,13 @@ class AuthToken {
 	static async getRequestAuthToken(req, allowExpired = false, event = null) {
 		let authHead  = req.get('X-BeameAuthToken');
 		assert(authHead, 'Auth Header not received!');
-		logger.debug(`auth head received ${authHead}`);
+		logger.debug(`Auth Header received '${authHead}'`);
 
 		/** @type {SignatureToken|null} */
-		let authToken = undefined;
-		try {
-			authToken = CommonUtils.parse(authHead);
-		}
-		catch (error) {
-			logger.error(`Parse auth header error ${BeameLogger.formatError(error)}`);
-			throw new Error('Auth token invalid json format');
-		}
+		let authToken = CommonUtils.parse(authHead);
 
-		if (!CommonUtils.isObject(authToken)) {
-			logger.error(`invalid auth ${authToken} token format`);
-			throw new Error('Auth token invalid json format');
-		}
-
-		assert(authToken, 'Auth token required');
+		assert(authToken, 'Auth Header is not valid or was not parsed successfully');
+		assert(authToken.signature && authToken.signedBy && authToken.signedData, 'Auth Header is not a valid SignatureToken');
 		return await AuthToken.validate(authToken, allowExpired, event);
 	}
 
