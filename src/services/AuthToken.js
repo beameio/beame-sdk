@@ -14,17 +14,16 @@ const timeFuzz = config.defaultTimeFuzz;
 
 class AuthToken {
 
-	//noinspection JSUnusedGlobalSymbols
 	static async getRequestAuthToken(req, allowExpired = false, event = null) {
 		let authHead  = req.get('X-BeameAuthToken');
-		assert(authHead, 'Auth Header not received!');
-		logger.debug(`Auth Header received '${authHead}'`);
+		assert(authHead, 'X-BeameAuthToken not received!');
+		logger.debug(`X-BeameAuthToken received '${authHead}'`);
 
 		/** @type {SignatureToken|null} */
 		let authToken = CommonUtils.parse(authHead);
 
-		assert(authToken, 'Auth Header is not valid or was not parsed successfully');
-		assert(authToken.signature && authToken.signedBy && authToken.signedData, 'Auth Header is not a valid SignatureToken');
+		assert(authToken, 'X-BeameAuthToken is not valid or was not parsed successfully');
+		assert(authToken.signature && authToken.signedBy && authToken.signedData, 'X-BeameAuthToken is not a valid SignatureToken');
 		return await AuthToken.validate(authToken, allowExpired, event);
 	}
 
