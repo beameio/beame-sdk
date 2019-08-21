@@ -39,29 +39,13 @@ class AuthToken {
 	static create(data, signingCreds, ttl, allowExpired = false) {
 
 		try {
-			if (!(signingCreds instanceof Credential)) {
-				logger.error('signingCreds must be present and must be instance of Credential');
-				return null;
-			}
-
-			if (signingCreds.expired && !allowExpired) {
-				logger.error(`signingCreds ${signingCreds.fqdn} expired`);
-				return null;
-			}
-
-			if (signingCreds.revoked) {
-				logger.error(`signingCreds ${signingCreds.fqdn} revoked`);
-				return null;
-			}
-
-			if(!signingCreds.hasPrivateKey){
-				logger.warn(`signingCreds ${signingCreds.fqdn} must have private key`);
-				return null;
-			}
+			assert(signingCreds instanceof Credential, 'signingCreds must be present and must be instance of Credential');
+			assert(!signingCreds.expired || allowExpired, `signingCreds ${signingCreds.fqdn} expired`);
+			assert(!signingCreds.revoked, `signingCreds ${signingCreds.fqdn} revoked`);
+			assert(signingCreds.hasPrivateKey, `signingCreds ${signingCreds.fqdn} must have private key`);
 
 			const now = Date.now();
-
-			let data2sign = data ? (typeof data == "object" ? CommonUtils.stringify(data, false) : data) : null;
+			const data2sign = data ? (typeof data == "object" ? CommonUtils.stringify(data, false) : data) : null;
 
 			/** @type {SignedData} */
 			const token = {
@@ -71,13 +55,11 @@ class AuthToken {
 			};
 
 			return CommonUtils.stringify(signingCreds ? signingCreds.sign(token) : token, false);
-
 		}
 		catch (error) {
 			logger.error(BeameLogger.formatError(error));
 			return null
 		}
-
 	}
 
 	static createAsync(data, signingCreds, ttl) {
