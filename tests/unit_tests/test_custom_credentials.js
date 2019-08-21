@@ -12,8 +12,7 @@ function _getRandomRegistrationData(prefix) {
 	};
 }
 
-if(!process.env.BEAME_TESTS_LOCAL_ROOT_FQDN)
-	throw new Error("Env BEAME_TESTS_LOCAL_ROOT_FQDN is required");
+assert(process.env.BEAME_TESTS_LOCAL_ROOT_FQDN, "Env BEAME_TESTS_LOCAL_ROOT_FQDN is required to run the tests");
 
 describe('local_creds_custom_create', function () {
 	this.timeout(100000);

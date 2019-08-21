@@ -15,10 +15,7 @@ const DirectoryServices = require('../../src/services/DirectoryServices');
 const debug = require("debug")(config.debugPrefix + "unittests:ocsp");
 
 const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN;
-if (!local_fqdn) {
-	console.error(`local fqdn is required`);
-	process.exit(1)
-}
+assert(local_fqdn, `Env BEAME_TESTS_LOCAL_FQDN is required to run the tests`);
 
 describe('ocsp', function () {
 	this.timeout(100000);
