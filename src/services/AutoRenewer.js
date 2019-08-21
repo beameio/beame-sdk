@@ -8,20 +8,20 @@ const BeameUtils          = require('../utils/BeameUtils');
 
 /**
  * Checks if a credential reached already the renewal period
- * @param cred - cred to check
- * @param date - date to consider for the expiration (default is now)
+ * @param cred {Credential} - credential to check
+ * @param date {Date} - date to consider for the expiration (default is now)
  * @returns {boolean} true: needs renewal, false otherwise
  */
 function needsRenewal(cred, date = new Date()) {
 	if(!cred.certData || !cred.certData.validity)
 		return true;
 
-	// calculate expiration before period from percentage and make sure it doesn't exceed the max period
-	let calculatedBeforeExpiration = ((cred.certData.validity.end - cred.certData.validity.start) * (config.renewalPercentageBeforeExpiration / 100));
-	if(calculatedBeforeExpiration > config.renewalBeforeExpirationMaxPeriod)
-		calculatedBeforeExpiration = config.renewalBeforeExpirationMaxPeriod;
+	// calculate renewal period from percentage and make sure it doesn't exceed the max period
+	let renewalPeriod = ((cred.certData.validity.end - cred.certData.validity.start) * (config.renewalPercentageBeforeExpiration / 100));
+	if(renewalPeriod > config.renewalBeforeExpirationMaxPeriod)
+		renewalPeriod = config.renewalBeforeExpirationMaxPeriod;
 
-	return new Date(cred.certData.validity.end) < new Date(date + calculatedBeforeExpiration);
+	return new Date(cred.certData.validity.end - renewalPeriod) < date;
 }
 
 /**

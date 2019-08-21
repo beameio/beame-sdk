@@ -114,7 +114,7 @@ function startBackgroundJob(name, func, interval) {
 		return false;
 	}
 
-	async function jobCall() {
+	async function invoke() {
 		backgroundJobs[name].called++;
 		backgroundJobs[name].running = true;
 		try {
@@ -123,11 +123,12 @@ function startBackgroundJob(name, func, interval) {
 		catch(e) {
 			backgroundJobs[name].lastRun = { error: e, timestamp: Date.now() };
 			backgroundJobs[name].failed++;
+			logger.error(`Failed to run background job '${name}'`, e);
 		}
 		backgroundJobs[name].running = false;
-		backgroundJobs[name].handle = setTimeout(jobCall, interval).unref(); // schedule next
+		backgroundJobs[name].handle = setTimeout(invoke, interval).unref(); // schedule next
 	}
-	backgroundJobs[name] = {handle: setTimeout(jobCall, interval).unref(), interval: interval, called: 0, failed: 0, running: false};
+	backgroundJobs[name] = {handle: setTimeout(invoke, interval).unref(), interval: interval, called: 0, failed: 0, running: false};
 	logger.info(`Running background job '${name}' every ${interval} ms`);
 	return true;
 }
