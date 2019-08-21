@@ -311,7 +311,7 @@ class Credential {
 		}
 		if (this.hasPrivateKey) {
 			this.privateKeyNodeRsa = new NodeRsa();
-			this.privateKeyNodeRsa.importKey(this.privateKey + " ", "private");
+			this.privateKeyNodeRsa.importKey(this.getPrivateKey + " ", "private");
 		}
 	}
 
@@ -487,11 +487,11 @@ class Credential {
 		return this.hasKey("PRIVATE_KEY");
 	}
 
-	get privateKey() {
+	get getPrivateKey() {
 		return this.getKey("PRIVATE_KEY");
 	}
 
-	get P7B() {
+	get getP7B() {
 		return this.getKey("P7B");
 	}
 //noinspection JSUnusedGlobalSymbols
@@ -752,7 +752,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.privateKey, parentCred.P7B);
+				api.setClientCerts(parentCred.getPrivateKey, parentCred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -800,7 +800,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.privateKey, parentCred.P7B);
+				api.setClientCerts(parentCred.getPrivateKey, parentCred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -853,7 +853,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.privateKey, parentCred.P7B);
+				api.setClientCerts(parentCred.getPrivateKey, parentCred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -914,7 +914,7 @@ class Credential {
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.RegisterEntity.endpoint, postData),
 				    api      = new ProvisionApi();
 
-				api.setClientCerts(parentCred.privateKey, parentCred.P7B);
+				api.setClientCerts(parentCred.getPrivateKey, parentCred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.Registering, parent_fqdn);
 
@@ -1290,7 +1290,7 @@ class Credential {
 						reject(`Signer cred for ${signerFqdn} not found`);
 						return;
 					}
-					api.setClientCerts(cred.privateKey, cred.P7B);
+					api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 				}
 				else {
 					authToken = CommonUtils.stringify(signerAuthToken, false);
@@ -1359,7 +1359,7 @@ class Credential {
 							logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.RequestingCerts, fqdn);
 							let authToken = null;
 							if (!signerAuthToken) {
-								api.setClientCerts(cred.privateKey, cred.P7B);
+								api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 							} else {
 								authToken = (typeof signerAuthToken === 'object') ? CommonUtils.stringify(signerAuthToken, false) : signerAuthToken;
 							}
@@ -1803,7 +1803,7 @@ class Credential {
 				const api     = new ProvisionApi(),
 				      apiData = ProvisionApi.getApiData(apiEntityActions.GetMetadata.endpoint, {});
 
-				api.setClientCerts(cred.privateKey, cred.P7B);
+				api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 
 				logger.printStandardEvent(logger_entity, BeameLogger.StandardFlowEvent.UpdatingMetadata, fqdn);
 
@@ -1848,7 +1848,7 @@ class Credential {
 				    },
 				    apiData  = ProvisionApi.getApiData(apiEntityActions.UpdateEntity.endpoint, postData);
 
-				api.setClientCerts(cred.privateKey, cred.P7B);
+				api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error) => {
@@ -2107,7 +2107,7 @@ class Credential {
 				let apiData = ProvisionApi.getApiData(apiEntityActions.SubscribeRegistration.endpoint, {}),
 				    api     = new ProvisionApi();
 
-				api.setClientCerts(cred.privateKey, cred.P7B);
+				api.setClientCerts(cred.getPrivateKey, cred.getP7B);
 
 				//noinspection ES6ModulesDependencies,NodeModulesDependencies
 				api.runRestfulAPI(apiData, (error) => {
@@ -2127,8 +2127,8 @@ class Credential {
 	 * @returns {{key: *, cert: *, ca: *}}
 	 */
 	getHttpsServerOptions() {
-		let pk  = this.privateKey,
-		    p7b = this.P7B;
+		let pk  = this.getPrivateKey,
+		    p7b = this.getP7B;
 		//ca  = this.getKey("CA");
 
 		if (!pk || !p7b) {
