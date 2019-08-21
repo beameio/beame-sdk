@@ -641,7 +641,7 @@ class BeameStoreV2 {
 		return new Promise((resolve, reject) => {
 				//noinspection JSDeprecatedSymbols
 				let parentCreds     = parentFqdn ? this.getCredential(parentFqdn) : null;
-				let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
+				let parentPublicKey = parentCreds && parentCreds.publicKeyNodeRsa;
 
 				const loadCred = (metadata) => {
 					let newCred = new Credential(this);
