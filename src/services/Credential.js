@@ -1524,15 +1524,16 @@ class Credential {
 	 */
 	setRevokedAndSave(isRevoked) {
 		if(isRevoked) {
+			let date = Date.now();
 			this.metadata.ocspStatus = {
 				fingerprint: this.certData.fingerprints.sha256,
 				status: Config.OcspStatus.Revoked,
-				date:   Date.now()
+				date:   date
 			};
 			this.save();
 			Credential.saveCredAction(this, {
 				action: Config.CredAction.Revoke,
-				date:   Date.now()
+				date:   date
 			});
 		}
 	}
@@ -1541,15 +1542,16 @@ class Credential {
 	 * @param {OcspStatus} status
 	 */
 	setOcspStatusAndSave(status) {
+		let date = Date.now();
 		this.metadata.ocspStatus = {
 			fingerprint: this.certData.fingerprints.sha256,
 			status: status,
-			date:   Date.now()
+			date:   date
 		};
 		this.save();
 		Credential.saveCredAction(this, {
 			action: Config.CredAction.OcspUpdate,
-			date:   Date.now()
+			date:   date
 		});
 	}
 
