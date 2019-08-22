@@ -10,6 +10,7 @@ const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
 const BeameLogger = require('../utils/Logger');
 const logger      = new BeameLogger(module_name);
+const assert      = require('assert').strict;
 
 function nop() {}
 
@@ -106,13 +107,9 @@ const backgroundJobs = {};
  * @param {String} name
  * @param {Function} func
  * @param {Number} interval (in ms)
- * @returns {boolean}
  */
 function startBackgroundJob(name, func, interval) {
-	if(backgroundJobs[name]) {
-		logger.warn(`Background job '${name}' is already running, skipping....`);
-		return false;
-	}
+	assert(!backgroundJobs[name], `Background job '${name}' is already running`);
 
 	async function invoke() {
 		backgroundJobs[name].called++;
@@ -130,23 +127,18 @@ function startBackgroundJob(name, func, interval) {
 	}
 	backgroundJobs[name] = {handle: setTimeout(invoke, interval).unref(), interval: interval, called: 0, failed: 0, running: false};
 	logger.info(`Running background job '${name}' every ${interval} ms`);
-	return true;
 }
 
 /**
  * Stops a background running job
  * @param name
- * @returns {boolean}
  */
 function stopBackgroundJob(name) {
-	if(!backgroundJobs[name]) {
-		logger.warn(`Background job '${name}' is not running, skipping....`);
-		return false;
-	}
+	assert(backgroundJobs[name], `Background job '${name}' is not running`);
+
 	clearTimeout(backgroundJobs[name].handle);
 	logger.info(`Stopped background job '${name}', job was called ${backgroundJobs[name].called} time(s) and failed ${backgroundJobs[name].failed} time(s)`);
 	backgroundJobs[name] = undefined;
-	return true;
 }
 
 /**
