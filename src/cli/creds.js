@@ -301,16 +301,18 @@ renewAll.toText = function (renewResult) {
 		colWidths: [60, 24, 16]
 	});
 
-	console.log(`\n  Total:  ${renewResult.failed.length + renewResult.succeeded.length + renewResult.skipped.length}    [ failed: ${renewResult.failed.length} | succeeded: ${renewResult.succeeded.length} | skipped: ${renewResult.skipped.length} ]`);
-	renewResult.failed.forEach(item => {
-		table.push([item.fqdn, item.validUntil, 'failed']);
-	});
-	renewResult.succeeded.forEach(item => {
-		table.push([item.fqdn, item.validUntil, 'succeeded']);
-	});
-	renewResult.skipped.forEach(item => {
-		table.push([item.fqdn, item.validUntil, 'skipped']);
-	});
+	let total = 0;
+	let subtotalsText = "";
+	for(let key in renewResult)
+	{
+		if(!renewResult.hasOwnProperty(key)) continue;
+		total += renewResult[key].length;
+		subtotalsText += ` ${key}: ${renewResult[key].length} `;
+		renewResult[key].forEach(item => {
+			table.push([item.fqdn, item.validUntil, key]);
+		});
+	}
+	table.push([{colSpan:3,hAlign:'center',content: `\n[${subtotalsText}]          Total:  ${total}\n`}]);
 	return table;
 };
 
