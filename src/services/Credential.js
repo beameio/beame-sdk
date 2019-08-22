@@ -1574,7 +1574,7 @@ class Credential {
 		return this;
 	}
 
-	asCommonUtils.isObjectEmpty(this.certData)ync checkOcspStatus(cred, forceCheck = false) {
+	async checkOcspStatus(cred, forceCheck = false) {
 		try {
 			return await this._checkOcspStatus(cred, forceCheck);
 		} catch(e) {
