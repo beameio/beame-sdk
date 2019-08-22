@@ -551,8 +551,7 @@ list.toText = function (creds) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
-		// noinspection JSUnresolvedFunction
-		return cred.expired === true || cred.revoked ? colors.red(val) : val;
+		return cred.expired || cred.revoked ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
@@ -577,8 +576,7 @@ signers.toText = function (creds) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
-		// noinspection JSUnresolvedFunction
-		return cred.expired === true ? colors.red(val) : val;
+		return cred.expired ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
@@ -671,8 +669,7 @@ listCredChain.toText = function (list) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
-		// noinspection JSUnresolvedFunction
-		return cred.expired === true ? colors.red(val) : val;
+		return cred.expired ? colors.red(val) : val;
 	};
 	for (let i = 0; i < list.length; i++) {
 		table.push([_setStyle(list[i].metadata.level, list[i]), _setStyle(list[i].fqdn, list[i])]);

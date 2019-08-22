@@ -1290,7 +1290,7 @@ class Credential {
 						return;
 					}
 
-					revokedCred.setRevokedAndSave(true);
+					revokedCred.setRevokedAndSave();
 					resolve();
 				};
 
@@ -1350,7 +1350,8 @@ class Credential {
 							api.runRestfulAPI(apiData, async (error, payload) => {
 								try {
 									const certs = await cred._saveCerts(error, payload);
-									cred.setRevokedAndSave(false);
+									cred.cleanOcspStatus();
+									cred.save();
 									Credential.saveCredAction(cred, {
 										action: Config.CredAction.Renew,
 										date: Date.now()
@@ -1514,28 +1515,24 @@ class Credential {
 	 * @param {boolean} isRevoked
 	 */
 	saveOcspStatus(isRevoked) {
+		assert(isRevoked, "saveOcspStatus must be called with isRevoked=true");
 		// Should be warning but logger does not support warning with exception as message
 		logger.error(new Error('Using deprecated Credential#saveOcspStatus for credential ' + this.fqdn));
-		this.setRevokedAndSave(isRevoked);
+		this.setRevokedAndSave();
 	}
 
-	/**
-	 * @param {boolean} isRevoked
-	 */
-	setRevokedAndSave(isRevoked) {
-		if(isRevoked) {
-			let date = Date.now();
-			this.metadata.ocspStatus = {
-				fingerprint: this.certData.fingerprints.sha256,
-				status: Config.OcspStatus.Revoked,
-				date:   date
-			};
-			this.save();
-			Credential.saveCredAction(this, {
-				action: Config.CredAction.Revoke,
-				date:   date
-			});
-		}
+	setRevokedAndSave() {
+		let date = Date.now();
+		this.metadata.ocspStatus = {
+			fingerprint: this.certData.fingerprints.sha256,
+			status: Config.OcspStatus.Revoked,
+			date: date
+		};
+		this.save();
+		Credential.saveCredAction(this, {
+			action: Config.CredAction.Revoke,
+			date: date
+		});
 	}
 
 	/**
@@ -1577,7 +1574,7 @@ class Credential {
 		return this;
 	}
 
-	async checkOcspStatus(cred, forceCheck = false) {
+	asCommonUtils.isObjectEmpty(this.certData)ync checkOcspStatus(cred, forceCheck = false) {
 		try {
 			return await this._checkOcspStatus(cred, forceCheck);
 		} catch(e) {
@@ -1698,9 +1695,7 @@ class Credential {
 		}
 
 		// beameioca1.pem still doesn't exist, get the cert and convert it to pem
-		if (!DirectoryServices.doesPathExists(Config.issuerCertsPath)) {
-			DirectoryServices.createDir(Config.issuerCertsPath);
-		}
+		DirectoryServices.createDir(Config.issuerCertsPath);
 
 		const opt = {
 			url: issuerCertUrl,
@@ -2655,12 +2650,12 @@ class Credential {
 		return this.metadata.ocspStatus.status === Config.OcspStatus.Revoked;
 	}
 
-	// TODO: Ric - Fix logic, it seems broken
 	get expired() {
 		try {
-			return CommonUtils.isObjectEmpty(this.certData) ? true : new Date(this.certData.validity.end) < new Date();
+			assert(!CommonUtils.isObjectEmpty(this.certData), "Credential#expired needs certData");
+			return new Date(this.certData.validity.end) < new Date();
 		} catch (e) {
-			logger.error(`set expiration status error ${e}`, this.certData)
+			logger.error(`set expiration status error ${e}`, this.certData);
 			return false;
 		}
 	}
