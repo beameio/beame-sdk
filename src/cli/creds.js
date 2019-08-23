@@ -303,9 +303,8 @@ renewAll.toText = function (renewResult) {
 
 	let total = 0;
 	let subtotalsText = "";
-	for(let key in renewResult)
+	for(const key of renewResult)
 	{
-		if(!renewResult.hasOwnProperty(key)) continue;
 		total += renewResult[key].length;
 		subtotalsText += ` ${key}: ${renewResult[key].length} `;
 		renewResult[key].forEach(item => {
