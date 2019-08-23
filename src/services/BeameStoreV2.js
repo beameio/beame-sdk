@@ -548,8 +548,8 @@ class BeameStoreV2 {
 				let expirationDate = new Date(cred.getCertEnd());
 
 				// noinspection JSUnresolvedVariable
-				if (options.excludeValid) {
-					return cred.revoked;
+				if (options.excludeValid && !cred.revoked) {
+					return false;
 				}
 
 				// noinspection JSUnresolvedVariable
