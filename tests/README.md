@@ -36,11 +36,19 @@ Currently using the libraries:
 
 Mocha can be called from `./node-modules/.bin/mocha`
 
+### test_authtoken.js
+Tests the Auth Token functionality.
+
+Requires `BEAME_TESTS_LOCAL_FQDN` (fqdn of a local available cred with private key) in order to run the tests against.
+
+### test_beameutils.js
+Tests the Beame Utils functionality.
+
 ### test_commonutil.js
-Tests the Common Utils.
+Tests the Common Utils functionality.
 
 ### tests_credentials.js
-Tests on the credentials functionality
+Tests on the credentials functionality.
 
 Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
 
@@ -49,6 +57,9 @@ Tests on the creation of custom credentials.
 
 Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
 Optionally `BEAME_TESTS_CUSTOM_FQDN` can be passed for a custom fqdn creation in the custom fqdn test.
+
+### test_makeenv.js
+Tests the Make Env functionality.
 
 ### test_ntp.js
 Tests the ntp base functionality.
@@ -59,7 +70,7 @@ Tests the ntp base functionality.
 ### test_ocsp.js
 Tests in the oscp functionality
 
-Requires `BEAME_TESTS_LOCAL_FQDN` (fqdn of a local available cred) in order to run the ocsp tests againts.
+Requires `BEAME_TESTS_LOCAL_FQDN` (fqdn of a local available cred) in order to run the ocsp tests against.
 
 Sets internally `EXTERNAL_OCSP_FQDN` and `BEAME_OCSP_IGNORE` as required to test the functionality
 

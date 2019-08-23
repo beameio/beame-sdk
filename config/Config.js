@@ -102,14 +102,14 @@ const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
 const cdrDir = process.env.BEAME_CDR_DIR || path.join(home, '.beame_cdr');
 
 /** @const {String} **/
-const scsDir = process.env.BEAME_SCS_DIR || path.join(rootDir, 'scs');
+const scsDir = process.env.BEAME_SCS_DIR || path.join(rootDir, 'cache');
 
 /** @const {String} **/
 const remotePKsDirV1 = path.join(rootDir, 'pki');
 
 const localCertsDirV2 = path.join(rootDir, 'v2');
 
-const issuerCertsPath = path.join(rootDir, 'ocsp-cache');
+const issuerCertsPath = path.join(scsDir, 'issuer-certs-chain');
 
 const localLogDir = process.env.BEAME_LOG_DIR || path.join(rootDir, 'logs');
 
@@ -135,11 +135,13 @@ const defaultTimeFuzz = 10;
 
 const defaultDays2Log = 7;
 
-const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30;
+const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30; // 30 days
 
-const ocspCheckInterval = process.env.BEAME_OCSP_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
+const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24; // 1 day
+const renewalPercentageBeforeExpiration = process.env.BEAME_RENEWAL_PERCENTAGE_BEFORE_EXPIRATION || 8; // 8% before cred expiration
+const renewalBeforeExpirationMaxPeriod = process.env.BEAME_RENEWAL_BEFORE_EXPIRATION_MAX_PERIOD || 1000 * 60 * 60 * 24 * 45; // 45 days
 
-const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
+const credentialMetadataActionsLimit = 20;
 
 /** @const {String} **/
 const metadataFileName = "metadata.json";
@@ -225,7 +227,6 @@ const MetadataProperties = {
 	NAME:          "name",
 	PARENT_FQDN:   "parent_fqdn",
 	APPROVER_FQDN: "approved_by_fqdn",
-	PATH:          "path",
 	DNS:           "dnsRecords",
 	REVOKED:       "revoked",
 	ACTIONS:       "actions",
@@ -268,6 +269,7 @@ const AltPrefix = {
  *  @enum {string}
  */
 const AppModules = {
+	"AutoRenewer":      "AutoRenewer",
 	"Credential":       "Credential",
 	"BeameEntity":      "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
@@ -365,56 +367,57 @@ const CDREvents = {
  */
 const OcspStatus = {
 	"Good":        "Good",
-	"Bad":         "Bad",
-	"Unavailable": "Unavailable",
-	"Unknown":     "Unknown"
+	"Revoked":     "Revoked", // revoked state from admin (sns revoked message) or from the ocsp call
+	"Unavailable": "Unavailable"
 };
 
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
-	debugPrefix,
-	rootDir,
-	cdrDir,
-	scsDir,
-	npmRootDir,
-	localCertsDirV2,
-	remotePKsDirV1,
-	issuerCertsPath,
-	loadBalancerURL,
-	metadataFileName,
-	s3MetadataFileName,
-	CertFileNames,
-	CertResponseFields,
+	ActionsApi,
+	AltPrefix,
 	AppModules,
-	MessageCodes,
-	TimeUnits,
-	SNIServerPort,
-	InitFirstRemoteEdgeClient,
-	PinAtomPKbyDefault,
-	MetadataProperties,
-	CredAction,
+	ApprovedZones,
+	AuthEventType,
 	beameForceEdgeFqdn,
 	beameForceEdgeIP,
-	RegistrationSource,
-	RequestType,
-	ApprovedZones,
-	defaultValidityPeriod,
-	ocspCachePeriod,
-	ocspCheckInterval,
-	renewalCheckInterval,
+	cdrDir,
+	CDREvents,
+	CertFileNames,
+	CertResponseFields,
 	CertValidationError,
+	CredAction,
+	credentialMetadataActionsLimit,
+	debugPrefix,
 	defaultAllowedClockDiff,
 	defaultAuthTokenTtl,
-	defaultTimeFuzz,
-	CDREvents,
-	OcspStatus,
-	AuthEventType,
-	AltPrefix,
-	LogFileNames,
-	LogEvents,
-	localLogDir,
 	defaultDays2Log,
+	defaultTimeFuzz,
+	defaultValidityPeriod,
+	InitFirstRemoteEdgeClient,
+	issuerCertsPath,
+	loadBalancerURL,
+	localCertsDirV2,
+	localLogDir,
+	LogEvents,
+	LogFileNames,
+	MessageCodes,
+	metadataFileName,
+	MetadataProperties,
+	npmRootDir,
+	ocspCachePeriod,
+	OcspStatus,
+	PinAtomPKbyDefault,
+	RegistrationSource,
+	remotePKsDirV1,
+	renewalCheckInterval,
+	renewalPercentageBeforeExpiration,
+	renewalBeforeExpirationMaxPeriod,
+	RequestType,
+	rootDir,
+	s3MetadataFileName,
+	scsDir,
 	SelectedProfile,
-	ActionsApi
+	SNIServerPort,
+	TimeUnits,
 };

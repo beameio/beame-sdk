@@ -14,8 +14,7 @@ function _getRandomRegistrationData(prefix) {
 	};
 }
 
-if(!process.env.BEAME_TESTS_LOCAL_ROOT_FQDN)
-	throw new Error("Env BEAME_TESTS_LOCAL_ROOT_FQDN is required");
+assert(process.env.BEAME_TESTS_LOCAL_ROOT_FQDN, "Env BEAME_TESTS_LOCAL_ROOT_FQDN is required to run the tests");
 
 describe('local_creds_create', function () {
 	this.timeout(100000);
@@ -162,9 +161,9 @@ describe('local_creds_isrevoked', function() {
 		assert(metadata.fqdn, `expected fqdn`);
 		let cred = store.getCredential(metadata.fqdn);
 		assert(cred, 'New credential not found inn store');
-		assert(!await cred.isRevoked(), 'Should not be revoked at first');
+		assert(!cred.revoked, 'Should not be revoked at first');
 		await cred.revokeCert(null, cred.fqdn, cred.fqdn);
-		assert(await cred.isRevoked(), 'Should be revoked after revocation');
+		assert(cred.revoked, 'Should be revoked after revocation');
 	});
 
 	// TODO: check with external revokation

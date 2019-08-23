@@ -98,7 +98,7 @@ class BeameStoreV2 {
 			);
 		};
 
-		console.log('******************', fqdn);
+		logger.info(`Fetching ${fqdn}`);
 
 		if (config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name))) {
 			return this.getRemoteCreds(fqdn).then(_saveCreds);
@@ -385,7 +385,7 @@ class BeameStoreV2 {
 				};
 
 				const _onValidationError = (credential, certError) => {
-					if (certError.errorCode === CertValidationError.Expired && !credential.hasKey("PRIVATE_KEY")) {
+					if (certError.errorCode === CertValidationError.Expired && !credential.hasPrivateKey) {
 						_renewCred();
 					}
 					else {
@@ -417,7 +417,7 @@ class BeameStoreV2 {
 
 				if (cred) {
 					//refresh metadata info
-					cred.metadata = cred.beameStoreServices.readMetadataSync(cred.metadata.path);
+					cred.metadata = cred.beameStoreServices.readMetadataSync();
 					_onCredFound(cred);
 				} else {
 					if (!allowRemote) {
@@ -548,12 +548,12 @@ class BeameStoreV2 {
 				let expirationDate = new Date(cred.getCertEnd());
 
 				// noinspection JSUnresolvedVariable
-				if (options.excludeValid) {
-					return (cred.metadata.revoked == true);
+				if (options.excludeValid && !cred.revoked) {
+					return false;
 				}
 
 				// noinspection JSUnresolvedVariable
-				if (options.excludeRevoked && cred.metadata.revoked) {
+				if (options.excludeRevoked && cred.revoked) {
 					return false;
 				}
 
@@ -573,11 +573,11 @@ class BeameStoreV2 {
 				}
 
 				//noinspection RedundantIfStatementJS,JSUnresolvedVariable
-				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
+				if (options.hasPrivateKey == true && !cred.hasPrivateKey) {
 					return false;
 				}
 				else { //noinspection JSUnresolvedVariable
-					if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
+					if (options.hasPrivateKey == false && cred.hasPrivateKey) {
 						return false;
 					}
 				}
@@ -641,7 +641,7 @@ class BeameStoreV2 {
 		return new Promise((resolve, reject) => {
 				//noinspection JSDeprecatedSymbols
 				let parentCreds     = parentFqdn ? this.getCredential(parentFqdn) : null;
-				let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
+				let parentPublicKey = parentCreds && parentCreds.publicKeyNodeRsa;
 
 				const loadCred = (metadata) => {
 					let newCred = new Credential(this);

@@ -10,7 +10,7 @@ const config      = require('../../config/Config');
 const module_name = config.AppModules.BeameUtils;
 const BeameLogger = require('../utils/Logger');
 const logger      = new BeameLogger(module_name);
-const CommonUtils = require('../utils/CommonUtils');
+const assert      = require('assert').strict;
 
 function nop() {}
 
@@ -85,6 +85,69 @@ function findInTree(node, predicate, limit) {
 	}
 
 	return result;
+}
+//endregion
+
+//region Background Jobs
+/**
+ * @typedef {Object} BackgroundJob
+ * @property {Object} handle => set interval handle
+ * @property {Number} interval => interval to run the job
+ * @property {Number} called => times the job was called
+ * @property {Number} failed => times the job failed
+ * @property {Boolean} running => will be true while the process is running
+ * @property { {result: * | undefined, error: * | undefined, timestamp: Number} | undefined} lastRun => result from the last run
+ */
+/**
+ * @type {{name: BackgroundJob}}
+ */
+const backgroundJobs = {};
+/**
+ * Starts a background job that will run every interval
+ * @param {String} name
+ * @param {Function} func
+ * @param {Number} interval (in ms)
+ */
+function startBackgroundJob(name, func, interval) {
+	assert(!backgroundJobs[name], `Background job '${name}' is already running`);
+
+	async function invoke() {
+		backgroundJobs[name].called++;
+		backgroundJobs[name].running = true;
+		try {
+			backgroundJobs[name].lastRun = { result: await func(), timestamp: Date.now() };
+		}
+		catch(e) {
+			backgroundJobs[name].lastRun = { error: e, timestamp: Date.now() };
+			backgroundJobs[name].failed++;
+			logger.error(`Failed to run background job '${name}'`, e);
+		}
+		backgroundJobs[name].running = false;
+		backgroundJobs[name].handle = setTimeout(invoke, interval).unref(); // schedule next
+	}
+	backgroundJobs[name] = {handle: setTimeout(invoke, interval).unref(), interval: interval, called: 0, failed: 0, running: false};
+	logger.info(`Running background job '${name}' every ${interval} ms`);
+}
+
+/**
+ * Stops a background running job
+ * @param name
+ */
+function stopBackgroundJob(name) {
+	assert(backgroundJobs[name], `Background job '${name}' is not running`);
+
+	clearTimeout(backgroundJobs[name].handle);
+	logger.info(`Stopped background job '${name}', job was called ${backgroundJobs[name].called} time(s) and failed ${backgroundJobs[name].failed} time(s)`);
+	backgroundJobs[name] = undefined;
+}
+
+/**
+ * Returns information about a background running job or undefined if it doesn't exist
+ * @param name
+ * @returns {BackgroundJob} | undefined
+ */
+function getBackgroundJob(name) {
+	return backgroundJobs[name];
 }
 //endregion
 
@@ -234,5 +297,9 @@ module.exports = {
 	},
 
 	iterateTree,
-	findInTree
+	findInTree,
+
+	startBackgroundJob,
+	getBackgroundJob,
+	stopBackgroundJob
 };
