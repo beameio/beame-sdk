@@ -2652,7 +2652,7 @@ class Credential {
 
 	get expired() {
 		try {
-			assert(!CommonUtils.isObjectEmpty(this.certData), "Credential#expired needs certData");
+			assert(!CommonUtils.isObjectEmpty(this.certData), `Credential#expired needs certData ${this.fqdn}`);
 			return new Date(this.certData.validity.end) < new Date();
 		} catch (e) {
 			logger.error(`set expiration status error ${e}`, this.certData);
