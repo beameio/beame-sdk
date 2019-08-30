@@ -399,7 +399,7 @@ function checkAllOcsp(forceCheck, callback) {
 	forceCheck = !!(forceCheck && forceCheck === "true");
 	async function _checkAllOcspStatus() {
 		const result = {};
-		for (const cred of _listCreds('.')) {
+		for (const cred of _listCreds('.', { excludeExpired: true })) {
 			try {
 				const status = await cred.checkOcspStatus(cred, forceCheck);
 				result[status] = (result[status] || 0) + 1;
