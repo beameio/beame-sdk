@@ -47,6 +47,7 @@ const BeameUtils          = require('../utils/BeameUtils');
 const CommonUtils         = require('../utils/CommonUtils');
 const DirectoryServices   = require('./DirectoryServices');
 const CertValidationError = config.CertValidationError;
+const assert              = require('assert').strict;
 
 let _store = null;
 
@@ -76,37 +77,23 @@ class BeameStoreV2 {
 		});
 	}
 
-	fetch(fqdn) {
+	async fetch(fqdn) {
+		assert(fqdn, 'Credential#find: fqdn is a required argument');
+		const currentCred = this;
 
-		if (!fqdn) {
-			return Promise.reject('Credential#find: fqdn is a required argument');
+		async function _saveCreds(data) {
+			let remoteCred = new Credential(this);
+			remoteCred.initFromX509(data.x509, data.metadata);
+			remoteCred.initFromData(fqdn);
+			currentCred.addCredential(remoteCred);
+			remoteCred.saveCredentialsObject();
+			return remoteCred;
 		}
-
-		/**
-		 * @param {RemoteCreds} data
-		 */
-		const _saveCreds = data => {
-
-			return new Promise(resolve => {
-					let remoteCred = new Credential(this);
-					remoteCred.initFromX509(data.x509, data.metadata);
-					remoteCred.initFromData(fqdn);
-					this.addCredential(remoteCred);
-					remoteCred.saveCredentialsObject();
-					resolve(remoteCred);
-				}
-			);
-		};
 
 		logger.info(`Fetching ${fqdn}`);
-
-		if (config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name))) {
-			return this.getRemoteCreds(fqdn).then(_saveCreds);
-		}
-		else {
-			return Promise.reject('Unknown domain');
-		}
-
+		assert(config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name)), 'Unknown domain');
+		const data = await currentCred.getRemoteCreds(fqdn);
+		return await _saveCreds(data);
 	}
 
 	getParent(cred) {
@@ -378,7 +365,7 @@ class BeameStoreV2 {
 						.catch(reject);
 				};
 
-				const _renewCred = () => {
+				const _fetchCred = () => {
 					this.fetch(fqdn)
 						.then(_validateNewCred)
 						.catch(reject);
@@ -386,7 +373,7 @@ class BeameStoreV2 {
 
 				const _onValidationError = (credential, certError) => {
 					if (certError.errorCode === CertValidationError.Expired && !credential.hasPrivateKey) {
-						_renewCred();
+						_fetchCred();
 					}
 					else {
 						reject(certError);
@@ -397,7 +384,7 @@ class BeameStoreV2 {
 					if (allowExpired && allowRevoked)
 						resolve(credential);
 					else if (allowExpired) {
-						credential.updateOcspStatus()
+						credential.checkOcspStatus(credential)
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 					}
@@ -408,7 +395,7 @@ class BeameStoreV2 {
 					}
 					else
 						credential.checkValidity()
-							.then(credential.updateOcspStatus.bind(credential))
+							.then(credential.checkOcspStatus)
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 				};
