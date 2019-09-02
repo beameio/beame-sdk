@@ -4,20 +4,19 @@
 
 # ---------- Environment sanity checks ----------
 
-assert('BEAME_INTERNAL_AUTH_SERVER_FQDN' in ENV, 'Environment variable BEAME_INTERNAL_AUTH_SERVER_FQDN must be set')
-
 if 'BEAME_DIR' in ENV {
 	throw Error("BEAME_DIR environment variable must be unset for tests")
 }
 
 HOME = ENV.HOME
+BEAME_AUTH_FQDN = ENV.get('BEAME_AUTH_FQDN', 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net')
+BEAME_INTERNAL_AUTH_SERVER_FQDN = ENV.get('BEAME_INTERNAL_AUTH_SERVER_FQDN', 'p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net')
 
 BEAME_DIR = HOME / '.beame'
 BEAME_BIN = '../../src/cli/beame.js'
 if not(File(BEAME_BIN)) {
    die("Could not find beame binary. Please make sure you are running this script from the tests/cli_tests directory")
 }
-BEAME_AUTH_FQDN = ENV.get('BEAME_AUTH_FQDN', 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net')
 
 if Path(BEAME_DIR) {
 	throw Error("Beame directory exists ($BEAME_DIR). Will not run tests.")
@@ -53,7 +52,7 @@ F create_token() {
 
 doc Emulate site registration
 F register_on_site() {
-	global registration = ``curl -s -X POST -H "X-BeameAuthToken: $token" "https://${ENV.BEAME_INTERNAL_AUTH_SERVER_FQDN}/test/sdk/register" -d "email=$entity_email&name=$entity_name"``
+	global registration = ``curl -s -X POST -H "X-BeameAuthToken: $token" "https://$BEAME_INTERNAL_AUTH_SERVER_FQDN/test/sdk/register" -d "email=$entity_email&name=$entity_name"``
 	assert_hash(registration, "Registration must be hash")
 	'authToken' not in registration throws TestFail("Registration has no authToken")
 	registration

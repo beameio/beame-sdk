@@ -11,20 +11,18 @@
 Integration tests done using [NGS](https://github.com/ngs-lang/ngs)
 
 `IMPORTANT: Copy your .beame folders into a backup folder and clean them from the system before starting`
+`IMPORTANT2: BEAME_AUTH_FQDN credential must be present in the HOME dir folder (default is n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net)`
 
-`mkdir ~/beame_backup`
-
-`mv ~/.beame* ~/beame_backup` 
-
+`homeDir=/tmp/tests/`
+`mkdir $homeDir`
+`cp -Rv ~/n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net $homeDir`
 
 ### testGetCredsFqdn.ngs
 Gets n credentials under the given fqdn
 `./testGetCredsFqdn.ngs --start_fqdn xxxxxxxxx.v1.d.beameio.net 3`
 
 ### testAll.ngs (requires an unlimited credential)
-`BEAME_AUTH_FQDN` will default to the test credential (n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net) that should be available to copy in ~/ 
-
-`BEAME_ENV_PROFILE=dev BEAME_INTERNAL_AUTH_SERVER_FQDN=p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net ./testAll.ngs`
+`BEAME_ENV=dev HOME=$homeDir ./testAll.ngs`
 
 ## unit_tests
 
