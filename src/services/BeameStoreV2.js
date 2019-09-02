@@ -383,7 +383,7 @@ class BeameStoreV2 {
 					if (allowExpired && allowRevoked)
 						resolve(credential);
 					else if (allowExpired) {
-						credential.checkOcspStatus(credential)
+						credential.updateOcspStatus()
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 					}
@@ -394,7 +394,7 @@ class BeameStoreV2 {
 					}
 					else
 						credential.checkValidity()
-							.then(credential.checkOcspStatus.bind(credential))
+							.then(credential.updateOcspStatus.bind(credential))
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 				};
