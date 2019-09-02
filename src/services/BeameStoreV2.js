@@ -394,7 +394,7 @@ class BeameStoreV2 {
 					}
 					else
 						credential.checkValidity()
-							.then(credential.checkOcspStatus)
+							.then(credential.checkOcspStatus.bind(credential))
 							.then(resolve)
 							.catch(_onValidationError.bind(null, credential));
 				};
