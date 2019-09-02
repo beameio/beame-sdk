@@ -79,21 +79,20 @@ class BeameStoreV2 {
 
 	async fetch(fqdn) {
 		assert(fqdn, 'Credential#find: fqdn is a required argument');
-		const currentCred = this;
 
-		async function _saveCreds(data) {
+		const _saveCreds = data => {
 			let remoteCred = new Credential(this);
 			remoteCred.initFromX509(data.x509, data.metadata);
 			remoteCred.initFromData(fqdn);
-			currentCred.addCredential(remoteCred);
+			this.addCredential(remoteCred);
 			remoteCred.saveCredentialsObject();
 			return remoteCred;
-		}
+		};
 
 		logger.info(`Fetching ${fqdn}`);
 		assert(config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name)), 'Unknown domain');
-		const data = await currentCred.getRemoteCreds(fqdn);
-		return await _saveCreds(data);
+		const data = await this.getRemoteCreds(fqdn);
+		return _saveCreds(data);
 	}
 
 	getParent(cred) {
