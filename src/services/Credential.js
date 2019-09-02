@@ -2503,9 +2503,9 @@ class Credential {
 
 	/**
 	 * Checks the validity of the certificate
-	 * @returns {Promise<Credential>}
+	 * @returns {Credential}
 	 */
-	async checkValidity() {
+	checkValidity() {
 		assert(!CommonUtils.isObjectEmpty(this.certData), `Certificate data is not present for ${this.fqdn}`);
 
 		const validity = this.certData.validity;

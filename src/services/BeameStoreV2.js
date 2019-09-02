@@ -350,71 +350,41 @@ class BeameStoreV2 {
 	 * @param {undefined|Boolean} [allowRevoked] //set only for automatic renewal of crypto-validated remote creds
 	 * @returns {Promise.<Credential>}
 	 */
-	find(fqdn, allowRemote = true, allowExpired = false, allowRevoked = false) {
+	async find(fqdn, allowRemote = true, allowExpired = false, allowRevoked = false) {
+		assert(fqdn, 'Credential#find: fqdn is a required argument');
 
-		return new Promise((resolve, reject) => {
-				if (!fqdn) {
-					reject('Credential#find: fqdn is a required argument');
-					return;
-				}
+		// get the credential to use
+		let credential = this.getCredential(fqdn);
+		if (credential) {
+			credential.metadata = credential.beameStoreServices.readMetadataSync(); //refresh metadata info
+		} else {
+			assert(allowRemote, `Credential ${fqdn} was not found locally and allowRemote is false`);
+			credential = await this.fetch(fqdn);
+		}
+		assert(credential, `Credential ${fqdn} was not found!`);
 
-				const _fetchCred = () => {
-					this.fetch(fqdn)
-						.then(newCred => newCred.checkValidity.bind(newCred))
-						.then(resolve)
-						.catch(reject);
-				};
-
-				const _onValidationError = (credential, certError) => {
-					if (certError.errorCode === CertValidationError.Expired && !credential.hasPrivateKey) {
-						_fetchCred();
-					}
-					else {
-						reject(certError);
-					}
-				};
-
-				const _onCredFound = credential => {
-					if (allowExpired && allowRevoked)
-						resolve(credential);
-					else if (allowExpired) {
-						credential.updateOcspStatus()
-							.then(resolve)
-							.catch(_onValidationError.bind(null, credential));
-					}
-					else if (allowRevoked) {
-						credential.checkValidity()
-							.then(resolve)
-							.catch(_onValidationError.bind(null, credential));
-					}
-					else
-						credential.checkValidity()
-							.catch(_onValidationError.bind(null, credential))
-							.then(credential.updateOcspStatus.bind(credential))
-							.then(resolve)
-							.catch(reject);
-				};
-
-				let cred = this.getCredential(fqdn);
-
-				if (cred) {
-					//refresh metadata info
-					cred.metadata = cred.beameStoreServices.readMetadataSync();
-					_onCredFound(cred);
-				} else {
-					if (!allowRemote) {
-						reject(`Credential ${fqdn} was not found locally and allowRemote is false`);
-						return;
-					}
-					this.fetch(fqdn)
-						.then(_onCredFound)
-						.catch(reject);
-				}
-
+		// check validity if allowed
+		if(!allowExpired) {
+			try {
+				credential.checkValidity();
 			}
-		);
+			catch(certError) {
+				if (certError.errorCode === CertValidationError.Expired && !credential.hasPrivateKey) {
+					// Cred is expired, try to get a more recent one
+					credential = await this.fetch(fqdn);
+					credential.checkValidity();
+				}
+				else {
+					throw certError;
+				}
+			}
+		}
 
+		// check ocsp status if allowed
+		assert(allowRevoked || await credential.checkOcspStatus(credential) !== config.OcspStatus.Revoked,
+			`Credential ${fqdn} is revoked and allowRevoked is false`);
 
+		return credential;
 	}
 
 	addCredential(credential) {
