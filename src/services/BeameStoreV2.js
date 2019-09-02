@@ -358,15 +358,10 @@ class BeameStoreV2 {
 					return;
 				}
 
-				const _validateNewCred = newCred => {
-					newCred.checkValidity()
-						.then(resolve)
-						.catch(reject);
-				};
-
 				const _fetchCred = () => {
 					this.fetch(fqdn)
-						.then(_validateNewCred)
+						.then(newCred => newCred.checkValidity.bind(newCred))
+						.then(resolve)
 						.catch(reject);
 				};
 
@@ -394,9 +389,10 @@ class BeameStoreV2 {
 					}
 					else
 						credential.checkValidity()
+							.catch(_onValidationError.bind(null, credential))
 							.then(credential.updateOcspStatus.bind(credential))
 							.then(resolve)
-							.catch(_onValidationError.bind(null, credential));
+							.catch(reject);
 				};
 
 				let cred = this.getCredential(fqdn);
