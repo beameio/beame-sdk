@@ -40,7 +40,7 @@ describe('local_creds_create', function () {
 
 			let cred = store.getCredential(metadata.fqdn);
 
-			assert(cred, 'New credential not found inn store');
+			assert(cred, 'New credential not found in store');
 			done();
 		}).catch(error=> {
 			debug(error);

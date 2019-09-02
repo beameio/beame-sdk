@@ -357,6 +357,9 @@ class BeameStoreV2 {
 		let credential = this.getCredential(fqdn);
 		if (credential) {
 			credential.metadata = credential.beameStoreServices.readMetadataSync(); //refresh metadata info
+			if(allowRemote && credential.expired) { // if credential is expired, try to fetch a new one
+				credential = await this.fetch(fqdn);
+			}
 		} else {
 			assert(allowRemote, `Credential ${fqdn} was not found locally and allowRemote is false`);
 			credential = await this.fetch(fqdn);
@@ -365,24 +368,14 @@ class BeameStoreV2 {
 
 		// check validity if allowed
 		if(!allowExpired) {
-			try {
-				credential.checkValidity();
-			}
-			catch(certError) {
-				if (certError.errorCode === CertValidationError.Expired && !credential.hasPrivateKey) {
-					// Cred is expired, try to get a more recent one
-					credential = await this.fetch(fqdn);
-					credential.checkValidity();
-				}
-				else {
-					throw certError;
-				}
-			}
+			credential.checkValidity();
 		}
 
 		// check ocsp status if allowed
-		assert(allowRevoked || await credential.checkOcspStatus(credential) !== config.OcspStatus.Revoked,
-			`Credential ${fqdn} is revoked and allowRevoked is false`);
+		if(!allowRevoked) {
+			assert(await credential.checkOcspStatus(credential) !== config.OcspStatus.Revoked,
+				`Credential ${fqdn} is revoked and allowRevoked is false`);
+		}
 
 		return credential;
 	}
