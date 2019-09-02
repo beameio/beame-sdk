@@ -81,7 +81,7 @@ class BeameStoreV2 {
 		assert(fqdn, 'Credential#find: fqdn is a required argument');
 
 		const _saveCreds = data => {
-			let remoteCred = new Credential(this);
+			const remoteCred = new Credential(this);
 			remoteCred.initFromX509(data.x509, data.metadata);
 			remoteCred.initFromData(fqdn);
 			this.addCredential(remoteCred);
