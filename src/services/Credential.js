@@ -1291,7 +1291,7 @@ class Credential {
 					}
 
 					revokedCred.setRevokedAndSave();
-					resolve();
+					resolve({message: `${revokeFqdn} Certificate has been revoked successfully`});
 				};
 
 				api.runRestfulAPI(apiData, _onApiResponse, 'POST', authToken);

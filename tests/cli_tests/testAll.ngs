@@ -316,17 +316,17 @@ test("S3 credentials", {
 	"All $oks certificates present in S3"
 })
 
-test("Hello world server", {
-	result = test_server(entities[0].fqdn, %($BEAME_BIN servers runHelloWorldServer --fqdn ${entities[0].fqdn}), "https://${entities[0].fqdn}/")
-	'hello world' not in result throws TestFail("Hello world server did not return 'hello world'")
-	"Hello world server is OK"
-})
+#test("Hello world server", {
+#	result = test_server(entities[0].fqdn, %($BEAME_BIN servers runHelloWorldServer --fqdn ${entities[0].fqdn}), "https://${entities[0].fqdn}/")
+#	'hello world' not in result throws TestFail("Hello world server did not return 'hello world'")
+#	"Hello world server is OK"
+#})
 
-test("File server", {
-	result = test_server(entities[0].fqdn, %($BEAME_BIN servers runStaticServer --fqdn ${entities[0].fqdn}), "https://${entities[0].fqdn}/photo1.jpg")
-	result != `cat "../../examples/public/shared/photo1.jpg"` throws TestFail("File server failed to serve correct /photo1.jpg")
-	"File server is OK"
-})
+#test("File server", {
+#	result = test_server(entities[0].fqdn, %($BEAME_BIN servers runStaticServer --fqdn ${entities[0].fqdn}), "https://${entities[0].fqdn}/photo1.jpg")
+#	result != `cat "../../examples/public/shared/photo1.jpg"` throws TestFail("File server failed to serve correct /photo1.jpg")
+#	"File server is OK"
+#})
 
 if Path(CREDS_FILE) {
 	echo("+ Removing temporary credentials file $CREDS_FILE")
@@ -354,7 +354,7 @@ test("Revoke", {
 
 test("OCSP test after revocation") with {
 	s = ``$BEAME_BIN creds checkOcsp --fqdn ${entities[1].fqdn} --format json``
-    assert_eq(s, 'Bad', "Ocsp status ${entities[1].fqdn} revoked")
+    assert_eq(s, 'Revoked', "Ocsp status ${entities[1].fqdn} revoked")
 }
 
 test("Credentials chain - nested credentials using 'creds getCreds --fqdn'", {

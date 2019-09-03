@@ -376,7 +376,7 @@ function checkOcsp(fqdn, forceCheck, callback) {
 	let check = !!(forceCheck && forceCheck === "true"),
 		store = new BeameStore();
 
-	store.find(fqdn, true).then(cred => {
+	store.find(fqdn, true, false, true).then(cred => {
 		CommonUtils.promise2callback(cred.checkOcspStatus(cred, check), callback);
 	}).catch(e => {
 		callback(BeameLogger.formatError(e));
