@@ -306,6 +306,7 @@ class BeameStoreV2 {
 				callback(null, false);
 			}
 			else {
+				logger.error(`verifyAncestry::localChain error ${BeameLogger.formatError(error)}`);
 				callback(null, false);
 			}
 		};

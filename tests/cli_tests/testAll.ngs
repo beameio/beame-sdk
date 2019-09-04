@@ -346,7 +346,6 @@ test("OCSP test") with {
 test_dns(entities[1].fqdn)
 
 test("Revoke", {
-	# TODO: Add status=ok in the program
 	s = ``$BEAME_BIN creds revokeCert --signerFqdn ${entities[1].fqdn} --fqdn ${entities[1].fqdn} --format json``
 	s.assert_hash_keys(%[message])
 	assert('Certificate has been revoked successfully' in s.message)
