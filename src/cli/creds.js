@@ -18,6 +18,7 @@ const path        = require('path');
 const fs          = require('fs');
 const colors      = require('colors');
 const assert      = require('assert');
+const util        = require('util');
 
 module.exports = {
 	show,
@@ -699,8 +700,9 @@ function getFqdnListByFilter(filter, regex, hasPrivateKey) {
  * @param {String} fqdn
  * @param {String} filter
  * @param {String} regex
+ * @param {Function} callback
  */
-function shred(fqdn, filter, regex) {
+function shred(fqdn, filter, regex, callback) {
 	if (!fqdn && !filter && !regex || (fqdn && (filter || regex))) {
 		logger.fatal("shred valid parameters are: fqdn || filter || regex || regex && filter");
 	}
@@ -710,15 +712,30 @@ function shred(fqdn, filter, regex) {
 	}
 	else credList[0] = fqdn;
 	const store = new BeameStore();
-	for (let i = 0; i < credList.length; i++) {
-		store.shredCredentials(credList[i], () => {
-			logger.info(`${credList[i]} has been erased from store`);
-		});
+
+	async function _shred() {
+		for (let i = 0; i < credList.length; i++) {
+			await util.promisify(store.shredCredentials.bind(store))(credList[i]);
+		}
+		return credList;
 	}
-	return 'ok';
+	CommonUtils.promise2callback(_shred(), callback);
 }
 
-shred.toText = _lineToText;
+shred.toText = function (list) {
+	if(list.length === 0)
+		return "Nothing to erase";
+
+	/** @type {Object} **/
+	let table = new Table({
+		head:      ['fqdn', 'status'],
+		colWidths: [ 64 , 16]
+	});
+	list.forEach(item => {
+		table.push( [ item, 'erased' ] );
+	});
+	return table;
+};
 
 //endregion
 
