@@ -116,6 +116,7 @@ class BeameStoreV2 {
 			return approver.substr(config.AltPrefix.Approver.length);
 		}
 
+		// FIXME: Should probably be return cred.metadata.approved_by_fqdn || null
 		return cred.metadata.approved_by_fqdn && cred.metadata.approved_by_fqdn.length ? cred.metadata.approved_by_fqdn : null;
 	}
 
