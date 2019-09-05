@@ -88,14 +88,11 @@ class DataServices {
 	}
 
 	static readMetadataSync(dir, fqdn) {
-		let p         = BeameUtils.makePath(dir, fqdn, config.metadataFileName),
-		    metadata  = DataServices.readJSON(p);
-		metadata.path = BeameUtils.makePath(dir, fqdn);
-		return metadata;
+		return DataServices.readJSON(path.join(dir, fqdn, config.metadataFileName));
 	}
 
 	static writeMetadataSync(dir, fqdn, metadata) {
-		let dirPath = BeameUtils.makePath(dir, fqdn);
+		let dirPath = path.join(dir, fqdn);
 		DataServices.saveFile(dirPath, config.metadataFileName, CommonUtils.stringify(metadata, true));
 	}
 
@@ -110,40 +107,38 @@ class DataServices {
 
 	/**
 	 * read JSON file
-	 * @param {String} dirPath
+	 * @param {String} fileName
 	 */
-	static readJSON(dirPath) {
-		if (DataServices.doesPathExists(dirPath)) {
-			try {
-				let file = fs.readFileSync(dirPath);
-				//noinspection ES6ModulesDependencies,NodeModulesDependencies
-				return JSON.parse(file);
-			}
-			catch (error) {
-				return {};
-			}
+	static readJSON(fileName) {
+		if(!DataServices.doesPathExists(fileName)) {
+			return {};
 		}
 
-		return {};
+		try {
+			return JSON.parse(fs.readFileSync(fileName));
+		} catch(error) {
+			return {};
+		}
+
 	}
 
 	/**
 	 *
 	 * @param {String} dirPath
-	 * @param {OrderPemResponse} payload
+	 * @param {OrderPemResponse} certificates
 	 */
-	saveCerts(dirPath, payload) {
+	saveCerts(dirPath, certificates) {
 		let errMsg;
 
 
 		const saveCert = (responseField, targetName, callback) => {
-			if (!payload.hasOwnProperty(responseField)) {
+			if (!certificates.hasOwnProperty(responseField)) {
 				errMsg = logger.formatErrorMessage(`${responseField} missing in API response on ${dirPath}`, module_name, null, config.MessageCodes.ApiRestError);
 				callback(errMsg, null);
 			}
 
 			//save cert
-			this.saveFileAsync(path.join(dirPath, targetName), payload[responseField], (error) => {
+			this.saveFileAsync(path.join(dirPath, targetName), certificates[responseField], (error) => {
 				if (error) {
 					errMsg = logger.formatErrorMessage(`Saving ${responseField} failed on path ${dirPath}`, module_name);
 					callback(errMsg, null);
@@ -162,7 +157,7 @@ class DataServices {
 						},
 						function (callback) {
 
-							if (!payload.hasOwnProperty(config.CertResponseFields.p7b) || !payload[config.CertResponseFields.p7b].length) {
+							if (!certificates.hasOwnProperty(config.CertResponseFields.p7b) || !certificates[config.CertResponseFields.p7b].length) {
 								callback(null);
 							}
 							else{

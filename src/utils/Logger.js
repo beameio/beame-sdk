@@ -3,28 +3,25 @@
  */
 "use strict";
 
-const util        = require('util');
 const log4js      = (require('./Log4js')).getInstance();
 const CommonUtils = require('../utils/CommonUtils');
 const LogLevel    = {
-	"Info":  "INFO",
 	"Debug": "DEBUG",
+	"Info":  "INFO",
 	"Warn":  "WARN",
 	"Error": "ERROR",
-	"Fatal": "FATAL"
+	"Fatal": "FATAL",
+	"Always": "ALWAYS"
 };
 
-// Pitfall alert: "INFO" is how the regular messages of interest to the user are printed.
-// Pitfall alert: printStandardEvent() prints at "INFO" and it doesn't seem to be controlled
-//                using the BEAME_LOG_LEVEL environment variable, so it's printing anyway.
 const LogLevelVerbosity = {
-	"INFO":  0,
-	"DEBUG": 4,
-	"WARN":  3,
-	"ERROR": 2,
-	"FATAL": 1
+	"DEBUG": 10000,
+	"INFO":  20000,
+	"WARN":  30000,
+	"ERROR": 40000,
+	"FATAL": 50000,
+	"ALWAYS": 100000
 };
-
 
 const StandardFlowEvent = {
 	"Registering":       "Registering",
@@ -38,6 +35,7 @@ const StandardFlowEvent = {
 	"UpdatingMetadata":  "UpdatingMetadata",
 	"MetadataUpdated":   "MetadataUpdated"
 };
+
 /**
  * @typedef {Object} LoggerMessage
  * @param {LogLevel} level
@@ -46,10 +44,7 @@ const StandardFlowEvent = {
  * @param {String} message
  * @param {Object} data
  */
-
-
 class BeameLogger {
-
 
 	constructor(module) {
 		this._module = '';
@@ -61,7 +56,7 @@ class BeameLogger {
 		this._logger = log4js.getLogger(this._module);
 
 		/** @member {LogLevel} **/
-		this.currentLogLevel = process.env.BEAME_LOG_LEVEL || LogLevel.Error;
+		this.currentLogLevel = process.env.BEAME_LOG_LEVEL || LogLevel.Info;
 	}
 
 	//noinspection JSUnusedGlobalSymbols
@@ -120,17 +115,15 @@ class BeameLogger {
 	printLogMessage(level, logMessage) {
 
 		let shouldPrint = () => {
-			return LogLevelVerbosity[level] <= LogLevelVerbosity[this.currentLogLevel];
+			return LogLevelVerbosity[level] >= LogLevelVerbosity[this.currentLogLevel];
 		};
 
 		if (!shouldPrint()) return;
-
 		let message_logger = logMessage.module ? log4js.getLogger(logMessage.module) : this._logger;
 
-		message_logger[level.toLocaleLowerCase()](logMessage.message);
-
+		message_logger.log(level, logMessage.message);
 		if(logMessage.data){
-			message_logger[level.toLocaleLowerCase()](logMessage.data);
+			message_logger.log(level, logMessage.data);
 		}
 
 		if(level == LogLevel.Fatal) {
@@ -190,13 +183,7 @@ class BeameLogger {
 	 * @param {Object|null|undefined} [data]
 	 */
 	info(message, data) {
-		/** @type {typeof LoggerMessage} **/
-		let log = {
-			message,
-			data
-		};
-
-		this.printLogMessage(LogLevel.Info, log);
+		this.printLogMessage(LogLevel.Info, { message, data });
 	}
 
 	/**
@@ -204,13 +191,7 @@ class BeameLogger {
 	 * @param {Object|null|undefined} [data]
 	 */
 	debug(message, data) {
-		/** @type {typeof LoggerMessage} **/
-		let log = {
-			message,
-			data
-		};
-
-		this.printLogMessage(LogLevel.Debug, log);
+		this.printLogMessage(LogLevel.Debug, { message, data });
 	}
 
 	/**
@@ -218,13 +199,7 @@ class BeameLogger {
 	 * @param {Object|null|undefined} [data]
 	 */
 	warn(message, data) {
-		/** @type {typeof LoggerMessage} **/
-		let log = {
-			message,
-			data
-		};
-
-		this.printLogMessage(LogLevel.Warn, log);
+		this.printLogMessage(LogLevel.Warn, { message, data });
 	}
 
 	/**
@@ -232,16 +207,10 @@ class BeameLogger {
 	 * @param {Object|null|undefined} [data]
 	 */
 	error(message, data) {
-		/** @type {typeof LoggerMessage} **/
-		let log = {
-			message,
-			data
-		};
-
 		if (message instanceof Error) {
 			message.stack.split('\n').forEach(line => this.error(line, null));
 		} else {
-			this.printLogMessage(LogLevel.Error, log);
+			this.printLogMessage(LogLevel.Error, { message, data });
 		}
 	}
 
@@ -250,15 +219,16 @@ class BeameLogger {
 	 * @param {Object|null|undefined} [data]
 	 */
 	fatal(message, data) {
-		/** @type {typeof LoggerMessage} **/
-		let log = {
-			message,
-			data
-		};
-
-		this.printLogMessage(LogLevel.Fatal, log);
+		this.printLogMessage(LogLevel.Fatal, { message, data });
 	}
 
+	/**
+	 * @param {String} message
+	 * @param {Object|null|undefined} [data]
+	 */
+	always(message, data) {
+		this.printLogMessage(LogLevel.Always, { message, data });
+	}
 
 	//noinspection JSUnusedGlobalSymbols
 	static get LogLevel() {

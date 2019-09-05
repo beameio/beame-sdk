@@ -47,6 +47,7 @@ const BeameUtils          = require('../utils/BeameUtils');
 const CommonUtils         = require('../utils/CommonUtils');
 const DirectoryServices   = require('./DirectoryServices');
 const CertValidationError = config.CertValidationError;
+const assert              = require('assert').strict;
 
 let _store = null;
 
@@ -76,37 +77,22 @@ class BeameStoreV2 {
 		});
 	}
 
-	fetch(fqdn) {
+	async fetch(fqdn) {
+		assert(fqdn, 'Credential#find: fqdn is a required argument');
 
-		if (!fqdn) {
-			return Promise.reject('Credential#find: fqdn is a required argument');
-		}
-
-		/**
-		 * @param {RemoteCreds} data
-		 */
 		const _saveCreds = data => {
-
-			return new Promise(resolve => {
-					let remoteCred = new Credential(this);
-					remoteCred.initFromX509(data.x509, data.metadata);
-					remoteCred.initFromData(fqdn);
-					this.addCredential(remoteCred);
-					remoteCred.saveCredentialsObject();
-					resolve(remoteCred);
-				}
-			);
+			const remoteCred = new Credential(this);
+			remoteCred.initFromX509(data.x509, data.metadata);
+			remoteCred.initFromData(fqdn);
+			this.addCredential(remoteCred);
+			remoteCred.saveCredentialsObject();
+			return remoteCred;
 		};
 
-		console.log('******************', fqdn);
-
-		if (config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name))) {
-			return this.getRemoteCreds(fqdn).then(_saveCreds);
-		}
-		else {
-			return Promise.reject('Unknown domain');
-		}
-
+		logger.info(`Fetching ${fqdn}`);
+		assert(config.ApprovedZones.some(zone_name => fqdn.endsWith(zone_name)), 'Unknown domain');
+		const data = await this.getRemoteCreds(fqdn);
+		return _saveCreds(data);
 	}
 
 	getParent(cred) {
@@ -130,6 +116,7 @@ class BeameStoreV2 {
 			return approver.substr(config.AltPrefix.Approver.length);
 		}
 
+		// FIXME: Should probably be return cred.metadata.approved_by_fqdn || null
 		return cred.metadata.approved_by_fqdn && cred.metadata.approved_by_fqdn.length ? cred.metadata.approved_by_fqdn : null;
 	}
 
@@ -319,6 +306,7 @@ class BeameStoreV2 {
 				callback(null, false);
 			}
 			else {
+				logger.error(`verifyAncestry::localChain error ${BeameLogger.formatError(error)}`);
 				callback(null, false);
 			}
 		};
@@ -364,75 +352,34 @@ class BeameStoreV2 {
 	 * @param {undefined|Boolean} [allowRevoked] //set only for automatic renewal of crypto-validated remote creds
 	 * @returns {Promise.<Credential>}
 	 */
-	find(fqdn, allowRemote = true, allowExpired = false, allowRevoked = false) {
+	async find(fqdn, allowRemote = true, allowExpired = false, allowRevoked = false) {
+		assert(fqdn, 'Credential#find: fqdn is a required argument');
 
-		return new Promise((resolve, reject) => {
-				if (!fqdn) {
-					reject('Credential#find: fqdn is a required argument');
-					return;
-				}
-
-				const _validateNewCred = newCred => {
-					newCred.checkValidity()
-						.then(resolve)
-						.catch(reject);
-				};
-
-				const _renewCred = () => {
-					this.fetch(fqdn)
-						.then(_validateNewCred)
-						.catch(reject);
-				};
-
-				const _onValidationError = (credential, certError) => {
-					if (certError.errorCode === CertValidationError.Expired && !credential.hasKey("PRIVATE_KEY")) {
-						_renewCred();
-					}
-					else {
-						reject(certError);
-					}
-				};
-
-				const _onCredFound = credential => {
-					if (allowExpired && allowRevoked)
-						resolve(credential);
-					else if (allowExpired) {
-						credential.updateOcspStatus()
-							.then(resolve)
-							.catch(_onValidationError.bind(null, credential));
-					}
-					else if (allowRevoked) {
-						credential.checkValidity()
-							.then(resolve)
-							.catch(_onValidationError.bind(null, credential));
-					}
-					else
-						credential.checkValidity()
-							.then(credential.updateOcspStatus.bind(credential))
-							.then(resolve)
-							.catch(_onValidationError.bind(null, credential));
-				};
-
-				let cred = this.getCredential(fqdn);
-
-				if (cred) {
-					//refresh metadata info
-					cred.metadata = cred.beameStoreServices.readMetadataSync(cred.metadata.path);
-					_onCredFound(cred);
-				} else {
-					if (!allowRemote) {
-						reject(`Credential ${fqdn} was not found locally and allowRemote is false`);
-						return;
-					}
-					this.fetch(fqdn)
-						.then(_onCredFound)
-						.catch(reject);
-				}
-
+		// get the credential to use
+		let credential = this.getCredential(fqdn);
+		if (credential) {
+			credential.metadata = credential.beameStoreServices.readMetadataSync(); //refresh metadata info
+			if(allowRemote && credential.expired) { // if credential is expired, try to fetch a new one
+				credential = await this.fetch(fqdn);
 			}
-		);
+		} else {
+			assert(allowRemote, `Credential ${fqdn} was not found locally and allowRemote is false`);
+			credential = await this.fetch(fqdn);
+		}
+		assert(credential, `Credential ${fqdn} was not found!`);
 
+		// check validity if allowed
+		if(!allowExpired) {
+			credential.checkValidity();
+		}
 
+		// check ocsp status if allowed
+		if(!allowRevoked) {
+			assert(await credential.checkOcspStatus(credential) !== config.OcspStatus.Revoked,
+				`Credential ${fqdn} is revoked and allowRevoked is false`);
+		}
+
+		return credential;
 	}
 
 	addCredential(credential) {
@@ -548,12 +495,12 @@ class BeameStoreV2 {
 				let expirationDate = new Date(cred.getCertEnd());
 
 				// noinspection JSUnresolvedVariable
-				if (options.excludeValid) {
-					return (cred.metadata.revoked == true);
+				if (options.excludeValid && !cred.revoked) {
+					return false;
 				}
 
 				// noinspection JSUnresolvedVariable
-				if (options.excludeRevoked && cred.metadata.revoked) {
+				if (options.excludeRevoked && cred.revoked) {
 					return false;
 				}
 
@@ -573,11 +520,11 @@ class BeameStoreV2 {
 				}
 
 				//noinspection RedundantIfStatementJS,JSUnresolvedVariable
-				if (options.hasPrivateKey == true && !cred.hasKey('PRIVATE_KEY')) {
+				if (options.hasPrivateKey == true && !cred.hasPrivateKey) {
 					return false;
 				}
 				else { //noinspection JSUnresolvedVariable
-					if (options.hasPrivateKey == false && cred.hasKey('PRIVATE_KEY')) {
+					if (options.hasPrivateKey == false && cred.hasPrivateKey) {
 						return false;
 					}
 				}
@@ -641,7 +588,7 @@ class BeameStoreV2 {
 		return new Promise((resolve, reject) => {
 				//noinspection JSDeprecatedSymbols
 				let parentCreds     = parentFqdn ? this.getCredential(parentFqdn) : null;
-				let parentPublicKey = parentCreds && parentCreds.getPublicKeyNodeRsa();
+				let parentPublicKey = parentCreds && parentCreds.publicKeyNodeRsa;
 
 				const loadCred = (metadata) => {
 					let newCred = new Credential(this);

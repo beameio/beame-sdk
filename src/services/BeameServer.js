@@ -80,7 +80,7 @@ function BeameServer(instanceFqdn, requestListener, hostOnlineCallback, errorCal
 				srv.getPort(), {onLocalServerCreated: onLocalServerCreated},
 				null, certs);
 
-		proxyClient.start();
+		proxyClient.start().catch(__onError);
 	});
 }
 

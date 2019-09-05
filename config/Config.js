@@ -77,7 +77,6 @@ const environments = {
 		TestsCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net',
 		BaseUrl: 'https://xmq6hpvgzt7h8m76.mpk3nobb568nycf5.v1.d.beameio.net',
 		BaseDNSUrl:'https://t24w58ow5jkkmkhu.mpk3nobb568nycf5.v1.d.beameio.net',
-		OcspProxyFqdn: "i6zirg0jsrzrk3dk.mpk3nobb568nycf5.v1.d.beameio.net",
 		RetryAttempts: 10
 	},
 
@@ -88,68 +87,28 @@ const environments = {
 		TestsCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net',
 		BaseUrl: 'https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net',
 		BaseDNSUrl:'https://lcram0sj9ox726l1.tl5h1ipgobrdqsj6.v1.p.beameio.net',
-		OcspProxyFqdn: "iep9bs1p7cj3cmit.tl5h1ipgobrdqsj6.v1.p.beameio.net",
 		RetryAttempts: 10
 	},
+
+	_COMMON: {
+		Dir: path.join(home, '.beame'),
+		CdrDir: path.join(home, '.beame_cdr'),
+		ForceEdgeFqdn: "",
+		ForceEdgeIp: 0,
+		CertValidityPeriod: 60 * 60 * 24 * 365, // 365 days (in sec)
+		OcspCachePeriod: 1000 * 60 * 60 * 24 * 30,  // 30 days (in ms)
+		RenewalCheckInterval: 1000 * 60 * 60 * 24, // 1 day (in ms)
+		RenewalPercentageBeforeExpiration: 8, // 8% before cred expiration
+		RenewalBeforeExpirationMaxPeriod: 1000 * 60 * 60 * 24 * 45, // 45 days (in ms)
+	}
 };
 const SelectedProfile = require('../src/utils/makeEnv')(environments, {protectedProperties: ['FqdnPattern']});
 
-const InitFirstRemoteEdgeClient = true;
-const PinAtomPKbyDefault        = false;
-
-/** @const {String} **/
-const rootDir = process.env.BEAME_DIR || path.join(home, '.beame');
-
-/** @const {String} **/
-const cdrDir = process.env.BEAME_CDR_DIR || path.join(home, '.beame_cdr');
-
-/** @const {String} **/
-const scsDir = process.env.BEAME_SCS_DIR || path.join(rootDir, 'scs');
-
-/** @const {String} **/
-const remotePKsDirV1 = path.join(rootDir, 'pki');
-
-const localCertsDirV2 = path.join(rootDir, 'v2');
-
-const issuerCertsPath = path.join(rootDir, 'ocsp-cache');
-
-const localLogDir = process.env.BEAME_LOG_DIR || path.join(rootDir, 'logs');
-
+const localLogDir = process.env.BEAME_LOG_DIR || path.join(SelectedProfile.Dir, 'logs');
 if (process.env.BEAME_LOAD_BALANCER_URL) {
 	console.error("BEAME_LOAD_BALANCER_URL environment variable is not used anymore. Please use BEAME_LOAD_BALANCER_FQDN.");
 	process.exit(1);
 }
-
-/** @const {String} **/
-const loadBalancerURL = "https://" + env.LoadBalancerFqdn;
-
-const beameForceEdgeFqdn = process.env.BEAME_FORCE_EDGE_FQDN || "";
-
-const beameForceEdgeIP = process.env.BEAME_FORCE_EDGE_IP || 0;
-
-const defaultValidityPeriod = process.env.BEAME_CERT_VALIDITY_PERIOD || 60 * 60 * 24 * 365;
-
-const defaultAllowedClockDiff = 100; //in seconds
-
-const defaultAuthTokenTtl = defaultAllowedClockDiff;
-
-const defaultTimeFuzz = 10;
-
-const defaultDays2Log = 7;
-
-const ocspCachePeriod = process.env.BEAME_OSCSP_CACHE_PERIOD || 1000 * 60 * 60 * 24 * 30;
-
-const ocspCheckInterval = process.env.BEAME_OCSP_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
-
-const renewalCheckInterval = process.env.BEAME_RENEWAL_CHECK_INTERVAL || 1000 * 60 * 60 * 24;
-
-/** @const {String} **/
-const metadataFileName = "metadata.json";
-
-/** @const {String} **/
-const s3MetadataFileName = "metadata.json";
-
-const ApprovedZones = ['beameio.net', 'beame.io'];
 
 /**
  * Registration sources
@@ -227,7 +186,6 @@ const MetadataProperties = {
 	NAME:          "name",
 	PARENT_FQDN:   "parent_fqdn",
 	APPROVER_FQDN: "approved_by_fqdn",
-	PATH:          "path",
 	DNS:           "dnsRecords",
 	REVOKED:       "revoked",
 	ACTIONS:       "actions",
@@ -270,6 +228,7 @@ const AltPrefix = {
  *  @enum {string}
  */
 const AppModules = {
+	"AutoRenewer":      "AutoRenewer",
 	"Credential":       "Credential",
 	"BeameEntity":      "BeameEntity",
 	"BeameSDKCli":      "BeameSDKCli",
@@ -280,7 +239,7 @@ const AppModules = {
 	"BeameStore":       "BeameStore",
 	"BeameSystem":      "BeameSystem",
 	"BeameDirServices": "BeameDirServices",
-	"ProvisionApi":     "ProvisionApi",
+	"ProvisionApi":     "BeameRequest",
 	"DataServices":     "DataServices",
 	"UnitTest":         "UnitTest",
 	"BaseHttpsServer":  "BaseHttpsServer",
@@ -367,56 +326,56 @@ const CDREvents = {
  */
 const OcspStatus = {
 	"Good":        "Good",
-	"Bad":         "Bad",
-	"Unavailable": "Unavailable",
-	"Unknown":     "Unknown"
+	"Revoked":     "Revoked", // revoked state from admin (sns revoked message) or from the ocsp call
+	"Unavailable": "Unavailable"
 };
 
 const SNIServerPort = (process.env.SNI_SERVER_PORT > 0 && process.env.SNI_SERVER_PORT < 65536) ? process.env.SNI_SERVER_PORT : 0;
 
 module.exports = {
-	debugPrefix,
-	rootDir,
-	cdrDir,
-	scsDir,
-	npmRootDir,
-	localCertsDirV2,
-	remotePKsDirV1,
-	issuerCertsPath,
-	loadBalancerURL,
-	metadataFileName,
-	s3MetadataFileName,
+	ActionsApi,
+	AltPrefix,
+	AppModules,
+	ApprovedZones: ['beameio.net', 'beame.io'],
+	AuthEventType,
+	beameForceEdgeFqdn: SelectedProfile.ForceEdgeFqdn,
+	beameForceEdgeIP: SelectedProfile.ForceEdgeFqdn,
+	cdrDir: SelectedProfile.CdrDir,
+	CDREvents,
 	CertFileNames,
 	CertResponseFields,
-	AppModules,
-	MessageCodes,
-	TimeUnits,
-	SNIServerPort,
-	InitFirstRemoteEdgeClient,
-	PinAtomPKbyDefault,
-	MetadataProperties,
-	CredAction,
-	beameForceEdgeFqdn,
-	beameForceEdgeIP,
-	RegistrationSource,
-	RequestType,
-	ApprovedZones,
-	defaultValidityPeriod,
-	ocspCachePeriod,
-	ocspCheckInterval,
-	renewalCheckInterval,
 	CertValidationError,
-	defaultAllowedClockDiff,
-	defaultAuthTokenTtl,
-	defaultTimeFuzz,
-	CDREvents,
-	OcspStatus,
-	AuthEventType,
-	AltPrefix,
-	LogFileNames,
-	LogEvents,
+	CredAction,
+	credentialMetadataActionsLimit: 20,
+	debugPrefix,
+	defaultAllowedClockDiff: 100, //in seconds
+	defaultAuthTokenTtl: 100, //in seconds
+	defaultDays2Log: 7,
+	defaultTimeFuzz: 10,
+	defaultValidityPeriod: SelectedProfile.CertValidityPeriod,
+	InitFirstRemoteEdgeClient: true,
+	issuerCertsPath: path.join(SelectedProfile.Dir, 'issuer-certs-chain'),
+	loadBalancerURL: "https://" + env.LoadBalancerFqdn,
+	localCertsDirV2: path.join(SelectedProfile.Dir, 'v2'),
 	localLogDir,
-	defaultDays2Log,
+	LogEvents,
+	LogFileNames,
+	MessageCodes,
+	metadataFileName: "metadata.json",
+	MetadataProperties,
+	npmRootDir,
+	ocspCachePeriod: SelectedProfile.OcspCachePeriod,
+	OcspStatus,
+	PinAtomPKbyDefault: false,
+	RegistrationSource,
+	remotePKsDirV1: path.join(SelectedProfile.Dir, 'pki'),
+	renewalCheckInterval: SelectedProfile.RenewalCheckInterval,
+	renewalPercentageBeforeExpiration: SelectedProfile.RenewalPercentageBeforeExpiration,
+	renewalBeforeExpirationMaxPeriod: SelectedProfile.RenewalBeforeExpirationMaxPeriod,
+	RequestType,
+	rootDir: SelectedProfile.Dir,
+	s3MetadataFileName: "metadata.json",
 	SelectedProfile,
-	ActionsApi
+	SNIServerPort,
+	TimeUnits,
 };

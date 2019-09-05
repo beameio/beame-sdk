@@ -13,9 +13,12 @@ const CommonUtils = require('../utils/CommonUtils');
 const BeameStore  = require("../services/BeameStoreV2");
 const Credential  = require('../services/Credential');
 //const AuthToken   = require('../services/AuthToken');
+const AutoRenew   = require('../services/AutoRenewer');
 const path        = require('path');
 const fs          = require('fs');
 const colors      = require('colors');
+const assert      = require('assert');
+const util        = require('util');
 
 module.exports = {
 	show,
@@ -32,11 +35,15 @@ module.exports = {
 	decrypt,
 	sign,
 	checkSignature,
-	revokeCert,
 	revoke,
-	renewCert,
+	revokeCert,
 	renew,
+	renewCert,
+	renewAll,
 	checkOcsp,
+	checkAllOcsp,
+	cleanOcspStatus,
+	cleanActions,
 	setDns,
 	deleteDns,
 	listCredChain,
@@ -80,8 +87,7 @@ function _obj2base64(o) {
  * @returns {Array<Credential>}
  */
 function _listCreds(regex, options) {
-	const store = new BeameStore();
-	return store.list(regex, options);
+	return new BeameStore().list(regex, options);
 }
 
 //endregion
@@ -283,6 +289,35 @@ renew.toText = _lineToText;
 
 /**
  * @public
+ * @method Creds.renew
+ * @param {Boolean|null} [force] -> force the certificate renewal for all certs
+ **/
+function renewAll(force, callback) {
+	CommonUtils.promise2callback(AutoRenew.renewAll(force),callback);
+}
+renewAll.toText = function (renewResult) {
+	/** @type {Object} **/
+	let table = new Table({
+		head:      ['fqdn', 'valid until', 'renew status'],
+		colWidths: [60, 24, 16]
+	});
+
+	let total = 0;
+	let subtotalsText = "";
+	for(const key of renewResult)
+	{
+		total += renewResult[key].length;
+		subtotalsText += ` ${key}: ${renewResult[key].length} `;
+		renewResult[key].forEach(item => {
+			table.push([item.fqdn, item.validUntil, key]);
+		});
+	}
+	table.push([{colSpan:3,hAlign:'center',content: `\n[${subtotalsText}]          Total:  ${total}\n`}]);
+	return table;
+};
+
+/**
+ * @public
  * @method Creds.revokeCert
  * @param {String|null} [signerAuthToken]
  * @param {String|null} [signerFqdn]
@@ -307,9 +342,7 @@ function revoke(signerAuthToken, signerFqdn, fqdn, callback) {
 		throw new Error(`signerAuthToken or signerFqdn required`);
 	}
 
-	if (!fqdn) {
-		throw new Error(`Fqdn required`);
-	}
+	assert(fqdn, 'Fqdn required');
 
 	let authToken;
 
@@ -339,13 +372,12 @@ revoke.toText = _lineToText;
  * @param {Function} callback
  */
 function checkOcsp(fqdn, forceCheck, callback) {
-	if (!fqdn) {
-		throw new Error(`Fqdn required`);
-	}
-	let check = !!(forceCheck && forceCheck === "true"),
-	    store = new BeameStore();
+	assert(fqdn, 'Fqdn required');
 
-	store.find(fqdn, true).then(cred => {
+	let check = !!(forceCheck && forceCheck === "true"),
+		store = new BeameStore();
+
+	store.find(fqdn, true, false, true).then(cred => {
 		CommonUtils.promise2callback(cred.checkOcspStatus(cred, check), callback);
 	}).catch(e => {
 		callback(BeameLogger.formatError(e));
@@ -354,8 +386,85 @@ function checkOcsp(fqdn, forceCheck, callback) {
 }
 
 checkOcsp.toText = x => {
-	return x !== config.OcspStatus.Bad ? `Certificate is valid` : 'Certificate is revoked';
+	return x !== config.OcspStatus.Revoked ? `Certificate is valid` : 'Certificate is revoked';
 };
+
+
+/**
+ * @public
+ * @method Creds.checkAllOcsp
+ * @param {Boolean|null} [forceCheck] => ignoring cache, when set to true
+ * @param {Function} callback
+ */
+function checkAllOcsp(forceCheck, callback) {
+	forceCheck = !!(forceCheck && forceCheck === "true");
+	async function _checkAllOcspStatus() {
+		const result = {};
+		for (const cred of _listCreds('.', { excludeExpired: true })) {
+			try {
+				const status = await cred.checkOcspStatus(cred, forceCheck);
+				result[status] = (result[status] || 0) + 1;
+			}
+			catch(e) {
+				console.log(BeameLogger.formatError(e));
+			}
+		}
+		return result;
+	}
+	CommonUtils.promise2callback(_checkAllOcspStatus(), callback);
+}
+
+checkAllOcsp.toText = x => {
+	const table = new Table({
+		head:      ['status', 'count'],
+	});
+	table.push(...Object.entries(x));
+	table.push(['(total)', Object.values(x).reduce((prev, x) => prev + x, 0)]);
+	return table;
+};
+
+
+/**
+ * @public
+ * @method Creds.cleanOcspStatus
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
+function cleanOcspStatus(fqdn, callback) {
+	assert(fqdn, 'Fqdn required');
+
+	let store = new BeameStore();
+
+	store.find(fqdn, true).then(cred => {
+		cred.cleanOcspStatus();
+		cred.save();
+		callback(`Cleaned Ocsp Status from ${fqdn}`);
+	}).catch(e => {
+		callback(BeameLogger.formatError(e));
+	});
+}
+cleanOcspStatus.toText = x => x;
+
+/**
+ * @public
+ * @method Creds.cleanActions
+ * @param {String} fqdn
+ * @param {Function} callback
+ */
+function cleanActions(fqdn, callback) {
+	assert(fqdn, 'Fqdn required');
+
+	let store = new BeameStore();
+
+	store.find(fqdn, true).then(cred => {
+		cred.cleanActions();
+		cred.save();
+		callback(`Cleaned Actions from ${fqdn}`);
+	}).catch(e => {
+		callback(BeameLogger.formatError(e));
+	});
+}
+cleanActions.toText = x => x;
 
 /**
  * @public
@@ -439,18 +548,17 @@ list.toText = function (creds) {
 	/** @type {Object} **/
 	let table = new Table({
 		head:      ['name', 'fqdn', 'parent', 'Expires', 'priv/k', 'ocsp'],
-		colWidths: [40, 65, 55, 25, 10, 10]
+		colWidths: [40, 65, 55, 24, 8, 13]
 	});
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
-		// noinspection JSUnresolvedFunction
-		return cred.expired === true || cred.metadata.revoked ? colors.red(val) : val;
+		return cred.expired || cred.revoked ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
 
-		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.getKey('PRIVATE_KEY') ? 'Y' : 'N', item), _setStyle(!!(item.metadata.revoked) ? 'Bad' : 'Good', item)]);
+		table.push([_setStyle(item.getMetadataKey("Name"), item), _setStyle(item.fqdn, item), _setStyle(item.getMetadataKey('PARENT_FQDN'), item), _setStyle(item.getCertEnd(), item), _setStyle(item.PRIVATE_KEY ? 'Y' : 'N', item), _setStyle(item.cachedOcspStatus, item)]);
 	});
 	return table;
 };
@@ -470,8 +578,7 @@ signers.toText = function (creds) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
-		// noinspection JSUnresolvedFunction
-		return cred.expired === true ? colors.red(val) : val;
+		return cred.expired ? colors.red(val) : val;
 	};
 
 	creds.forEach(item => {
@@ -564,8 +671,7 @@ listCredChain.toText = function (list) {
 
 	const _setStyle = (value, cred) => {
 		let val = value || '';
-		// noinspection JSUnresolvedFunction
-		return cred.expired === true ? colors.red(val) : val;
+		return cred.expired ? colors.red(val) : val;
 	};
 	for (let i = 0; i < list.length; i++) {
 		table.push([_setStyle(list[i].metadata.level, list[i]), _setStyle(list[i].fqdn, list[i])]);
@@ -581,9 +687,7 @@ function getFqdnListByFilter(filter, regex, hasPrivateKey) {
 	let tmpList  = _listCreds(regex || '.', options);
 	let credList = [];
 	for (let j = 0; j < tmpList.length; j++) {
-		// if(tmpList[j].hasKey('PRIVATE_KEY'))
-		// 	console.log(j,': ',tmpList[j].fqdn,' revoked => ',tmpList[j].metadata.revoked, ',expired => ', tmpList[j].expired);
-		if (hasPrivateKey && tmpList[j].hasKey('PRIVATE_KEY') || !hasPrivateKey)
+		if (hasPrivateKey && tmpList[j].hasPrivateKey || !hasPrivateKey)
 			tmpList[j].fqdn && credList.push(tmpList[j].fqdn);
 	}
 	return credList;
@@ -596,8 +700,9 @@ function getFqdnListByFilter(filter, regex, hasPrivateKey) {
  * @param {String} fqdn
  * @param {String} filter
  * @param {String} regex
+ * @param {Function} callback
  */
-function shred(fqdn, filter, regex) {
+function shred(fqdn, filter, regex, callback) {
 	if (!fqdn && !filter && !regex || (fqdn && (filter || regex))) {
 		logger.fatal("shred valid parameters are: fqdn || filter || regex || regex && filter");
 	}
@@ -607,15 +712,30 @@ function shred(fqdn, filter, regex) {
 	}
 	else credList[0] = fqdn;
 	const store = new BeameStore();
-	for (let i = 0; i < credList.length; i++) {
-		store.shredCredentials(credList[i], () => {
-			logger.info(`${credList[i]} has been erased from store`);
-		});
+
+	async function _shred() {
+		for (let i = 0; i < credList.length; i++) {
+			await util.promisify(store.shredCredentials.bind(store))(credList[i]);
+		}
+		return credList;
 	}
-	return 'ok';
+	CommonUtils.promise2callback(_shred(), callback);
 }
 
-shred.toText = _lineToText;
+shred.toText = function (list) {
+	if(list.length === 0)
+		return "Nothing to erase";
+
+	/** @type {Object} **/
+	let table = new Table({
+		head:      ['fqdn', 'status'],
+		colWidths: [ 64 , 16]
+	});
+	list.forEach(item => {
+		table.push( [ item, 'erased' ] );
+	});
+	return table;
+};
 
 //endregion
 
