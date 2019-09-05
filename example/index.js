@@ -14,8 +14,5 @@ if(!devHostname) {
 
 beameSDK.BaseHttpsServer(devHostname, {}, appExpress, (data, app) => {
 	console.log('Server started on: https://'+devHostname);
-	appExpress.get('/', (req, res) => {
-		res.sendFile(path.join(__dirname + '/index.html'));
-	});
 	// process http events here with <app> if needed
 });
