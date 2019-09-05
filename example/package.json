@@ -1,5 +1,5 @@
 {
-  "name": "beameSDK",
+  "name": "beameSDKexample",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,7 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "beame-sdk": "1.1.1",
-    "express": "4.14.0"
+    "beame-sdk": "latest",
+    "express": "^4.17.1"
   }
 }
