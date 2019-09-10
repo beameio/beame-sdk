@@ -1,7 +1,7 @@
 'use strict';
 
 const BeameLogger = require('../src/utils/Logger');
-const logger      = new BeameLogger("Env");
+const logger      = new BeameLogger("SdkEnv");
 const config      = require('./Config');
 
 module.exports = {
