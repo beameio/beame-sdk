@@ -46,7 +46,6 @@ const async               = require('async');
 const BeameUtils          = require('../utils/BeameUtils');
 const CommonUtils         = require('../utils/CommonUtils');
 const DirectoryServices   = require('./DirectoryServices');
-const CertValidationError = config.CertValidationError;
 const assert              = require('assert').strict;
 
 let _store = null;
@@ -62,7 +61,7 @@ class BeameStoreV2 {
 
 		DirectoryServices.createDir(config.rootDir);
 		DirectoryServices.createDir(config.localCertsDirV2);
-		DirectoryServices.createDir(config.localLogDir);
+		DirectoryServices.createDir(config.SelectedProfile.LogDir);
 		this.reload();
 	}
 

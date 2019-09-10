@@ -1602,20 +1602,20 @@ class Credential {
 
 		let status = null;
 
-		if (process.env.EXTERNAL_OCSP_FQDN) {
-			logger.debug('_checkOcspStatus() uses EXTERNAL_OCSP_FQDN');
+		if (Config.SelectedProfile.ExternalOcspFqdn) {
+			logger.debug('_checkOcspStatus() uses BEAME_EXTERNAL_OCSP_FQDN');
 
 			const AuthToken = require('./AuthToken');
 
 			const req = await this.generateOcspRequest(cred);
 			const ocspUri = await ocspUtils.getOcspUri(cred.getKey("X509"));
-			const signerCred = await cred.getSigningCred();
+			const signerCred = await cred.getOcspSigningCred();
 			const digest    = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
 			const authToken = AuthToken.create(digest, signerCred);
 
 			if (authToken == null) throw `Auth token create for ${signerCred.fqdn} failed`;
 
-			const url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.Check.endpoint}`;
+			const url = `https://${Config.SelectedProfile.ExternalOcspFqdn}${actionsApi.OcspApi.Check.endpoint}`;
 
 			let opt = {
 				url:      url,
@@ -1645,17 +1645,17 @@ class Credential {
 		return status;
 	}
 
-	async getSigningCred() {
-		const credsChain = await util.promisify(this.store.fetchCredChain.bind(this.store))(this.fqdn, {
-			highestFqdn: null,
-			allowRevoked: true,
-			allowExpired: true,
-			allowApprovers: true
-		});
+	async getOcspSigningCred() {
+		const externalOcspSigningFqdnEnvVariable = "BEAME_EXTERNAL_OCSP_SIGNING_FQDN";
+		assert(Config.SelectedProfile.ExternalOcspSigningFqdn, `${externalOcspSigningFqdnEnvVariable} needs to be defined when using BEAME_EXTERNAL_OCSP_FQDN`);
+		const signingCred = this.store.getCredential(Config.SelectedProfile.ExternalOcspSigningFqdn);
 
-		const ret = credsChain.find(c => c.hasPrivateKey && !c.expired && !c.revoked);
-		assert(ret, `Failed to find valid signer cred for ${this.fqdn}`);
-		return ret;
+		assert(signingCred, `Error getting cred for ${externalOcspSigningFqdnEnvVariable}=${Config.SelectedProfile.ExternalOcspSigningFqdn}`);
+		assert(signingCred.hasPrivateKey, `${externalOcspSigningFqdnEnvVariable}=${Config.SelectedProfile.ExternalOcspSigningFqdn} credential doesn't have a private key. Please choose another one in order to use the Extenal OCSP`);
+		assert(!signingCred.expired, `${externalOcspSigningFqdnEnvVariable}=${Config.SelectedProfile.ExternalOcspSigningFqdn} credential has expired. Please renew it in order to use the Extenal OCSP`);
+		assert(!signingCred.revoked, `${externalOcspSigningFqdnEnvVariable}=${Config.SelectedProfile.ExternalOcspSigningFqdn} credential is revoked. Please choose another one in order to use the Extenal OCSP`);
+
+		return signingCred;
 	}
 
 	async doOcspRequest(cred) {
@@ -1702,14 +1702,14 @@ class Credential {
 			encoding: null,  // important: required by windows in order to download the cert correctly
 			method: 'GET'
 		};
-		if (process.env.EXTERNAL_OCSP_FQDN) {
+		if (Config.SelectedProfile.ExternalOcspFqdn) {
 			const AuthToken = require('./AuthToken');
-			let authToken = AuthToken.create(cred.fqdn, cred.getSigningCred());
+			let authToken = AuthToken.create(cred.fqdn, cred.getOcspSigningCred());
 			if (authToken == null) {
 				throw `Auth token create for ${cred.fqdn}  failed`;
 			}
 
-			opt.url = `https://${process.env.EXTERNAL_OCSP_FQDN}${actionsApi.OcspApi.HttpGetProxy.endpoint}`;
+			opt.url = `https://${Config.SelectedProfile.ExternalOcspFqdn}${actionsApi.OcspApi.HttpGetProxy.endpoint}`;
 			opt.headers = {
 				'X-BeameAuthToken': authToken,
 				'Content-Type': 'application/json'

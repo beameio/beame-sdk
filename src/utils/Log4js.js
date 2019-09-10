@@ -82,7 +82,7 @@ module.exports = {
 			cdr_path:          Config.cdrDir,
 			cdr_file_name:     'cdr',
 			cdr_roll_strategy: LogRollingStrategy.Day,
-			log_path:          Config.localLogDir,
+			log_path:          Config.SelectedProfile.LogDir,
 			log_file_name:     'log',
 			log_roll_strategy: LogRollingStrategy.Day
 		};

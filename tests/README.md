@@ -69,8 +69,9 @@ Tests the ntp base functionality.
 Tests in the oscp functionality
 
 Requires `BEAME_TESTS_LOCAL_FQDN` (fqdn of a local available cred) in order to run the ocsp tests against.
+Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred) in order to sign the external ocsp requests.
 
-Sets internally `EXTERNAL_OCSP_FQDN` and `BEAME_OCSP_IGNORE` as required to test the functionality
+Sets internally `BEAME_EXTERNAL_OCSP_FQDN`, `BEAME_EXTERNAL_OCSP_SIGNING_FQDN` and `BEAME_OCSP_IGNORE` as required to test the functionality
 
 ## Running cli_tests
 ToDo
