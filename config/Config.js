@@ -93,6 +93,7 @@ const environments = {
 	_COMMON: {
 		Dir: path.join(home, '.beame'),
 		CdrDir: path.join(home, '.beame_cdr'),
+		LogDir: "",
 		ForceEdgeFqdn: "",
 		ForceEdgeIp: 0,
 		CertValidityPeriod: 60 * 60 * 24 * 365, // 365 days (in sec)
@@ -100,15 +101,23 @@ const environments = {
 		RenewalCheckInterval: 1000 * 60 * 60 * 24, // 1 day (in ms)
 		RenewalPercentageBeforeExpiration: 8, // 8% before cred expiration
 		RenewalBeforeExpirationMaxPeriod: 1000 * 60 * 60 * 24 * 45, // 45 days (in ms)
+		ExternalOcspFqdn: "",
+		ExternalOcspSigningFqdn: "",
 	}
 };
 const SelectedProfile = require('../src/utils/makeEnv')(environments, {protectedProperties: ['FqdnPattern']});
+SelectedProfile.LogDir = SelectedProfile.LogDir || path.join(SelectedProfile.Dir, 'logs');
 
-const localLogDir = process.env.BEAME_LOG_DIR || path.join(SelectedProfile.Dir, 'logs');
+/* Deprecated ENV Variables */
+if (process.env.EXTERNAL_OCSP_FQDN) {
+	console.error("EXTERNAL_OCSP_FQDN environment variable is not used anymore. Please use BEAME_EXTERNAL_OCSP_FQDN.");
+	process.exit(1);
+}
 if (process.env.BEAME_LOAD_BALANCER_URL) {
 	console.error("BEAME_LOAD_BALANCER_URL environment variable is not used anymore. Please use BEAME_LOAD_BALANCER_FQDN.");
 	process.exit(1);
 }
+
 
 /**
  * Registration sources
@@ -357,7 +366,6 @@ module.exports = {
 	issuerCertsPath: path.join(SelectedProfile.Dir, 'issuer-certs-chain'),
 	loadBalancerURL: "https://" + env.LoadBalancerFqdn,
 	localCertsDirV2: path.join(SelectedProfile.Dir, 'v2'),
-	localLogDir,
 	LogEvents,
 	LogFileNames,
 	MessageCodes,

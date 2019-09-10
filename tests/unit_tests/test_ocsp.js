@@ -14,8 +14,9 @@ const DirectoryServices = require('../../src/services/DirectoryServices');
 
 const debug = require("debug")(config.debugPrefix + "unittests:ocsp");
 
-const local_fqdn = process.env.BEAME_TESTS_LOCAL_FQDN;
-assert(local_fqdn, `Env BEAME_TESTS_LOCAL_FQDN is required to run the tests`);
+assert(process.env.BEAME_TESTS_LOCAL_FQDN, `Env BEAME_TESTS_LOCAL_FQDN is required to run the tests`);
+assert(process.env.BEAME_TESTS_LOCAL_ROOT_FQDN, "Env BEAME_TESTS_LOCAL_ROOT_FQDN is required to run the tests");
+
 
 describe('ocsp', function () {
 	this.timeout(100000);
@@ -23,18 +24,19 @@ describe('ocsp', function () {
 
 	beforeEach(() => {
 		process.env.BEAME_OCSP_IGNORE = "";
-		cred = store.getCredential(local_fqdn);
+		cred = store.getCredential(process.env.BEAME_TESTS_LOCAL_FQDN);
 		assert(cred);
 	});
 	afterEach(() => simple.restore());
 
 	const runs = [
-		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", function_name: "check" },
-		{desc: '[With Proxy] ', external_ocsp_fqdn: env.OcspProxyFqdn, function_name: "verify"}
+		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", external_ocsp_signing_fqdn: "", function_name: "check" },
+		{desc: '[With Proxy] ', external_ocsp_fqdn: env.OcspProxyFqdn, external_ocsp_signing_fqdn: process.env.BEAME_TESTS_LOCAL_ROOT_FQDN,function_name: "verify"}
 	];
 
 	async function runOcspWithMockStatus(run, set_status) {
-		process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+		config.SelectedProfile.ExternalOcspFqdn = run.external_ocsp_fqdn;
+		config.SelectedProfile.ExternalOcspSigningFqdn = run.external_ocsp_signing_fqdn;
 
 		const credential = require("../../src/services/Credential");
 		const ocspUtils = require("../../src/utils/ocspUtils");
@@ -56,7 +58,9 @@ describe('ocsp', function () {
 	runs.forEach(function (run) {
 
 		it(run.desc + 'without forceCheck', async () => {
-			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+			config.SelectedProfile.ExternalOcspFqdn = run.external_ocsp_fqdn;
+			config.SelectedProfile.ExternalOcspSigningFqdn = run.external_ocsp_signing_fqdn;
+
 			const result = await cred.checkOcspStatus(cred, false);
 
 			debug(result);
@@ -64,7 +68,9 @@ describe('ocsp', function () {
 		});
 
 		it(run.desc + 'with forceCheck', async () => {
-			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+			config.SelectedProfile.ExternalOcspFqdn = run.external_ocsp_fqdn;
+			config.SelectedProfile.ExternalOcspSigningFqdn = run.external_ocsp_signing_fqdn;
+
 			const result = await cred.checkOcspStatus(cred, true);
 
 			debug(result);
@@ -72,7 +78,8 @@ describe('ocsp', function () {
 		});
 
 		it(run.desc + 'with ocsp ignore', async () => {
-			process.env.EXTERNAL_OCSP_FQDN = run.external_ocsp_fqdn;
+			config.SelectedProfile.ExternalOcspFqdn = run.external_ocsp_fqdn;
+			config.SelectedProfile.ExternalOcspSigningFqdn = run.external_ocsp_signing_fqdn;
 
 			process.env.BEAME_OCSP_IGNORE = "true";
 			const result = await cred.checkOcspStatus(cred, true);
@@ -98,7 +105,7 @@ describe('ocspUtils', function() {
 	let cred;
 
 	beforeEach(() => {
-		cred = store.getCredential(local_fqdn);
+		cred = store.getCredential(process.env.BEAME_TESTS_LOCAL_FQDN);
 		assert(cred);
 	});
 

@@ -384,7 +384,8 @@ testCheckSignature({ signedData: 'beameio',
 
 * `BEAME_OCSP_IGNORE` - Resolve OCSP check if unavailable or in any other arbitration situation
 * `BEAME_OCSP_CACHE_PERIOD` - Period for caching OCSP results, override default value (30 days)
-* `EXTERNAL_OCSP_FQDN` - External ocsp server 
+* `BEAME_EXTERNAL_OCSP_FQDN` - External ocsp server
+* `BEAME_EXTERNAL_OCSP_SIGNING_FQDN` - Signing cred to be used in the connections with the External ocsp server. Needs to be a credential that is not expired, not revoked and that has private key
 * `BEAME_ENV` - Defines the environment profile to run in: prod or dev
 * `BEAME_LOG_LEVEL` - Can be set to DEBUG or other beame log levels
 * `BEAME_LOG_TO_FILE` - Activates log console to file. Can be true or false.
