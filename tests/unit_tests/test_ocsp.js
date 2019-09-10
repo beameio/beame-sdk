@@ -9,7 +9,6 @@ const store = require("../../src/services/BeameStoreV2").getInstance();
 const ocspUtils = require('../../src/utils/ocspUtils');
 
 const config = require("../../config/Config");
-const env = require("../../config/env");
 const DirectoryServices = require('../../src/services/DirectoryServices');
 
 const debug = require("debug")(config.debugPrefix + "unittests:ocsp");
@@ -31,7 +30,7 @@ describe('ocsp', function () {
 
 	const runs = [
 		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", external_ocsp_signing_fqdn: "", function_name: "check" },
-		{desc: '[With Proxy] ', external_ocsp_fqdn: env.OcspProxyFqdn, external_ocsp_signing_fqdn: process.env.BEAME_TESTS_LOCAL_ROOT_FQDN,function_name: "verify"}
+		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.OcspProxyFqdn, external_ocsp_signing_fqdn: process.env.BEAME_TESTS_LOCAL_ROOT_FQDN,function_name: "verify"}
 	];
 
 	async function runOcspWithMockStatus(run, set_status) {
@@ -285,7 +284,7 @@ describe('ocspUtils', function() {
 		const authToken = AuthToken.create(digest, signerCred);
 		const ocspuri = await ocspUtils.getOcspUri(cred.X509);
 
-		const url = `https://${env.OcspProxyFqdn}${config.ActionsApi.OcspApi.Check.endpoint}`;
+		const url = `https://${config.SelectedProfile.OcspProxyFqdn}${config.ActionsApi.OcspApi.Check.endpoint}`;
 		let opt = {
 			url:      url,
 			headers:  {

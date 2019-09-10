@@ -62,7 +62,6 @@ const NodeRsa                = require("node-rsa");
 const async                  = require('async');
 const _                      = require('underscore');
 const Config                 = require('../../config/Config');
-const Env                    = require('../../config/env');
 const actionsApi             = Config.ActionsApi;
 const envProfile             = Config.SelectedProfile;
 const module_name            = Config.AppModules.Credential;
@@ -2006,7 +2005,7 @@ class Credential {
 				[expected_ip, real_ip, edge_ips] = await Promise.all([
 					resolveDns(this.metadata.dnsRecords[0].value),
 					resolveDns(this.fqdn),
-					resolveDns(Env.LoadBalancerFqdn, {all: true})
+					resolveDns(Config.SelectedProfile.LoadBalancerFqdn, {all: true})
 				]);
 			} catch(e) {
 				logger.warn('Failed to resolve DNS');
