@@ -2465,6 +2465,9 @@ class Credential {
 	}
 
 	save() {
+		// FIXME: workaround because of the messed up code on the credential creation that creates certificate with wrong metadata. We need to rewrite it
+		if(this.fqdn !== this.metadata.fqdn) return;
+
 		this.beameStoreServices.writeMetadataSync(this.metadata);
 	}
 

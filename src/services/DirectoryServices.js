@@ -11,7 +11,6 @@ const config      = require('../../config/Config');
 const module_name = config.AppModules.DataServices;
 const logger      = new (require('../utils/Logger'))(module_name);
 const CommonUtils = require('../utils/CommonUtils');
-const BeameUtils  = require('../utils/BeameUtils');
 /** @const {String} */
 
 
@@ -58,6 +57,7 @@ class DataServices {
 	 * @param {Function|null} [cb]
 	 */
 	static saveFile(dirPath, fileName, data, cb) {
+		this.createDir(dirPath); // ensure folder exists
 		try {
 			fs.writeFileSync(path.join(dirPath, fileName), data);
 			cb && cb(null, true);
