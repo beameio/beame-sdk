@@ -1607,11 +1607,14 @@ class Credential {
 			const AuthToken = require('./AuthToken');
 
 			const req = await this.generateOcspRequest(cred);
+			assert(req, "Failed to generate the ocsp request");
 			const ocspUri = await ocspUtils.getOcspUri(cred.getKey("X509"));
-			const signerCred = await cred.getOcspSigningCred();
+			assert(ocspUri, "Failed to get the ocsp uri");
+			const signerCred = cred.getOcspSigningCred();
+			assert(signerCred, "Failed to get the ocsp signing creds");
 			const digest    = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
+			assert(digest, "Failed to generate the digest");
 			const authToken = AuthToken.create(digest, signerCred);
-
 			if (authToken == null) throw `Auth token create for ${signerCred.fqdn} failed`;
 
 			const url = `https://${Config.SelectedProfile.ExternalOcspFqdn}${actionsApi.OcspApi.Check.endpoint}`;
@@ -1644,7 +1647,7 @@ class Credential {
 		return status;
 	}
 
-	async getOcspSigningCred() {
+	getOcspSigningCred() {
 		const externalOcspSigningFqdnEnvVariable = "BEAME_EXTERNAL_OCSP_SIGNING_FQDN";
 		assert(Config.SelectedProfile.ExternalOcspSigningFqdn, `${externalOcspSigningFqdnEnvVariable} needs to be defined when using BEAME_EXTERNAL_OCSP_FQDN`);
 		const signingCred = this.store.getCredential(Config.SelectedProfile.ExternalOcspSigningFqdn);
@@ -1703,7 +1706,9 @@ class Credential {
 		};
 		if (Config.SelectedProfile.ExternalOcspFqdn) {
 			const AuthToken = require('./AuthToken');
-			let authToken = AuthToken.create(cred.fqdn, cred.getOcspSigningCred());
+			const signerCred = cred.getOcspSigningCred();
+			assert(signerCred, "Failed to get the ocsp signing creds");
+			let authToken = AuthToken.create(cred.fqdn, signerCred);
 			if (authToken == null) {
 				throw `Auth token create for ${cred.fqdn}  failed`;
 			}
