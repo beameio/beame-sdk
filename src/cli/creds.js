@@ -438,9 +438,9 @@ function cleanOcspStatus(fqdn, callback) {
 	store.find(fqdn, true).then(cred => {
 		cred.cleanOcspStatus();
 		cred.save();
-		callback(`Cleaned Ocsp Status from ${fqdn}`);
+		callback(null, `Cleaned Ocsp Status from ${fqdn}`);
 	}).catch(e => {
-		callback(BeameLogger.formatError(e));
+		callback(BeameLogger.formatError(e), null);
 	});
 }
 cleanOcspStatus.toText = x => x;
@@ -459,9 +459,9 @@ function cleanActions(fqdn, callback) {
 	store.find(fqdn, true).then(cred => {
 		cred.cleanActions();
 		cred.save();
-		callback(`Cleaned Actions from ${fqdn}`);
+		callback(null, `Cleaned Actions from ${fqdn}`);
 	}).catch(e => {
-		callback(BeameLogger.formatError(e));
+		callback(BeameLogger.formatError(e), null);
 	});
 }
 cleanActions.toText = x => x;

@@ -62,7 +62,6 @@ const NodeRsa                = require("node-rsa");
 const async                  = require('async');
 const _                      = require('underscore');
 const Config                 = require('../../config/Config');
-const Env                    = require('../../config/env');
 const actionsApi             = Config.ActionsApi;
 const envProfile             = Config.SelectedProfile;
 const module_name            = Config.AppModules.Credential;
@@ -1608,11 +1607,14 @@ class Credential {
 			const AuthToken = require('./AuthToken');
 
 			const req = await this.generateOcspRequest(cred);
+			assert(req, "Failed to generate the ocsp request");
 			const ocspUri = await ocspUtils.getOcspUri(cred.getKey("X509"));
-			const signerCred = await cred.getOcspSigningCred();
+			assert(ocspUri, "Failed to get the ocsp uri");
+			const signerCred = cred.getOcspSigningCred();
+			assert(signerCred, "Failed to get the ocsp signing creds");
 			const digest    = CommonUtils.generateDigest(req.data, 'sha256', 'base64');
+			assert(digest, "Failed to generate the digest");
 			const authToken = AuthToken.create(digest, signerCred);
-
 			if (authToken == null) throw `Auth token create for ${signerCred.fqdn} failed`;
 
 			const url = `https://${Config.SelectedProfile.ExternalOcspFqdn}${actionsApi.OcspApi.Check.endpoint}`;
@@ -1645,7 +1647,7 @@ class Credential {
 		return status;
 	}
 
-	async getOcspSigningCred() {
+	getOcspSigningCred() {
 		const externalOcspSigningFqdnEnvVariable = "BEAME_EXTERNAL_OCSP_SIGNING_FQDN";
 		assert(Config.SelectedProfile.ExternalOcspSigningFqdn, `${externalOcspSigningFqdnEnvVariable} needs to be defined when using BEAME_EXTERNAL_OCSP_FQDN`);
 		const signingCred = this.store.getCredential(Config.SelectedProfile.ExternalOcspSigningFqdn);
@@ -1704,7 +1706,9 @@ class Credential {
 		};
 		if (Config.SelectedProfile.ExternalOcspFqdn) {
 			const AuthToken = require('./AuthToken');
-			let authToken = AuthToken.create(cred.fqdn, cred.getOcspSigningCred());
+			const signerCred = cred.getOcspSigningCred();
+			assert(signerCred, "Failed to get the ocsp signing creds");
+			let authToken = AuthToken.create(cred.fqdn, signerCred);
 			if (authToken == null) {
 				throw `Auth token create for ${cred.fqdn}  failed`;
 			}
@@ -2006,7 +2010,7 @@ class Credential {
 				[expected_ip, real_ip, edge_ips] = await Promise.all([
 					resolveDns(this.metadata.dnsRecords[0].value),
 					resolveDns(this.fqdn),
-					resolveDns(Env.LoadBalancerFqdn, {all: true})
+					resolveDns(Config.SelectedProfile.LoadBalancerFqdn, {all: true})
 				]);
 			} catch(e) {
 				logger.warn('Failed to resolve DNS');
@@ -2461,6 +2465,9 @@ class Credential {
 	}
 
 	save() {
+		// FIXME: workaround because of the messed up code on the credential creation that creates certificate with wrong metadata. We need to rewrite it
+		if(this.fqdn !== this.metadata.fqdn) return;
+
 		this.beameStoreServices.writeMetadataSync(this.metadata);
 	}
 

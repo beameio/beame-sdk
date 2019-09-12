@@ -1,17 +1,35 @@
 'use strict';
 
-const environments = {
-	dev: {
-		Name: 'Dev',
-		LoadBalancerFqdn: 'may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net',
-		OcspProxyFqdn: 'i6zirg0jsrzrk3dk.mpk3nobb568nycf5.v1.d.beameio.net',
+const BeameLogger = require('../src/utils/Logger');
+const logger      = new BeameLogger("SdkEnv");
+const config      = require('./Config');
+
+module.exports = {
+	Name: config.SelectedProfile.Name,
+	LoadBalancerFqdn: config.SelectedProfile.LoadBalancerFqdn,
+	OcspProxyFqdn: config.SelectedProfile.OcspProxyFqdn,
+
+	get ExternalOcspFqdn() {
+		return config.SelectedProfile.ExternalOcspFqdn;
+	},
+	set ExternalOcspFqdn(fqdn) {
+		logger.info(`Setting ExternalOcspFqdn to ${fqdn}`);
+		config.SelectedProfile.ExternalOcspFqdn = fqdn;
 	},
 
-	prod: {
-		Name: 'Prod',
-		LoadBalancerFqdn: 'ioigl3wzx6lajrx6.tl5h1ipgobrdqsj6.v1.p.beameio.net',
-		OcspProxyFqdn: 'iep9bs1p7cj3cmit.tl5h1ipgobrdqsj6.v1.p.beameio.net',
+	get ExternalOcspSigningFqdn() {
+		return config.SelectedProfile.ExternalOcspSigningFqdn;
+	},
+	set ExternalOcspSigningFqdn(fqdn) {
+		logger.info(`Setting ExternalOcspSigningFqdn to ${fqdn}`);
+		config.SelectedProfile.ExternalOcspSigningFqdn = fqdn;
+	},
+
+	get OcspCachePeriod() {
+		return config.SelectedProfile.OcspCachePeriod;
+	},
+	set OcspCachePeriod(ocspCachePeriod) {
+		logger.info(`Setting OcspCachePeriod to ${ocspCachePeriod}`);
+		config.SelectedProfile.OcspCachePeriod = ocspCachePeriod;
 	},
 };
-
-module.exports = require('../src/utils/makeEnv')(environments, {protectedProperties: ['Name']});

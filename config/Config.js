@@ -11,7 +11,6 @@ const home       = os.homedir();
 const npmPrefix  = require('npm-prefix');
 const npmRootDir = npmPrefix();
 const debugPrefix = 'beame:sdk:';
-const env = require('./env');
 
 const ActionsApi = {
 	"EntityApi": {
@@ -71,23 +70,29 @@ const ActionsApi = {
 
 const environments = {
 	dev: {
+		Name: 'Dev',
 		FqdnPattern: '.d.',
 		CertEndpoint:  'https://beameio-net-certs-dev.s3.amazonaws.com',
 		AuthServerURL: 'https://p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net',
 		TestsCredsFqdn: 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net',
 		BaseUrl: 'https://xmq6hpvgzt7h8m76.mpk3nobb568nycf5.v1.d.beameio.net',
 		BaseDNSUrl:'https://t24w58ow5jkkmkhu.mpk3nobb568nycf5.v1.d.beameio.net',
-		RetryAttempts: 10
+		RetryAttempts: 10,
+		LoadBalancerFqdn: 'may129m153e6emrn.bqnp2d2beqol13qn.v1.d.beameio.net',
+		OcspProxyFqdn: 'i6zirg0jsrzrk3dk.mpk3nobb568nycf5.v1.d.beameio.net',
 	},
 
 	prod: {
+		Name: 'Prod',
 		FqdnPattern: '.p.',
 		CertEndpoint: 'https://beameio-net-certs.s3.amazonaws.com',
 		AuthServerURL: 'https://ypxf72akb6onjvrq.ohkv8odznwh5jpwm.v1.p.beameio.net',
 		TestsCredsFqdn: 'am53rz8o6cjsm0xm.gjjpak0yxk8jhlxv.v1.p.beameio.net',
 		BaseUrl: 'https://ieoateielwkqnbuw.tl5h1ipgobrdqsj6.v1.p.beameio.net',
 		BaseDNSUrl:'https://lcram0sj9ox726l1.tl5h1ipgobrdqsj6.v1.p.beameio.net',
-		RetryAttempts: 10
+		RetryAttempts: 10,
+		LoadBalancerFqdn: 'ioigl3wzx6lajrx6.tl5h1ipgobrdqsj6.v1.p.beameio.net',
+		OcspProxyFqdn: 'iep9bs1p7cj3cmit.tl5h1ipgobrdqsj6.v1.p.beameio.net',
 	},
 
 	_COMMON: {
@@ -105,7 +110,7 @@ const environments = {
 		ExternalOcspSigningFqdn: "",
 	}
 };
-const SelectedProfile = require('../src/utils/makeEnv')(environments, {protectedProperties: ['FqdnPattern']});
+const SelectedProfile = require('../src/utils/makeEnv')(environments, {protectedProperties: ['Name', 'FqdnPattern']});
 SelectedProfile.LogDir = SelectedProfile.LogDir || path.join(SelectedProfile.Dir, 'logs');
 
 /* Deprecated ENV Variables */
@@ -364,7 +369,7 @@ module.exports = {
 	defaultValidityPeriod: SelectedProfile.CertValidityPeriod,
 	InitFirstRemoteEdgeClient: true,
 	issuerCertsPath: path.join(SelectedProfile.Dir, 'issuer-certs-chain'),
-	loadBalancerURL: "https://" + env.LoadBalancerFqdn,
+	loadBalancerURL: "https://" + SelectedProfile.LoadBalancerFqdn,
 	localCertsDirV2: path.join(SelectedProfile.Dir, 'v2'),
 	LogEvents,
 	LogFileNames,
