@@ -1521,13 +1521,12 @@ class Credential {
 	}
 
 	setRevokedAndSave() {
-		let date = Date.now();
-		this.metadata.ocspStatus = {
+		const date = Date.now();
+		Credential.saveOcsp(this, {
 			fingerprint: this.certData.fingerprints.sha256,
 			status: Config.OcspStatus.Revoked,
 			date: date
-		};
-		this.save();
+		});
 		Credential.saveCredAction(this, {
 			action: Config.CredAction.Revoke,
 			date: date
@@ -1538,13 +1537,12 @@ class Credential {
 	 * @param {OcspStatus} status
 	 */
 	setOcspStatusAndSave(status) {
-		let date = Date.now();
-		this.metadata.ocspStatus = {
+		const date = Date.now();
+		Credential.saveOcsp(this, {
 			fingerprint: this.certData.fingerprints.sha256,
 			status: status,
 			date:   date
-		};
-		this.save();
+		});
 		Credential.saveCredAction(this, {
 			action: Config.CredAction.OcspUpdate,
 			date:   date
@@ -2452,7 +2450,7 @@ class Credential {
 	}
 
 	static saveCredAction(cred, action) {
-		cred.metadata = cred.beameStoreServices.readMetadataSync();
+		cred.mergeMetadata(cred.beameStoreServices.readMetadataSync());
 
 		if (!cred.metadata.actions) {
 			cred.metadata.actions = [];
@@ -2461,6 +2459,21 @@ class Credential {
 		cred.metadata.actions.push(action);
 		cred.metadata.actions = cred.metadata.actions.slice(-Config.credentialMetadataActionsLimit);
 
+		cred.save();
+	}
+
+	/**
+	 * @typedef {Object} OcspStatusObj
+	 * @property {String} fingerprint
+	 * @property {OcspStatus} status
+	 * @property {Date} date
+
+	 * @param {Credential} cred
+	 * @param {OcspStatusObj} statusObj
+	 */
+	static saveOcsp(cred, statusObj) {
+		cred.mergeMetadata(cred.beameStoreServices.readMetadataSync());
+		cred.metadata.ocspStatus = statusObj;
 		cred.save();
 	}
 

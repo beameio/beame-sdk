@@ -173,7 +173,7 @@ class BeameStoreV2 {
 					if (!related) {
 						let ndx       = 0;
 						let isRelated = (i) => {
-							if (i < anchor.length) {
+							if (anchor && i < anchor.length) {
 
 								/** @type {VerifyAncestryOptions} **/
 								let opt = {
