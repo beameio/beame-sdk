@@ -277,6 +277,7 @@ class Credential {
 			this.certData.notBefore            = (new Date(this.certData.validity.start)).toString();
 		}
 		catch (e) {
+			logger.error(`Error updating certificate data`, e);
 		}
 	}
 
@@ -338,7 +339,7 @@ class Credential {
 			try {
 				this.publicKeyNodeRsa.importKey(this.publicKeyStr, "pkcs8-public-pem");
 			} catch(e) {
-				console.log(`Error could not import ${this.publicKeyStr}`);
+				logger.error(`Error could not import ${this.publicKeyStr}`, e);
 			}
 
 		});
@@ -2625,10 +2626,9 @@ class Credential {
 		try {
 			let ciphers           = tls.getCiphers().filter(cipher => {
 				return cipher.indexOf('ec') < 0;
-
 			});
 			let allowedCiphers    = ciphers.join(':').toUpperCase();
-			let conn              = tls.connect(443, fqdn, {host: fqdn, ciphers: allowedCiphers});
+			let conn              = tls.connect({host: fqdn, servername: fqdn, port: 443, ciphers: allowedCiphers, maxVersion: 'TLSv1.2'});
 			let onSecureConnected = function () {
 				//noinspection JSUnresolvedFunction
 				let cert = conn.getPeerCertificate(true);
