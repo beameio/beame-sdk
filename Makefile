@@ -4,24 +4,37 @@ default:
 build:
 	npm install
 
-preptests:
-	rm -rf /tmp/tests/
-	mkdir /tmp/tests
-dev-clitests: preptests
-	cp -R ~/n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net /tmp/tests/
-	(cd tests/cli_tests && DEBUG=process BEAME_ENV=dev HOME=/tmp/tests ./testAll.ngs)
-prod-clitests: preptests
-	@echo "Still not implemented, missing test prod cred"
-
 printunittestenv:
 	@echo
 	@echo "Running with:"
+	@echo "  BEAME_ENV=${BEAME_ENV}"
 	@echo "  BEAME_TESTS_LOCAL_FQDN=${BEAME_TESTS_LOCAL_FQDN}"
 	@echo "  BEAME_TESTS_LOCAL_ROOT_FQDN=${BEAME_TESTS_LOCAL_ROOT_FQDN}"
+	@echo "  BEAME_AUTH_FQDN=${BEAME_AUTH_FQDN}"
 	@echo
-dev-unittests: printunittestenv
-	DEBUG="beame:sdk:unittests:*" BEAME_ENV=dev ./node_modules/mocha/bin/mocha tests/unit_tests/*.js
-prod-unittests: printunittestenv
-	DEBUG="beame:sdk:unittests:*" BEAME_ENV=prod ./node_modules/mocha/bin/mocha tests/unit_tests/*.js
+
+clitests: printunittestenv
+ifndef BEAME_ENV
+	$(error BEAME_ENV is undefined)
+endif
+ifndef BEAME_AUTH_FQDN
+	$(error BEAME_AUTH_FQDN is undefined)
+endif
+	rm -rf /tmp/tests/
+	mkdir /tmp/tests
+	cp -R ~/.beame/v2/$$BEAME_AUTH_FQDN /tmp/tests/
+	(cd tests/cli_tests && DEBUG=process HOME=/tmp/tests ./testAll.ngs)
+
+unittests: printunittestenv
+ifndef BEAME_ENV
+	$(error BEAME_ENV is undefined)
+endif
+ifndef BEAME_TESTS_LOCAL_FQDN
+	$(error BEAME_TESTS_LOCAL_FQDN is undefined)
+endif
+ifndef BEAME_TESTS_LOCAL_ROOT_FQDN
+	$(error BEAME_TESTS_LOCAL_ROOT_FQDN is undefined)
+endif
+	DEBUG="beame:sdk:unittests:*" ./node_modules/mocha/bin/mocha tests/unit_tests/*.js
 
 # TODO: gulp doc
