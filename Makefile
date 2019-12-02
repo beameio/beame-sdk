@@ -20,8 +20,8 @@ printunittestenv:
 	@echo "  BEAME_TESTS_LOCAL_ROOT_FQDN=${BEAME_TESTS_LOCAL_ROOT_FQDN}"
 	@echo
 dev-unittests: printunittestenv
-	DEBUG="beame:sdk:unittests:*" BEAME_ENV=dev mocha tests/unit_tests/*.js
+	DEBUG="beame:sdk:unittests:*" BEAME_ENV=dev ./node_modules/mocha/bin/mocha tests/unit_tests/*.js
 prod-unittests: printunittestenv
-	DEBUG="beame:sdk:unittests:*" BEAME_ENV=prod mocha tests/unit_tests/*.js
+	DEBUG="beame:sdk:unittests:*" BEAME_ENV=prod ./node_modules/mocha/bin/mocha tests/unit_tests/*.js
 
 # TODO: gulp doc
