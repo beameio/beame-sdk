@@ -31,22 +31,13 @@ describe('local_creds_create', function () {
 		assert(parent_cred, 'Parent credential not found');
 	});
 
-	it('Should create entity', function (done) {
-		parent_cred.createEntityWithLocalCreds(parent_fqdn, data.name, data.email).then(metadata => {
-			debug('metadata received %j', metadata);
-
-			assert(metadata, `expected metadata`);
-			assert(metadata.fqdn, `expected fqdn`);
-
-			let cred = store.getCredential(metadata.fqdn);
-
-			assert(cred, 'New credential not found in store');
-			done();
-		}).catch(error=> {
-			debug(error);
-			assert.fail(error);
-			done();
-		});
+	it('Should create entity', async function () {
+		const metadata = await parent_cred.createEntityWithLocalCreds(parent_fqdn, data.name, data.email)
+		debug('metadata received %j', metadata);
+		assert(metadata, `expected metadata`);
+		assert(metadata.fqdn, `expected fqdn`);
+		let cred = store.getCredential(metadata.fqdn);
+		assert(cred, 'New credential not found in store');
 	});
 
 });
@@ -101,25 +92,14 @@ describe('sign_and_create', function () {
 		assert(signing_cred, 'Parent credential not found');
 	});
 
-	it('Should create entity', function (done) {
-		signing_cred.signWithFqdn(parent_fqdn, commonUtils.generateDigest(data)).then(authToken=> {
-			signing_cred.createEntityWithAuthToken(authToken, data.name, data.email).then(metadata => {
-				debug('metadata received %j', metadata);
-
-				assert(metadata, `expected metadata`);
-				assert(metadata.fqdn, `expected fqdn`);
-
-				let cred = store.getCredential(metadata.fqdn);
-
-				assert(cred, 'New credential not found inn store');
-				done();
-			});
-		}).catch(error=> {
-			debug(error);
-			assert.fail(error);
-
-			done();
-		});
+	it('Should create entity', async function () {
+		const authToken = await signing_cred.signWithFqdn(parent_fqdn, commonUtils.generateDigest(data));
+		const metadata = await signing_cred.createEntityWithAuthToken(authToken, data.name, data.email);
+		debug('metadata received %j', metadata);
+		assert(metadata, `expected metadata`);
+		assert(metadata.fqdn, `expected fqdn`);
+		let cred = store.getCredential(metadata.fqdn);
+		assert(cred, 'New credential not found inn store');
 	});
 });
 
@@ -135,15 +115,9 @@ describe('sns_topic', function () {
 		assert(cred, 'Parent credential not found');
 	});
 
-	it('Should create entity', function (done) {
-		cred.subscribeForChildRegistration(fqdn).then(() => {
-			debug('topic created');
-			done();
-		}).catch(error=> {
-			debug(error);
-			assert.fail(error);
-			done();
-		});
+	it('Should create entity', async function () {
+		await cred.subscribeForChildRegistration(fqdn);
+		debug('topic created');
 	});
 });
 
