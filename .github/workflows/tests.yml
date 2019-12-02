@@ -25,7 +25,7 @@ jobs:
           tar -xvzf creds.tgz -C ~/.beame/v2
           echo ""
           echo "+ Installing NGS"
-          ( git clone https://github.com/ngs-lang/ngs.git && cd ngs && ./install-linux.sh && make install )
+          ( git clone -b dev --single-branch https://github.com/ngs-lang/ngs.git && cd ngs && ./install-linux.sh && make install )
       - name: Unit Tests
         run:  make unittests
       - name: Integration Tests
