@@ -27,8 +27,9 @@ jobs:
           echo "$CREDS" | base64 --decode > creds.tgz
           mkdir -p ~/.beame/v2
           tar -xvzf creds.tgz -C ~/.beame/v2
+          echo ""
           echo "+ Installing NGS"
-          apt-get install -y libgc1c2 libffi6 libjson-c3
+          sudo apt-get install -y libgc1c2 libffi6 libjson-c3
           ( git clone https://github.com/ngs-lang/ngs.git && cd ngs && make install )
       - name: Unit Tests
         run:  make unittests
