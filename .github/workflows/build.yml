@@ -10,6 +10,7 @@ jobs:
     name: Node ${{ matrix.node }} build
     env:
       CREDS: ${{ secrets.CREDS }}
+      BEAME_ENV: dev
       BEAME_AUTH_FQDN: ${{ secrets.BEAME_AUTH_FQDN }}
       BEAME_TESTS_LOCAL_FQDN: ${{ secrets.BEAME_TESTS_LOCAL_FQDN }}
       BEAME_TESTS_LOCAL_ROOT_FQDN: ${{ secrets.BEAME_TESTS_LOCAL_ROOT_FQDN }}
