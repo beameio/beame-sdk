@@ -1,37 +1,17 @@
 name: Build
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
         node: [ '12', '10', '8' ]
-    name: Node ${{ matrix.node }} build
-    env:
-      CREDS: ${{ secrets.CREDS }}
-      BEAME_ENV: dev
-      BEAME_AUTH_FQDN: ${{ secrets.BEAME_AUTH_FQDN }}
-      BEAME_TESTS_LOCAL_FQDN: ${{ secrets.BEAME_TESTS_LOCAL_FQDN }}
-      BEAME_TESTS_LOCAL_ROOT_FQDN: ${{ secrets.BEAME_TESTS_LOCAL_ROOT_FQDN }}
+    name: Build
     steps:
       - uses: actions/checkout@v1
-      - name: Setup node
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v1
         with:
-          node-version: ${{ matrix.node }}
-      - name: Dependencies & base tests
-        run: npm install && npm test
-      - name: Prepare test environment
-        run: |
-          echo "+ Deploying test creds"
-          echo "$CREDS" | base64 --decode > creds.tgz
-          mkdir -p ~/.beame/v2
-          tar -xvzf creds.tgz -C ~/.beame/v2
-          echo ""
-          echo "+ Installing NGS"
-          ( git clone https://github.com/ngs-lang/ngs.git && cd ngs && ./install-linux.sh && make install )
-      - name: Unit Tests
-        run:  make unittests
-      - name: Integration Tests
-        run:  make clitests
+          node-version: '12'
+      - run: npm install && npm test
