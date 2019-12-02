@@ -19,7 +19,4 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm install && npm test
-      - run: |
-          echo $CREDS | base64 --decode > creds.tgz
-          tar -xvzf -C ~/.beame/v2 creds.tgz
-          make dev-unittests
+      - run: echo $CREDS | base64 --decode > creds.tgz ; tar -xvzf -C ~/.beame/v2 creds.tgz ; make dev-unittests
