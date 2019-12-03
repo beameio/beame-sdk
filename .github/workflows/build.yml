@@ -6,7 +6,6 @@ jobs:
     name: Build
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 1
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
         node: [ '12', '10', '8' ]
@@ -16,6 +15,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm install
+      - run: npm test
   tests:
     name: Tests
     runs-on: ubuntu-latest

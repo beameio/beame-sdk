@@ -5,7 +5,7 @@
   "main": "index.js",
   "engine": "node >= 8.0.0",
   "scripts": {
-    "test": "mocha ./tests/unit_tests/test_commonutils.js ./tests/unit_tests/test_beameutils.js ./tests/unit_tests/test_makeenv.js ./tests/unit_tests/test_ntp.js"
+    "test": "mocha ./tests/unit_tests/test_commonutils.js ./tests/unit_tests/test_makeenv.js ./tests/unit_tests/test_ntp.js"
   },
   "bin": {
     "beame": "src/cli/beame.js"
