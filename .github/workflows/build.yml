@@ -9,6 +9,10 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
         node: [ '12', '10', '8' ]
+        exclude:
+          # excludes node 8 on windows, since its a older version that doesnt have assert strict
+          - os: windows-latest
+            node: 8
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
@@ -16,8 +20,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: node --version
       - run: npm install
-      - run: if [ "$RUNNER_OS" != "windows-latest" ]; then npm test; fi
-        shell: bash
+      - run: npm test
   tests:
     name: Tests
     runs-on: ubuntu-latest
