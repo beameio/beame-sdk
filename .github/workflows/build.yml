@@ -14,8 +14,10 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
+      - run: node --version
       - run: npm install
-      - run: npm test
+      - run: if [ "$RUNNER_OS" != "windows-latest" ]; then npm test; fi
+        shell: bash
   tests:
     name: Tests
     runs-on: ubuntu-latest
