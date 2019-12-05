@@ -121,7 +121,7 @@ F test_dns(fqdn:Str) {
     test("Change DNS to CNAME record") with {
     	cname = CHARS::ascii_lowercase.rand(16) + '.example.com'
     	$($BEAME_BIN creds setDns --fqdn $fqdn --value $cname --format json)
-    	assert_resolvable(fqdn, sleep=10, check={"${cname}." in A})
+    	assert_resolvable(fqdn, sleep=20, check={"${cname}." in A})
     }
 
     test("Delete DNS record") with {
