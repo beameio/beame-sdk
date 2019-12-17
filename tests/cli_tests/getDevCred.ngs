@@ -4,8 +4,6 @@
 
 # ---------- Environment sanity checks ----------
 
-assert('BEAME_INTERNAL_AUTH_SERVER_FQDN' in ENV, 'Environment variable BEAME_INTERNAL_AUTH_SERVER_FQDN must be set')
-
 HOME = ENV.HOME
 
 BEAME_DIR = HOME / '.beame'
@@ -14,6 +12,7 @@ if not(File(BEAME_BIN)) {
    die("Could not find beame binary. Please make sure you are running this script from the tests/cli_tests directory")
 }
 BEAME_AUTH_FQDN = ENV.get('BEAME_AUTH_FQDN', 'n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net')
+BEAME_INTERNAL_AUTH_SERVER_FQDN = ENV.get('BEAME_INTERNAL_AUTH_SERVER_FQDN', 'p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net')
 
 # ---------- Tests library ----------
 
