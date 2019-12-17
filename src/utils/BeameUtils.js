@@ -189,55 +189,39 @@ module.exports = {
 		if (!loadBalancerEndpoint) {
 			loadBalancerEndpoint = config.loadBalancerURL;
 		}
+
 		if (config.beameForceEdgeFqdn) {
 			let edgeF = {
 				endpoint: config.beameForceEdgeFqdn,
 				publicIp: config.beameForceEdgeIP
 			};
-			callback(null, edgeF);
+			return callback(null, edgeF);
 		}
-		else {
-			if (retries == 0) {
-				callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
-			}
-			else {
-				retries--;
 
-				this.httpGet(loadBalancerEndpoint + "/instance",
-					/**
-					 *
-					 * @param error
-					 * @param {Object} data
-					 */
-					(error, data) => {
-						if (data) {
-
-							//noinspection JSUnresolvedVariable,JSValidateTypes
-							/** @type {EdgeShortData} edge **/
-							let edge = {
-								endpoint: data.instanceData.endpoint,
-								publicIp: data.instanceData.publicipv4
-							};
-
-							callback(null, edge);
-
-						}
-						else {
-
-							sleep = parseInt(sleep * (Math.random() + 1.5));
-
-							logger.warn("Retry to getMetadataKey lb instance", {
-								"sleep":   sleep,
-								"retries": retries
-							});
-
-							setTimeout(() => {
-								this.selectBestProxy(loadBalancerEndpoint, retries, sleep, callback);
-							}, sleep);
-						}
-					});
-			}
+		if (retries === 0) {
+			return callback(logger.formatErrorMessage(`Edge not found on load-balancer ${loadBalancerEndpoint}`, config.AppModules.EdgeClient, null, config.MessageCodes.EdgeLbError), null);
 		}
+
+		retries--;
+		this.httpGet(loadBalancerEndpoint + "/instance",
+			(error, data) => {
+				if (data) {
+					//noinspection JSUnresolvedVariable,JSValidateTypes
+					/** @type {EdgeShortData} edge **/
+					let edge = {
+						endpoint: data.instanceData.endpoint,
+						publicIp: data.instanceData.publicipv4
+					};
+					return callback(null, edge);
+				}
+
+				sleep = parseInt(sleep * (Math.random() + 1.5));
+				logger.warn("Retry to getMetadataKey lb instance", {
+					"sleep":   sleep,
+					"retries": retries
+				});
+				setTimeout(() => { this.selectBestProxy(loadBalancerEndpoint, retries, sleep, callback); }, sleep);
+			});
 	},
 	//endregion
 
