@@ -24,6 +24,7 @@ jobs:
     env:
       CREDS: ${{ secrets.CREDS }}
       BEAME_ENV: dev
+      BEAME_INTERNAL_AUTH_SERVER_FQDN:  ${{ secrets.BEAME_INTERNAL_AUTH_SERVER_FQDN }}
       BEAME_TESTS_CREDS_FQDN: ${{ secrets.BEAME_TESTS_CREDS_FQDN }}
       BEAME_TESTS_ROOT_CREDS_FQDN: ${{ secrets.BEAME_TESTS_ROOT_CREDS_FQDN }}
     steps:
