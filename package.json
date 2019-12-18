@@ -68,7 +68,7 @@
     "test": "tests"
   },
   "devDependencies": {
-    "eslint": "^6.7.1",
+    "eslint": "^6.7.2",
     "gulp": "^4.0.2",
     "gulp-jsdoc3": "^2.0.0",
     "jsdoc": "^3.6.3",
