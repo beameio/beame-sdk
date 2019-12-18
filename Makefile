@@ -23,7 +23,7 @@ endif
 	rm -rf /tmp/tests/
 	mkdir /tmp/tests
 	cp -R ~/.beame/v2/$$BEAME_TESTS_ROOT_CREDS_FQDN /tmp/tests/
-	(cd tests/cli_tests && DEBUG=process HOME=/tmp/tests ./testAll.ngs)
+	(cd tests/cli_tests && HOME=/tmp/tests ./testAll.ngs)
 
 unittests: printunittestenv
 ifndef BEAME_ENV
