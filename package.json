@@ -3,7 +3,7 @@
   "version": "2.2.6",
   "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
   "main": "index.js",
-  "engine": "node >= 8.0.0",
+  "engine": "node >= 8.16.0",
   "scripts": {
     "test": "mocha tests/unit_tests/test_commonutils.js tests/unit_tests/test_makeenv.js tests/unit_tests/test_ntp.js"
   },
