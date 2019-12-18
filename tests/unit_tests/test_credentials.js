@@ -14,12 +14,12 @@ function _getRandomRegistrationData(prefix) {
 	};
 }
 
-assert(process.env.BEAME_TESTS_LOCAL_ROOT_FQDN, "Env BEAME_TESTS_LOCAL_ROOT_FQDN is required to run the tests");
+assert(process.env.BEAME_TESTS_ROOT_CREDS_FQDN, "Env BEAME_TESTS_ROOT_CREDS_FQDN is required to run the tests");
 
 describe('local_creds_create', function () {
 	this.timeout(100000);
 
-	let parent_fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
+	let parent_fqdn = process.env.BEAME_TESTS_ROOT_CREDS_FQDN;
 	let data = _getRandomRegistrationData(`${parent_fqdn}-child-`);
 	debug('*** createEntityWithLocalCreds data %j', data);
 	let parent_cred;
@@ -44,7 +44,7 @@ describe('local_creds_create', function () {
 
 describe("auth_server_creds_create", function () {
 	this.timeout(100000);
-	let fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
+	let fqdn = process.env.BEAME_TESTS_ROOT_CREDS_FQDN;
 	let cred, data;
 	debug(`env signed fqdn is ${fqdn}`);
 
@@ -81,7 +81,7 @@ describe("auth_server_creds_create", function () {
 describe('sign_and_create', function () {
 	this.timeout(100000);
 
-	let parent_fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
+	let parent_fqdn = process.env.BEAME_TESTS_ROOT_CREDS_FQDN;
 	let data = _getRandomRegistrationData(`${parent_fqdn}-child-`);
 	let signing_cred;
 
@@ -105,7 +105,7 @@ describe('sign_and_create', function () {
 
 describe('sns_topic', function () {
 	this.timeout(100000);
-	let fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
+	let fqdn = process.env.BEAME_TESTS_ROOT_CREDS_FQDN;
 	let cred;
 
 	before(function () {
@@ -124,7 +124,7 @@ describe('sns_topic', function () {
 describe('local_creds_isrevoked', function() {
 	this.timeout(100000);
 
-	let parent_fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
+	let parent_fqdn = process.env.BEAME_TESTS_ROOT_CREDS_FQDN;
 
 	it('Create, revoke entity and check revoked state', async () => {
 		const data = _getRandomRegistrationData(`${parent_fqdn}-child-`);

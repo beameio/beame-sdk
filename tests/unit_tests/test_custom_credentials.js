@@ -12,13 +12,13 @@ function _getRandomRegistrationData(prefix) {
 	};
 }
 
-assert(process.env.BEAME_TESTS_LOCAL_ROOT_FQDN, "Env BEAME_TESTS_LOCAL_ROOT_FQDN is required to run the tests");
+assert(process.env.BEAME_TESTS_ROOT_CREDS_FQDN, "Env BEAME_TESTS_ROOT_CREDS_FQDN is required to run the tests");
 
 describe('local_creds_custom_create', function () {
 	this.timeout(100000);
 	const rnd = beameUtils.randomString(8).toLowerCase();
 
-	let parent_fqdn = process.env.BEAME_TESTS_LOCAL_ROOT_FQDN;
+	let parent_fqdn = process.env.BEAME_TESTS_ROOT_CREDS_FQDN;
 	let custom_fqdn = process.env.BEAME_TESTS_CUSTOM_FQDN || `c-${rnd}.tests`;
 	let data = _getRandomRegistrationData(`${parent_fqdn}-child-`);
 	debug('*** createCustomWithLocalCreds data %j', data);

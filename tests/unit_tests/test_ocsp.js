@@ -13,8 +13,8 @@ const DirectoryServices = require('../../src/services/DirectoryServices');
 
 const debug = require("debug")(config.debugPrefix + "unittests:ocsp");
 
-assert(process.env.BEAME_TESTS_LOCAL_FQDN, `Env BEAME_TESTS_LOCAL_FQDN is required to run the tests`);
-assert(process.env.BEAME_TESTS_LOCAL_ROOT_FQDN, "Env BEAME_TESTS_LOCAL_ROOT_FQDN is required to run the tests");
+assert(process.env.BEAME_TESTS_CREDS_FQDN, `Env BEAME_TESTS_CREDS_FQDN is required to run the tests`);
+assert(process.env.BEAME_TESTS_ROOT_CREDS_FQDN, "Env BEAME_TESTS_ROOT_CREDS_FQDN is required to run the tests");
 
 
 describe('ocsp', function () {
@@ -23,14 +23,14 @@ describe('ocsp', function () {
 
 	beforeEach(() => {
 		process.env.BEAME_OCSP_IGNORE = "";
-		cred = store.getCredential(process.env.BEAME_TESTS_LOCAL_FQDN);
+		cred = store.getCredential(process.env.BEAME_TESTS_CREDS_FQDN);
 		assert(cred);
 	});
 	afterEach(() => simple.restore());
 
 	const runs = [
 		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", external_ocsp_signing_fqdn: "", function_name: "check" },
-		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.OcspProxyFqdn, external_ocsp_signing_fqdn: process.env.BEAME_TESTS_LOCAL_ROOT_FQDN,function_name: "verify"}
+		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.OcspProxyFqdn, external_ocsp_signing_fqdn: process.env.BEAME_TESTS_ROOT_CREDS_FQDN,function_name: "verify"}
 	];
 
 	async function runOcspWithMockStatus(run, set_status) {
@@ -104,7 +104,7 @@ describe('ocspUtils', function() {
 	let cred;
 
 	beforeEach(() => {
-		cred = store.getCredential(process.env.BEAME_TESTS_LOCAL_FQDN);
+		cred = store.getCredential(process.env.BEAME_TESTS_CREDS_FQDN);
 		assert(cred);
 	});
 

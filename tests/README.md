@@ -10,12 +10,9 @@
 
 Integration tests done using [NGS](https://github.com/ngs-lang/ngs)
 
-`IMPORTANT: Copy your .beame folders into a backup folder and clean them from the system before starting`
-`IMPORTANT2: BEAME_AUTH_FQDN credential must be present in the HOME dir folder (default is n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net)`
+`IMPORTANT: BEAME_TESTS_ROOT_CREDS_FQDN credential must be present in the ~/.beame/v2/ dir folder (default is n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net)`
 
-`homeDir=/tmp/tests/`
-`mkdir $homeDir`
-`cp -Rv ~/n6ge8i9q4b4b5vb6.h40d7vrwir2oxlnn.v1.d.beameio.net $homeDir`
+`make clitests`
 
 ### testGetCredsFqdn.ngs
 Gets n credentials under the given fqdn
@@ -34,10 +31,25 @@ Currently using the libraries:
 
 Mocha can be called from `./node-modules/.bin/mocha`
 
+### Running unit_tests
+
+`make unittests`
+
+or from the tests folder run:
+
+`BEAME_TESTS_ROOT_CREDS_FQDN=xxxxxxxxxxxxxxx.v1.d.beameio.net BEAME_ENV=dev ../node_modules/mocha/bin/mocha unit_tests/test_credentials.js`
+
+`BEAME_TESTS_CREDS_FQDN=xxxxxxxxxxxxxxxxx.v1.d.beameio.net BEAME_ENV=dev ../node_modules/mocha/bin/mocha unit_tests/test_ocsp.js`
+
+
+For debugging information on the tests, add the `DEBUG=beame:sdk:unittests:*`
+
+In production environment, just use a `.p.beameio.net` credential and change the `BEAME_ENV=dev` to `BEAME_ENV=prod`.
+
 ### test_authtoken.js
 Tests the Auth Token functionality.
 
-Requires `BEAME_TESTS_LOCAL_FQDN` (fqdn of a local available cred with private key) in order to run the tests against.
+Requires `BEAME_TESTS_CREDS_FQDN` (fqdn of a local available cred with private key) in order to run the tests against.
 
 ### test_beameutils.js
 Tests the Beame Utils functionality.
@@ -48,12 +60,12 @@ Tests the Common Utils functionality.
 ### tests_credentials.js
 Tests on the credentials functionality.
 
-Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
+Requires `BEAME_TESTS_ROOT_CREDS_FQDN` (fqdn of a local root available cred)
 
 ### tests_custom_credentials.js (requires an unlimited credential)
 Tests on the creation of custom credentials.
 
-Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred)
+Requires `BEAME_TESTS_ROOT_CREDS_FQDN` (fqdn of a local root available cred)
 Optionally `BEAME_TESTS_CUSTOM_FQDN` can be passed for a custom fqdn creation in the custom fqdn test.
 
 ### test_makeenv.js
@@ -68,23 +80,7 @@ Tests the ntp base functionality.
 ### test_ocsp.js
 Tests in the oscp functionality
 
-Requires `BEAME_TESTS_LOCAL_FQDN` (fqdn of a local available cred) in order to run the ocsp tests against.
-Requires `BEAME_TESTS_LOCAL_ROOT_FQDN` (fqdn of a local root available cred) in order to sign the external ocsp requests.
+Requires `BEAME_TESTS_CREDS_FQDN` (fqdn of a local available cred) in order to run the ocsp tests against.
+Requires `BEAME_TESTS_ROOT_CREDS_FQDN` (fqdn of a local root available cred) in order to sign the external ocsp requests.
 
 Sets internally `BEAME_EXTERNAL_OCSP_FQDN`, `BEAME_EXTERNAL_OCSP_SIGNING_FQDN` and `BEAME_OCSP_IGNORE` as required to test the functionality
-
-## Running cli_tests
-ToDo
-
-## Running unit_tests
-
-From the tests folder run:
-
-`BEAME_TESTS_LOCAL_ROOT_FQDN=xxxxxxxxxxxxxxx.v1.d.beameio.net BEAME_ENV=dev ../node_modules/mocha/bin/mocha unit_tests/test_credentials.js`
-
-`BEAME_TESTS_LOCAL_FQDN=xxxxxxxxxxxxxxxxx.v1.d.beameio.net BEAME_ENV=dev ../node_modules/mocha/bin/mocha unit_tests/test_ocsp.js`
-
-
-For debugging information on the tests, add the `DEBUG=beame:sdk:unittests:*`
-
-In production environment, just use a `.p.beameio.net` credential and change the `BEAME_ENV=dev` to `BEAME_ENV=prod`.
