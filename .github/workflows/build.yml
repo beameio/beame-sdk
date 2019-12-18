@@ -41,6 +41,8 @@ jobs:
           echo ""
           echo "+ Installing NGS"
           ( git clone -b dev --single-branch https://github.com/ngs-lang/ngs.git && cd ngs && ./install-linux.sh && make install )
+      - name: Build
+        run: make build
       - name: Unit Tests
         run:  make unittests
       - name: Integration Tests

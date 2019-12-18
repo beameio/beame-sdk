@@ -13,7 +13,7 @@ printunittestenv:
 	@echo "  BEAME_INTERNAL_AUTH_SERVER_FQDN=${BEAME_INTERNAL_AUTH_SERVER_FQDN}"
 	@echo
 
-clitests: printunittestenv build
+clitests: printunittestenv
 ifndef BEAME_ENV
 	$(error BEAME_ENV is undefined)
 endif
@@ -25,7 +25,7 @@ endif
 	cp -R ~/.beame/v2/$$BEAME_TESTS_ROOT_CREDS_FQDN /tmp/tests/
 	(cd tests/cli_tests && DEBUG=process HOME=/tmp/tests ./testAll.ngs)
 
-unittests: printunittestenv build
+unittests: printunittestenv
 ifndef BEAME_ENV
 	$(error BEAME_ENV is undefined)
 endif
