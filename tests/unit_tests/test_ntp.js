@@ -11,7 +11,8 @@ const ntpServer = process.env.BEAME_TESTS_NTP_SERVER || "pool.ntp.org";
 const ntpServerPort = process.env.BEAME_TESTS_NTP_SERVER_PORT || 123;
 const range = Number.parseInt(process.env.BEAME_TEST_NTP_RANGE || '10');
 
-describe('ntp', () => {
+describe('ntp', function() {
+	this.timeout(100000);
 	it('check date', async () => {
 		const date = await util.promisify(ntpClient.getNetworkTime.bind(ntpClient, ntpServer, ntpServerPort))();
 		const local = new Date();
