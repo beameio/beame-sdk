@@ -35,6 +35,6 @@ endif
 ifndef BEAME_TESTS_ROOT_CREDS_FQDN
 	$(error BEAME_TESTS_ROOT_CREDS_FQDN is undefined)
 endif
-	DEBUG="beame:sdk:unittests:*" ./node_modules/mocha/bin/mocha tests/unit_tests/*.js
+	DEBUG="beame:sdk:unittests:*" BEAME_LOG_LEVEL=FATAL ./node_modules/mocha/bin/mocha tests/unit_tests/*.js
 
 # TODO: gulp doc

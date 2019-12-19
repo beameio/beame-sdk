@@ -175,7 +175,7 @@ class BeameLogger {
 				return;
 		}
 
-		this._logger.info(message);
+		this.info(message);
 	}
 
 	/**
