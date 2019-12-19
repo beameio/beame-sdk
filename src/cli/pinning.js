@@ -13,10 +13,10 @@ function getPublicKeyEncodedDer(cert) {
 	let xcert = x509.parseCert(cert + "");
 	if (xcert) {
 		let publicKey = xcert.publicKey,
-		    modulus = new Buffer(publicKey.n, 'hex'),
-		    header = new Buffer("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64"),
-		    midheader = new Buffer("0203", "hex"),
-		    exponent = new Buffer("010001", "hex");
+		    modulus = Buffer.from(publicKey.n, 'hex'),
+		    header = Buffer.from("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA", "base64"),
+		    midheader = Buffer.from("0203", "hex"),
+		    exponent = Buffer.from("010001", "hex");
 		return Buffer.concat([header, modulus, midheader, exponent]);
 	}
 	return {};

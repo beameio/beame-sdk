@@ -45,7 +45,7 @@ const handlers = {
 	aesKey(payload) {
 		// XXX continue here.
 		// Getting sharedSecret wrong. Probably encoding issues because it starts correctly.
-		sharedSecret = new Buffer(creds.decrypt(payload.encryptedSharedSecret), 'base64');
+		sharedSecret = Buffer.from(creds.decrypt(payload.encryptedSharedSecret), 'base64');
 		// console.log('sharedSecret %j', sharedSecret);
 
 		var peerCreds = new Credential();

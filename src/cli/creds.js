@@ -76,7 +76,7 @@ function _lineToText(line) {
  * @private
  */
 function _obj2base64(o) {
-	return new Buffer(CommonUtils.stringify(o, false)).toString('base64');
+	return Buffer.from(CommonUtils.stringify(o, false)).toString('base64');
 }
 
 /**

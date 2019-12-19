@@ -19,7 +19,7 @@ function create(fqdn, data, ttl, callback) {
 	CommonUtils.promise2callback(cred.signWithFqdn(fqdn, data, ttl), callback);
 }
 
-create.toText = token => new Buffer(CommonUtils.stringify(token,false)).toString('base64');
+create.toText = token => Buffer.from(CommonUtils.stringify(token,false)).toString('base64');
 
 
 function validate(authToken, callback) {

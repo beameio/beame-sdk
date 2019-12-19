@@ -13,7 +13,7 @@ require('../../initWin');
  * @private
  */
 function _obj2base64(o) {
-	return Buffer(CommonUtils.stringify(o, false)).toString('base64');
+	return Buffer.from(CommonUtils.stringify(o, false)).toString('base64');
 }
 
 /**
@@ -24,7 +24,7 @@ function _obj2base64(o) {
  * @returns Array.<AesEncryptedData>
  */
 function aesEncrypt(data, secret) {
-	let sharedSecret = secret ? new Buffer(secret, 'base64') : null;
+	let sharedSecret = secret ? Buffer.from(secret, 'base64') : null;
 	return CryptoServices.aesEncrypt(data, sharedSecret);
 }
 

@@ -58,8 +58,8 @@ class CryptoServices{
 		if (!(data[1].IV && data[1].sharedCipher && data[0].AES128CBC )) {
 			throw new Error('Invalid data passed to aesDecrypt');
 		}
-		let cipher = new Buffer(data[1].sharedCipher, "base64");
-		let IV = new Buffer(data[1].IV, "base64");
+		let cipher = Buffer.from(data[1].sharedCipher, "base64");
+		let IV = Buffer.from(data[1].IV, "base64");
 
 		let decipher = crypto.createDecipheriv("aes-128-cbc", cipher, IV);
 		let dec = decipher.update(data[0].AES128CBC, 'base64', 'utf8');

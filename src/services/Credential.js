@@ -368,7 +368,7 @@ class Credential {
 
 		for (let key in Config.CertFileNames) {
 			if (Config.CertFileNames.hasOwnProperty(key) && importCred.hasOwnProperty(key)) {
-				this[key] = new Buffer(importCred[key]).toString();
+				this[key] = Buffer.from(importCred[key]).toString();
 			}
 
 		}
@@ -1105,7 +1105,7 @@ class Credential {
 							    email:     options.email,
 							    type:      Config.RequestType.RequestWithFqdn
 						    },
-						    str   = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+						    str   = Buffer.from(CommonUtils.stringify(token, false)).toString('base64');
 
 						resolve(str);
 					}).catch(reject);
@@ -1148,7 +1148,7 @@ class Credential {
 							    imageRequired: options.imageRequired,
 							    gwFqdn:        options.gwFqdn
 						    },
-						    str   = new Buffer(CommonUtils.stringify(token, false)).toString('base64');
+						    str   = Buffer.from(CommonUtils.stringify(token, false)).toString('base64');
 
 						resolve(str);
 
@@ -1455,7 +1455,7 @@ class Credential {
 								signerCred.signWithFqdn(signerCred.fqdn, fqdn).then((token) => {
 									signerAuthToken = token;
 									make();
-									// _renew(new Buffer(token).toString('base64'), fqdn, true);
+									// _renew(Buffer.from(token).toString('base64'), fqdn, true);
 								}).catch(e => {
 									logger.error(`Failed to create token with cred ${signerCred.fqdn}::${BeameLogger.formatError(e)}`);
 								});
@@ -2633,7 +2633,7 @@ class Credential {
 				//noinspection JSUnresolvedFunction
 				let cert = conn.getPeerCertificate(true);
 				conn.end();
-				let bas64Str              = new Buffer(cert.raw, "hex").toString("base64");
+				let bas64Str              = Buffer.from(cert.raw, "hex").toString("base64");
 				let certBody              = "-----BEGIN CERTIFICATE-----\r\n";
 				certBody += bas64Str.match(/.{1,64}/g).join("\r\n") + "\r\n";
 				certBody += "-----END CERTIFICATE-----";
