@@ -216,10 +216,10 @@ class Credential {
 				    'sha256': rs.KJUR.crypto.Util.hashHex(x509.hex, 'sha256')
 			    },
 			    ai           = x509.getExtAIAInfo(),
-			    alt          = x509.getExtSubjectAltName() || [],
+			    alt          = (x509.getExtSubjectAltName2() || []).filter(x => x[0] === "DNS" ).map(x => x[1]),
 			    keyUsageStr  = x509.getExtKeyUsageString(),
 			    alg          = x509.getSignatureAlgorithmField(),
-			    subjectStr   = x509.getSubjectString() || "";
+			    subjectStr   = x509.getSubjectString();
 
 			let subject = {
 				"commonName":   "",
