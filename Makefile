@@ -4,6 +4,9 @@ default:
 build:
 	npm install
 
+clean:
+	rm -rf node_modules
+
 printunittestenv:
 	@echo
 	@echo "Running with:"

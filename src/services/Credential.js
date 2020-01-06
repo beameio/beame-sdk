@@ -206,23 +206,20 @@ class Credential {
 			const x509Path = this.beameStoreServices.getAbsoluteFileName(Config.CertFileNames.X509);
 
 			const rs   = require('jsrsasign');
-			const X509 = rs.X509;
 			const fs   = require('fs');
 			let pemStr = (fs.readFileSync(x509Path)).toString();
-			let x      = new rs.X509();
-			x.readCertPEM(pemStr);
+			let x509      = new rs.X509();
+			x509.readCertPEM(pemStr);
 
-
-			let hex          = X509.pemToHex(pemStr);
 			let fingerprints = {
-				    'sha1':   rs.KJUR.crypto.Util.hashHex(hex, 'sha1'),
-				    'sha256': rs.KJUR.crypto.Util.hashHex(hex, 'sha256')
+				    'sha1':   rs.KJUR.crypto.Util.hashHex(x509.hex, 'sha1'),
+				    'sha256': rs.KJUR.crypto.Util.hashHex(x509.hex, 'sha256')
 			    },
-			    ai           = X509.getExtAIAInfo(hex),
-			    alt          = X509.getExtSubjectAltName(hex),
-			    keyUsageStr  = X509.getExtKeyUsageString(hex),
-			    alg          = x.getSignatureAlgorithmField(),
-			    subjectStr   = x.getSubjectString();
+			    ai           = x509.getExtAIAInfo(),
+			    alt          = x509.getExtSubjectAltName(),
+			    keyUsageStr  = x509.getExtKeyUsageString(),
+			    alg          = x509.getSignatureAlgorithmField(),
+			    subjectStr   = x509.getSubjectString();
 
 			let subject = {
 				"commonName":   "",
@@ -235,7 +232,7 @@ class Credential {
 			let sp = subjectStr.split('/');
 			for (let i = 0; i < sp.length; i++) {
 				let pair = sp[i].split('=');
-				if (pair.length != 2) continue;
+				if (pair.length !== 2) continue;
 
 				let prefix = pair[0];
 
@@ -261,8 +258,8 @@ class Credential {
 
 			this.certData.extensions           = {
 				keyUsage:               keyUsageStr,
-				authorityKeyIdentifier: X509.getExtAuthorityKeyIdentifier(hex).kid.match(/(..)/g).join(':').toUpperCase(),
-				subjectKeyIdentifier:   X509.getExtSubjectKeyIdentifier(hex).match(/(..)/g).join(':').toUpperCase()
+				authorityKeyIdentifier: x509.getExtAuthorityKeyIdentifier().kid.match(/(..)/g).join(':').toUpperCase(),
+				subjectKeyIdentifier:   x509.getExtSubjectKeyIdentifier().match(/(..)/g).join(':').toUpperCase()
 			};
 			this.certData.fingerprints         = fingerprints;
 			this.certData.subject              = subject;
