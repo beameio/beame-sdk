@@ -219,7 +219,7 @@ class Credential {
 			    alt          = x509.getExtSubjectAltName() || [],
 			    keyUsageStr  = x509.getExtKeyUsageString(),
 			    alg          = x509.getSignatureAlgorithmField(),
-			    subjectStr   = x509.getSubjectString();
+			    subjectStr   = x509.getSubjectString() || "";
 
 			let subject = {
 				"commonName":   "",
