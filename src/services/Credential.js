@@ -216,7 +216,7 @@ class Credential {
 				    'sha256': rs.KJUR.crypto.Util.hashHex(x509.hex, 'sha256')
 			    },
 			    ai           = x509.getExtAIAInfo(),
-			    alt          = x509.getExtSubjectAltName(),
+			    alt          = x509.getExtSubjectAltName() || [],
 			    keyUsageStr  = x509.getExtKeyUsageString(),
 			    alg          = x509.getSignatureAlgorithmField(),
 			    subjectStr   = x509.getSubjectString();
