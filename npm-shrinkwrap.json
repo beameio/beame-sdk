@@ -1283,11 +1283,6 @@
       "integrity": "sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==",
       "dev": true
     },
-    "dirsum": {
-      "version": "0.1.1",
-      "resolved": "https://registry.npmjs.org/dirsum/-/dirsum-0.1.1.tgz",
-      "integrity": "sha1-dwEjrowG9r3ZV6+OTnBTVw/3Phg="
-    },
     "doctrine": {
       "version": "3.0.0",
       "resolved": "https://registry.npmjs.org/doctrine/-/doctrine-3.0.0.tgz",
@@ -4756,11 +4751,6 @@
         }
       }
     },
-    "node-uuid": {
-      "version": "1.4.8",
-      "resolved": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.8.tgz",
-      "integrity": "sha1-sEDrCSOWivq/jTL7HxfxFn/auQc="
-    },
     "normalize-package-data": {
       "version": "2.5.0",
       "resolved": "https://registry.npmjs.org/normalize-package-data/-/normalize-package-data-2.5.0.tgz",
@@ -6249,11 +6239,6 @@
       "requires": {
         "extend-shallow": "^3.0.0"
       }
-    },
-    "sprintf": {
-      "version": "0.1.5",
-      "resolved": "https://registry.npmjs.org/sprintf/-/sprintf-0.1.5.tgz",
-      "integrity": "sha1-j4PjmpMXwaUCy324BQ5Rxnn27c8="
     },
     "sprintf-js": {
       "version": "1.0.3",
