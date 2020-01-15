@@ -17,7 +17,7 @@ function _getRandomRegistrationData(prefix) {
 assert(process.env.BEAME_TESTS_ROOT_CREDS_FQDN, "Env BEAME_TESTS_ROOT_CREDS_FQDN is required to run the tests");
 
 describe('fetch', function() {
-	const fqdn = "p2payp4q8f5ruo22.q6ujqecc83gg6fod.v1.d.beameio.net";
+	const fqdn = config.SelectedProfile.OcspProxyFqdn;
 
 	it('Fetch ' + fqdn, async function () {
 		const fetchedCred = await store.fetch(fqdn);
