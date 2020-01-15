@@ -30,7 +30,7 @@ describe('ocsp', function () {
 
 	const runs = [
 		{desc: '[Without Proxy] ', external_ocsp_fqdn: "", external_ocsp_signing_fqdn: "", function_name: "check" },
-		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.OcspProxyFqdn, external_ocsp_signing_fqdn: process.env.BEAME_TESTS_ROOT_CREDS_FQDN,function_name: "verify"}
+		{desc: '[With Proxy] ', external_ocsp_fqdn: config.SelectedProfile.OcspProxyFqdn, external_ocsp_signing_fqdn: process.env.BEAME_TESTS_ROOT_CREDS_FQDN, function_name: "verify"}
 	];
 
 	async function runOcspWithMockStatus(run, set_status) {
