@@ -396,3 +396,4 @@ testCheckSignature({ signedData: 'beameio',
 
 ## Tests
 [Readme](tests/README.md)
+
