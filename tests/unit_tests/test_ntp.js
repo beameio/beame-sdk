@@ -3,6 +3,7 @@
 const assert = require('assert').strict;
 const ntpClient = require('ntp-client');
 const util = require('util');
+const commonUtils = require('../../src/utils/CommonUtils');
 
 const config = require("../../config/Config");
 const debug = require("debug")(config.debugPrefix + "unittests:ntp");
@@ -14,7 +15,8 @@ const range = Number.parseInt(process.env.BEAME_TEST_NTP_RANGE || '10');
 describe('ntp', function() {
 	this.timeout(100000);
 	it('check date', async () => {
-		const date = await util.promisify(ntpClient.getNetworkTime.bind(ntpClient, ntpServer, ntpServerPort))();
+		// Sometimes the ntpClient fails to instantiate, so we retry
+		const date = await commonUtils.retry(util.promisify(ntpClient.getNetworkTime.bind(ntpClient, ntpServer, ntpServerPort)));
 		const local = new Date();
 
 		debug("Current ntp time is: ", date);
