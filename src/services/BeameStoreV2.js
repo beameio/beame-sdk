@@ -77,7 +77,7 @@ class BeameStoreV2 {
 	}
 
 	async fetch(fqdn) {
-		assert(fqdn, 'Credential#find: fqdn is a required argument');
+		assert(fqdn, `${module_name}#fetch: fqdn is a required argument`);
 
 		const _saveCreds = data => {
 			const remoteCred = new Credential(this);
@@ -352,7 +352,7 @@ class BeameStoreV2 {
 	 * @returns {Promise.<Credential>}
 	 */
 	async find(fqdn, allowRemote = true, allowExpired = false, allowRevoked = false) {
-		assert(fqdn, 'Credential#find: fqdn is a required argument');
+		assert(fqdn, `${module_name}#find: fqdn is a required argument`);
 
 		// get the credential to use
 		let credential = this.getCredential(fqdn);
