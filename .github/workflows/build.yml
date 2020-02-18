@@ -3,6 +3,7 @@ on: [push]
 
 jobs:
   build:
+    timeout-minutes: 3
     name: Build
     runs-on: ${{ matrix.os }}
     strategy:
@@ -19,6 +20,7 @@ jobs:
       - run: npm install
       - run: npm test
   tests:
+    timeout-minutes: 10
     name: Tests
     runs-on: ubuntu-latest
     env:
