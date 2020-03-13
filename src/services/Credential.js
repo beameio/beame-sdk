@@ -57,7 +57,6 @@
  * @property {String} signedBy
  * @property {String} signature
  */
-const pem                    = require('pem');
 const NodeRsa                = require("node-rsa");
 const async                  = require('async');
 const _                      = require('underscore');
@@ -83,6 +82,7 @@ const timeFuzz               = Config.defaultTimeFuzz * 1000;
 const util                   = require('util');
 const dns                    = require('dns');
 const assert                 = require("assert");
+const pem                    = new (require('../utils/PemWrapper'))();
 
 const nop = function () {
 };
@@ -167,7 +167,6 @@ class Credential {
 		 * @member {Object}
 		 */
 		this.certData = {};
-
 	}
 
 	//region Init functions
@@ -283,7 +282,6 @@ class Credential {
 	 */
 	initCryptoKeys() {
 		if (this.hasKey("X509")) {
-			pem.config({sync: true});
 			pem.readCertificateInfo(this.getKey("X509") + "", (err, certData) => {
 				if (this.fqdn && this.fqdn !== certData.commonName) {
 					throw new Error(`Credentialing mismatch ${this.metadata} the common name in x509 does not match the metadata`);
@@ -304,7 +302,6 @@ class Credential {
 					console.log(`could not import services ${this.publicKeyStr}`)
 				}
 			});
-			pem.config({sync: false});
 		}
 		if (this.hasPrivateKey) {
 			this.privateKeyNodeRsa = new NodeRsa();
@@ -318,7 +315,6 @@ class Credential {
 	 * @param metadata
 	 */
 	initFromX509(x509, metadata) {
-		pem.config({sync: true});
 		pem.readCertificateInfo(x509, (err, certData) => {
 			assert(!err, err);
 			this.certData = certData;
@@ -342,7 +338,6 @@ class Credential {
 		});
 		this.mergeMetadata(metadata);
 		this.save();
-		pem.config({sync: false});
 	}
 
 	/**
@@ -2365,8 +2360,7 @@ class Credential {
 									return;
 								}
 
-								const pem = require('pem');
-
+								const pem = new (require('../utils/PemWrapper'))()
 								pem.createPkcs12(private_key, payload.p7b, password, [], (err, pfx) => {
 
 									if (err) {

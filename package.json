@@ -51,14 +51,15 @@
     "npm-prefix": "^1.2.0",
     "ntp-client": "^0.5.3",
     "ocsp": "^1.2.0",
-    "pem": "https://github.com/beameio/pem/archive/v1.8.3-beame2.tar.gz",
+    "pem": "^1.14.4",
     "request": "^2.88.2",
     "rimraf": "^3.0.2",
     "serve-index": "^1.9.1",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
     "sync-request": "^6.1.0",
-    "underscore": "^1.9.2"
+    "underscore": "^1.9.2",
+    "which": "^2.0.2"
   },
   "directories": {
     "test": "tests"
