@@ -1132,7 +1132,19 @@
         "nice-try": "^1.0.4",
         "path-key": "^2.0.1",
         "semver": "^5.5.0",
-        "shebang-command": "^1.2.0"
+        "shebang-command": "^1.2.0",
+        "which": "^1.2.9"
+      },
+      "dependencies": {
+        "which": {
+          "version": "1.3.1",
+          "resolved": "https://registry.npmjs.org/which/-/which-1.3.1.tgz",
+          "integrity": "sha512-HxJdYWq1MTIQbJ3nw0cqssHoTNU267KlrDuGZ1WYlxDStUtKUhOaJmh112/TZmHxxUfuJqPXSOm7tDyas0OSIQ==",
+          "dev": true,
+          "requires": {
+            "isexe": "^2.0.0"
+          }
+        }
       }
     },
     "crypt": {
@@ -3015,7 +3027,19 @@
         "expand-tilde": "^2.0.2",
         "homedir-polyfill": "^1.0.1",
         "ini": "^1.3.4",
-        "is-windows": "^1.0.1"
+        "is-windows": "^1.0.1",
+        "which": "^1.2.14"
+      },
+      "dependencies": {
+        "which": {
+          "version": "1.3.1",
+          "resolved": "https://registry.npmjs.org/which/-/which-1.3.1.tgz",
+          "integrity": "sha512-HxJdYWq1MTIQbJ3nw0cqssHoTNU267KlrDuGZ1WYlxDStUtKUhOaJmh112/TZmHxxUfuJqPXSOm7tDyas0OSIQ==",
+          "dev": true,
+          "requires": {
+            "isexe": "^2.0.0"
+          }
+        }
       }
     },
     "globals": {
@@ -4339,6 +4363,7 @@
         "object.assign": "4.1.0",
         "strip-json-comments": "2.0.1",
         "supports-color": "6.0.0",
+        "which": "1.3.1",
         "wide-align": "1.1.3",
         "yargs": "13.3.0",
         "yargs-parser": "13.1.1",
@@ -4548,6 +4573,15 @@
           "dev": true,
           "requires": {
             "is-number": "^7.0.0"
+          }
+        },
+        "which": {
+          "version": "1.3.1",
+          "resolved": "https://registry.npmjs.org/which/-/which-1.3.1.tgz",
+          "integrity": "sha512-HxJdYWq1MTIQbJ3nw0cqssHoTNU267KlrDuGZ1WYlxDStUtKUhOaJmh112/TZmHxxUfuJqPXSOm7tDyas0OSIQ==",
+          "dev": true,
+          "requires": {
+            "isexe": "^2.0.0"
           }
         },
         "which-module": {
