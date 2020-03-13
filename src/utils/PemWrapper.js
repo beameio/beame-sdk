@@ -1,10 +1,12 @@
 const logger = new (require('./Logger'))("PemWrapper");
 
 const Module = require('module');
+const fs = require('fs');
+const which = require('which');
+const childProcess = require('child_process');
+
 const originalRequire = Module.prototype.require;
-const originalChildProcess = require('child_process');
-const originalFS = require('fs');
-const originalWhich = require('which');
+const originalSpawn = childProcess.spawn;
 
 class PemWrapper {
 	constructor() {
@@ -30,7 +32,7 @@ class PemWrapper {
 	_makeSync() {
 		function whichOverride(cmd, cb) {
 			try {
-				const result = originalWhich.sync(cmd);
+				const result = which.sync(cmd);
 				cb(null, result)
 			} catch (e) {
 				cb(e)
@@ -39,7 +41,7 @@ class PemWrapper {
 
 		function unlinkOverride(path, callback) {
 			try {
-				originalFS.unlinkSync(path);
+				fs.unlinkSync(path);
 				callback()
 			} catch (e) {
 				callback(e)
@@ -48,13 +50,13 @@ class PemWrapper {
 
 		function spawnOverride(command, args, options) {
 			if (command !== 'openssl') {
-				return originalChildProcess.spawn(command, args, options)
+				return originalSpawn(command, args, options)
 			}
 
 			let out = null;
 			let err = null;
 			try {
-				out = originalChildProcess.spawnSync(command, args, options)
+				out = childProcess.spawnSync(command, args, options)
 			} catch (e) {
 				err = e
 			}
