@@ -78,7 +78,6 @@ const apiAuthServerActions   = actionsApi.AuthServerApi;
 const DirectoryServices      = require('./DirectoryServices');
 const CryptoServices         = require('../services/Crypto');
 const ocspUtils              = require('../utils/ocspUtils');
-const timeFuzz               = Config.defaultTimeFuzz * 1000;
 const util                   = require('util');
 const dns                    = require('dns');
 const assert                 = require("assert");
@@ -2525,8 +2524,8 @@ class Credential {
 		logger.debug(`checkValidity: fqdn, start, end', ${this.fqdn}, ${validity.start}, ${validity.end}`);
 
 		const now = Date.now();
-		assert(validity.start - Config.defaultAllowedClockDiff < now + timeFuzz, new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`, CertValidationError.InFuture));
-		assert(validity.end + Config.defaultAllowedClockDiff > now - timeFuzz, new CertificateValidityError(`Certificate ${this.fqdn} has expired`, CertValidationError.Expired));
+		assert(validity.start < (now + Config.defaultAllowedClockDiff), new CertificateValidityError(`Certificate ${this.fqdn} is not valid yet`, CertValidationError.InFuture));
+		assert(validity.end > (now - Config.defaultAllowedClockDiff), new CertificateValidityError(`Certificate ${this.fqdn} has expired`, CertValidationError.Expired));
 		return this;
 	}
 
