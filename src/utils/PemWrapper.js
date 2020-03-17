@@ -80,15 +80,15 @@ class PemWrapper {
 				},
 				on: function (eventName, callback) {
 					switch (eventName) {
-					case 'error':
-						if (err) callback(err);
-						break;
-					case 'close':
-					case 'exit':
-						callback();
-						break;
-					default:
-						throw new Error('on called with unknown event ' + eventName)
+						case 'error':
+							if (err) callback(err);
+							break;
+						case 'close':
+						case 'exit':
+							callback();
+							break;
+						default:
+							throw new Error('on called with unknown event ' + eventName)
 					}
 				}
 			}
@@ -97,21 +97,21 @@ class PemWrapper {
 		Module.prototype.require = function (cmd) {
 			if (this.filename.includes('pem/lib/openssl.js')) {
 				switch (cmd) {
-				case 'which':
-					logger.debug('Overriding which for ' + this.filename);
-					return whichOverride;
-				case 'child_process': {
-					logger.debug('Overriding child_process.spawn for ' + this.filename);
-					const childProcess = originalRequire.apply(this, arguments);
-					childProcess.spawn = spawnOverride;
-					return childProcess;
-				}
-				case 'fs': {
-					logger.debug('Overriding fs.unlink for ' + this.filename);
-					const fs = originalRequire.apply(this, arguments);
-					fs.unlink = unlinkOverride;
-					return fs;
-				}
+					case 'which':
+						logger.debug('Overriding which for ' + this.filename);
+						return whichOverride;
+					case 'child_process': {
+						logger.debug('Overriding child_process.spawn for ' + this.filename);
+						const childProcess = originalRequire.apply(this, arguments);
+						childProcess.spawn = spawnOverride;
+						return childProcess;
+					}
+					case 'fs': {
+						logger.debug('Overriding fs.unlink for ' + this.filename);
+						const fs = originalRequire.apply(this, arguments);
+						fs.unlink = unlinkOverride;
+						return fs;
+					}
 				}
 			}
 			return originalRequire.apply(this, arguments);
