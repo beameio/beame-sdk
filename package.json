@@ -17,7 +17,7 @@
 		"jsrsasign": "^8.0.12",
 		"lodash": "^4.17.15",
 		"log4js": "^6.1.2",
-		"log4js-json-layout": "^2.1.0",
+		"log4js-json-layout": "^2.2.2",
 		"minimist": "^1.2.5",
 		"network": "^0.5.0",
 		"node-rsa": "^1.0.7",
