@@ -1,75 +1,75 @@
 {
-  "name": "beame-sdk",
-  "version": "2.2.9",
-  "description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
-  "main": "index.js",
-  "engine": "node >= 8.16.0",
-  "scripts": {
-    "test": "mocha tests/unit_tests/test_commonutils.js tests/unit_tests/test_makeenv.js tests/unit_tests/test_ntp.js"
-  },
-  "bin": {
-    "beame": "src/cli/beame.js"
-  },
-  "repository": {
-    "_type": "git",
-    "url": "git@github.com:beameio/beame-sdk.git"
-  },
-  "keywords": [
-    "beame",
-    "SSL cert",
-    "x509",
-    "localhost",
-    "proxy tunnel",
-    "ssl tunnel",
-    "self signed ",
-    "CA",
-    "signing",
-    "crypto"
-  ],
-  "author": "beame.io",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/beameio/beame-sdk/issues"
-  },
-  "homepage": "https://github.com/beameio/beame-sdk#readme",
-  "dependencies": {
-    "async": "^3.2.0",
-    "change-case": "^4.1.1",
-    "cli-table3": "0.5.1",
-    "colors": "^1.4.0",
-    "debug": "^4.1.1",
-    "express": "^4.17.1",
-    "http-proxy": "^1.18.0",
-    "https-proxy-agent": "^5.0.0",
-    "jsrsasign": "^8.0.12",
-    "log4js": "^6.1.2",
-    "log4js-json-layout": "^2.1.0",
-    "minimist": "^1.2.5",
-    "nedb": "^1.8.0",
-    "network": "^0.5.0",
-    "node-rsa": "^1.0.7",
-    "npm-prefix": "^1.2.0",
-    "ntp-client": "^0.5.3",
-    "ocsp": "^1.2.0",
-    "pem": "^1.14.4",
-    "request": "^2.88.2",
-    "rimraf": "^3.0.2",
-    "serve-index": "^1.9.1",
-    "socket.io": "^2.3.0",
-    "socket.io-client": "^2.3.0",
-    "sync-request": "^6.1.0",
-    "underscore": "^1.9.2",
-    "which": "^2.0.2"
-  },
-  "directories": {
-    "test": "tests"
-  },
-  "devDependencies": {
-    "eslint": "^6.8.0",
-    "gulp": "^4.0.2",
-    "gulp-jsdoc3": "^2.0.0",
-    "jsdoc": "^3.6.3",
-    "mocha": "^7.1.1",
-    "simple-mock": "^0.8.0"
-  }
+	"author": "beame.io",
+	"bin": {
+		"beame": "src/cli/beame.js"
+	},
+	"bugs": {
+		"url": "https://github.com/beameio/beame-sdk/issues"
+	},
+	"dependencies": {
+		"async": "^3.2.0",
+		"change-case": "^4.1.1",
+		"cli-table3": "0.5.1",
+		"colors": "^1.4.0",
+		"debug": "^4.1.1",
+		"express": "^4.17.1",
+		"https-proxy-agent": "^5.0.0",
+		"jsrsasign": "^8.0.12",
+		"lodash": "^4.17.15",
+		"log4js": "^6.1.2",
+		"log4js-json-layout": "^2.1.0",
+		"minimist": "^1.2.5",
+		"network": "^0.5.0",
+		"node-rsa": "^1.0.7",
+		"npm-prefix": "^1.2.0",
+		"ntp-client": "^0.5.3",
+		"ocsp": "^1.2.0",
+		"pem": "^1.14.4",
+		"request": "^2.88.2",
+		"rimraf": "^3.0.2",
+		"serve-index": "^1.9.1",
+		"socket.io": "^2.3.0",
+		"socket.io-client": "^2.3.0",
+		"sync-request": "^6.1.0",
+		"underscore": "^1.9.2",
+		"which": "^2.0.2",
+		"x509": "^0.3.4"
+	},
+	"description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
+	"devDependencies": {
+		"eslint": "^6.8.0",
+		"gulp": "^4.0.2",
+		"gulp-jsdoc3": "^2.0.0",
+		"jsdoc": "^3.6.3",
+		"mocha": "^7.1.1",
+		"simple-mock": "^0.8.0"
+	},
+	"directories": {
+		"test": "tests"
+	},
+	"engine": "node >= 8.16.0",
+	"homepage": "https://github.com/beameio/beame-sdk#readme",
+	"keywords": [
+		"beame",
+		"SSL cert",
+		"x509",
+		"localhost",
+		"proxy tunnel",
+		"ssl tunnel",
+		"self signed ",
+		"CA",
+		"signing",
+		"crypto"
+	],
+	"license": "MIT",
+	"main": "index.js",
+	"name": "beame-sdk",
+	"repository": {
+		"_type": "git",
+		"url": "git@github.com:beameio/beame-sdk.git"
+	},
+	"scripts": {
+		"test": "mocha tests/unit_tests/test_commonutils.js tests/unit_tests/test_makeenv.js tests/unit_tests/test_ntp.js"
+	},
+	"version": "2.2.9"
 }
