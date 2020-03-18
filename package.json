@@ -32,8 +32,7 @@
 		"socket.io-client": "^2.3.0",
 		"sync-request": "^6.1.0",
 		"underscore": "^1.9.2",
-		"which": "^2.0.2",
-		"x509": "^0.3.4"
+		"which": "^2.0.2"
 	},
 	"description": "Beame.io SDK - x509 certificates and tunnelling traffic to your servers",
 	"devDependencies": {
