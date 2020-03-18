@@ -92,7 +92,7 @@ F test_server(fqdn:Str, cmd:CommandsPipeline, url:Str) {
 	]
 	echo("  Waiting for host ${fqdn} to be resolvable")
 	addr = retry(
-		times = 45
+		times = 90
 		sleep = 2
 		body = { `dig "+short" $fqdn`.lines() }
 		fail_cb = { throw TestFail("No resolve for $fqdn").set('host', fqdn) }
