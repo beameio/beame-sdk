@@ -70,5 +70,5 @@
 	"scripts": {
 		"test": "mocha tests/unit_tests/test_commonutils.js tests/unit_tests/test_makeenv.js tests/unit_tests/test_ntp.js"
 	},
-	"version": "2.2.10"
+	"version": "2.2.11"
 }
