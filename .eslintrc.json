@@ -12,7 +12,8 @@
     "rules": {
         "indent": [
             "warn",
-            "tab"
+            "tab",
+            { "SwitchCase": 1 }
         ],
         "no-console": "off"
     }

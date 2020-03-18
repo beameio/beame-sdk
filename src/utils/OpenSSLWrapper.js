@@ -5,7 +5,6 @@
 const path     = require('path');
 const exec     = require('child_process').exec;
 const execFile = require('child_process').execFile;
-const fs       = require('fs');
 
 const CommonUtils = require('./CommonUtils');
 const config      = require('../../config/Config');

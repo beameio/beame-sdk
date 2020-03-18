@@ -10,8 +10,6 @@ const Credential  = require('./Credential');
 const OcspStatus  = (require('../../config/Config')).OcspStatus;
 const assert      = require('assert').strict;
 
-const timeFuzz = config.defaultTimeFuzz;
-
 class AuthToken {
 
 	static async getRequestAuthToken(req, allowExpired = false, event = null) {
@@ -105,9 +103,9 @@ class AuthToken {
 			let signedData = CommonUtils.parse(authToken.signedData);
 			assert(signedData, 'Could not decode authToken.signedData JSON. authToken.signedData must be a valid JSON');
 
-			const now = Math.round(Date.now() / 1000);
-			assert(signedData.created_at - config.defaultAllowedClockDiff < now + timeFuzz, `authToken.signedData.created_at ${signedData.created_at} is in future - invalid token or incorrect clock`);
-			assert(signedData.valid_till + config.defaultAllowedClockDiff > now - timeFuzz, `authToken.signedData.valid_till ${signedData.valid_till} is in the past - token expired`);
+			const now = Date.now();
+			assert((signedData.created_at * 1000) < (now + config.defaultAllowedClockDiff), `authToken.signedData.created_at ${signedData.created_at} is in future - invalid token or incorrect clock`);
+			assert((signedData.valid_till * 1000) > (now - config.defaultAllowedClockDiff), `authToken.signedData.valid_till ${signedData.valid_till} is in the past - token expired`);
 
 			if(event) {
 				cdr_logger.info(event);

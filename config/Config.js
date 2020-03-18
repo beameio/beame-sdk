@@ -362,10 +362,9 @@ module.exports = {
 	CredAction,
 	credentialMetadataActionsLimit: 20,
 	debugPrefix,
-	defaultAllowedClockDiff: 100, //in seconds
+	defaultAllowedClockDiff: 5000, //in milliseconds
 	defaultAuthTokenTtl: 100, //in seconds
 	defaultDays2Log: 7,
-	defaultTimeFuzz: 10,
 	defaultValidityPeriod: SelectedProfile.CertValidityPeriod,
 	InitFirstRemoteEdgeClient: true,
 	issuerCertsPath: path.join(SelectedProfile.Dir, 'issuer-certs-chain'),
