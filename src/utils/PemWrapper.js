@@ -16,17 +16,17 @@ class PemWrapper {
 		PemWrapper.instance = this;
 
 		this._makeSync();
-		this.realPem = require('pem');
+		this.originalPem = require('pem');
 	}
 
 	readCertificateInfo(certificate, cb) {
-		return this.realPem.readCertificateInfo(certificate, cb)
+		return this.originalPem.readCertificateInfo(certificate, cb)
 	}
 	getPublicKey(certificate, cb) {
-		return this.realPem.getPublicKey(certificate, cb)
+		return this.originalPem.getPublicKey(certificate, cb)
 	}
 	createPkcs12 (key, certificate, password, options, callback) {
-		return this.realPem.createPkcs12(key, certificate, password, options, callback);
+		return this.originalPem.createPkcs12(key, certificate, password, options, callback);
 	}
 
 	_makeSync() {
