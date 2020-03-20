@@ -44,7 +44,8 @@
 		"simple-mock": "^0.8.0"
 	},
 	"directories": {
-		"test": "tests"
+		"example": "./examples",
+		"test": "./tests"
 	},
 	"engine": "node >= 8.16.0",
 	"homepage": "https://github.com/beameio/beame-sdk#readme",
