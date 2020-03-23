@@ -2,10 +2,10 @@ default:
 	exit 1
 
 build:
-	npm install
+	npm run build
 
 clean:
-	rm -rf node_modules
+	npm run clean
 
 printunittestenv:
 	@echo

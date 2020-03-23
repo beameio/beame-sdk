@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: node --version
-      - run: npm install
+      - run: npm run build
       - run: npm test
   tests:
     timeout-minutes: 10
@@ -52,8 +52,7 @@ jobs:
           echo ""
           echo "+ Installing NGS"
           ( git clone -b dev --single-branch https://github.com/ngs-lang/ngs.git && cd ngs && ./install-linux.sh && make install )
-      - name: Build
-        run: make build
+      - run: npm run build
       - name: Unit Tests
         run:  make unittests
       - name: Integration Tests
