@@ -69,12 +69,10 @@
 		"url": "git@github.com:beameio/beame-sdk.git"
 	},
 	"scripts": {
-		"test": "mocha tests/unit_tests/test_commonutils.js tests/unit_tests/test_makeenv.js tests/unit_tests/test_ntp.js",
+		"test": "./node_modules/mocha/bin/mocha tests/unit_tests/test_commonutils.js tests/unit_tests/test_makeenv.js tests/unit_tests/test_ntp.js",
 		"unittests": "make unittests",
 		"clitests": "make clitests",
-		"clean": "rm -rf node_modules",
-		"prebuild": "npm run clean",
-		"build": "npm i"
+		"clean": "rm -rf node_modules"
 	},
 	"version": "2.2.11"
 }

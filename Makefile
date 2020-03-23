@@ -1,12 +1,6 @@
 default:
 	exit 1
 
-build:
-	npm run build
-
-clean:
-	npm run clean
-
 printunittestenv:
 	@echo
 	@echo "Running with:"
